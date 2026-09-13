@@ -23,7 +23,7 @@
   var kutular = {};   // kamera_id -> {ts, liste:[{x,y,w,h,tur,etiket,kaynak_w,kaynak_h}]}
   var takip = {};     // kamera_id -> son ai_takip mesajı (+ _ts)
 
-  var TUR_AD = { insan: "İNSAN", kara_araci: "KARA ARACI", hava_araci: "HAVA ARACI" };
+  var TUR_AD = { hava_araci: "HAVA ARACI" };
 
   function wsGonder(o) {
     try {

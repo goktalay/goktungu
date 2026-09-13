@@ -103,8 +103,7 @@ class KameraYoneticisi:
         return dict(row) if row else None
 
     # v2.4.2: kamera basina AI gorev anahtarlari
-    GECERLI_AI_GOREVLER = ("yuz", "plaka", "hava_araci", "insan",
-                           "kara_araci")
+    GECERLI_AI_GOREVLER = ("hava_araci",)
 
     @classmethod
     def _ai_gorevler(cls, deger):
@@ -145,8 +144,7 @@ class KameraYoneticisi:
         if not isinstance(deger, dict):
             return ""
         temiz = {}
-        # v2.4.161: "yuz" (yakin cekim yuz tespiti) ayri gorev/hassasiyet.
-        for k in ("insan", "yuz", "kara_araci", "hava_araci"):
+        for k in ("hava_araci",):
             try:
                 v = int(round(float(deger[k])))
             except (KeyError, TypeError, ValueError):

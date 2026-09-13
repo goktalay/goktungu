@@ -195,11 +195,9 @@ try:
 except ImportError:
     OCR_VAR = False
 # GRCOFF pasif yerel görüntü işleme kabul listesi.
-# v2.4.161: "yuz" = yakin cekim yuz tespiti (ayri ac/kapat gorevi). Tam
-# beden "insan" (HOG/yaya) ile BAGIMSIZ acilip kapanir; tespit YINE "insan"
-# olarak bildirilir (kullanici istegi: "en azindan insan demeli"). Kimlik
-# TANIMA yapilmaz — yalniz varlik.
-IZINLI_SINIFLAR = frozenset(("insan", "yuz", "kara_araci", "hava_araci"))
+# v2.4.165: Sistem C-UAS (Karşı-İHA) odaklıdır; yalnız hava araçları tespit
+# edilir ve angaje olunur. İnsan/yüz/kara aracı tespiti kaldırıldı.
+IZINLI_SINIFLAR = frozenset(("hava_araci",))
 
 
 def gorevleri_sinirla(gorevler):
@@ -435,7 +433,7 @@ class AkisIsleyici(threading.Thread):
         tur = str(tur or "").strip().lower()
         if tur not in IZINLI_SINIFLAR:
             return {"tamam": False,
-                    "hata": "yalnız insan, kara_araci veya hava_araci seçilebilir"}
+                    "hata": "yalnız hava_araci takip edilebilir (C-UAS modu)"}
         with self.takip_kilit:
             if not self.tampon:
                 return {"tamam": False, "hata": "akista kare yok"}
@@ -544,51 +542,10 @@ class AIIsci:
         self.kilit = threading.Lock()
         os.makedirs(KAYIT_KLASORU, exist_ok=True)
 
-        self.yuz_tespit = None
-        self.yuz_tanima = None
-        self.plaka_cascade = None
-        # v2.4.2: HOG insan dedektoru (OpenCV yerlesik, model dosyasiz)
-        # v2.4.5: OpenCV 5.x'te HOGDescriptor kaldirildi — bu durumda
-        # insan tespiti hareket tabanli (MOG2 dikey blob) yontemine duser.
-        try:
-            self.insan_hog = cv2.HOGDescriptor()
-            self.insan_hog.setSVMDetector(
-                cv2.HOGDescriptor_getDefaultPeopleDetector())
-        except Exception:
-            self.insan_hog = None
-            print("[AI] Uyari: HOGDescriptor yok (OpenCV 5); insan"
-                  " tespiti hareket tabanli yonteme dusuruldu.")
-        self.yuz_tespit = model_yukle(
-            YUNET,
-            lambda y: cv2.FaceDetectorYN.create(y, "", (320, 320),
-                                                0.7, 0.3, 5000),
-            "Yuz tespit (YuNet)")
-        self.yuz_tanima = model_yukle(
-            SFACE,
-            lambda y: cv2.FaceRecognizerSF.create(y, ""),
-            "Yuz tanima (SFace)")
-        # OpenCV 5.x'te CascadeClassifier kaldirildi; 4.x'te calisir.
-        if (os.path.exists(PLAKA_CASCADE)
-                and hasattr(cv2, "CascadeClassifier")):
-            try:
-                self.plaka_cascade = cv2.CascadeClassifier(PLAKA_CASCADE)
-                if self.plaka_cascade.empty():
-                    self.plaka_cascade = None
-                    print("[AI] Uyari: plaka cascade dosyasi okunamadi;"
-                          " plaka tespiti kontur yontemine dusuruldu.")
-            except Exception as e:
-                self.plaka_cascade = None
-                print(f"[AI] Uyari: plaka cascade yuklenemedi ({e});"
-                      " kontur yontemi kullanilacak.")
-        elif not hasattr(cv2, "CascadeClassifier"):
-            print("[AI] Uyari: OpenCV 5 CascadeClassifier icermiyor;"
-                  " plaka tespiti kontur yontemine dusuruldu.")
+        # C-UAS modu: yalnız MOG2 hareket tespiti (hava_araci).
+        # Yüz/insan/plaka modelleri kaldırıldı.
         print(f"[AI] Isci kod ozeti: {KOD_OZETI[:12]} pid={os.getpid()}")
-        print(f"[AI] Isci hazir: {self.ad} ({self.tip}) "
-              f"yuz={'VAR' if self.yuz_tespit else 'YOK'} "
-              f"tanima={'VAR' if self.yuz_tanima else 'YOK'} "
-              f"plaka={'VAR' if self.plaka_cascade is not None else 'YOK'} "
-              f"ocr={'VAR' if OCR_VAR else 'YOK'}")
+        print(f"[AI] Isci hazir: {self.ad} ({self.tip}) mod=C-UAS")
 
     # ------------------------------------------------------------------
     # Gorev yonetimi
@@ -641,18 +598,10 @@ class AIIsci:
     # Analiz
     # ------------------------------------------------------------------
     def kare_analiz(self, akis, kare, ts):
-        # GRCOFF 2.5.20: yüz, plaka ve diğer sınıflar aktif akışta yoktur.
+        # GRCOFF 2.5.35 C-UAS: yalnız hava aracı (IHA/drone) tespiti.
         g = akis.gorevler & IZINLI_SINIFLAR
         akis.canli_kutular = []
-        if "insan" in g:
-            self._insan_analiz(akis, kare, ts)
-        # v2.4.161: Yakin cekim yuz tespiti AYRI gorev ("yuz"); tam beden
-        # "insan" (HOG/yaya) ile bagimsiz. Ikisi de acikken hem uzaktaki
-        # yaya hem yakindaki kisi yakalanir.
-        if "yuz" in g:
-            self._insan_yuzden(akis, kare, ts)
-        if "hava_araci" in g or "kara_araci" in g or (
-                "insan" in g and self.insan_hog is None):
+        if "hava_araci" in g:
             self._hareket_analiz(akis, kare, ts)
         try:
             h, w = kare.shape[:2]
@@ -802,114 +751,7 @@ class AIIsci:
                                 guven=0.6, plaka_metin=metin)
 
     # ------------------------------------------------------------------
-    # v2.4.2: Insan tespiti (HOG tam-vucut dedektoru)
-    # ------------------------------------------------------------------
-    def _insan_analiz(self, akis, kare, ts):
-        # v2.4.161: Tam beden (HOG/yaya) tespiti. Yakın çekim yüz tespiti
-        # artık AYRI "yuz" görevidir (bkz. kare_analiz + _insan_yuzden);
-        # burada çağrılmaz. Böylece yaya ve yakın-yüz bağımsız açılıp kapanır.
-        if self.insan_hog is None:
-            # OpenCV 5: HOG yok — tam beden hareket blob'u _hareket_analiz'de.
-            return
-        h, w = kare.shape[:2]
-        # HOG icin kucult (hiz): genislik ~640
-        olcek = 640.0 / w if w > 640 else 1.0
-        kucuk = (cv2.resize(kare, (int(w * olcek), int(h * olcek)))
-                 if olcek < 1.0 else kare)
-        try:
-            kutular, agirliklar = self.insan_hog.detectMultiScale(
-                kucuk, winStride=(8, 8), padding=(8, 8), scale=1.05)
-        except Exception:
-            return
-        # v2.5.24: insan hassasiyeti -> güven eşiği (s=50 iken 0.6, nötr)
-        _k_insan = getattr(akis, "_olcek", {}).get("insan", 1.0)
-        _esik_insan = max(0.2, min(0.9, 0.6 * min(1.5, _k_insan)))
-        for i, (x, y, gw, gh) in enumerate(kutular):
-            guven = float(agirliklar[i]) if len(agirliklar) > i else 0.0
-            if guven < _esik_insan:
-                continue
-            # orijinal olcege don
-            x, y, gw, gh = (int(x / olcek), int(y / olcek),
-                            int(gw / olcek), int(gh / olcek))
-            self._canli_kutu_ekle(akis, x, y, gw, gh, "insan")
-            anahtar = f"insan_{x // 100}_{y // 100}"
-            if not akis.sogutma_gecti(anahtar, saniye=12.0):
-                continue
-            x0, y0 = max(0, x - 15), max(0, y - 15)
-            kirp = kare[y0:min(h, y + gh + 15), x0:min(w, x + gw + 15)]
-            self._tespit_bildir(akis, "insan", kare, kirp, ts,
-                                guven=min(1.0, guven / 2.0))
-
-    def _insan_yuzden(self, akis, kare, ts):
-        """Yakın çekimde YuNet yüz tespitiyle 'insan' üretir.
-
-        GİZLİLİK: Bu yol yalnız VARLIK tespitidir — yüz TANIMA (kimlik)
-        YAPMAZ; embedding/isim çıkarılmaz, hariçe taşınmaz. Amaç tam-beden
-        HOG'un göremediği yakın/üst-beden kadrajında kişiyi yakalamaktır.
-        """
-        if self.yuz_tespit is None:
-            return
-        h, w = kare.shape[:2]
-        # v2.4.161: "yuz" gorevinin kendi hassasiyeti (insan'dan bagimsiz).
-        k = getattr(akis, "_olcek", {}).get("yuz", 1.0)
-        esik = max(0.30, min(0.95, 0.7 * min(1.5, k)))
-        asgari = max(18, int(36 * min(1.5, k)))
-        # YuNet cok BUYUK yuzde (yakin cekim, kadrajin yarisindan fazlasi)
-        # zayiflar; tam cozunurlukte bulamazsa kucultulmus karede de dener.
-        yuzler = None
-        for olcek in (1.0, 0.5):
-            try:
-                if olcek != 1.0:
-                    kk = cv2.resize(kare, (max(1, int(w * olcek)),
-                                           max(1, int(h * olcek))))
-                    self.yuz_tespit.setInputSize((kk.shape[1], kk.shape[0]))
-                    _, bulunan = self.yuz_tespit.detect(kk)
-                    if bulunan is not None and len(bulunan):
-                        bulunan = bulunan.copy()
-                        bulunan[:, :4] /= olcek   # koordinatları orijinale ölçekle
-                else:
-                    self.yuz_tespit.setInputSize((w, h))
-                    _, bulunan = self.yuz_tespit.detect(kare)
-            except Exception:
-                bulunan = None
-            if bulunan is not None and len(bulunan):
-                yuzler = bulunan
-                break
-        # Teşhis (kısıtlı): kaç aday, en iyi güven — log'dan görülebilsin.
-        if akis.sogutma_gecti("yuz_teshis", saniye=8.0):
-            try:
-                _n = 0 if yuzler is None else len(yuzler)
-                _iyi = (max(float(y[-1]) for y in yuzler) if _n else 0.0)
-                print("[AI] yuz tespit: %d aday, en_iyi=%.2f (esik=%.2f) kam=%s"
-                      % (_n, _iyi, esik, akis.kamera_id))
-            except Exception:
-                pass
-        if yuzler is None:
-            return
-        for yuz in yuzler:
-            x, y, gw, gh = [int(v) for v in yuz[:4]]
-            guven = float(yuz[-1])
-            if guven < esik or gw < asgari or gh < asgari:
-                continue
-            # Yüzden kaba bir gövde kutusu kestir (yüz ~ gövdenin üst kısmı):
-            # genişliği yanlara, yüksekliği aşağı doğru genişlet, kareye kırp.
-            bx = max(0, int(x - gw * 0.6))
-            by = max(0, int(y - gh * 0.3))
-            bw = min(w - bx, int(gw * 2.2))
-            bh = min(h - by, int(gh * 4.5))
-            # Yuz yolundan gelen insan kutusu videoda ayirt edilsin
-            # (cv2.putText Turkce karakter cizemez -> ASCII).
-            self._canli_kutu_ekle(akis, bx, by, bw, bh, "insan",
-                                  etiket="INSAN (YUZ) %%%d" % int(guven * 100))
-            anahtar = f"insan_yuz_{x // 100}_{y // 100}"
-            if not akis.sogutma_gecti(anahtar, saniye=12.0):
-                continue
-            kirp = kare[by:by + bh, bx:bx + bw]
-            self._tespit_bildir(akis, "insan", kare, kirp, ts,
-                                guven=min(1.0, guven))
-
-    # ------------------------------------------------------------------
-    # v2.4.2: Hareket tabanli hava araci / kara araci tespiti
+    # C-UAS: Hareket tabanli hava araci (IHA/drone) tespiti
     # ------------------------------------------------------------------
     # CPU iscide arka plan cikarma (MOG2) + blob analizi kullanilir:
     #  - hava_araci: karenin ust bolgesinde (gokyuzu), kompakt, kucuk-orta
@@ -931,46 +773,28 @@ class AIIsci:
         kare_alani = float(h * w)
         # v2.5.24: sınıf başına alan alt-sınır ölçeği (s=50 -> k=1.0 nötr;
         # yüksek hassasiyet -> daha küçük alt sınır -> daha çok tespit).
-        _olc = getattr(akis, "_olcek", {})
-        _kh = _olc.get("hava_araci", 1.0)
-        _kk = _olc.get("kara_araci", 1.0)
-        _ki = _olc.get("insan", 1.0)
+        _kh = getattr(akis, "_olcek", {}).get("hava_araci", 1.0)
         for c in konturlar:
             x, y, gw, gh = cv2.boundingRect(c)
             alan = gw * gh
             oran = gw / float(gh) if gh else 0
             merkez_y = y + gh / 2.0
-            tur = None
-            if ("hava_araci" in akis.gorevler
-                    and merkez_y < h * 0.55
-                    and 0.0004 * _kh * kare_alani < alan < 0.06 * kare_alani
-                    and 0.5 <= oran <= 3.5):
-                tur = "hava_araci"
-            elif ("kara_araci" in akis.gorevler
-                    and merkez_y >= h * 0.45
-                    and 0.008 * _kk * kare_alani < alan < 0.5 * kare_alani
-                    and 1.1 <= oran <= 4.5):
-                tur = "kara_araci"
-            elif ("insan" in akis.gorevler and self.insan_hog is None
-                    and merkez_y >= h * 0.35
-                    and 0.002 * _ki * kare_alani < alan < 0.15 * kare_alani
-                    and 0.2 <= oran <= 0.75):
-                # OpenCV 5 HOG geri cekilmesi: dikey (boy > en) hareketli
-                # bloblar insan adayi sayilir
-                tur = "insan"
-            if tur is None:
+            # Hava aracı (IHA/drone): karenin üst %70'inde, kompakt, hızlı hareket
+            # Üst sınır genişletildi (%55 -> %70): alçak irtifadaki dronlar da yakalansın
+            if not (merkez_y < h * 0.70
+                    and 0.0003 * _kh * kare_alani < alan < 0.08 * kare_alani
+                    and 0.3 <= oran <= 4.0):
                 continue
             # doluluk filtresi: cok seyrek konturlar gurultudur
-            if cv2.contourArea(c) / float(alan) < 0.3:
+            if cv2.contourArea(c) / float(alan) < 0.25:
                 continue
-            self._canli_kutu_ekle(akis, x, y, gw, gh, tur)
-            anahtar = f"{tur}_{x // 120}_{y // 120}"
-            sogutma = 8.0 if tur == "hava_araci" else 15.0
-            if not akis.sogutma_gecti(anahtar, saniye=sogutma):
+            self._canli_kutu_ekle(akis, x, y, gw, gh, "hava_araci")
+            anahtar = f"hava_araci_{x // 120}_{y // 120}"
+            if not akis.sogutma_gecti(anahtar, saniye=6.0):
                 continue
             x0, y0 = max(0, x - 20), max(0, y - 20)
             kirp = kare[y0:min(h, y + gh + 20), x0:min(w, x + gw + 20)]
-            self._tespit_bildir(akis, tur, kare, kirp, ts, guven=0.55)
+            self._tespit_bildir(akis, "hava_araci", kare, kirp, ts, guven=0.55)
 
     # ------------------------------------------------------------------
     # Takip (tracking) bildirimi — angajman koprusu

@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.164";
+const GCS_SURUM = "2.4.165";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.165",
+    tarih: "2026-09-13",
+    baslik: "C-UAS modu: yalnız hava aracı tespiti ve kinetik angajman (paket 2.5.35)",
+    maddeler: [
+      "İnsan ve kara aracı tespiti sistemden tamamen kaldırıldı. Sistem artık yalnızca hava araçlarını (İHA/drone) tespit eder, takip eder ve angaje olur.",
+      "AI panelinde artık yalnız 'Hava Aracı (İHA / Drone)' sınıfı görünür.",
+      "MOG2 hareket dedektörü hava aracı profiline göre hassaslaştırıldı: daha geniş kare alanı (%70 yüksekliğe kadar), daha küçük alan alt sınırı ve daha geniş en-boy oranı aralığı ile alçak irtifadaki İHA'lar da yakalanır.",
+      "Tespit → çift tıkla takip → Görüntüye Angaje Ol → kinetik angajman akışı yalnız hava hedeflerine çalışır.",
+      "HOG insan dedektörü ve YuNet yüz modeli yüklenmez; başlangıç bellek ve CPU tüketimi azaldı."
+    ]
+  },
   {
     surum: "2.4.164",
     tarih: "2026-09-13",

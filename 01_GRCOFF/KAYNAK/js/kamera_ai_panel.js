@@ -16,13 +16,9 @@
 (function () {
   "use strict";
 
-  // v2.4.161: "yuz" (yakın çekim yüz tespiti) ayrı aç/kapat + hassasiyet.
-  // Tam beden "insan" (yaya) ile bağımsızdır; tespit yine "insan" bildirilir.
+  // v2.4.165: C-UAS modu — yalnız hava aracı tespiti etkin.
   var SINIFLAR = [
-    ["insan", "İnsan (tam beden / yaya)"],
-    ["yuz", "Yüz (yakın çekim)"],
-    ["kara_araci", "Kara Aracı"],
-    ["hava_araci", "Hava Aracı"]
+    ["hava_araci", "Hava Aracı (İHA / Drone)"]
   ];
   var HEDEFLER = [
     ["harita", "Harita", "fa-map-location-dot"],

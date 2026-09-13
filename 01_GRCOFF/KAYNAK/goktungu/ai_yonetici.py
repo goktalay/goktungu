@@ -26,8 +26,8 @@ from . import veritabani
 
 SFACE_ESIK = 0.363          # Eski kütüphane verisi için korunur; aktif GRCOFF akışında kullanılmaz.
 YOKLAMA_ARALIGI = 5.0       # saniye
-# GRCOFF 2.5.20 pasif görüntü takibi: yalnız bu üç sınıf kabul edilir.
-PASIF_TAKIP_SINIFLARI = frozenset(("insan", "kara_araci", "hava_araci"))
+# GRCOFF 2.5.35 C-UAS modu: yalnız hava araçları takip edilir.
+PASIF_TAKIP_SINIFLARI = frozenset(("hava_araci",))
 TRACK_DOSYA_ADI = "track_verisi.ndjson"
 TRACK_DOSYA_AZAMI_BAYT = 10 * 1024 * 1024
 
@@ -39,7 +39,7 @@ def _izinli_sinif(tur):
 
 # v2.4.162: Izleme GOREVLERI (tespit siniflarindan ayri): "yuz" yakin cekim
 # yuz tespiti gorevidir; tespit yine "insan" bildirilir.
-IZINLI_GOREVLER = frozenset(("insan", "yuz", "kara_araci", "hava_araci"))
+IZINLI_GOREVLER = frozenset(("hava_araci",))
 
 
 def _gorevleri_sinirla(gorevler):
@@ -733,8 +733,7 @@ class AIYonetici:
                 iy = max(0.0, min(y + h, by + bh) - max(y, by))
                 return ix * iy > 0.5 * min(w * h, bw * bh)
             liste = [b for b in liste if not _cakisir(b)]
-            etiket = "TAKIP " + {"insan": "INSAN", "kara_araci": "KARA ARACI",
-                                 "hava_araci": "HAVA ARACI"}.get(tk.get("tur"), "")
+            etiket = "TAKIP " + {"hava_araci": "HAVA ARACI"}.get(tk.get("tur"), "")
             liste.append({"x": x, "y": y, "w": w, "h": h, "tur": "takip",
                           "etiket": etiket.strip(),
                           "kaynak_w": (boyut or [0, 0])[0],
@@ -793,9 +792,9 @@ class AIYonetici:
                 veri.get("embedding", ""))
         elif tur == "plaka":
             arac_id = self._plaka_eslestir(veri.get("plaka_metin", ""))
-        # v2.4.2: kutuphanesiz saf tespit turleri (hava_araci, insan,
-        # kara_araci) kayitsiz listesine dusmez — dogrudan incelendi=1
-        kutuphanesiz = tur in ("hava_araci", "insan", "kara_araci")
+        # Kutuphanesiz saf tespit turu (hava_araci) kayitsiz listesine
+        # dusmez — dogrudan incelendi=1
+        kutuphanesiz = tur == "hava_araci"
 
         # v2.4.2: kamera drona bagliysa ve dronun aktif ucusu varsa
         # tespiti ucus kaydina bagla (ucus geriye donuk izleme)
@@ -952,7 +951,7 @@ class AIYonetici:
         tur = _izinli_sinif(tur)
         if not tur:
             return {"tamam": False,
-                    "hata": "yalnız insan, kara_araci veya hava_araci seçilebilir"}
+                    "hata": "yalnız hava_araci takip edilebilir (C-UAS modu)"}
         with self.kilit:
             sid = self.gorevler.get(kamera_id)
         if not sid:

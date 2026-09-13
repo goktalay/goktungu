@@ -62,22 +62,14 @@ def _port_oku(anahtar, varsayilan):
 
 VIDEO_PROXY_PORT = _port_oku("GOKTUNGU_VIDEO_PORT", 8801)
 
-# Tespit turu -> cerceve rengi (BGR)
+# Tespit turu -> cerceve rengi (BGR) — C-UAS: yalniz hava araci + takip
 _TUR_RENK = {
-    "yuz": (80, 200, 60),
-    "plaka": (60, 170, 255),
-    "insan": (60, 120, 255),
     "hava_araci": (255, 120, 60),
-    "kara_araci": (60, 220, 220),
     "takip": (0, 0, 255),        # v2.4.164: takip cercevesi TAM KIRMIZI (BGR)
 }
 
 _TUR_AD = {
-    "yuz": "KISI",
-    "plaka": "PLAKA",
-    "insan": "INSAN",
     "hava_araci": "HAVA ARACI",
-    "kara_araci": "KARA ARACI",
     "takip": "TAKIP",
 }
 

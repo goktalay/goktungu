@@ -66,9 +66,8 @@ import time
 # kayit degistirir).
 YEREL_ORNEK_TABAN = 900_000_000
 
-# Sadece bu uc sinif pasif takibe ve dolayisiyla angajmana girebilir
-# (2.5.20 sozlesmesi ile ayni kume).
-IZINLI_SINIFLAR = frozenset(("insan", "kara_araci", "hava_araci"))
+# C-UAS modu: yalnız hava araçları takibe ve angajmana girebilir.
+IZINLI_SINIFLAR = frozenset(("hava_araci",))
 
 # Yer duzlemi kesisiminin gecerli sayildigi asgari ufuk-alti egim.
 # Cok kucuk egimde (hedef neredeyse ufukta) H/tan(d) patlar ve minik
@@ -79,9 +78,7 @@ ASGARI_EGIM_DERECE = 2.0
 # Kutu YUKSEKLIGI ile karsilastirilir. Degerler kaba varsayilandir;
 # operator daha iyisini bilirse ileride kamera/sinif basina ayarlanabilir.
 SINIF_BOY_M = {
-    "insan": 1.7,
-    "kara_araci": 1.6,     # tipik arac yuksekligi
-    "hava_araci": 1.0,     # kucuk/orta iha govde yuksekligi (kaba)
+    "hava_araci": 0.6,     # kucuk/orta IHA govde yuksekligi (kaba; dron ~0.4-1.0 m)
 }
 
 # Gorunen-boyut mesafesinin ust guveni. Yer duzlemi yonteminden daima
@@ -262,25 +259,14 @@ class YerelHedefBesleyici:
         # boresight ufkun `tilt` derece altinda; isin egimi (asagi +):
         egim = tilt - aci_dik_yukari
 
-        if sinif in ("insan", "kara_araci"):
-            # Yer duzlemi kesisimi.
-            if egim < ASGARI_EGIM_DERECE:
-                return self._ret(kamera_id,
-                                 "hedef ufka cok yakin; yer duzlemi "
-                                 "mesafesi guvenilir degil")
-            mesafe = H / math.sin(math.radians(egim))
-            yukselis = -egim
-            guven = YER_DUZLEMI_GUVEN
-            kaynak = "yer_duzlemi"
-        else:
-            # hava_araci: gorunen boyut.
-            mesafe, guven = self._gorunen_boyut_mesafe(sinif, olay, odak_d)
-            if mesafe is None:
-                return self._ret(kamera_id, "hava hedefi mesafesi "
-                                            "kestirilecmedi (kutu boyu yok)")
-            # Ufka gore yukselis: boresight -tilt, isin yukari ofseti eklenir.
-            yukselis = -tilt + aci_dik_yukari
-            kaynak = "gorunen_boyut"
+        # C-UAS: yalniz hava_araci — gorunen boyutla mesafe kestirimi.
+        mesafe, guven = self._gorunen_boyut_mesafe(sinif, olay, odak_d)
+        if mesafe is None:
+            return self._ret(kamera_id, "hava hedefi mesafesi "
+                                        "kestirilecmedi (kutu boyu yok)")
+        # Ufka gore yukselis: boresight -tilt, isin yukari ofseti eklenir.
+        yukselis = -tilt + aci_dik_yukari
+        kaynak = "gorunen_boyut"
 
         hedef = {
             "iz": self._iz(olay),
