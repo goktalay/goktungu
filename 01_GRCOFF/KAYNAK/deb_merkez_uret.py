@@ -360,7 +360,7 @@ Environment=GOKTUNGU_VIDEO_PORT={VIDEO_PORT}
 Environment=GOKTUNGU_AI_PORT={AI_PORT}
 # --tarayici-yok: servis kipinde tarayici acmak anlamsizdir; grafik
 # oturum olmayabilir ve tarayici acma cagrisi saniyelerce bloke olur.
-ExecStart={HEDEF}/.venv/bin/python {HEDEF}/main.py --tarayici-yok
+ExecStart={HEDEF}/.venv/bin/python {HEDEF}/goktungu_guncelleyici.py
 Restart=always
 RestartSec=5
 

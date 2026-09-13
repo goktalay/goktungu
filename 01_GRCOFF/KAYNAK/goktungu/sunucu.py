@@ -8866,6 +8866,15 @@ class WSSunucusu:
                     await self._hata_bildir(
                         websocket, "KAMERA", "Kopru bulunamadi")
                     return
+                # v2.5.27: Kaynak (url/protokol) değişti mi? Değişmediyse
+                # (ör. yalnız AI ayarı/hassasiyet değişikliği) canlı yayını
+                # DURDURMA. Aksi halde her AI ayar değişiminde webcam
+                # (cv2.VideoCapture) durdurulup yeniden açılıyor; Windows'ta
+                # bu hızlı aç-kapa yerel bellek bozulmasına (0xC0000374)
+                # yol açıp Merkez'i çökertiyordu.
+                _eski_kam = self.kameralar.bul(kam_id) or {}
+                _eski_url = str(_eski_kam.get("url") or "")
+                _eski_prot = str(_eski_kam.get("protokol") or "")
                 liste = self.kameralar.guncelle(
                     kam_id, k.get("isim"), k.get("protokol"),
                     k.get("url"), k.get("lokasyon_id"),
@@ -8873,13 +8882,16 @@ class WSSunucusu:
                     firma_id=_fid, kopru_ornek_id=_kopru,
                     ai_hassasiyet=k.get("ai_hassasiyet", None))
                 if liste is not None:
+                    _kaynak_degisti = (str(k.get("url") or "") != _eski_url or
+                                       str(k.get("protokol") or "") != _eski_prot)
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     self.kameralar.dron_bagla(kam_id, _dron_uid)
                     # v2.5.21: yerel AI angajman kalibrasyonunu guncelle.
                     self.kameralar.kalibrasyon_kaydet(kam_id, k, firma_id=_fid)
                     liste = self.kameralar.listele(firma_id=_fid)
-                    # URL/protokol degismis olabilir; aktif proxy'yi kapat
-                    if self.video_proxy:
+                    # URL/protokol DEĞİŞTİYSE aktif proxy'yi kapat; aksi halde
+                    # (AI-only değişiklik) capture'a DOKUNMA (bkz. yukarıdaki not).
+                    if self.video_proxy and _kaynak_degisti:
                         self.video_proxy.yayin_durdur(kam_id)
                     self.konsol("KAMERA",
                                 f"Kamera guncellendi: #{kam_id}", "basari")

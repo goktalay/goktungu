@@ -2,11 +2,40 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.154";
+const GCS_SURUM = "2.4.157";
 const GCS_SURUM_TARIH = "2026-09-12";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.157",
+    tarih: "2026-09-13",
+    baslik: "Kritik: AI ayarı değiştirilince oluşan çökme giderildi (paket 2.5.27)",
+    maddeler: [
+      "KRİTİK: Bir kameranın AI ayarını (sınıf aç-kapa/hassasiyet) değiştirmek Merkez'i çökertiyordu (Windows yerel bellek bozulması, 0xC0000374). Neden: her kamera kaydında canlı yayın koşulsuz durdurulup yeniden açılıyor; webcam (cv2.VideoCapture) hızlı aç-kapada çöküyordu. Artık yayın yalnız kaynak (URL/protokol) gerçekten değiştiğinde durdurulur; AI-only değişiklikte webcam'e dokunulmaz.",
+      "Ek koruma: aynı yerel kamera cihazının açılışı ve kapanışı tek kilitle serileştirildi; eşzamanlı aç/kapa çakışması (çökme kaynağı) engellendi.",
+      "Bu düzeltme dosya tabanlı güncelleme servisiyle gelir; yeni kurulum .exe indirmeye gerek yoktur."
+    ]
+  },
+  {
+    surum: "2.4.156",
+    tarih: "2026-09-13",
+    baslik: "Dosya tabanlı arka plan güncelleme servisi (paket 2.5.26)",
+    maddeler: [
+      "Güncellemeler artık imzasız kurulum (.exe) indirmiyor; arka planda çalışan güncelleme servisi yalnız DEĞİŞEN düz dosyaları (imzalı manifest + sha256) indirip uyguluyor. Bu, Windows Defender'ın kurulum .exe'sini yanlışlıkla karantinaya almasını (Sabsik.FL.A!ml) ve güncellemenin [Errno 22] ile bozulmasını ortadan kaldırır; güncellemeler küçük ve hızlıdır (artımlı).",
+      "Arka plan servisi (gözetmen) uygulamayı çalıştırır, çökerse yeniden başlatır ve güncellemeyi uygular; güncelleme sırasında uygulama durdurulup dosyalar atomik yerleştirilir, hata olursa geri alınır. veri/, lisans ve loglar gibi kullanıcı dosyalarına dokunulmaz.",
+      "Not: dosya tabanlı güncellemeye geçiş için bu sürümü bir kez elle kurmak gerekir; sonraki güncellemeler otomatik ve AV dostudur."
+    ]
+  },
+  {
+    surum: "2.4.155",
+    tarih: "2026-09-13",
+    baslik: "Kritik: kamera aç-kapada sunucu çökmesi giderildi (paket 2.5.25)",
+    maddeler: [
+      "KRİTİK DÜZELTME: Kamera birkaç kez açılıp kapatıldığında (özellikle yerel AI etkinken) Merkez sunucusu 'PostgreSQL bağlantı havuzu dolu' hatasıyla çöküyordu. Her canlı MJPEG yayını, akış boyunca bir veritabanı havuz bağlantısını kilitliyordu; yerel AI işçisinin kendi kamera okuması da ana havuzdan kalıcı bir bağlantı tutuyordu. Yayın iş parçacığı artık kamera kaydını okuduktan hemen sonra bağlantıyı havuza iade eder; havuz (10) dolmaz, sunucu çökmez.",
+      "Dron panelindeki 'Kamera Başlat' düğmesinin etiketi 'Başlat' olarak kısaltıldı."
+    ]
+  },
   {
     surum: "2.4.154",
     tarih: "2026-09-13",

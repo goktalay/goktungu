@@ -1,6 +1,29 @@
 # GÖKTUNGU Sürüm Notları — GRCOFF
 
-Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_surum.py` (`PAKET_SURUM`). Kaynaktaki `GCS_SURUM_GECMISI` tam listedir.
+Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket `goktungu/paket_surum.py`. Tam liste kaynaktaki `GCS_SURUM_GECMISI`.
+
+## Paket 2.5.27 / Uygulama 2.4.157 — 2026-09-13
+
+**Kritik: AI ayarı değiştirilince oluşan çökme giderildi (paket 2.5.27)**
+
+- KRİTİK: Bir kameranın AI ayarını (sınıf aç-kapa/hassasiyet) değiştirmek Merkez'i çökertiyordu (Windows yerel bellek bozulması, 0xC0000374). Neden: her kamera kaydında canlı yayın koşulsuz durdurulup yeniden açılıyor; webcam (cv2.VideoCapture) hızlı aç-kapada çöküyordu. Artık yayın yalnız kaynak (URL/protokol) gerçekten değiştiğinde durdurulur; AI-only değişiklikte webcam'e dokunulmaz.
+- Ek koruma: aynı yerel kamera cihazının açılışı ve kapanışı tek kilitle serileştirildi; eşzamanlı aç/kapa çakışması (çökme kaynağı) engellendi.
+- Bu düzeltme dosya tabanlı güncelleme servisiyle gelir; yeni kurulum .exe indirmeye gerek yoktur.
+
+## Paket 2.5.26 / Uygulama 2.4.156 — 2026-09-13
+
+**Dosya tabanlı arka plan güncelleme servisi (paket 2.5.26)**
+
+- Güncellemeler artık imzasız kurulum (.exe) indirmiyor; arka planda çalışan güncelleme servisi yalnız DEĞİŞEN düz dosyaları (imzalı manifest + sha256) indirip uyguluyor. Bu, Windows Defender'ın kurulum .exe'sini yanlışlıkla karantinaya almasını (Sabsik.FL.A!ml) ve güncellemenin [Errno 22] ile bozulmasını ortadan kaldırır; güncellemeler küçük ve hızlıdır (artımlı).
+- Arka plan servisi (gözetmen) uygulamayı çalıştırır, çökerse yeniden başlatır ve güncellemeyi uygular; güncelleme sırasında uygulama durdurulup dosyalar atomik yerleştirilir, hata olursa geri alınır. veri/, lisans ve loglar gibi kullanıcı dosyalarına dokunulmaz.
+- Not: dosya tabanlı güncellemeye geçiş için bu sürümü bir kez elle kurmak gerekir; sonraki güncellemeler otomatik ve AV dostudur.
+
+## Paket 2.5.25 / Uygulama 2.4.155 — 2026-09-13
+
+**Kritik: kamera aç-kapada sunucu çökmesi giderildi (paket 2.5.25)**
+
+- KRİTİK DÜZELTME: Kamera birkaç kez açılıp kapatıldığında (özellikle yerel AI etkinken) Merkez sunucusu 'PostgreSQL bağlantı havuzu dolu' hatasıyla çöküyordu. Her canlı MJPEG yayını, akış boyunca bir veritabanı havuz bağlantısını kilitliyordu; yerel AI işçisinin kendi kamera okuması da ana havuzdan kalıcı bir bağlantı tutuyordu. Yayın iş parçacığı artık kamera kaydını okuduktan hemen sonra bağlantıyı havuza iade eder; havuz (10) dolmaz, sunucu çökmez.
+- Dron panelindeki 'Kamera Başlat' düğmesinin etiketi 'Başlat' olarak kısaltıldı.
 
 ## Paket 2.5.24 / Uygulama 2.4.154 — 2026-09-13
 
@@ -13,11 +36,6 @@ Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_
 - Yüzen penceredeki eski satır içi AI kümesi kaldırıldı; hassasiyet çubuğu yanlışlıkla radar sınıflandırıcısına bağlıydı, artık kamera AI'sına doğru bağlanan sınıf bazlı panel kullanılır.
 - GRCON (çevrimiçi Merkez) değişmedi; bu arayüz yalnız GRCOFF yerel kamera/AI yüzeyindedir.
 
-| Platform | Dosya | SHA-256 |
-|---|---|---|
-| Linux | `goktungu-merkez_2.5.24_all.deb` | `24e42e728bfc27e87366787eb89a4d61672e13b706fd3491edc8fca224ffae96` |
-| Windows | `GOKTUNGU-Merkez-Setup-2.5.24.exe` | `a9574295a98c291dba096054c2d112d9b157dcc11bcdedffd9551770a29113d8` |
-
 ## Paket 2.5.23 / Uygulama 2.4.153 — 2026-09-12
 
 **GRCOFF Merkez aynı zamanda AI sunucusu: köprüsüz canlı görüntü AI (paket 2.5.23)**
@@ -29,11 +47,6 @@ Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_
 - Kurulumda örnek olarak eklenen ve hiç çalışmayan 'ASUS Ascent GX10' ile 'CPU AI Sunucusu (Yerel)' kayıtları artık eklenmez; değiştirilmemiş eski kayıtlar açılışta kaldırılır.
 - GRCON (çevrimiçi Merkez) değişmedi: orada AI Görüntü Köprüsünde çalışır, yerel işçi başlatılmaz.
 
-| Platform | Dosya | SHA-256 |
-|---|---|---|
-| Linux | `goktungu-merkez_2.5.23_all.deb` | `6e374b8535e1ab88c7b9e4be9af123ad2c28d3d2035f3ac9580eee17a52af00f` |
-| Windows | `GOKTUNGU-Merkez-Setup-2.5.23.exe` | `133495db38d1b8242f07409b67622bc81b76fbee7c005898f27f4fc7af2b676e` |
-
 ## Paket 2.5.22 / Uygulama 2.4.152 — 2026-09-12
 
 **Kamera formunda AI görevleri geri geldi, form bölümlere ayrıldı (paket 2.5.22)**
@@ -41,11 +54,6 @@ Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_
 - Kamera ekle/düzenle formunda kaybolan 'AI Görevleri' bölümü geri geldi: Kişi Tanıma, Araç Tanıma, Hava Aracı Tespit, İnsan Tespit, Kara Aracı Tespit. Bölüm eksik olduğu için görevler hep boş kaydediliyor ve yerel AI izlemesi hiçbir kamerada başlamıyordu; görev seçilen kamerada izleme kayıt anında otomatik başlar.
 - Kamera formu açılır-kapanır bölümlere ayrıldı: Genel, AI Görevleri ve AI Angajman Kalibrasyonu. Bölüm başlıkları seçili görev sayısını ve kalibrasyon durumunu gösterir; Kaydet/İptal düğmeleri her zaman görünür kalır.
 - Otomatik güncelleme artık kurulu paketin gerçek sürümünü bildirir. 2.5.20 ve 2.5.21 kendini 2.5.19 olarak tanıttığı için 'Yeni sürüm hazır' uyarısı güncelleme yapıldıktan sonra da kaybolmuyordu.
-
-| Platform | Dosya | SHA-256 |
-|---|---|---|
-| Linux | `goktungu-merkez_2.5.22_all.deb` | `f5521f0a626357ebffc3e6115f6e536e4a3dfa4dcbb87a57b7538855242b66f0` |
-| Windows | `GOKTUNGU-Merkez-Setup-2.5.22.exe` | `8b5bebf893b4ee3bedfe9abe962826d357f0aca7140f75f8650229cf9a6dc835` |
 
 ## Paket 2.5.21 / Uygulama 2.4.151 — 2026-09-12
 
@@ -57,11 +65,6 @@ Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_
 - Kamera formuna 'Kamera Tipi' seçici ve angajman kalibrasyon alanları eklendi. Yeni/eksik kalibreli kameralar açıkça 'angajmana alınamaz' olarak işaretlenir.
 - Hava aracı sınıfı düşman dron tespiti için kullanılabilir: yerel AI bir dronu 'hava_araci' olarak sınıflandırır, operatör onayıyla interceptor dron angaje olur.
 - 2.5.20 pasif takip sözleşmesi (yerel NDJSON kayıt katmanı) DEĞİŞMEDEN korundu; yerel besleme kolu bu akıştan bağımsız ikinci bir tüketicidir. Angajman her durumda açık operatör onayı gerektirir.
-
-| Platform | Dosya | SHA-256 |
-|---|---|---|
-| Linux | `goktungu-merkez_2.5.21_all.deb` | `47980704eee52b4185a0488548865ebebe5a3b8f8870e1e8112339e1f457757d` |
-| Windows | `GOKTUNGU-Merkez-Setup-2.5.21.exe` | `49b30ff654b11f6ddcd2d8d3c5e99774f309e527d644deea84193ed277c84a8f` |
 
 ## Paket 2.5.20 / Uygulama 2.4.150 — 2026-09-12
 

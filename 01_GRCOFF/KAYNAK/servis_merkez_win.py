@@ -190,9 +190,13 @@ class GoktunguMerkezServisi(win32serviceutil.ServiceFramework):  # type: ignore[
 
     # -- Asil is ------------------------------------------------------
     def _calis(self) -> None:
-        ana = os.path.join(KOK, "main.py")
+        # v2.5.26: Servis artık ana uygulamayı DOĞRUDAN değil, arka plan
+        # güncelleyici (gözetmen) üzerinden çalıştırır. Gözetmen main.py'yi
+        # başlatır, çökerse yeniden başlatır ve dosya tabanlı güncellemeyi
+        # uygular. Böylece güncellemeler imzasız .exe indirmez (AV dostu).
+        ana = os.path.join(KOK, "goktungu_guncelleyici.py")
         if not os.path.isfile(ana):
-            self._g.yaz("SERVIS", "main.py bulunamadi: %s" % ana, "hata")
+            self._g.yaz("SERVIS", "guncelleyici bulunamadi: %s" % ana, "hata")
             raise RuntimeError("main.py yok")
 
         try:

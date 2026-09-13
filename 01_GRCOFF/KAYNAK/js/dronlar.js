@@ -227,7 +227,7 @@ function dronKartKameraSatirDurum(kart, kamId){
   play.classList.toggle("aktif", !!oyn);
   play.innerHTML = oyn
     ? "<i class='fa-solid fa-stop'></i><span>Durdur</span>"
-    : "<i class='fa-solid fa-play'></i><span>Kamera Başlat</span>";
+    : "<i class='fa-solid fa-play'></i><span>Başlat</span>";
 }
 // Kamera listesi/oynatma değişince tüm kartların satırını tazele.
 window.dronKartKameraTazeleTum = function(){

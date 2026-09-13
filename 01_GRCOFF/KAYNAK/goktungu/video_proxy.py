@@ -19,6 +19,12 @@ import subprocess
 import threading
 import time
 
+# v2.5.27: Aynı yerel kamera cihazının (cv2.VideoCapture) açılışı ve
+# release'i ASLA çakışmamalı — Windows DShow/MSMF eşzamanlı aç/kapada
+# yerel bellek bozulması üretir (0xC0000374). Tüm donanım aç/bırak
+# işlemleri bu tek kilit altında serileştirilir.
+_DONANIM_KILIDI = threading.Lock()
+
 try:
     import cv2
     import numpy as np
@@ -308,18 +314,19 @@ class _Yayin:
         import sys as _sys
         adaylar = ([cv2.CAP_DSHOW, cv2.CAP_ANY]
                    if _sys.platform.startswith("win") else [cv2.CAP_ANY])
-        for be in adaylar:
-            try:
-                cap = cv2.VideoCapture(indeks, be)
-            except Exception:
-                cap = cv2.VideoCapture(indeks)
-            if cap.isOpened():
-                break
-            try:
-                cap.release()
-            except Exception:
-                pass
-            cap = None
+        with _DONANIM_KILIDI:
+            for be in adaylar:
+                try:
+                    cap = cv2.VideoCapture(indeks, be)
+                except Exception:
+                    cap = cv2.VideoCapture(indeks)
+                if cap.isOpened():
+                    break
+                try:
+                    cap.release()
+                except Exception:
+                    pass
+                cap = None
         if cap is None or not cap.isOpened():
             self.hata = "cihaz acilamadi (indeks %s)" % indeks
             self.calisiyor = False
@@ -348,7 +355,11 @@ class _Yayin:
             if not okk:
                 continue
             self._kare_yayinla(jpg.tobytes())
-        cap.release()
+        with _DONANIM_KILIDI:
+            try:
+                cap.release()
+            except Exception:
+                pass
         self.calisiyor = False
         with self.kosul:
             self.kosul.notify_all()
@@ -707,6 +718,17 @@ def mjpeg_yaz(istek, kamera_id, proxy, gunluk=print):
         mjpeg_gerekce_yaz(istek, 404, "gecersiz kamera kimligi")
         return
     y = proxy.yayin_al(kid)
+    # v2.5.25 KRITIK: Bu istek uzun ömürlü bir MJPEG akış iş parçacığıdır.
+    # `yayin_al` -> `kameralar.bul` DB'ye dokunur ve bu iş parçacığına havuzdan
+    # bir bağlantı ödünç verir; akış boyunca (dakikalar) elde tutulursa havuz
+    # (HAVUZ_MAKS=10) birkaç kamerada/AI işçisinde dolar ve sunucu çöker
+    # ("PostgreSQL baglanti havuzu dolu"). Bundan sonra DB'ye dokunulmadığı
+    # için bağlantıyı HEMEN havuza iade et.
+    try:
+        from . import veritabani as _vt
+        _vt.baglanti_kapat()
+    except Exception:
+        pass
     if y is None:
         gerekce = proxy.son_hata(kid) or "kaynak acilamadi"
         mjpeg_gerekce_yaz(istek, 503, gerekce)

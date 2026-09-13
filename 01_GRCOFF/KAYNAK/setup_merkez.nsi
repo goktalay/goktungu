@@ -160,6 +160,7 @@ Section "GOKTUNGU Merkez" AnaBolum
   SetOverwrite on
 
   File "main.py"
+  File "goktungu_guncelleyici.py"
   File "servis_merkez_win.py"
 
   ; assets/ agaci: paketle_merkez.py duz dizinleri buraya esler.
@@ -376,6 +377,7 @@ Section "Uninstall"
   Delete "$INSTDIR\python\pywintypes311.dll"
   Delete "$INSTDIR\arayuz_ac.bat"
   Delete "$INSTDIR\main.py"
+  Delete "$INSTDIR\goktungu_guncelleyici.py"
   Delete "$INSTDIR\servis_merkez_win.py"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR\assets"

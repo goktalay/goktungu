@@ -105,7 +105,7 @@ WEB_DOSYA = (
 )
 
 # Kok dizinde kalanlar.
-KOK_DOSYA = ("main.py", "requirements.txt")
+KOK_DOSYA = ("main.py", "requirements.txt", "goktungu_guncelleyici.py")
 
 # AI modelleri: `--ai-dahil` ile eklenir (38,7 MB).
 AI_MODEL_DIZIN = "ai_modeller"
