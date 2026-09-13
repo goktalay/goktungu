@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.157";
+const GCS_SURUM = "2.4.158";
 const GCS_SURUM_TARIH = "2026-09-12";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.158",
+    tarih: "2026-09-13",
+    baslik: "Yakın çekim insan tespiti eklendi (paket 2.5.28)",
+    maddeler: [
+      "İnsan tespiti artık iki yolu birlikte kullanır: tam beden (yaya) tespiti KORUNDU; buna ek olarak yakın webcam/masa başı kadrajında YuNet yüz tespitiyle 'insan var' sinyali üretilir. Böylece hem uzaktaki yaya hem yakındaki kişi yakalanır.",
+      "GİZLİLİK: Yakın çekim yolu yalnız VARLIK tespitidir — yüz TANIMA (kimlik) yapmaz; embedding/isim çıkarılmaz, dışarı taşınmaz.",
+      "İnsan hassasiyeti bu yolu da ölçekler: yüksek hassasiyet daha küçük/daha düşük güvenli yüzleri de yakalar.",
+      "Manuel kontrol: Kamera artık kendiliğinden açılmaz. Yalnız 'Başlat'a basınca kamera açılır ve (görevi varsa) AI izlemesi başlar; 'Durdur'da kamera ve AI birlikte durur. Açılışta/kayıtta otomatik başlatma kaldırıldı.",
+      "Dron panelinde kamera kontrolleri (görüntü konumu + Yapay Zeka Ayarları) taşmayı önlemek için bir açılır menüye (⋯) toplandı; Ad ve Başlat görünür kalır.",
+      "İlk dosya tabanlı güncelleme ile gelir; yeni kurulum gerekmez."
+    ]
+  },
   {
     surum: "2.4.157",
     tarih: "2026-09-13",

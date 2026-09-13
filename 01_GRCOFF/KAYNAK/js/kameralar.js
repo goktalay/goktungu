@@ -541,8 +541,17 @@
   // ----------------------------------------------------------------
   // PLAY / STOP
   // ----------------------------------------------------------------
+  function _kameraAiGorevliMi(id) {
+    const kam = kameralar.find((k) => Number(k.id) === Number(id));
+    return !!(kam && String(kam.ai_gorevler || "").trim());
+  }
   function oynat(id) {
     oynayanlar.add(id);
+    // v2.4.158: Kamera KULLANICI tarafından başlatılınca, görevi varsa AI
+    // izlemesi de başlar (otomatik başlatma kaldırıldı; manuel kontrol).
+    if (_kameraAiGorevliMi(id) && typeof window.aiIzlemeBaslat === "function") {
+      try { window.aiIzlemeBaslat(id); } catch (e) {}
+    }
     listeCiz();
     // Bağlı dronların harita önizlemesi Play sonrasında anında görünür.
     if (typeof window.dronKameraHaritaOnizlemeTazele === "function")
@@ -553,6 +562,10 @@
   }
   function durdur(id) {
     oynayanlar.delete(id);
+    // v2.4.158: Durdur -> AI izlemesini de durdur.
+    if (typeof window.aiIzlemeDurdur === "function") {
+      try { window.aiIzlemeDurdur(id); } catch (e) {}
+    }
     videoTemizle(id);
     if (typeof tamEkranId !== "undefined" && tamEkranId === id) tamEkranKapat();
     listeCiz();

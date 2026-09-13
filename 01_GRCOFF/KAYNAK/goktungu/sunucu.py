@@ -1223,22 +1223,21 @@ class WSSunucusu:
         kamera = self.kameralar.bul(kamera_id)
         if not kamera:
             return
+        # v2.4.158: Kamera kaydı AI izlemesini BAŞLATMAZ (manuel kontrol).
+        # İzleme YALNIZ çalışıyorsa görev/hassasiyet güncellenir; çalışmıyorsa
+        # dokunulmaz (kullanıcı "Başlat" demeden webcam açılmaz).
         gorevler = (kamera.get("ai_gorevler") or "").strip()
         try:
+            aktif = {iz["kamera_id"]
+                     for iz in self.ai_yonetici.izleme_listesi()}
+            if kamera_id not in aktif:
+                return
             if gorevler:
-                sonuc = await asyncio.to_thread(
+                await asyncio.to_thread(
                     self.ai_yonetici.izleme_baslat, kamera_id,
                     "/kamera/%s" % kamera_id, "gcs_proxy", gorevler,
                     kamera.get("ai_hassasiyet") or "")
-                if not sonuc.get("tamam"):
-                    self.konsol("AI", "Otomatik izleme baslatilamadi"
-                                f" (kamera #{kamera_id}):"
-                                f" {sonuc.get('hata', '')}", "hata")
             else:
-                aktif = {iz["kamera_id"]
-                         for iz in self.ai_yonetici.izleme_listesi()}
-                if kamera_id not in aktif:
-                    return
                 await asyncio.to_thread(
                     self.ai_yonetici.izleme_durdur, kamera_id)
                 self.konsol("AI", f"AI izleme durduruldu (kamera"

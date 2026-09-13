@@ -995,7 +995,9 @@ def _yerel_ai_bekci(ai_yonetici, http_sunucu):
         try:
             if _yerel_ai_dinliyor(ai_port):
                 deneme = 0
-                _yerel_ai_gorevleri_esitle(ai_yonetici, son_deneme)
+                # v2.4.158: AI izleme ARTIK otomatik başlatılmaz. Kullanıcı
+                # kamerayı "Başlat" ile açtığında izleme başlar, "Durdur" ile
+                # durur (manuel kontrol). Gözetmen yalnız işçiyi ayakta tutar.
             else:
                 surec_var = (_yerel_ai_isci is not None
                              and _yerel_ai_isci.poll() is None)

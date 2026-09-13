@@ -210,11 +210,52 @@ function dronKartKameraSatirTazele(kart, d){
         window.kameraIzlemeAc(kam.id);
       setTimeout(() => dronKartKameraSatirDurum(kart, kam.id), 150);
     });
-    satir.append(ad, play);
-    if (typeof window.kameraGoruntuHedefSecici === "function")
-      satir.appendChild(window.kameraGoruntuHedefSecici(kam.id));
-    if (typeof window.kameraAiAyarButonu === "function")
-      satir.appendChild(window.kameraAiAyarButonu(kam.id, "dk-kam-ai"));
+    // v2.4.158: Kontroller taşmasın diye görüntü hedefi + AI ayarları bir
+    // "⋯" açılır menüsüne konur. Ad + Başlat görünür kalır.
+    const menuBtn = document.createElement("button");
+    menuBtn.type = "button";
+    menuBtn.className = "dk-kam-menu-btn";
+    menuBtn.title = "Kamera seçenekleri";
+    menuBtn.innerHTML = "<i class='fa-solid fa-ellipsis-vertical'></i>";
+    const menu = document.createElement("div");
+    menu.className = "dk-kam-menu gizli";
+    if (typeof window.kameraGoruntuHedefSecici === "function"){
+      const gh = document.createElement("div");
+      gh.className = "dk-kam-menu-satir";
+      const et = document.createElement("span");
+      et.className = "dk-kam-menu-etiket";
+      et.textContent = "Görüntü konumu";
+      gh.append(et, window.kameraGoruntuHedefSecici(kam.id));
+      menu.appendChild(gh);
+    }
+    if (typeof window.kameraAiAyarButonu === "function"){
+      const ai = document.createElement("div");
+      ai.className = "dk-kam-menu-satir";
+      const aiBtn = window.kameraAiAyarButonu(kam.id, "dk-kam-ai");
+      // metinli göster
+      aiBtn.innerHTML = "<i class='fa-solid fa-robot'></i><span>Yapay Zeka Ayarları</span>";
+      aiBtn.classList.add("dk-kam-menu-ai");
+      ai.appendChild(aiBtn);
+      menu.appendChild(ai);
+    }
+    menuBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const acik = !menu.classList.contains("gizli");
+      // diğer açık menüleri kapat
+      document.querySelectorAll(".dk-kam-menu").forEach((m) => m.classList.add("gizli"));
+      menu.classList.toggle("gizli", acik);
+    });
+    // dışarı tıklayınca kapan
+    if (!kart._kamMenuKapat){
+      kart._kamMenuKapat = (ev) => {
+        if (!satir.contains(ev.target)) menu.classList.add("gizli");
+      };
+      document.addEventListener("click", kart._kamMenuKapat);
+    }
+    const sarmal = document.createElement("div");
+    sarmal.className = "dk-kam-menu-sarmal";
+    sarmal.append(menuBtn, menu);
+    satir.append(ad, play, sarmal);
     kart._kamPlay = play;
   }
   dronKartKameraSatirDurum(kart, kam.id);

@@ -1,6 +1,17 @@
 # GÖKTUNGU Sürüm Notları — GRCOFF
 
-Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket `goktungu/paket_surum.py`. Tam liste kaynaktaki `GCS_SURUM_GECMISI`.
+Uygulama `js/surum.js` (`GCS_SURUM`), paket `goktungu/paket_surum.py`.
+
+## Paket 2.5.28 / Uygulama 2.4.158 — 2026-09-13
+
+**Yakın çekim insan tespiti eklendi (paket 2.5.28)**
+
+- İnsan tespiti artık iki yolu birlikte kullanır: tam beden (yaya) tespiti KORUNDU; buna ek olarak yakın webcam/masa başı kadrajında YuNet yüz tespitiyle 'insan var' sinyali üretilir. Böylece hem uzaktaki yaya hem yakındaki kişi yakalanır.
+- GİZLİLİK: Yakın çekim yolu yalnız VARLIK tespitidir — yüz TANIMA (kimlik) yapmaz; embedding/isim çıkarılmaz, dışarı taşınmaz.
+- İnsan hassasiyeti bu yolu da ölçekler: yüksek hassasiyet daha küçük/daha düşük güvenli yüzleri de yakalar.
+- Manuel kontrol: Kamera artık kendiliğinden açılmaz. Yalnız 'Başlat'a basınca kamera açılır ve (görevi varsa) AI izlemesi başlar; 'Durdur'da kamera ve AI birlikte durur. Açılışta/kayıtta otomatik başlatma kaldırıldı.
+- Dron panelinde kamera kontrolleri (görüntü konumu + Yapay Zeka Ayarları) taşmayı önlemek için bir açılır menüye (⋯) toplandı; Ad ve Başlat görünür kalır.
+- İlk dosya tabanlı güncelleme ile gelir; yeni kurulum gerekmez.
 
 ## Paket 2.5.27 / Uygulama 2.4.157 — 2026-09-13
 

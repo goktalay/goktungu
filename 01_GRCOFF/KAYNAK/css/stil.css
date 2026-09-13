@@ -10025,3 +10025,30 @@ body.tam-ekran-modu #altOrtaPanel {
 .dk-kam-play.aktif { background: #b4453a; }
 .dk-kam-play:hover { filter: brightness(1.08); }
 .kai-ac-btn i, .dk-kam-ai i { color: #b98bff; }
+
+/* v2.4.158: Dron kartı kamera satırı — açılır menü (taşma önleme) */
+.dk-kamera-satir { flex-wrap: nowrap; }
+.dk-kam-ad { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-kam-play { flex: 0 0 auto; }
+.dk-kam-menu-sarmal { position: relative; flex: 0 0 auto; }
+.dk-kam-menu-btn {
+  border: 1px solid var(--cizgi, #2a3542); border-radius: 6px;
+  background: transparent; color: var(--soluk, #95a9b8);
+  padding: 4px 8px; cursor: pointer; line-height: 1;
+}
+.dk-kam-menu-btn:hover { color: var(--metin, #e6edf3); background: rgba(255,255,255,.06); }
+.dk-kam-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 50;
+  min-width: 210px; padding: 8px; display: flex; flex-direction: column; gap: 8px;
+  background: var(--panel, #131a24); border: 1px solid var(--cizgi, #2a3542);
+  border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+.dk-kam-menu-satir { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dk-kam-menu-etiket { font-size: 11px; color: var(--soluk, #95a9b8); }
+.dk-kam-menu-ai {
+  display: inline-flex; align-items: center; gap: 6px; width: 100%;
+  justify-content: center; padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--cizgi, #2a3542); background: rgba(255,255,255,.03);
+  color: var(--metin, #e6edf3); cursor: pointer; font-size: 12px;
+}
+.dk-kam-menu-ai:hover { background: rgba(255,255,255,.08); }

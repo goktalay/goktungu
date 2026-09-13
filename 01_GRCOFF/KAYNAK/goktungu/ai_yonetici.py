@@ -423,44 +423,16 @@ class AIYonetici:
         return self._kalici_gorevler().get(str(kamera_id))
 
     def _gorevleri_geri_yukle(self):
-        time.sleep(8)   # iscilerin ayaga kalkmasini bekle
-        gorevler = dict(self._kalici_gorevler())
-        # v2.4.8: kalici gorev kaydi olmayan ama ai_gorevler'i dolu
-        # kameralar da otomatik izlemeye alinir (kamera daha once
-        # kaydedilmis, izleme hic baslatilmamis olabilir).
-        if self.kameralar is not None:
-            try:
-                for kam in self.kameralar.listele():
-                    kid = str(kam.get("id"))
-                    if kid in gorevler:
-                        # gorev listesi guncel olsun (kamera duzenlendiyse)
-                        gorevler[kid]["gorevler"] = (
-                            kam.get("ai_gorevler") or "")
-                        gorevler[kid]["hassasiyet"] = (
-                            kam.get("ai_hassasiyet") or "")
-                        continue
-                    if (kam.get("ai_gorevler") or "").strip():
-                        gorevler[kid] = {
-                            "url": "/kamera/%s" % kam["id"],
-                            "protokol": "gcs_proxy",
-                            "gorevler": kam["ai_gorevler"],
-                            "hassasiyet": kam.get("ai_hassasiyet") or ""}
-                        self.konsol("AI", f"Kamera #{kam['id']} AI"
-                                    " gorevleri secili; izleme otomatik"
-                                    " baslatiliyor", "bilgi")
-            except Exception as e:
-                self.konsol("AI", f"Acilis kamera taramasi: {e}",
-                            "uyari")
-            self._kalici_kaydet(gorevler)
-        for kamera_id, bilgi in gorevler.items():
-            try:
-                self._gorev_ata(int(kamera_id), bilgi["url"],
-                                bilgi["protokol"],
-                                gorevler=bilgi.get("gorevler", ""),
-                                hassasiyet=bilgi.get("hassasiyet", ""))
-            except Exception as e:
-                self.konsol("AI", f"Gorev geri yuklenemedi"
-                            f" (kamera #{kamera_id}): {e}", "uyari")
+        """v2.4.158: AI izleme açılışta OTOMATİK başlatılmaz.
+
+        Kullanıcı kamerayı "Başlat" ile açtığında izleme başlar (istemci
+        ai_izleme_baslat gönderir), "Durdur" ile durur. Böylece webcam
+        kullanıcı istemeden açılmaz. Bu yordam artık yalnızca eski/asılı
+        kalıcı izleme kayıtlarını TEMİZLER (otomatik başlatma yapmaz)."""
+        try:
+            self._kalici_kaydet({})
+        except Exception:
+            pass
 
     def _gorev_ata(self, kamera_id, url, protokol, haric=None,
                    gorevler="", hassasiyet=""):

@@ -779,9 +779,13 @@ class AIIsci:
     # v2.4.2: Insan tespiti (HOG tam-vucut dedektoru)
     # ------------------------------------------------------------------
     def _insan_analiz(self, akis, kare, ts):
+        # v2.4.158: Yakın webcam çekiminde tam-beden HOG çalışmaz; YuNet yüz
+        # tespiti "insan var" sinyali olarak eklenir (KİMLİK TANIMA DEĞİL —
+        # embedding/isim çıkarılmaz, yalnız varlık). Böylece masa başı/yakın
+        # kadrajda kişi tespit edilir.
+        self._insan_yuzden(akis, kare, ts)
         if self.insan_hog is None:
-            # OpenCV 5: HOG yok — insan tespiti _hareket_analiz icinde
-            # dikey blob olarak yapilir (asagida 'insan' turu).
+            # OpenCV 5: HOG yok — tam beden hareket blob'u _hareket_analiz'de.
             return
         h, w = kare.shape[:2]
         # HOG icin kucult (hiz): genislik ~640
@@ -811,6 +815,46 @@ class AIIsci:
             kirp = kare[y0:min(h, y + gh + 15), x0:min(w, x + gw + 15)]
             self._tespit_bildir(akis, "insan", kare, kirp, ts,
                                 guven=min(1.0, guven / 2.0))
+
+    def _insan_yuzden(self, akis, kare, ts):
+        """Yakın çekimde YuNet yüz tespitiyle 'insan' üretir.
+
+        GİZLİLİK: Bu yol yalnız VARLIK tespitidir — yüz TANIMA (kimlik)
+        YAPMAZ; embedding/isim çıkarılmaz, hariçe taşınmaz. Amaç tam-beden
+        HOG'un göremediği yakın/üst-beden kadrajında kişiyi yakalamaktır.
+        """
+        if self.yuz_tespit is None:
+            return
+        h, w = kare.shape[:2]
+        # insan hassasiyeti -> yüz güven eşiği ve asgari yüz boyutu
+        k = getattr(akis, "_olcek", {}).get("insan", 1.0)
+        esik = max(0.30, min(0.95, 0.7 * min(1.5, k)))
+        asgari = max(18, int(36 * min(1.5, k)))
+        try:
+            self.yuz_tespit.setInputSize((w, h))
+            _, yuzler = self.yuz_tespit.detect(kare)
+        except Exception:
+            return
+        if yuzler is None:
+            return
+        for yuz in yuzler:
+            x, y, gw, gh = [int(v) for v in yuz[:4]]
+            guven = float(yuz[-1])
+            if guven < esik or gw < asgari or gh < asgari:
+                continue
+            # Yüzden kaba bir gövde kutusu kestir (yüz ~ gövdenin üst kısmı):
+            # genişliği yanlara, yüksekliği aşağı doğru genişlet, kareye kırp.
+            bx = max(0, int(x - gw * 0.6))
+            by = max(0, int(y - gh * 0.3))
+            bw = min(w - bx, int(gw * 2.2))
+            bh = min(h - by, int(gh * 4.5))
+            self._canli_kutu_ekle(akis, bx, by, bw, bh, "insan")
+            anahtar = f"insan_yuz_{x // 100}_{y // 100}"
+            if not akis.sogutma_gecti(anahtar, saniye=12.0):
+                continue
+            kirp = kare[by:by + bh, bx:bx + bw]
+            self._tespit_bildir(akis, "insan", kare, kirp, ts,
+                                guven=min(1.0, guven))
 
     # ------------------------------------------------------------------
     # v2.4.2: Hareket tabanli hava araci / kara araci tespiti
