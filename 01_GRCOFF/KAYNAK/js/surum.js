@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.166";
+const GCS_SURUM = "2.4.167";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.167",
+    tarih: "2026-09-13",
+    baslik: "ffmpeg'siz RTSP/video oynatma (OpenCV geri çekilmesi) (paket 2.5.37)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: Windows kurulumunda ffmpeg yoksa RTSP/HTTP/MJPEG/video dosyası kaynakları hiç açılmıyordu (VLC oynatırken GRCOFF 'YAYIN ALINAMIYOR' gösteriyordu). Video kaynakları artık ffmpeg kurulu değilse OpenCV'nin kendi FFMPEG çözücüsüyle okunur — ek kurulum gerekmez.",
+      "İKİNCİ KUSUR: 'ffmpeg kurulu değil' gerekçesi HTTP başlığına yazılırken içindeki özel karakter (—) kodlama hatası üretiyor, gerekçe istemciye hiç ulaşmıyordu. Başlık artık güvenli kodlanır; hata nedeni arayüzde görünür.",
+      "Video dosyası (mp4) kaynağı OpenCV yolunda da döngülüdür: dosya bitince başa sarar, gerçek zamanlı hızda akar."
+    ]
+  },
   {
     surum: "2.4.166",
     tarih: "2026-09-13",

@@ -14,6 +14,7 @@ kalmadiginda surec otomatik sonlandirilir (30 sn bekleme sonrasi).
 import http.server
 import json
 import os
+import shutil as _shutil
 import socketserver
 import subprocess
 import threading
@@ -211,6 +212,21 @@ class _Yayin:
                 self.hata = "video dosyasi bulunamadi: %s" % (ad or "(bos)")
                 return False
             girdi = yol
+        # v2.4.167: ffmpeg YOKSA OpenCV geri cekilmesi. opencv-python
+        # tekerlegi kendi FFMPEG cozucusunu tasir; RTSP/HTTP/MJPEG/dosya
+        # kaynaklari ffmpeg ikilisi kurulmadan da okunabilir. (Olculen
+        # kusur: Windows kurulumunda ffmpeg yok; VLC RTSP'yi oynatirken
+        # GRCOFF 503 donduruyordu.)
+        if (cv2 is not None and _shutil.which("ffmpeg") is None
+                and self.protokol in ("rtsp", "rtp", "mjpeg", "hls",
+                                      "http", "dosya")):
+            self.calisiyor = True
+            self.hata = None
+            threading.Thread(target=self._oku_opencv_kaynak,
+                             args=(girdi, self.protokol == "dosya"),
+                             daemon=True).start()
+            threading.Thread(target=self._bekci, daemon=True).start()
+            return True
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if self.protokol == "rtsp":
             cmd += ["-rtsp_transport", "tcp"]
@@ -252,7 +268,7 @@ class _Yayin:
             # v2.4.34: eyleme donuk metin. Onceki "ffmpeg bulunamadi"
             # istemciye HIC ulasmiyordu; artik ulasiyor, dolayisiyla
             # kullanicinin ne yapacagini da soylemesi gerekiyor.
-            self.hata = ("ffmpeg kurulu degil — kurulum: "
+            self.hata = ("ffmpeg kurulu degil - kurulum: "
                          "winget install Gyan.FFmpeg (Windows) / "
                          "sudo apt install ffmpeg (Linux)")
             return False
@@ -367,6 +383,87 @@ class _Yayin:
                 cap.release()
             except Exception:
                 pass
+        self.calisiyor = False
+        with self.kosul:
+            self.kosul.notify_all()
+
+    def _oku_opencv_kaynak(self, girdi, dongulu):
+        """v2.4.167: ffmpeg ikilisi yokken RTSP/HTTP/MJPEG/dosya kaynagini
+        OpenCV (kendi FFMPEG arka ucu) ile okur.
+
+        `dongulu=True` ("dosya" protokolu): EOF'ta basa sarilir ve okuma
+        dosya FPS'ine gore hizlanmadan (gercek zamanli) ilerletilir.
+        Canli kaynaklar koptugunda 3 sn arayla yeniden baglanilir.
+        Cikti ffmpeg yoluyla ayni: en cok 15 fps, genislik <= 960.
+        """
+        CIKTI_FPS = 15.0
+        while self.calisiyor:
+            cap = None
+            try:
+                cap = cv2.VideoCapture(girdi)
+            except Exception:
+                cap = None
+            if cap is None or not cap.isOpened():
+                self.hata = "kaynak acilamadi (OpenCV): baglanti kurulamadi"
+                try:
+                    if cap is not None:
+                        cap.release()
+                except Exception:
+                    pass
+                if not self.calisiyor:
+                    break
+                # dosyada yeniden denemenin anlami yok; canli kaynakta var
+                if dongulu:
+                    break
+                time.sleep(3.0)
+                continue
+            self.hata = None
+            fps = 0.0
+            try:
+                fps = float(cap.get(cv2.CAP_PROP_FPS) or 0)
+            except Exception:
+                fps = 0.0
+            dosya_fps = fps if 1.0 <= fps <= 60.0 else 25.0
+            onceki_yayin = 0.0
+            while self.calisiyor:
+                ok, kare = cap.read()
+                if not ok:
+                    if dongulu:
+                        try:
+                            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                            ok, kare = cap.read()
+                        except Exception:
+                            ok = False
+                        if not ok:
+                            break   # dosya okunamaz oldu -> yeniden ac
+                    else:
+                        self.hata = "kaynak koptu; yeniden baglaniliyor"
+                        break
+                if dongulu:
+                    # dosya gercek zamanli aksin (yoksa saniyeler icinde biter)
+                    time.sleep(1.0 / dosya_fps)
+                simdi = time.time()
+                if simdi - onceki_yayin < 1.0 / CIKTI_FPS:
+                    continue
+                onceki_yayin = simdi
+                try:
+                    h, w = kare.shape[:2]
+                    if w > 960:
+                        olcek = 960.0 / w
+                        kare = cv2.resize(kare, (960, int(h * olcek)))
+                    okk, jpg = cv2.imencode(".jpg", kare,
+                                            [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    if okk:
+                        self._kare_yayinla(jpg.tobytes())
+                except Exception:
+                    continue
+            try:
+                cap.release()
+            except Exception:
+                pass
+            if not self.calisiyor:
+                break
+            time.sleep(3.0)
         self.calisiyor = False
         with self.kosul:
             self.kosul.notify_all()
@@ -698,6 +795,10 @@ def mjpeg_gerekce_yaz(istek, kod, gerekce):
     """Canlı yayın hatasını güvenli, makine-okunabilir HTTP yanıtıyla yazar."""
     metin = str(gerekce or "kaynak acilamadi").replace("\r", " ").replace("\n", " ")[:400]
     govde = json.dumps({"hata": metin}, ensure_ascii=False).encode("utf-8")
+    # v2.4.167 OLCULEN KUSUR: HTTP basliklari latin-1 ile kodlanir; gerekce
+    # "—" gibi bir karakter tasiyinca send_header UnicodeEncodeError firlatir
+    # ve istemciye HICBIR gerekce ulasmazdi (bos "YAYIN ALINAMIYOR").
+    metin = metin.encode("latin-1", "replace").decode("latin-1")
     try:
         istek.send_response(int(kod))
         istek.send_header("Content-Type", "application/json; charset=utf-8")
