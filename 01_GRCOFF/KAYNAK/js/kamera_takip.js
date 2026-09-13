@@ -21,7 +21,14 @@
   // v2.4.169: YOLO cikarimi yavas CPU'da saniyeler surebilir; cift tik
   // hedef secim penceresi son kutu yayinini o kadar sure gecerli sayar.
   var KUTU_GECERLI_MS = 6000;
-  var TAKIP_BAYAT_MS = 3000;
+  // v2.4.176: sunucudaki takip_tolerans (varsayilan 5 sn) ile TUTARLI
+  // olmali. Onceki 3000ms, sunucunun kendi sabrinden (5000ms) KISAYDI —
+  // sunucu henuz "kayip" DEMEDEN tarayici zaten "pasif" gosterebiliyordu.
+  // Ayrica gecici (tek kareli) CSRT basarisizliklarinda ARTIK HICBIR
+  // BILDIRIM gelmiyor (bkz. ai_sunucu.py _takip_guncelle); bu yuzden
+  // gercek durum, bir sonraki BASARILI guncellemeye kadar SESSIZCE
+  // korunmali — bayatlik esigi cömert tutulur.
+  var TAKIP_BAYAT_MS = 8000;
   var kutular = {};   // kamera_id -> {ts, liste:[{x,y,w,h,tur,etiket,kaynak_w,kaynak_h}]}
   var takip = {};     // kamera_id -> son ai_takip mesajı (+ _ts)
 

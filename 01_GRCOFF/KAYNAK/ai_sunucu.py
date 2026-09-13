@@ -654,6 +654,20 @@ class AkisIsleyici(threading.Thread):
                     self.takip = None
                     self.isci.takip_bildir(self, None, ts, kayip=True)
                     return
+                # v2.4.176 OLCULEN KUSUR: CSRT/KCF gibi korelasyon
+                # tabanli izleyiciler DUSUK KONTRASTLI FON (ozellikle
+                # duz gokyuzu) uzerinde TEK KARELIK "ok=False" donmesi
+                # cok sik yasar — bu GERCEK kayip DEGILDIR (yukaridaki
+                # tolerans penceresi tam da bunu tolere etmek icindir).
+                # ONCEKI SURUM her tek-kare basarisizliginda "kayip:true"
+                # BILDIRIYORDU; Merkez bunu ALDIGINDA takip kaydini HEMEN
+                # SILIYORDU (self.takipler.pop), tarayici dugmeleri
+                # "Hedef Sec"e donduruyordu — VE CSRT bir sonraki karede
+                # toparlansa BILE Merkez'deki kayit zaten silindigi icin
+                # "aktif tekrar basladi" bildirimi HICBIR ZAMAN gitmiyordu
+                # (kalici, sessiz kilitlenme). Tolerans icindeyken HICBIR
+                # SEY bildirilmez; son bilinen kutu/aktif durum korunur.
+                return
             # bildirimi ~5 Hz ile sinirla
             if ts - tk["son_ts"] < 0.2:
                 return
@@ -664,7 +678,7 @@ class AkisIsleyici(threading.Thread):
             "tur": tk["tur"], "kutu": [x, y, gw, gh],
             "merkez": [round(merkez[0], 4), round(merkez[1], 4)],
             "kare_boyutu": [int(w), int(h)],
-            "kayip": not basarili and tk["kayip_sayac"] > 0,
+            "kayip": False,
         }, ts)
 
     # ------------------------------------------------------------------

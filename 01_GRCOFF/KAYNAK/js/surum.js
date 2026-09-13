@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.175";
+const GCS_SURUM = "2.4.176";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.176",
+    tarih: "2026-09-13",
+    baslik: "KÖK NEDEN: piksel takip düğmeleri hedef görünürken bile kayboluyordu (paket 2.5.46)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN: CSRT/KCF gibi korelasyon tabanlı izleyiciler, özellikle düz gökyüzü gibi düşük kontrastlı fonlarda TEK KARELİK 'başarısız' dönüşü sıkça yaşar (bu normaldir, gerçek kayıp değildir — bu yüzden zaten bir kayıp toleransı vardı). Ancak her tek karelik başarısızlıkta sunucu 'kayıp: true' bildiriyor, Merkez takip kaydını HEMEN SİLİYOR, tarayıcı 'Angaje Ol/Takip Et' düğmelerini 'Hedef Seç'e döndürüyordu. İzleyici BİR SONRAKİ karede toparlansa bile, silinen kayıt yüzünden 'tekrar aktif' bildirimi hiçbir zaman gönderilmiyordu — kalıcı, sessiz bir kilitlenmeydi.",
+      "DÜZELTME: geçici (tolerans süresi içindeki) tek karelik başarısızlıklarda artık HİÇBİR bildirim gönderilmiyor; son bilinen konum ve 'aktif' durumu korunuyor. Yalnız gerçek kayıp (tolerans süresi dolduğunda, varsayılan 5 sn) bir kez bildiriliyor.",
+      "Tarayıcının 'bayat' kabul etme süresi (3 sn) sunucunun kendi kayıp toleransından (5 sn) KISAYDI — sunucu henüz pes etmeden tarayıcı zaten pasif gösterebiliyordu. Süre 8 saniyeye çıkarıldı, video üzerindeki kırmızı çerçevenin tazelik eşiği de (2 sn → 6 sn) buna göre uyumlandı.",
+      "Etkilenen arayüz dosyaları (kamera_takip.js, kameralar.js, angajman.js, angajman_izle.js, kamera_ai_panel.js) için tarayıcı önbellek sürümü güncellendi — bazı kurulumlarda tarayıcı, güncelleme sonrası bu dosyaların eski önbelleklenmiş kopyasını kullanmaya devam edebiliyordu."
+    ]
+  },
   {
     surum: "2.4.175",
     tarih: "2026-09-13",

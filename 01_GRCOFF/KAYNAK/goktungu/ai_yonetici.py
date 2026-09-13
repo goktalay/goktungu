@@ -723,7 +723,12 @@ class AIYonetici:
         tk = self.takipler.get(kamera_id) or {}
         kutu = tk.get("kutu")
         boyut = tk.get("kare_boyutu")
-        if kutu and not tk.get("kayip") and simdi - float(tk.get("ts") or 0) < 2.0:
+        # v2.4.176: isci artik gecici (tolerans icindeki) hatalarda HIC
+        # bildirim gondermiyor (bkz. ai_sunucu.py _takip_guncelle); bu
+        # yuzden "ts" birkac saniye guncellenmeyebilir. Esik, sunucunun
+        # kendi kayip toleransina (varsayilan 5 sn) yakin tutulur ki
+        # kirmizi cerceve normal bir gecici duraklamada YANIP SONMESIN.
+        if kutu and not tk.get("kayip") and simdi - float(tk.get("ts") or 0) < 6.0:
             x, y, w, h = [float(v) for v in kutu]
 
             def _cakisir(b):
