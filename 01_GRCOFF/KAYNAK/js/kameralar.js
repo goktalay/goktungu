@@ -111,8 +111,13 @@
   const kopruAlan = document.getElementById("kamKopruAlan");
   const kopruSec  = document.getElementById("kamKopruSec");
 
+  const dosyaSatir = document.getElementById("kamDosyaSatir");
+  const dosyaSec = document.getElementById("kamDosyaSec");
+  const dosyaBilgi = document.getElementById("kamDosyaBilgi");
+
   function protokolDegisti() {
     const prot = inProt.value;
+    if (dosyaSatir) dosyaSatir.classList.toggle("gizli", prot !== "dosya");
     if (prot === "donanim") {
       cihazSatir.classList.remove("gizli");
       if (djiSatir) djiSatir.classList.add("gizli");
@@ -125,6 +130,11 @@
       lblUrlSatir.classList.add("gizli");
       inUrl.classList.add("gizli");
       djiCihazlariListele();
+    } else if (prot === "dosya") {
+      cihazSatir.classList.add("gizli");
+      if (djiSatir) djiSatir.classList.add("gizli");
+      lblUrlSatir.classList.add("gizli");
+      inUrl.classList.add("gizli");
     } else {
       cihazSatir.classList.add("gizli");
       if (djiSatir) djiSatir.classList.add("gizli");
@@ -133,6 +143,28 @@
     }
   }
   inProt.addEventListener("change", protokolDegisti);
+
+  // v2.4.166: "dosya" protokolu — mp4 sunucuya yuklenir, url = dosya adi.
+  async function videoDosyaYukle(dosya) {
+    const yanit = await fetch("/api/kamera/video_yukle", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Dosya-Ad": encodeURIComponent(dosya.name || "video.mp4")
+      },
+      body: dosya
+    });
+    if (!yanit.ok) {
+      let m = "";
+      try { m = (await yanit.text()).slice(0, 200); } catch (e) {}
+      throw new Error("HTTP " + yanit.status + (m ? " — " + m : ""));
+    }
+    const veri = await yanit.json();
+    if (!veri || !veri.tamam || !veri.dosya) throw new Error("yükleme reddedildi");
+    return veri.dosya;
+  }
 
   // v2.4.7: cihazlar artik SUNUCU makinesinden listelenir (indeks
   // tabanli) — goruntu Python'da yakalanip AI boru hattina girer ve
@@ -200,9 +232,8 @@
     }
   };
 
-  // v2.4.2: kamera basina AI gorev checkbox'lari
-  const AI_GOREV_KUTULARI = ["kamAiYuz", "kamAiPlaka", "kamAiHava",
-                             "kamAiInsan", "kamAiKara"];
+  // C-UAS modu: yalniz hava araci gorevi.
+  const AI_GOREV_KUTULARI = ["kamAiHava"];
 
   function aiGorevleriDoldur(csv) {
     const secili = String(csv || "").split(",").map(s => s.trim());
@@ -291,6 +322,20 @@
     if (kamera && kamera.protokol === "donanim" && cihazSec) {
       cihazSec.dataset.secili = kamera.url;
     }
+    // v2.4.166: duzenlemede kayitli video dosyasi adi korunur/gosterilir
+    if (dosyaSec) {
+      dosyaSec.value = "";
+      if (kamera && kamera.protokol === "dosya" && kamera.url) {
+        dosyaSec.dataset.mevcut = kamera.url;
+        if (dosyaBilgi) dosyaBilgi.textContent = "Kayıtlı dosya: " + kamera.url +
+          " — değiştirmek için yeni dosya seçin.";
+      } else {
+        delete dosyaSec.dataset.mevcut;
+        if (dosyaBilgi) dosyaBilgi.textContent =
+          "Dosya sunucuya yüklenir ve döngüde canlı kamera gibi yayınlanır;" +
+          " AI tespiti ve angajman testi için kullanılabilir.";
+      }
+    }
     aiGorevleriDoldur(kamera ? kamera.ai_gorevler : "");
     // v2.4.0: lokasyon listesi yoksa sunucudan iste, combobox'i doldur
     if (!window._lokasyonlarSon) wsGonder({tip: "lokasyon_liste"});
@@ -356,7 +401,7 @@
     duzenlenenId = null;
   }
 
-  function modalKaydet() {
+  async function modalKaydet() {
     const t = T();
     const isim = inAd.value.trim();
     const prot = inProt.value;
@@ -369,12 +414,34 @@
     } else if (prot === "dji") {
       url = djiSec ? (djiSec.value || "") : "";
       if (!url) { hataEl.textContent = t.kamHataDji || "DJI dron se\u00e7in."; return; }
+    } else if (prot === "dosya") {
+      // v2.4.166: yeni dosya secildiyse once yukle; secilmediyse mevcut
+      // kayitli dosya adi (duzenleme) korunur.
+      const dosya = dosyaSec && dosyaSec.files && dosyaSec.files[0];
+      if (dosya) {
+        hataEl.textContent = "";
+        if (dosyaBilgi) dosyaBilgi.textContent =
+          "Y\u00fckleniyor: " + dosya.name + " (" +
+          (dosya.size / 1048576).toFixed(1) + " MB)\u2026";
+        try {
+          url = await videoDosyaYukle(dosya);
+          if (dosyaBilgi) dosyaBilgi.textContent = "Y\u00fcklendi: " + url;
+        } catch (e) {
+          if (dosyaBilgi) dosyaBilgi.textContent = "";
+          hataEl.textContent = (t.kamHataYukleme || "Video y\u00fcklenemedi: ") + e.message;
+          return;
+        }
+      } else {
+        url = (dosyaSec && dosyaSec.dataset.mevcut) || url;
+      }
+      if (!url) { hataEl.textContent = t.kamHataDosya || "Video dosyas\u0131 se\u00e7in."; return; }
     } else {
       if (!url) { hataEl.textContent = t.kamHataUrl || "Yay\u0131n adresi bo\u015f olamaz."; return; }
     }
     // v2.4.56: merkezde kopru secimi zorunludur.
+    // v2.4.166: "dosya" kaynagi MERKEZ sunucusunda durur — kopru gerekmez.
     const merkezde = (typeof window.kopruMerkezKipiMi === "function")
-      && window.kopruMerkezKipiMi();
+      && window.kopruMerkezKipiMi() && prot !== "dosya";
     const kopruId = kopruSec ? String(kopruSec.value || "") : "";
     if (merkezde && !kopruId) {
       hataEl.textContent = t.kamKopruUyari ||
@@ -462,7 +529,8 @@
     // v2.4.10: HTTP video (MP4/WebM) da proxy'den gecer — AI anotasyonu
     // MP4 kaynaklarinda da gorunur (ffmpeg -re -stream_loop ile dongulu).
     if (prot === "rtsp" || prot === "rtp" || prot === "mjpeg" ||
-        prot === "dji" || prot === "donanim" || prot === "http") {
+        prot === "dji" || prot === "donanim" || prot === "http" ||
+        prot === "dosya") {
       const img = document.createElement("img");
       img.className = "kam-video";
       img.draggable = false;
@@ -534,7 +602,8 @@
     const kam = kameralar.find((k) => k.id === id);
     if (kam && (kam.protokol === "rtsp" || kam.protokol === "rtp" ||
                 kam.protokol === "dji" || kam.protokol === "mjpeg" ||
-                kam.protokol === "donanim" || kam.protokol === "http")) {
+                kam.protokol === "donanim" || kam.protokol === "http" ||
+                kam.protokol === "dosya")) {
       // Sunucudaki FFmpeg/yakalama surecini serbest birak
       wsGonder({ tip: "kamera_proxy_durdur", id: id });
     }

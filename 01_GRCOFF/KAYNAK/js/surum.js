@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.165";
+const GCS_SURUM = "2.4.166";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.166",
+    tarih: "2026-09-13",
+    baslik: "Test için video dosyası kamera kaynağı (paket 2.5.36)",
+    maddeler: [
+      "Yeni kamera protokolü: 'Video dosyası (MP4 döngü — test)'. MP4 dosyası arayüzden sunucuya yüklenir ve döngüde canlı kamera gibi yayınlanır.",
+      "Yüklenen video normal kamera akışı gibi AI boru hattından geçer: hava aracı tespiti, çift tıkla takip, 'Görüntüye Angaje Ol' ve sanal/gerçek dronla kinetik angajman testi yapılabilir.",
+      "Sabit kamera kalibrasyonu (konum/yön/FOV) video kaynağına da tanımlanabilir; tespit edilen hava hedefinin tahmini coğrafi konumu çözülür.",
+      "Yükleme, kamera görüntüleme oturumuyla (giriş yapılmış kullanıcı) korunur; yalnız video uzantıları kabul edilir, üst sınır 512 MB.",
+      "Kamera formundaki İnsan/Kara Aracı anahtarları kaldırıldı (C-UAS modu tamamlama)."
+    ]
+  },
   {
     surum: "2.4.165",
     tarih: "2026-09-13",

@@ -197,6 +197,20 @@ class _Yayin:
             threading.Thread(target=self._oku_opencv, daemon=True).start()
             threading.Thread(target=self._bekci, daemon=True).start()
             return True
+        # v2.4.166: "dosya" — sunucuya yuklenmis video dosyasi, dongulu
+        # test yayini. url YALNIZ dosya adidir; yol daima veri kokundeki
+        # kamera_videolar klasorune cozulur (yol gezinme engeli).
+        # DIKKAT: self.url DEGISTIRILMEZ — yayin_al `y.url != url`
+        # kiyasi yapar; degistirilse yayin her istekte yeniden baslardi.
+        girdi = self.url
+        if self.protokol == "dosya":
+            from .sabitler import _veri_yolu
+            ad = os.path.basename(str(self.url or "").strip())
+            yol = _veri_yolu("kamera_videolar", ad) if ad else ""
+            if not ad or not os.path.isfile(yol):
+                self.hata = "video dosyasi bulunamadi: %s" % (ad or "(bos)")
+                return False
+            girdi = yol
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if self.protokol == "rtsp":
             cmd += ["-rtsp_transport", "tcp"]
@@ -219,12 +233,12 @@ class _Yayin:
         # zamanli okunur (-re) ve sonsuza dek dongulenir (-stream_loop):
         # boylece MP4 kaynagi da canli kamera gibi AI boru hattindan
         # kesintisiz akar.
-        if self.protokol in ("http", "hls"):
+        if self.protokol in ("http", "hls", "dosya"):
             cmd += ["-re", "-stream_loop", "-1"]
         else:
             # Dusuk gecikme secenekleri (canli kaynaklar)
             cmd += ["-fflags", "nobuffer", "-flags", "low_delay"]
-        cmd += ["-i", self.url,
+        cmd += ["-i", girdi,
                 "-an",                       # ses yok
                 "-vf", "scale='min(960,iw)':-2",  # bant genisligi icin sinirla
                 "-q:v", "7",

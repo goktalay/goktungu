@@ -11470,10 +11470,85 @@ class HttpSunucusu:
                 self._devir_yanit(sonuc, 200)
                 return None
 
+            # v2.4.166: "dosya" protokolu icin video yukleme ucu.
+            # Kimlik: canli kamera goruntusuyle ayni HttpOnly cerez
+            # (goktungu_kamera; girisle uretilir). Dosya adi X-Dosya-Ad
+            # basligindan gelir; yalniz taban ad + guvenli karakterler +
+            # video uzantisi kabul edilir (yol gezinme engeli). Icerik
+            # parcali okunup diske yazilir (bellek tasmasi engeli).
+            _VIDEO_UZANTILAR = (".mp4", ".m4v", ".mov", ".avi", ".mkv",
+                                ".webm", ".ts")
+            _VIDEO_AZAMI_BAYT = 512 * 1024 * 1024
+
+            def _kamera_video_yukle(self):
+                ham = self._cerez_oku(self.headers.get("Cookie"),
+                                      "goktungu_kamera")
+                if not self.server.goktungu_http._kamera_oturum_gecerli(ham):
+                    self.send_error(401, "Kamera oturumu gerekli")
+                    return
+                try:
+                    boy = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    boy = 0
+                if boy <= 0:
+                    self.send_error(400, "Bos govde")
+                    return
+                if boy > self._VIDEO_AZAMI_BAYT:
+                    self.send_error(413, "Dosya cok buyuk (ust sinir 512 MB)")
+                    return
+                from urllib.parse import unquote
+                ad = os.path.basename(
+                    unquote(self.headers.get("X-Dosya-Ad") or ""))
+                ad = re.sub(r"[^A-Za-z0-9._-]+", "_", ad).strip("._")
+                kok_ad, uzanti = os.path.splitext(ad)
+                if not kok_ad or uzanti.lower() not in self._VIDEO_UZANTILAR:
+                    self.send_error(
+                        415, "Yalniz video dosyalari"
+                             " (mp4/m4v/mov/avi/mkv/webm/ts)")
+                    return
+                klasor = _veri_yolu("kamera_videolar")
+                os.makedirs(klasor, exist_ok=True)
+                hedef = os.path.join(klasor, ad)
+                if os.path.exists(hedef):
+                    ad = "%s_%d%s" % (kok_ad[:80], int(time.time()),
+                                      uzanti.lower())
+                    hedef = os.path.join(klasor, ad)
+                gecici = hedef + ".yukleniyor"
+                kalan = boy
+                try:
+                    with open(gecici, "wb") as f:
+                        while kalan > 0:
+                            parca = self.rfile.read(min(256 * 1024, kalan))
+                            if not parca:
+                                break
+                            f.write(parca)
+                            kalan -= len(parca)
+                    if kalan > 0:
+                        os.remove(gecici)
+                        self.send_error(400, "Eksik govde")
+                        return
+                    os.replace(gecici, hedef)
+                except OSError as e:
+                    try:
+                        os.remove(gecici)
+                    except OSError:
+                        pass
+                    self.send_error(500, "Yazilamadi: %s" % e)
+                    return
+                govde = json.dumps({"tamam": True, "dosya": ad}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(govde)))
+                self.end_headers()
+                self.wfile.write(govde)
+
             def do_POST(self):
                 yol = self.path.split("?", 1)[0]
                 if yol == "/api/istemci/giris":
                     return self._istemci_giris()
+                # v2.4.166: "dosya" kamera kaynagi icin video yukleme
+                if yol == "/api/kamera/video_yukle":
+                    return self._kamera_video_yukle()
                 if yol == "/api/istemci/kamera_oturum":
                     return self._istemci_kamera_oturum()
                 if yol == "/api/istemci/sunucu_kayit":
