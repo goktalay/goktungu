@@ -44,8 +44,30 @@
   window.kameraAiKutularIsle = function (m) {
     var id = Number(m && m.kamera_id);
     if (!isFinite(id)) return;
-    kutular[id] = { ts: Date.now(), liste: Array.isArray(m.kutular) ? m.kutular : [] };
+    kutular[id] = { ts: Date.now(), liste: Array.isArray(m.kutular) ? m.kutular : [],
+                    durum: (m && m.durum) || null };
   };
+
+  // v2.4.171: dedektor/GPU/fps durum rozeti metni
+  var SAGLAYICI_AD = {
+    DmlExecutionProvider: "DirectML GPU",
+    CUDAExecutionProvider: "CUDA GPU",
+    CPUExecutionProvider: "CPU"
+  };
+  function durumMetni(id) {
+    var k = kutular[Number(id)];
+    if (!k || !k.durum || Date.now() - k.ts > 8000) return "";
+    var d = k.durum;
+    var p = [];
+    p.push(d.dedektor || "?");
+    if (d.saglayici) p.push(SAGLAYICI_AD[d.saglayici] || d.saglayici);
+    else if (d.dedektor === "MOG2" || d.dedektor === "YOLO") p.push("CPU");
+    if (d.cikarim_ms > 0) p.push("çıkarım " + (d.cikarim_ms >= 1000
+      ? (d.cikarim_ms / 1000).toFixed(1) + " sn" : d.cikarim_ms + " ms"));
+    if (d.analiz_hz > 0) p.push("tespit " + d.analiz_hz + " Hz");
+    if (d.video_fps > 0) p.push("video " + d.video_fps + " fps");
+    return p.join(" · ");
+  }
 
   window.kameraTakipIsle = function (m) {
     var id = Number(m && m.kamera_id);
@@ -100,6 +122,19 @@
       ip.className = "kam-takip-ipucu";
       ip.textContent = "Takip için tespit kutusuna çift tıklayın";
       kap.appendChild(ip);
+    }
+    // v2.4.171: dedektor/GPU/fps durum rozeti (AI izleme calisiyorsa)
+    var dm = durumMetni(id);
+    if (dm) {
+      var teknik = document.createElement("span");
+      teknik.className = "kam-takip-teknik";
+      teknik.style.cssText = "display:block;opacity:.75;font-size:11px;" +
+        "margin-top:2px;font-variant-numeric:tabular-nums;";
+      var gpuMu = /GPU/.test(dm);
+      teknik.innerHTML = "<i class='fa-solid fa-microchip' style='margin-right:4px;" +
+        (gpuMu ? "color:#4caf50" : "color:#ff9800") + "'></i>";
+      teknik.appendChild(document.createTextNode(dm));
+      kap.appendChild(teknik);
     }
   }
 

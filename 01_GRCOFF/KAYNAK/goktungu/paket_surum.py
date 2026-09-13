@@ -11,8 +11,8 @@ yaziyordu; 2.5.20 ve 2.5.21 kurulumlari kendini 2.5.19 sanip "YENI SURUM
 HAZIR" uyarisini kalici gosteriyordu. Build betikleri de kendi sabitlerini
 tasiyordu. Uc kopya tek kaynaga indirildi.
 """
-PAKET_SURUM = "2.5.40"
+PAKET_SURUM = "2.5.41"
 
 # Bu paketin tasidigi uygulama surumu (js/surum.js GCS_SURUM ile ESLESMELI).
 # Build betikleri eslesmezse durur (bayat agac / yanlis eslesme kapisi).
-UYGULAMA_SURUM = "2.4.170"
+UYGULAMA_SURUM = "2.4.171"

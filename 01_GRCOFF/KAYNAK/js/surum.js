@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.170";
+const GCS_SURUM = "2.4.171";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.171",
+    tarih: "2026-09-13",
+    baslik: "Video altında AI teknoloji/performans rozeti (paket 2.5.41)",
+    maddeler: [
+      "Kamera panelinde video altına canlı durum rozeti eklendi: dedektör (YOLO-GPU / YOLO-ORT / YOLO / MOG2), donanım (DirectML GPU / CUDA GPU / CPU), çıkarım süresi (ms), tespit döngüsü (Hz) ve video kare hızı (fps).",
+      "GPU aktifse işlemci simgesi YEŞİL, CPU'da TURUNCU görünür — hızlandırmanın devrede olup olmadığı bir bakışta anlaşılır.",
+      "Değerler AI işçisinden ~2 sn'de bir canlı gelir (tespit olmasa da kalp atışıyla); çıkarım süresi ve tespit Hz'i kayan ortalamayla yumuşatılır."
+    ]
+  },
   {
     surum: "2.4.170",
     tarih: "2026-09-13",

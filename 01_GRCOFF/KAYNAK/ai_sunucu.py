@@ -304,6 +304,18 @@ class AkisIsleyici(threading.Thread):
     def durdur(self):
         self.calisiyor = False
 
+    def video_fps(self):
+        """Halka tampondan olculen gercek video kare hizi."""
+        try:
+            k = list(self.tampon)
+            if len(k) >= 2:
+                sure = k[-1][1] - k[0][1]
+                if sure > 0.2:
+                    return (len(k) - 1) / sure
+        except Exception:
+            pass
+        return 0.0
+
     # ------------------------------------------------------------------
     def run(self):
         while self.calisiyor:
@@ -724,12 +736,26 @@ class AIIsci:
             self._yolo_kuyrukla(akis, kare, ts)
             return
         akis.canli_kutular = []
+        _t0 = time.time()
         self._hareket_analiz(akis, kare, ts)
+        self._olcum_guncelle(akis, ts, (time.time() - _t0) * 1000.0)
         try:
             h, w = kare.shape[:2]
             self._kutulari_bildir(akis, w, h, ts)
         except Exception:
             pass
+
+    @staticmethod
+    def _olcum_guncelle(akis, ts, sure_ms):
+        """Cikarim suresi (ms) ve analiz dongusu (Hz) EMA olcumleri."""
+        eski = getattr(akis, "_cikarim_ms", 0.0)
+        akis._cikarim_ms = sure_ms if not eski else 0.7 * eski + 0.3 * sure_ms
+        onceki = getattr(akis, "_analiz_onceki_ts", 0.0)
+        akis._analiz_onceki_ts = ts
+        if onceki and ts > onceki:
+            hz = 1.0 / (ts - onceki)
+            e = getattr(akis, "_analiz_hz", 0.0)
+            akis._analiz_hz = hz if not e else 0.7 * e + 0.3 * hz
 
     def _yolo_kuyrukla(self, akis, kare, ts):
         """Son kareyi cikarim ipligine birakir (eski bekleyen atilir)."""
@@ -762,14 +788,25 @@ class AIIsci:
         gonderir (v2.4.7). Sogutmadan bagimsizdir; bos liste de
         gonderilir ki eski kutular temizlensin."""
         kutular = getattr(akis, "canli_kutular", None) or []
-        # bos liste ard arda gonderilmesin (bant genisligi)
+        # bos liste ard arda gonderilmesin (bant genisligi) — ama durum
+        # bilgisi (dedektor/GPU/fps) icin ~2 sn'de bir kalp atisi gider.
         if not kutular and not getattr(akis, "_son_kutu_vardi", False):
-            return
+            if ts - getattr(akis, "_durum_ts", 0.0) < 2.0:
+                return
+        akis._durum_ts = ts
         akis._son_kutu_vardi = bool(kutular)
         for k in kutular:
             k["kaynak_w"], k["kaynak_h"] = int(kaynak_w), int(kaynak_h)
         govde = {"kamera_id": akis.kamera_id, "ts": ts,
-                 "isci": self.ad, "kutular": kutular}
+                 "isci": self.ad, "kutular": kutular,
+                 "durum": {
+                     "dedektor": self._dedektor_adi(),
+                     "saglayici": self.ort_saglayici,
+                     "cikarim_ms": int(getattr(akis, "_cikarim_ms", 0) or 0),
+                     "analiz_hz": round(
+                         getattr(akis, "_analiz_hz", 0.0) or 0.0, 1),
+                     "video_fps": round(akis.video_fps(), 1),
+                 }}
         try:
             istek = urllib.request.Request(
                 self.ana_url + "/ai/kutular",
@@ -924,11 +961,13 @@ class AIIsci:
         blob = cv2.dnn.blobFromImage(tuval, 1.0 / 255.0, (BOY, BOY),
                                      swapRB=True, crop=False)
         try:
+            _t0 = time.time()
             if self.ort is not None:
                 cikti = self.ort.run(None, {self.ort_girdi: blob})[0]
             else:
                 self.yolo.setInput(blob)
                 cikti = self.yolo.forward()
+            self._olcum_guncelle(akis, ts, (time.time() - _t0) * 1000.0)
         except Exception as e:
             if akis.sogutma_gecti("yolo_hata", saniye=60.0):
                 print(f"[AI] YOLO cikarimi basarisiz: {e}")

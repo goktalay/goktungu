@@ -700,6 +700,8 @@ class AIYonetici:
             try:
                 self.duyuru_cb({"tip": "ai_kutular", "kamera_id": kamera_id,
                                 "ts": simdi,
+                                # v2.4.171: dedektor/GPU/fps durum rozeti
+                                "durum": veri.get("durum") or {},
                                 "kutular": [{"x": b.get("x"), "y": b.get("y"),
                                              "w": b.get("w"), "h": b.get("h"),
                                              "tur": b.get("tur"),
