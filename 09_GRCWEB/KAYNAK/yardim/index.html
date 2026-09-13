@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Destek Merkezi | GÖKTUNGU</title>
+<meta name="description" content="GÖKTUNGU komuta kontrol sistemi kullanım kılavuzu: kayıt, köprü kurulumu, dron bağlantısı, radar, yapay zekâ görüntü işleme, video, rota planlama, sürü uçuş, abonelik ve destek talebi. Gökkubbe Teknoloji Anonim Şirketi.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#070a0e">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GÖKTUNGU Destek Merkezi">
+<meta property="og:description" content="Sistemin tüm modüllerini adım adım anlatan kullanım kılavuzu.">
+<meta property="og:locale" content="tr_TR">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon_32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/favicon_180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/stil.css?v=2137">
+<link rel="stylesheet" href="/css/logo_anim.css?v=2137">
+<link rel="stylesheet" href="/yardim/yardim.css?v=2137">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" defer crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+<!-- ============================ ÜST ÇUBUK ============================ -->
+<header id="ustCubuk">
+  <div class="ic">
+    <a href="/" class="marka" aria-label="GÖKTUNGU Komuta Kontrol">
+      <img class="koyu" src="/img/goktungu_serit.webp" alt="GÖKTUNGU Komuta Kontrol">
+      <img class="acik" src="/img/goktungu_serit_acik.webp" alt="GÖKTUNGU Komuta Kontrol">
+    </a>
+    <!-- FAZ16-DESTEK-MENU  icindekiler duğmesi: hamburger ile
+         ayni hizada, ayni gorsel dilde.  960px ustunde gizli --
+         orada sol panel zaten sabit duruyor. -->
+    <button id="icindekilerDg" type="button"
+            aria-label="İçindekiler" aria-expanded="false"
+            aria-controls="yrdYan" data-i18n-title="yrd.icindekiler">
+      <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+    </button>
+    <!-- FAZ17-DESTEK-BAGIMSIZ  Destek sitesi artik tanitim sayfasi
+         menusunu TASIMAZ.  Onceki surumde burada `#menuAc` hamburger ve
+         `#anaMenu` (Mimari/Yetenekler/Istemciler) vardi; hamburgerin
+         dinleyicisi `js/sayfa.js`'te ve o dosya Destek'te yuklenmedigi
+         icin dugme hem masaustunde hem mobilde OLUYDU.
+
+         Destek bir belge sitesidir: menusu belgeye ait olmali.  Kullanici
+         bilgileri / oturum kabugu da BURAYA KONULMAZ (kullanici karari). -->
+    <nav id="destekMenu" aria-label="Destek gezinme">
+      <a href="/" class="dm-baglanti" data-i18n="yrd.anasite">Ana Site</a>
+      <div class="dil-sec" role="group" aria-label="Dil / Language">
+        <button type="button" data-dil="tr" aria-pressed="true">TR</button>
+        <button type="button" data-dil="en" aria-pressed="false">EN</button>
+      </div>
+      <button class="tema-dugme" data-tema-dugme type="button"></button>
+      <!-- FAZ18/IS5: "Sisteme Giriş" bağı kaldırıldı. Destek bir belge sitesidir; oturum kabuğu FAZ17'de zaten
+           kaldırılmıştı ama giriş bağı kalmıştı. Bağ kalktığı için dil seçici ve tema düğmesi
+           grubun son iki öğesi olarak EN SAĞA geldi. Amblem `/` adresine gider. -->
+    </nav>
+  </div>
+</header>
+
+<div class="yrd-perde"></div>
+<!-- FAZ16-DESTEK-MENU
+     Kirmizi yuzen yuvarlak duğme kaldirildi.  Icindekiler agaci artik
+     ust cubuktaki `#icindekilerDg` duğmesiyle aciliyor: ayni sayfada
+     iki farkli menu duğmesi (ustte hamburger, sol altta kirmizi
+     yuvarlak) tutarsizdi.  `--vurgu` marka kirmizisi gezinme oğesinde
+     kullanilmaz. -->
+
+<section class="yrd-sayfa">
+  <div class="yrd-kabuk">
+
+  <!-- ======================= SOL: MODÜL AĞACI ======================= -->
+  <aside class="yrd-yan" id="yrdYan">
+    <div class="yrd-arama">
+      <input type="search" placeholder="Destekte ara…  ( / )"
+             data-i18n-attr="placeholder:ara.yerTutucu"
+             aria-label="Destek içinde ara">
+      <button class="yrd-temizle" type="button" aria-label="Aramayı temizle">&times;</button>
+    </div>
+    <div class="yrd-arama-sonuc"></div>
+
+    <ul class="yrd-agac">
+
+      <li class="yrd-dal acik" data-dal="baslangic">
+        <button class="yrd-bas" type="button" aria-expanded="true">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-flag-checkered"></i></span>
+          <span data-i18n="agac.baslangic">Başlangıç</span>
+        </button>
+        <ul>
+          <li><a href="#genel-bakis" data-i18n="agac.genelBakis">Sistem Nedir</a></li>
+          <li><a href="#mimari" data-i18n="agac.mimari">Mimari ve Bileşenler</a></li>
+          <li><a href="#kayit" data-i18n="agac.kayit">Kayıt ve Hesap Türleri</a></li>
+          <li><a href="#eposta-dogrulama" data-i18n="agac.epostaDogrulama">E-posta Doğrulama</a></li>
+          <li><a href="#ilk-giris" data-i18n="agac.ilkGiris">İlk Giriş ve Arayüz</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="kopru">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-network-wired"></i></span>
+          <span data-i18n="agac.kopru">Köprü Yazılımı</span>
+        </button>
+        <ul>
+          <li><a href="#kopru-nedir" data-i18n="agac.kopruNedir">Köprü Nedir</a></li>
+          <li><a href="#kopru-kurulum" data-i18n="agac.kopruKurulum">Kurulum (Windows / Ubuntu)</a></li>
+          <li><a href="#kopru-sihirbaz" data-i18n="agac.kopruSihirbaz">İlk Açılış Sihirbazı</a></li>
+          <li><a href="#kopru-sunucular" data-i18n="agac.kopruSunucular">Sunucu Yönetimi</a></li>
+          <li><a href="#kopru-sorun" data-i18n="agac.kopruSorun">Sorun Giderme</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="dronlar">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-helicopter-symbol"></i></span>
+          <span data-i18n="agac.dronlar">Dronlar</span>
+        </button>
+        <ul>
+          <li><a href="#dron-baglanti" data-i18n="agac.dronBaglanti">Bağlantı Yöneticisi</a></li>
+          <li><a href="#dron-kontrol" data-i18n="agac.dronKontrol">Uçuş Kontrolü</a></li>
+          <li><a href="#dron-joystick" data-i18n="agac.dronJoystick">Joystick Kullanımı</a></li>
+          <li><a href="#suru-ucus" data-i18n="agac.suruUcus">Sürü Uçuş</a></li>
+          <li><a href="#ucus-duvari" data-i18n="agac.ucusDuvari">Uçuş Duvarı</a></li>
+          <li><a href="#ucus-gecmisi" data-i18n="agac.ucusGecmisi">Uçuş Geçmişi ve Raporlar</a></li>
+          <li><a href="#sitl" data-i18n="agac.sitl">Sanal Dron (SITL)</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="rotalar">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-route"></i></span>
+          <span data-i18n="agac.rotalar">Rota Planlama</span>
+        </button>
+        <ul>
+          <li><a href="#rota-temel" data-i18n="agac.rotaTemel">Rota Oluşturma</a></li>
+          <li><a href="#rota-turleri" data-i18n="agac.rotaTurleri">Rota Türleri</a></li>
+          <li><a href="#rota-yonetim" data-i18n="agac.rotaYonetim">Rota Yönetimi</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="radar">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-satellite-dish"></i></span>
+          <span data-i18n="agac.radar">Radar Modülü</span>
+        </button>
+        <ul>
+          <li><a href="#radar-genel" data-i18n="agac.radarGenel">Radar Nedir</a></li>
+          <li><a href="#radar-baglanti" data-i18n="agac.radarBaglanti">Radar Bağlantısı</a></li>
+          <li><a href="#radar-hedef" data-i18n="agac.radarHedef">Hedef Takibi</a></li>
+          <li><a href="#radar-kayit" data-i18n="agac.radarKayit">Kayıt ve Tekrar Oynatma</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="ai">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-brain"></i></span>
+          <span data-i18n="agac.ai">Yapay Zekâ</span>
+        </button>
+        <ul>
+          <li><a href="#ai-genel" data-i18n="agac.aiGenel">AI Modülü</a></li>
+          <li><a href="#ai-sunucu" data-i18n="agac.aiSunucu">AI Sunucuları</a></li>
+          <li><a href="#ai-tespit" data-i18n="agac.aiTespit">Tespit ve Tanıma</a></li>
+          <li><a href="#ai-lokasyon" data-i18n="agac.aiLokasyon">Kayıtlı Lokasyonlar</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="video">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-video"></i></span>
+          <span data-i18n="agac.video">Kamera ve Video</span>
+        </button>
+        <ul>
+          <li><a href="#kamera-ekle" data-i18n="agac.kameraEkle">Kamera Ekleme</a></li>
+          <li><a href="#video-duvari" data-i18n="agac.videoDuvari">Video Duvarı</a></li>
+          <li><a href="#video-kayit" data-i18n="agac.videoKayit">Video Kayıtları</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="gccdual">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-gamepad"></i></span>
+          <span data-i18n="agac.gccdual">Yer Kontrol İstasyonu Dual</span>
+        </button>
+        <ul>
+          <li><a href="#gccdual-genel" data-i18n="agac.gccdualGenel">GCCDUAL Nedir</a></li>
+          <li><a href="#gccdual-dugmeler" data-i18n="agac.gccdualDugmeler">Düğme ve Joystick Eşlemesi</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="dji">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-brands fa-android"></i></span>
+          <span data-i18n="agac.dji">DJI Köprüsü</span>
+        </button>
+        <ul>
+          <li><a href="#dji-genel" data-i18n="agac.djiGenel">DJI Köprüsü Nedir</a></li>
+          <li><a href="#dji-kurulum" data-i18n="agac.djiKurulum">Kurulum ve Eşleme</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="paneller">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-table-columns"></i></span>
+          <span data-i18n="agac.paneller">Paneller</span>
+        </button>
+        <ul>
+          <li><a href="#kurumsal-panel" data-i18n="agac.kurumsalPanel">Kurumsal Panel</a></li>
+          <li><a href="#ekip-yonetimi" data-i18n="agac.ekipYonetimi">Ekip ve Pilot Yönetimi</a></li>
+          <li><a href="#yonetim-paneli" data-i18n="agac.yonetimPaneli">Yönetim Paneli</a></li>
+          <li><a href="#personel-yonetimi" data-i18n="agac.personelYonetimi">Personel Yönetimi</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="merkez">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-server"></i></span>
+          <span data-i18n="agac.merkez">Merkez Uygulama</span>
+        </button>
+        <ul>
+          <li><a href="#merkez-genel" data-i18n="agac.merkezGenel">Kapalı Devre Kurulum</a></li>
+          <li><a href="#merkez-kurulum" data-i18n="agac.merkezKurulum">Kurulum Sihirbazı</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="abonelik">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-credit-card"></i></span>
+          <span data-i18n="agac.abonelik">Abonelik ve Ödeme</span>
+        </button>
+        <ul>
+          <li><a href="#fiyatlar" data-i18n="agac.fiyatlar">Fiyat Listesi</a></li>
+          <li><a href="#koltuk" data-i18n="agac.koltuk">Pilot Koltuğu Nasıl İşler</a></li>
+          <li><a href="#odeme" data-i18n="agac.odeme">Ödeme ve Fatura</a></li>
+        </ul>
+      </li>
+
+      <li class="yrd-dal" data-dal="destek">
+        <button class="yrd-bas" type="button" aria-expanded="false">
+          <span class="yrd-ok"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="yrd-ikon"><i class="fa-solid fa-life-ring"></i></span>
+          <span data-i18n="agac.destek">Destek</span>
+        </button>
+        <ul>
+          <li><a href="#destek-talep" data-i18n="agac.destekTalep">Destek Talebi Açma</a></li>
+          <li><a href="#destek-takip" data-i18n="agac.destekTakip">Talep Takibi</a></li>
+          <li><a href="#sss" data-i18n="agac.sss">Sık Sorulan Sorular</a></li>
+          <li><a href="#iletisim" data-i18n="agac.iletisim">İletişim</a></li>
+        </ul>
+      </li>
+
+    </ul>
+  </aside>
+
+  <!-- ======================= SAĞ: İÇERİK ======================= -->
+  <main class="yrd-icerik">
+
+<!-- ############ GENEL BAKIŞ ############ -->
+<article class="yrd-bolum" id="b-genel-bakis">
+  <div class="yrd-yol"><span data-i18n="agac.baslangic">Başlangıç</span><span data-i18n="agac.genelBakis">Sistem Nedir</span></div>
+  <h1 data-i18n="gb.baslik">GÖKTUNGU Nedir</h1>
+  <p class="yrd-ozet" data-i18n="gb.ozet">GÖKTUNGU, alçak irtifa hava sahasında radar, insansız hava aracı ve yapay zekâ görüntü işleme kaynaklarını tek bir harekât resminde birleştiren komuta kontrol sistemidir. Sistem tarayıcı üzerinden çalışır; sahaya yalnızca hafif bir köprü yazılımı kurulur.</p>
+
+  <h2 data-i18n="gb.b1">Sistem ne işe yarar</h2>
+  <p data-i18n="gb.p1">Geleneksel yer kontrol yazılımları tek bir hava aracını tek bir bilgisayardan yönetir. GÖKTUNGU bunun yerine <strong>çok kaynaklı ve çok kullanıcılı</strong> bir harekât resmi kurar: aynı ekranda birden çok dron, radar hedefleri, sabit ve gezici kameralar ile yapay zekâ tespitleri tek bir üç boyutlu harita üzerinde birleşir.</p>
+  <p data-i18n="gb.p2">Komuta kontrol arayüzü merkezde çalıştığı için pilotun bilgisayarına ağır bir kurulum yapılmaz. Saha tarafında yalnızca <strong>köprü yazılımı</strong> bulunur; bu yazılım yerel donanımı (telemetri portu, kamera, radar, yapay zekâ sunucusu) merkeze bağlar.</p>
+
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-layer-group"></i></span>
+      <h4 data-i18n="gb.k1b">Tek harekât resmi</h4>
+      <p data-i18n="gb.k1p">Dron telemetrisi, radar izleri, kamera görüntüleri ve yapay zekâ tespitleri aynı üç boyutlu harita üzerinde birleşir.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-cloud"></i></span>
+      <h4 data-i18n="gb.k2b">Merkezde çalışır</h4>
+      <p data-i18n="gb.k2p">Arayüz tarayıcıda açılır. Kurulum, güncelleme ve yedekleme merkezde yönetilir; sahada bakım yükü kalmaz.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-users"></i></span>
+      <h4 data-i18n="gb.k3b">Çok kullanıcılı</h4>
+      <p data-i18n="gb.k3p">Her pilot kendi hesabıyla girer. Uçuşun sahibi kalkış komutunu veren pilottur; kayıtlar buna göre ayrışır.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-shield-halved"></i></span>
+      <h4 data-i18n="gb.k4b">Kiracı yalıtımı</h4>
+      <p data-i18n="gb.k4p">Her kurumun verisi kendi alanında durur. Bir kurumun uçuşu, videosu veya destek talebi başka kuruma görünmez.</p>
+    </div>
+  </div>
+
+  <h2 data-i18n="gb.b2">Kimler kullanır</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="gb.t1h1">Kullanıcı</th>
+      <th data-i18n="gb.t1h2">Yaptığı iş</th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-i18n="gb.t1a1"><strong>Pilot</strong></td><td data-i18n="gb.t1a2">Hava aracını uçurur, rota planlar, kamera ve yapay zekâ tespitlerini izler.</td></tr>
+      <tr><td data-i18n="gb.t1b1"><strong>Gözlemci</strong></td><td data-i18n="gb.t1b2">Harekât resmini izler, uçuş kaydı görüntüler; komut vermez.</td></tr>
+      <tr><td data-i18n="gb.t1c1"><strong>Kurum yöneticisi</strong></td><td data-i18n="gb.t1c2">Pilot ekler, abonelik yönetir, kurum uçuş ve video kayıtlarını görür.</td></tr>
+      <tr><td data-i18n="gb.t1d1"><strong>Bireysel kullanıcı</strong></td><td data-i18n="gb.t1d2">Kuruma bağlı olmadan sistemi tek başına kullanır.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ MİMARİ ############ -->
+<article class="yrd-bolum" id="b-mimari">
+  <div class="yrd-yol"><span data-i18n="agac.baslangic">Başlangıç</span><span data-i18n="agac.mimari">Mimari ve Bileşenler</span></div>
+  <h1 data-i18n="mim.baslik">Mimari ve Bileşenler</h1>
+  <p class="yrd-ozet" data-i18n="mim.ozet">Sistem üç katmandan oluşur: tarayıcıda çalışan komuta kontrol arayüzü, sahada çalışan köprü yazılımı ve bu ikisini birbirine bağlayan merkez sunucu. Bağlantı her zaman sahadan merkeze doğru kurulur.</p>
+
+  <h2 data-i18n="mim.b1">Üç katman</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="mim.t1h1">Katman</th>
+      <th data-i18n="mim.t1h2">Nerede çalışır</th>
+      <th data-i18n="mim.t1h3">Görevi</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td data-i18n="mim.t1a1"><strong>Komuta kontrol arayüzü</strong></td>
+        <td data-i18n="mim.t1a2">Tarayıcı</td>
+        <td data-i18n="mim.t1a3">Harita, telemetri, radar izleri, kamera görüntüleri ve komut arayüzü.</td>
+      </tr>
+      <tr>
+        <td data-i18n="mim.t1b1"><strong>Merkez sunucu</strong></td>
+        <td data-i18n="mim.t1b2">Merkez</td>
+        <td data-i18n="mim.t1b3">Kimlik doğrulama, veri tabanı, kayıt saklama, köprü yönlendirme.</td>
+      </tr>
+      <tr>
+        <td data-i18n="mim.t1c1"><strong>Köprü yazılımı</strong></td>
+        <td data-i18n="mim.t1c2">Saha bilgisayarı</td>
+        <td data-i18n="mim.t1c3">Yerel donanımı merkeze bağlar: telemetri portu, kamera, radar, yapay zekâ sunucusu.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 data-i18n="mim.b2">Bağlantı yönü neden önemli</h2>
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-circle-info"></i></span>
+    <div data-i18n="mim.n1" data-i18n-html>Bağlantı <strong>her zaman sahadan merkeze</strong> kurulur. Saha bilgisayarının sabit IP adresine, açık porta veya yönlendirici ayarına ihtiyacı yoktur. Köprü kendini merkeze tanıtır; merkez o bağlantı üzerinden komut gönderir.</div>
+  </div>
+  <p data-i18n="mim.p1">Bu yaklaşım sahada güvenlik duvarı ayarı gerektirmez ve mobil bağlantı (4G/5G) üzerinden çalışmayı mümkün kılar. Köprü çevrimdışıysa ilgili menü arayüzde <strong>görünmez</strong>; böylece kullanılamayacak bir düğmeye basma durumu oluşmaz.</p>
+
+  <h2 data-i18n="mim.b3">Köprü altında gruplanan kaynaklar</h2>
+  <p data-i18n="mim.p2">Her kaynak bağlı olduğu köprünün altında gruplanır. Bu gruplama dronlar, kameralar ve yapay zekâ sunucuları için geçerlidir. Bir kaynağı hangi köprünün taşıdığı, bağlantı eklerken seçilir.</p>
+  <ul>
+    <li data-i18n="mim.l1"><strong>Dron bağlantıları</strong> — seri port, TCP veya UDP; köprünün bulunduğu makinedeki port kullanılır.</li>
+    <li data-i18n="mim.l2"><strong>Kameralar</strong> — RTSP, HTTP veya yerel aygıt; köprü akışı merkeze taşır.</li>
+    <li data-i18n="mim.l3"><strong>Yapay zekâ sunucuları</strong> — köprü bilgisayarı veya aynı ağdaki ayrı bir makine.</li>
+    <li data-i18n="mim.l4"><strong>Radar</strong> — köprünün eriştiği ağ adresi; bağlantı komutu merkezden gelir.</li>
+  </ul>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KAYIT ############ -->
+<article class="yrd-bolum" id="b-kayit">
+  <div class="yrd-yol"><span data-i18n="agac.baslangic">Başlangıç</span><span data-i18n="agac.kayit">Kayıt ve Hesap Türleri</span></div>
+  <h1 data-i18n="kyt.baslik">Kayıt ve Hesap Türleri</h1>
+  <p class="yrd-ozet" data-i18n="kyt.ozet">Sisteme kayıt ücretsizdir. İki hesap türü vardır: kurumsal kayıt ve bireysel kayıt. Her iki türde de ilk pilot koltuğu ücretsizdir.</p>
+
+  <h2 data-i18n="kyt.b1">İki hesap türü</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="kyt.t1h1">Özellik</th>
+      <th data-i18n="kyt.t1h2">Kurumsal</th>
+      <th data-i18n="kyt.t1h3">Bireysel</th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-i18n="kyt.t1a1">Kurum bilgisi</td><td data-i18n="kyt.t1a2">Zorunlu (ünvan, vergi no)</td><td data-i18n="kyt.t1a3">İstenmez</td></tr>
+      <tr><td data-i18n="kyt.t1b1">Kurumsal panel</td><td><span class="yrd-rozet iyi" data-i18n="kyt.var">VAR</span></td><td><span class="yrd-rozet soluk" data-i18n="kyt.yok">YOK</span></td></tr>
+      <tr><td data-i18n="kyt.t1c1">Pilot ekleme</td><td data-i18n="kyt.t1c2">Panelden, koltuk satın alarak</td><td data-i18n="kyt.t1c3">Tek kullanıcı</td></tr>
+      <tr><td data-i18n="kyt.t1d1">Radar modülü</td><td data-i18n="kyt.t1d2">Talep üzerine açılır</td><td><span class="yrd-rozet kotu" data-i18n="kyt.kapali">ZORUNLU KAPALI</span></td></tr>
+      <tr><td data-i18n="kyt.t1e1">Yer Kontrol İstasyonu Dual</td><td data-i18n="kyt.t1e2">Talep üzerine açılır</td><td><span class="yrd-rozet kotu" data-i18n="kyt.kapali">ZORUNLU KAPALI</span></td></tr>
+      <tr><td data-i18n="kyt.t1f1">Yapay zekâ modülü</td><td data-i18n="kyt.t1f2">Ücretli eklenti</td><td data-i18n="kyt.t1f3">Ücretli eklenti</td></tr>
+      <tr><td data-i18n="kyt.t1g1">E-posta doğrulama</td><td data-i18n="kyt.t1g2">Gerekli</td><td data-i18n="kyt.t1g3">Gerekli</td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="kyt.n1" data-i18n-html">Bireysel hesaplarda <strong>radar ve Yer Kontrol İstasyonu Dual modülleri veri tabanı düzeyinde kapalıdır</strong>. Bu kısıt arayüzde değil şemada zorlanır; hiçbir yolla açılamaz. Bu modüllere ihtiyaç duyan kullanıcılar kurumsal kayıt açmalıdır.</div>
+  </div>
+
+  <h2 data-i18n="kyt.b2">Kayıt adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="kyt.a1b">Kayıt formunu açın</strong>
+      <p data-i18n="kyt.a1p">Tanıtım sayfasının sağ üstündeki kullanıcı simgesine tıklayın ve <em>Kayıt Ol</em> seçeneğini seçin.</p>
+    </li>
+    <li>
+      <strong data-i18n="kyt.a2b">Hesap türünü seçin</strong>
+      <p data-i18n="kyt.a2p">Kurumsal veya bireysel. Bireysel seçildiğinde kurum alanları formdan kalkar.</p>
+    </li>
+    <li>
+      <strong data-i18n="kyt.a3b">Bilgileri girin</strong>
+      <p data-i18n="kyt.a3p">Ad soyad, e-posta ve şifre zorunludur. Kurumsal kayıtta ayrıca ünvan ve vergi bilgileri istenir.</p>
+    </li>
+    <li>
+      <strong data-i18n="kyt.a4b">E-postanızı doğrulayın</strong>
+      <p data-i18n="kyt.a4p">Kayıt sonrası adresinize doğrulama bağlantısı gönderilir. Doğrulama tamamlanmadan giriş yapılamaz.</p>
+    </li>
+    <li>
+      <strong data-i18n="kyt.a5b">Giriş yapın</strong>
+      <p data-i18n="kyt.a5p">Doğrulama sonrası e-posta ve şifrenizle sisteme girebilirsiniz.</p>
+    </li>
+  </ol>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ E-POSTA DOĞRULAMA ############ -->
+<article class="yrd-bolum" id="b-eposta-dogrulama">
+  <div class="yrd-yol"><span data-i18n="agac.baslangic">Başlangıç</span><span data-i18n="agac.epostaDogrulama">E-posta Doğrulama</span></div>
+  <h1 data-i18n="epd.baslik">E-posta Doğrulama</h1>
+  <p class="yrd-ozet" data-i18n="epd.ozet">Bireysel kullanıcılar ve sistem yöneticileri ilk girişte e-posta adreslerini doğrulamak zorundadır. Doğrulama tamamlanmadan oturum açılmaz.</p>
+
+  <h2 data-i18n="epd.b1">Nasıl çalışır</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="epd.a1b">Bağlantı gönderilir</strong>
+      <p data-i18n="epd.a1p">Kayıt tamamlandığında adresinize tek kullanımlık bir doğrulama bağlantısı gönderilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="epd.a2b">Bağlantıya tıklayın</strong>
+      <p data-i18n="epd.a2p">Bağlantı sizi doğrulama sayfasına götürür ve adresinizi onaylar.</p>
+    </li>
+    <li>
+      <strong data-i18n="epd.a3b">Giriş yapın</strong>
+      <p data-i18n="epd.a3p">Doğrulama sonrası normal giriş akışı açılır.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="epd.b2">Bağlantı gelmediyse</h2>
+  <ul>
+    <li data-i18n="epd.l1">Gereksiz posta (spam) klasörünü denetleyin.</li>
+    <li data-i18n="epd.l2">Doğrulama sayfasındaki <em>Yeniden gönder</em> düğmesini kullanın.</li>
+    <li data-i18n="epd.l3">Adresi yanlış yazdıysanız yeni kayıt açmanız gerekir.</li>
+  </ul>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-clock"></i></span>
+    <div data-i18n="epd.n1" data-i18n-html>Doğrulama bağlantısı <strong>tek kullanımlıktır</strong> ve belirli bir süre sonra geçersiz olur. Süresi geçmiş bağlantı için yeniden gönderim yapın.</div>
+  </div>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-shield-halved"></i></span>
+    <div data-i18n="epd.n2" data-i18n-html>Güvenlik gereği sistem, girilen adresin kayıtlı olup olmadığını <strong>açığa vurmaz</strong>. Kayıtlı olmayan bir adres için de aynı yanıt döner; böylece hesap sayımı yapılamaz.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ İLK GİRİŞ ############ -->
+<article class="yrd-bolum" id="b-ilk-giris">
+  <div class="yrd-yol"><span data-i18n="agac.baslangic">Başlangıç</span><span data-i18n="agac.ilkGiris">İlk Giriş ve Arayüz</span></div>
+  <h1 data-i18n="ilk.baslik">İlk Giriş ve Arayüz</h1>
+  <p class="yrd-ozet" data-i18n="ilk.ozet">Komuta kontrol arayüzü üst menü çubuğu, üç boyutlu harita ve yüzen paneller olmak üzere üç bölgeden oluşur. Menüler yalnız ilgili modül etkinse görünür.</p>
+
+  <h2 data-i18n="ilk.b1">Üst menü çubuğu</h2>
+  <p data-i18n="ilk.p1">Menü çubuğu modüllere göre gruplanmıştır. Bir modül kapalıysa veya köprüsü çevrimdışıysa o menü <strong>hiç görünmez</strong>.</p>
+
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m1b">Radar</b><span data-i18n="ilk.m1p">Radar ayarları, hedef filtresi, iz ayarları, hedef sınıflandırma, kayıt ve tekrar oynatma, hedef panelleri. Radar modülü kapalıysa görünmez.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m2b">Dronlar</b><span data-i18n="ilk.m2p">Bağlantı yöneticisi, geçmiş yönetimi, kayıtlı dronlar, sürü uçuş, uçuş duvarı.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m3b">Kameralar</b><span data-i18n="ilk.m3p">Yeni kamera, tüm kameralara bağlan, önizleme görünümü, video duvarı, kameralar paneli.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m4b">Rotalar</b><span data-i18n="ilk.m4p">Yeni rota, spiral rota, serbest form, koridor, rota yükle, tüm rotaları aç/kapat, rotalar paneli.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m5b">AI</b><span data-i18n="ilk.m5p">Kayıtlı lokasyonlar, sunucular, kişiler, araçlar, kayıtsız tespitler, tespit geçmişi. Yapay zekâ modülü kapalıysa görünmez.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m6b">Göktungu</b><span data-i18n="ilk.m6p">Program ayarları, harita ayarları, arayüz ayarları ve etkinse Yer Kontrol İstasyonu Dual.</span></div>
+    <div class="yrd-menu-oge"><b data-i18n="ilk.m7b">Destek</b><span data-i18n="ilk.m7p">Destek merkezi, program hakkında ve gösterge pencereleri (saat, hava durumu, konum, pusula, pilotlar, sayaç, sistem kaynakları).</span></div>
+  </div>
+
+  <h2 data-i18n="ilk.b2">Kullanıcı menüsü</h2>
+  <p data-i18n="ilk.p2">Sağ üstteki kullanıcı simgesi kişisel ayarları ve oturum işlemlerini toplar: pilot bilgileri, uyarılar, joystick ayarları, kurumsal panel bağlantısı ve çıkış. Yönetici rolündeki kullanıcılar ayrıca kurum bilgileri ve veri tabanı ayarlarını görür.</p>
+
+  <h2 data-i18n="ilk.b3">Gece ve gündüz teması</h2>
+  <p data-i18n="ilk.p3">Tüm arayüzlerde tema düğmesi bulunur. Seçim tarayıcıda saklanır ve her arayüz kendi seçimini hatırlar. Koyu tema saha kullanımı, açık tema ofis kullanımı için uygundur.</p>
+
+  <h2 data-i18n="ilk.b4">Harita denetimi</h2>
+  <ul>
+    <li data-i18n="ilk.l1"><strong>Sol tık ve sürükle</strong> — haritayı kaydırır.</li>
+    <li data-i18n="ilk.l2"><strong>Tekerlek</strong> — yakınlaştırır ve uzaklaştırır.</li>
+    <li data-i18n="ilk.l3"><strong>Orta tuş ve sürükle</strong> — kamera eğimini değiştirir.</li>
+    <li data-i18n="ilk.l4"><strong>Ctrl + sol tık</strong> — harita bağlam menüsünü açar; seçili drona git komutu buradan verilir.</li>
+  </ul>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KÖPRÜ NEDİR ############ -->
+<article class="yrd-bolum" id="b-kopru-nedir">
+  <div class="yrd-yol"><span data-i18n="agac.kopru">Köprü Yazılımı</span><span data-i18n="agac.kopruNedir">Köprü Nedir</span></div>
+  <h1 data-i18n="kpn.baslik">Köprü Yazılımı Nedir</h1>
+  <p class="yrd-ozet" data-i18n="kpn.ozet">Köprü, saha bilgisayarında çalışan hafif bir hizmettir. Yerel donanımı merkeze bağlar: telemetri portu, kamera akışı, radar ve yapay zekâ sunucusu. Komuta kontrol arayüzü merkezde çalıştığı için sahaya ağır kurulum yapılmaz.</p>
+
+  <h2 data-i18n="kpn.b1">Neden gerekli</h2>
+  <p data-i18n="kpn.p1">Merkez sunucu, saha bilgisayarındaki bir USB telemetri portuna veya yerel ağdaki bir kameraya doğrudan erişemez. Köprü bu erişimi sağlar: yerel kaynakları okur ve merkeze aktarır, merkezden gelen komutları yerel donanıma iletir.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-circle-info"></i></span>
+    <div data-i18n="kpn.n1" data-i18n-html>Köprü <strong>hizmet olarak</strong> çalışır. Bilgisayar açıldığında kendiliğinden başlar; kullanıcının el ile başlatmasına gerek yoktur.</div>
+  </div>
+
+  <h2 data-i18n="kpn.b2">Köprünün taşıdığı kaynaklar</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="kpn.t1h1">Kaynak</th>
+      <th data-i18n="kpn.t1h2">Bağlantı türü</th>
+      <th data-i18n="kpn.t1h3">Örnek</th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-i18n="kpn.t1a1">Dron telemetrisi</td><td data-i18n="kpn.t1a2">Seri port, TCP, UDP</td><td><code>/dev/ttyACM0</code>, <code>COM3</code>, <code>127.0.0.1:5760</code></td></tr>
+      <tr><td data-i18n="kpn.t1b1">Kamera</td><td data-i18n="kpn.t1b2">RTSP, HTTP, yerel aygıt</td><td><code>rtsp://192.168.1.50/stream</code></td></tr>
+      <tr><td data-i18n="kpn.t1c1">Radar</td><td data-i18n="kpn.t1c2">Ağ adresi</td><td data-i18n="kpn.t1c3">Radar birimi IP adresi</td></tr>
+      <tr><td data-i18n="kpn.t1d1">Yapay zekâ sunucusu</td><td data-i18n="kpn.t1d2">SSH ile başlatma</td><td data-i18n="kpn.t1d3">Aynı ağdaki GPU makinesi</td></tr>
+      <tr><td data-i18n="kpn.t1e1">Yer Kontrol İstasyonu Dual</td><td data-i18n="kpn.t1e2">Seri port (JSON)</td><td><code>/dev/ttyACM0</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 data-i18n="kpn.b3">Yerel arayüz</h2>
+  <p data-i18n="kpn.p2">Köprünün kendi yerel web arayüzü vardır. Bu arayüzde sunucuları başlatıp durdurabilir, konsol çıktılarını izleyebilirsiniz. Arayüze giriş için kullanıcı adı ve şifre istenir; oturum açan kullanıcının kurum logosu görüntülenir.</p>
+  <p data-i18n="kpn.p3">Köprü arayüzünde sol panelde sunucu listesi (Dron, Yapay Zekâ, Video, GCCDUAL, Radar), üstte başlat ve durdur düğmeleri, altta ise ham konsol çıktısı bulunur. Her sunucu türünün kendi sürüm defteri vardır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KÖPRÜ KURULUM ############ -->
+<article class="yrd-bolum" id="b-kopru-kurulum">
+  <div class="yrd-yol"><span data-i18n="agac.kopru">Köprü Yazılımı</span><span data-i18n="agac.kopruKurulum">Kurulum</span></div>
+  <h1 data-i18n="kpk.baslik">Köprü Kurulumu</h1>
+  <p class="yrd-ozet" data-i18n="kpk.ozet">Köprü yazılımı Windows ve Ubuntu için ayrı kurulum paketleri hâlinde dağıtılır. İndirme bağlantısı yalnız kurumsal panelde bulunur; tanıtım sayfasında yer almaz.</p>
+
+  <h2 data-i18n="kpk.b1">Kurulum paketini indirme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="kpk.a1b">Kurumsal panele girin</strong>
+      <p data-i18n="kpk.a1p">Kullanıcı menüsünden <em>Kurumsal Panel</em> seçeneğini kullanın. Panel ayrı bir sekmede açılır.</p>
+    </li>
+    <li>
+      <strong data-i18n="kpk.a2b">Köprü bölümünü açın</strong>
+      <p data-i18n="kpk.a2p">Sol menüden <em>Köprü</em> bölümüne geçin.</p>
+    </li>
+    <li>
+      <strong data-i18n="kpk.a3b">İşletim sistemini seçin</strong>
+      <p data-i18n="kpk.a3p">Windows için kurulum programı, Ubuntu için paket dosyası indirin.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="kpk.b2">Windows kurulumu</h2>
+  <ul>
+    <li data-i18n="kpk.l1">Kurulum programı yazılımı <code>Program Files</code> altına kurar.</li>
+    <li data-i18n="kpk.l2">Köprü Windows hizmeti olarak kaydedilir ve kendiliğinden başlar.</li>
+    <li data-i18n="kpk.l3">Başlat menüsüne ve masaüstüne yerel arayüz kısayolu eklenir.</li>
+    <li data-i18n="kpk.l4">Güncelleme kurulumunda hizmet durdurulur, dosyalar yenilenir, hizmet yeniden başlatılır. Ayarlar korunur.</li>
+  </ul>
+
+  <h2 data-i18n="kpk.b3">Ubuntu kurulumu</h2>
+  <ul>
+    <li data-i18n="kpk.l5">Paket dosyası sistem hizmeti olarak kurulum yapar.</li>
+    <li data-i18n="kpk.l6">Başlat menüsü ve masaüstü kısayolları oluşturulur.</li>
+    <li data-i18n="kpk.l7">Hizmet durumu <code>systemctl status</code> ile denetlenebilir.</li>
+  </ul>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="kpk.n1" data-i18n-html>Eski bir kurulumun üzerine kurulum yapıyorsanız ve hizmet oluşmuyorsa, önce eski kurulumu tümüyle kaldırın. Artık kalan hizmet tanımı yeni kurulumun kendi hizmetini kaydetmesini engelleyebilir.</div>
+  </div>
+
+  <h2 data-i18n="kpk.b4">Aynı makinede merkez ve köprü</h2>
+  <p data-i18n="kpk.p1">Merkez Uygulama lisansı olan kurumlar aynı bilgisayarda hem merkez yazılımını hem köprüyü çalıştırabilir. Bu durumda köprü, merkeze <code>127.0.0.1</code> adresi üzerinden bağlanır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KÖPRÜ SİHİRBAZ ############ -->
+<article class="yrd-bolum" id="b-kopru-sihirbaz">
+  <div class="yrd-yol"><span data-i18n="agac.kopru">Köprü Yazılımı</span><span data-i18n="agac.kopruSihirbaz">İlk Açılış Sihirbazı</span></div>
+  <h1 data-i18n="kps.baslik">İlk Açılış Sihirbazı</h1>
+  <p class="yrd-ozet" data-i18n="kps.ozet">Köprü ilk kez açıldığında yerel arayüzde bir sihirbaz başlar. Sihirbaz merkez sunucu adresini ve oturum bilgilerini sorar; ardından bağlantıyı sınar.</p>
+
+  <h2 data-i18n="kps.b1">Sihirbaz adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="kps.a1b">Merkez sunucu adresi</strong>
+      <p data-i18n="kps.a1p">Bulut kullanıyorsanız merkez alan adını girin. Kendi merkez kurulumunuz varsa onun adresini yazın; aynı makinedeyse <code>127.0.0.1</code> kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="kps.a2b">Kullanıcı bilgileri</strong>
+      <p data-i18n="kps.a2p">Merkezde tanımlı e-posta ve şifrenizi girin. Köprü bu bilgilerle merkeze kendini tanıtır.</p>
+    </li>
+    <li>
+      <strong data-i18n="kps.a3b">Köprü adı</strong>
+      <p data-i18n="kps.a3p">Bu köprüyü ayırt edecek bir ad verin. Ad, arayüzdeki kaynak gruplamasında görünür.</p>
+    </li>
+    <li>
+      <strong data-i18n="kps.a4b">Bağlantı sınaması</strong>
+      <p data-i18n="kps.a4p">Sihirbaz merkeze bağlanır ve sonucu bildirir. Başarısızsa adres ve oturum bilgileri yeniden sorulur.</p>
+    </li>
+  </ol>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-rotate"></i></span>
+    <div data-i18n="kps.n1" data-i18n-html>Sihirbaz <strong>yeniden çalıştırılabilir</strong>. Merkez adresi veya oturum bilgileri değiştiğinde köprü arayüzünden sihirbazı tekrar açabilirsiniz.</div>
+  </div>
+
+  <h2 data-i18n="kps.b2">Köprü hangi adreste dinler</h2>
+  <p data-i18n="kps.p1">Köprü yerel arayüzü tüm ağ arayüzlerinde dinler. Böylece aynı ağdaki başka bir bilgisayardan da köprü arayüzüne erişilebilir. Yalnız kendi makinesinden erişim istiyorsanız bunu güvenlik duvarı ile sınırlayın.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KÖPRÜ SUNUCULAR ############ -->
+<article class="yrd-bolum" id="b-kopru-sunucular">
+  <div class="yrd-yol"><span data-i18n="agac.kopru">Köprü Yazılımı</span><span data-i18n="agac.kopruSunucular">Sunucu Yönetimi</span></div>
+  <h1 data-i18n="kpu.baslik">Sunucu Yönetimi</h1>
+  <p class="yrd-ozet" data-i18n="kpu.ozet">Köprü arayüzünde beş sunucu türü yönetilir. Her biri bağımsız başlatılıp durdurulabilir ve kendi konsol çıktısını gösterir.</p>
+
+  <h2 data-i18n="kpu.b1">Sunucu türleri</h2>
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-helicopter-symbol"></i></span>
+      <h4 data-i18n="kpu.k1b">Dron Sunucusu</h4>
+      <p data-i18n="kpu.k1p">Telemetri bağlantılarını yönetir. Seri port, TCP ve UDP bağlantılarını merkeze taşır.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-brain"></i></span>
+      <h4 data-i18n="kpu.k2b">Yapay Zekâ Sunucusu</h4>
+      <p data-i18n="kpu.k2p">Görüntü işleme modellerini çalıştırır. Ayrı bir makinede ise SSH ile uzaktan başlatılır.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-video"></i></span>
+      <h4 data-i18n="kpu.k3b">Video Sunucusu</h4>
+      <p data-i18n="kpu.k3p">Kamera akışlarını merkeze aktarır ve kayıt alır. Sistemde <code>ffmpeg</code> gerektirir.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-gamepad"></i></span>
+      <h4 data-i18n="kpu.k4b">GCCDUAL Sunucusu</h4>
+      <p data-i18n="kpu.k4p">Çift ekranlı yer kontrol istasyonunun düğme ve joystick verisini okur.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-satellite-dish"></i></span>
+      <h4 data-i18n="kpu.k5b">Radar Sunucusu</h4>
+      <p data-i18n="kpu.k5p">Radar birimine bağlanır ve hedef izlerini merkeze aktarır.</p>
+    </div>
+  </div>
+
+  <h2 data-i18n="kpu.b2">Yapay zekâ sunucusunu uzaktan başlatma</h2>
+  <p data-i18n="kpu.p1">Yapay zekâ sunucusu ayrı bir makinede çalışıyorsa, o makinenin adresi ve SSH oturum bilgileri tanımlanır. Sunucu listesindeki başlat düğmesi SSH ile bağlanıp sunucuyu uzaktan çalıştırır. Konsol düğmesi SSH çıktısını canlı gösterir.</p>
+
+  <h2 data-i18n="kpu.b3">Sürüm yönetimi</h2>
+  <p data-i18n="kpu.p2">Her sunucu türünün kendi sürüm numarası ve sürüm defteri vardır. Sürüm numarasına tıkladığınızda o sunucunun değişiklik geçmişi açılır: hangi sürümde ne değişti ve neden.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KÖPRÜ SORUN GİDERME ############ -->
+<article class="yrd-bolum" id="b-kopru-sorun">
+  <div class="yrd-yol"><span data-i18n="agac.kopru">Köprü Yazılımı</span><span data-i18n="agac.kopruSorun">Sorun Giderme</span></div>
+  <h1 data-i18n="kpr.baslik">Köprü Sorun Giderme</h1>
+  <p class="yrd-ozet" data-i18n="kpr.ozet">Köprü ile ilgili en sık karşılaşılan durumlar ve çözümleri.</p>
+
+  <h2 data-i18n="kpr.b1">Sık görülen durumlar</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="kpr.t1h1">Belirti</th>
+      <th data-i18n="kpr.t1h2">Olası neden ve çözüm</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td data-i18n="kpr.t1a1">Menüde radar görünmüyor</td>
+        <td data-i18n="kpr.t1a2">Radar köprüsü başlatılmamış veya kurumun radar yetkisi kapalı. Köprü arayüzünden radar sunucusunu başlatın.</td>
+      </tr>
+      <tr>
+        <td data-i18n="kpr.t1b1">Yer Kontrol İstasyonu Dual menüde yok</td>
+        <td data-i18n="kpr.t1b2">GCCDUAL sunucusu çalışmıyor veya kurum yetkisi kapalı. Menü yalnız sunucu çevrimiçiyken görünür.</td>
+      </tr>
+      <tr>
+        <td data-i18n="kpr.t1c1">Dron bağlantısı port bulamıyor</td>
+        <td data-i18n="kpr.t1c2">Bağlantı eklerken hangi köprüye ait olduğu seçilmemiş olabilir. Port, köprünün bulunduğu makinede aranır.</td>
+      </tr>
+      <tr>
+        <td data-i18n="kpr.t1d1">Video sunucusu uyarı veriyor</td>
+        <td data-i18n="kpr.t1d2">Sistemde <code>ffmpeg</code> bulunamadı. Konsol çıktısı kurulum yönergesini gösterir.</td>
+      </tr>
+      <tr>
+        <td data-i18n="kpr.t1e1">Radar yanlış adrese bağlanıyor</td>
+        <td data-i18n="kpr.t1e2">Köprü yalnız merkezden gelen bağlan komutundaki adrese bağlanır. Radar ayarlarındaki adresi denetleyin.</td>
+      </tr>
+      <tr>
+        <td data-i18n="kpr.t1f1">Hizmet oluşmadı</td>
+        <td data-i18n="kpr.t1f2">Eski kurulumun üzerine kurulum yapıldı. Eski kurulumu kaldırıp yeniden kurun.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 data-i18n="kpr.b2">Konsol çıktısını okuma</h2>
+  <p data-i18n="kpr.p1">Her sunucunun konsol çıktısı ham hâlde gösterilir; hiçbir satır gizlenmez. Dron bağlantılarının iletişim kaydı ise genel konsola değil, ilgili dronun panelinin altındaki açılır konsola yazılır. Böylece birden çok dron uçarken kayıtlar karışmaz.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-life-ring"></i></span>
+    <div data-i18n="kpr.n1" data-i18n-html>Sorun sürüyorsa <a href="#destek-talep">destek talebi</a> açın. Konsol çıktısının ekran görüntüsünü eklemeniz çözümü hızlandırır.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DRON BAĞLANTI ############ -->
+<article class="yrd-bolum" id="b-dron-baglanti">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.dronBaglanti">Bağlantı Yöneticisi</span></div>
+  <h1 data-i18n="dbg.baslik">Bağlantı Yöneticisi</h1>
+  <p class="yrd-ozet" data-i18n="dbg.ozet">Bağlantı yöneticisi hava araçlarının telemetri bağlantılarını tanımladığınız yerdir. Her bağlantı bir köprüye bağlıdır; port ve adres o köprünün bulunduğu makinede aranır.</p>
+
+  <h2 data-i18n="dbg.b1">Yeni bağlantı ekleme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="dbg.a1b">Bağlantı yöneticisini açın</strong>
+      <p data-i18n="dbg.a1p">Dronlar menüsünden <em>Bağlantı Yöneticisi</em> seçeneğini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="dbg.a2b">Köprüyü seçin</strong>
+      <p data-i18n="dbg.a2p">Bağlantının hangi köprü üzerinden kurulacağını seçin. Bu seçim zorunludur; port bu makinede aranır.</p>
+    </li>
+    <li>
+      <strong data-i18n="dbg.a3b">Bağlantı türünü seçin</strong>
+      <p data-i18n="dbg.a3p">Seri port, TCP veya UDP. Seri portta hız (baud) değeri de girilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="dbg.a4b">Adresi girin</strong>
+      <p data-i18n="dbg.a4p">Seri portta aygıt yolu (<code>/dev/ttyACM0</code> veya <code>COM3</code>), ağ bağlantısında adres ve port.</p>
+    </li>
+    <li>
+      <strong data-i18n="dbg.a5b">Bağlantıyı başlatın</strong>
+      <p data-i18n="dbg.a5p">Listedeki başlat düğmesi bağlantıyı açar. Telemetri gelmeye başladığında hava aracı haritada görünür.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="dbg.b2">Bağlantı türleri</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="dbg.t1h1">Tür</th>
+      <th data-i18n="dbg.t1h2">Kullanım</th>
+      <th data-i18n="dbg.t1h3">Örnek adres</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><strong>Seri</strong></td><td data-i18n="dbg.t1a2">USB telemetri modülü veya doğrudan uçuş kartı</td><td><code>/dev/ttyACM0</code> · <code>COM3</code></td></tr>
+      <tr><td><strong>TCP</strong></td><td data-i18n="dbg.t1b2">Yer istasyonu köprüsü, sanal dron (SITL)</td><td><code>127.0.0.1:5760</code></td></tr>
+      <tr><td><strong>UDP</strong></td><td data-i18n="dbg.t1c2">Ağ üzerinden yayın yapan telemetri</td><td><code>0.0.0.0:14550</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-sitemap"></i></span>
+    <div data-i18n="dbg.n1" data-i18n-html>Bağlantılar <strong>köprü altında gruplanır</strong>. Bir köprü çevrimdışı olduğunda onun altındaki bağlantılar da erişilemez duruma geçer. Aynı gruplama kameralar ve yapay zekâ sunucuları için de geçerlidir.</div>
+  </div>
+
+  <h2 data-i18n="dbg.b3">Kayıtlı dronlar</h2>
+  <p data-i18n="dbg.p1">Sık kullandığınız hava araçlarını kaydedebilirsiniz. Kayıtlı dron listesinde araç adı, türü ve son bilinen bağlantı ayarları saklanır; böylece her uçuşta ayarları yeniden girmeniz gerekmez.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DRON KONTROL ############ -->
+<article class="yrd-bolum" id="b-dron-kontrol">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.dronKontrol">Uçuş Kontrolü</span></div>
+  <h1 data-i18n="dkn.baslik">Uçuş Kontrolü</h1>
+  <p class="yrd-ozet" data-i18n="dkn.ozet">Her hava aracının kendi kontrol paneli vardır. Panelde uçuş kipi, kalkış ve iniş komutları, telemetri göstergeleri ve iletişim konsolu bulunur.</p>
+
+  <h2 data-i18n="dkn.b1">Temel komutlar</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="dkn.t1h1">Komut</th>
+      <th data-i18n="dkn.t1h2">Açıklama</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><strong>ARM / DISARM</strong></td><td data-i18n="dkn.t1a2">Motorları devreye alır veya devreden çıkarır. Kalkış öncesi zorunludur.</td></tr>
+      <tr><td><strong>TAKEOFF</strong></td><td data-i18n="dkn.t1b2">Belirtilen irtifaya dikey kalkış yapar. <strong>Uçuşun sahibi bu komutu veren pilottur.</strong></td></tr>
+      <tr><td><strong>LAND</strong></td><td data-i18n="dkn.t1c2">Bulunduğu konumda iniş yapar.</td></tr>
+      <tr><td><strong>RETURN HOME</strong></td><td data-i18n="dkn.t1d2">Kalkış noktasına döner ve iner.</td></tr>
+      <tr><td><strong>GUIDED</strong></td><td data-i18n="dkn.t1e2">Yer istasyonundan hedef konum verilebilen kip. Haritaya tıklayarak yönlendirme bu kipte çalışır.</td></tr>
+      <tr><td><strong>ALTHOLD</strong></td><td data-i18n="dkn.t1f2">İrtifayı sabit tutar, yatay denetim pilotta kalır.</td></tr>
+      <tr><td><strong>AUTO</strong></td><td data-i18n="dkn.t1g2">Yüklenmiş rotayı kendiliğinden uçar.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-not tehlike">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="dkn.n1" data-i18n-html>Kalkış komutunu veren pilot <strong>o uçuşun sahibidir</strong>. Uçuş kaydı, telemetri geçmişi ve raporlar bu pilota bağlanır. Pilotlar yalnız kendi uçuşlarını görür; tüm uçuşları yalnız yönetici rolü görebilir.</div>
+  </div>
+
+  <h2 data-i18n="dkn.b2">Haritaya tıklayarak yönlendirme</h2>
+  <p data-i18n="dkn.p1">Hava aracı GUIDED kipindeyken haritada bir noktaya <strong>Ctrl + sol tık</strong> yapıp <em>Seçili drona git</em> komutunu verebilirsiniz. Araç belirtilen konuma yönelir. Komut yalnız seçili araca gönderilir.</p>
+
+  <h2 data-i18n="dkn.b3">İletişim konsolu</h2>
+  <p data-i18n="dkn.p2">Her dron panelinin altında açılır kapanır bir konsol bulunur. Bu konsol o hava aracıyla yapılan iletişimi ham hâlde gösterir. Kayıtlar genel konsola yazılmaz; böylece birden çok araç uçarken kayıtlar karışmaz.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ JOYSTICK ############ -->
+<article class="yrd-bolum" id="b-dron-joystick">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.dronJoystick">Joystick Kullanımı</span></div>
+  <h1 data-i18n="djy.baslik">Joystick Kullanımı</h1>
+  <p class="yrd-ozet" data-i18n="djy.ozet">Bağlı bir joystick ile hava aracını doğrudan uçurabilirsiniz. Eksen yönleri pilot ayarlarından tersine çevrilebilir; her pilot kendi alışkanlığına göre ayarlar.</p>
+
+  <h2 data-i18n="djy.b1">Joystick kipini açma</h2>
+  <p data-i18n="djy.p1">Kullanıcı menüsündeki <em>Joystick Ayarları</em> bölümünden joystick kipini etkinleştirin. Kip açıkken eksen hareketleri hava aracına komut olarak gider.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="djy.n1" data-i18n-html>Joystick kipi açıkken <strong>eksenler nötr konumda olmalıdır</strong>. Sürüklenme (drift) varsa araç kendiliğinden dönebilir. Ayarlardaki ölü bölge değerini artırarak bunu giderin.</div>
+  </div>
+
+  <h2 data-i18n="djy.b2">Eksen ayarları</h2>
+  <ul>
+    <li data-i18n="djy.l1"><strong>Eksen tersleme</strong> — her eksen bağımsız olarak ters çevrilebilir. Bazı pilotlar itiş eksenini ters kullanır.</li>
+    <li data-i18n="djy.l2"><strong>Ölü bölge</strong> — merkeze yakın küçük hareketleri yok sayar; sürüklenmeyi engeller.</li>
+    <li data-i18n="djy.l3"><strong>Duyarlılık</strong> — eksen hareketinin komuta dönüşme oranı.</li>
+  </ul>
+
+  <h2 data-i18n="djy.b3">Ayarlar nerede saklanır</h2>
+  <p data-i18n="djy.p2">Joystick ayarları pilot hesabına bağlı saklanır. Aynı hesapla başka bir bilgisayardan girdiğinizde ayarlarınız korunur.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ SÜRÜ UÇUŞ ############ -->
+<article class="yrd-bolum" id="b-suru-ucus">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.suruUcus">Sürü Uçuş</span></div>
+  <h1 data-i18n="sru.baslik">Sürü Uçuş</h1>
+  <p class="yrd-ozet" data-i18n="sru.ozet">Sürü uçuşta bir hava aracı önder (master), diğerleri izleyici (slave) olur. İzleyiciler öndere göre tanımlanmış konum farkını korur; önder kalkış yaptığında izleyiciler de kalkar.</p>
+
+  <h2 data-i18n="sru.b1">Sürü kurma</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="sru.a1b">Sürü uçuş penceresini açın</strong>
+      <p data-i18n="sru.a1p">Dronlar menüsünden <em>Sürü Uçuş</em> seçeneğini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="sru.a2b">Önderi seçin</strong>
+      <p data-i18n="sru.a2p">Bağlı hava araçları arasından önderi belirleyin. Sürünün hareketi öndere göre hesaplanır.</p>
+    </li>
+    <li>
+      <strong data-i18n="sru.a3b">İzleyici ekleyin</strong>
+      <p data-i18n="sru.a3p">Her izleyici için önderden olan konum farkını üç eksende girin: doğu, kuzey ve irtifa farkı.</p>
+    </li>
+    <li>
+      <strong data-i18n="sru.a4b">Sürüyü başlatın</strong>
+      <p data-i18n="sru.a4p">Başlatma sonrası izleme penceresi açılır ve formasyon üç boyutlu olarak gösterilir.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="sru.b2">İzleme penceresi</h2>
+  <p data-i18n="sru.p1">İzleme penceresi formasyonu üç boyutlu uzayda gösterir. Araçlar arasındaki gerçek zamanlı mesafeler metre cinsinden görüntülenir; hedeflenen konum farkı ile gerçek konum arasındaki sapma izlenir.</p>
+
+  <h2 data-i18n="sru.b3">Sürüyü sonlandırma</h2>
+  <ul>
+    <li data-i18n="sru.l1"><strong>Sürüyü dağıt</strong> — tüm izleyicileri sürüden çıkarır; her araç bağımsız denetime döner.</li>
+    <li data-i18n="sru.l2"><strong>Tek tek çıkar</strong> — belirli bir izleyiciyi sürüden ayırır, diğerleri formasyonu korur.</li>
+  </ul>
+
+  <div class="yrd-not tehlike">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="sru.n1" data-i18n-html>Sürü uçuşta <strong>konum farkları güvenli aralıkta olmalıdır</strong>. Çok yakın tanımlanmış farklar çarpışma riski taşır. İlk denemeleri sanal dron (SITL) ile yapmanız önerilir.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ UÇUŞ DUVARI ############ -->
+<article class="yrd-bolum" id="b-ucus-duvari">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.ucusDuvari">Uçuş Duvarı</span></div>
+  <h1 data-i18n="udv.baslik">Uçuş Duvarı</h1>
+  <p class="yrd-ozet" data-i18n="udv.ozet">Uçuş duvarı bağlı tüm hava araçlarının telemetri göstergelerini tek ekranda toplar. Çok araçlı harekâtta genel durumu izlemek için kullanılır.</p>
+
+  <h2 data-i18n="udv.b1">Ne gösterir</h2>
+  <ul>
+    <li data-i18n="udv.l1">Her araç için irtifa, hız, yön ve batarya durumu</li>
+    <li data-i18n="udv.l2">Uçuş kipi ve motor durumu (ARM / DISARM)</li>
+    <li data-i18n="udv.l3">Uydu sayısı ve konum doğruluğu</li>
+    <li data-i18n="udv.l4">Bağlantı gecikmesi ve veri akışı durumu</li>
+  </ul>
+
+  <h2 data-i18n="udv.b2">Tam ekran kipi</h2>
+  <p data-i18n="udv.p1">Uçuş duvarı penceresinde tam ekran düğmesi bulunur. Duvar panelini ekranın tamamına yayarak büyük ekranlı harekât merkezlerinde kullanabilirsiniz.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ UÇUŞ GEÇMİŞİ ############ -->
+<article class="yrd-bolum" id="b-ucus-gecmisi">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.ucusGecmisi">Uçuş Geçmişi ve Raporlar</span></div>
+  <h1 data-i18n="ugc.baslik">Uçuş Geçmişi ve Raporlar</h1>
+  <p class="yrd-ozet" data-i18n="ugc.ozet">Tamamlanan her uçuş kayda alınır. Kayıtlar üç boyutlu haritada tekrar oynatılabilir, grafiklerle incelenebilir ve rapor olarak çıktı alınabilir.</p>
+
+  <h2 data-i18n="ugc.b1">Uçuş sahipliği</h2>
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-user-check"></i></span>
+    <div data-i18n="ugc.n1" data-i18n-html>Bir uçuşun sahibi <strong>kalkış komutunu veren pilottur</strong>. Pilot rolündeki kullanıcılar yalnız kendi uçuşlarını görür. Kurum yöneticisi rolündeki kullanıcılar kurumun tüm uçuşlarını görebilir.</div>
+  </div>
+
+  <h2 data-i18n="ugc.b2">Kayıt görüntüleme</h2>
+  <p data-i18n="ugc.p1">Uçuş kaydını açtığınızda güzergâh üç boyutlu haritada çizilir. Rota noktaları arasındaki mesafeler etiketlerle gösterilir. Sağ köşede uçuşa ait kare kod (QR) bulunur; bu kod uçuş kaydını hızlıca paylaşmak için kullanılır.</p>
+  <p data-i18n="ugc.p2">Kayıt paneli tam ekran yapılabilir. Böylece uzun uçuşların ayrıntılı incelemesi rahat yapılır.</p>
+
+  <h2 data-i18n="ugc.b3">Uçuş grafiği ve rapor</h2>
+  <p data-i18n="ugc.p3">Uçuş grafiği irtifa, hız, batarya ve diğer telemetri değerlerini zaman ekseninde gösterir. Panelin altındaki rapor düğmesi grafikleri ve uçuş özetini yazdırılabilir rapor olarak çıkarır.</p>
+
+  <h2 data-i18n="ugc.b4">Geçmiş yönetimi</h2>
+  <p data-i18n="ugc.p4">Dronlar menüsündeki geçmiş yönetimi bölümünden kayıtları listeleyebilir, süzebilir ve gereksiz kayıtları silebilirsiniz. Silme işlemi geri alınamaz.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ SITL ############ -->
+<article class="yrd-bolum" id="b-sitl">
+  <div class="yrd-yol"><span data-i18n="agac.dronlar">Dronlar</span><span data-i18n="agac.sitl">Sanal Dron (SITL)</span></div>
+  <h1 data-i18n="stl.baslik">Sanal Dron (SITL)</h1>
+  <p class="yrd-ozet" data-i18n="stl.ozet">Sanal dron, gerçek donanım olmadan uçuş denemesi yapmanızı sağlar. Rota planlarını, sürü formasyonlarını ve arayüz alışkanlıklarını risksiz sınamak için kullanılır.</p>
+
+  <h2 data-i18n="stl.b1">Sanal dron başlatma</h2>
+  <p data-i18n="stl.p1">Gerekli dosyalar sistemde hazır bulunur; ayrıca indirme yapmanız gerekmez. Sanal dron başlattığınızda araç <strong>Sanal Dron</strong> grubu altında toplanır. Her sanal araç için ayrı grup açılmaz.</p>
+
+  <h2 data-i18n="stl.b2">Sık görülen durumlar</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="stl.t1h1">Belirti</th>
+      <th data-i18n="stl.t1h2">Neden ve çözüm</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td data-i18n="stl.t1a1">Çalıştırma izni hatası</td>
+        <td data-i18n="stl.t1a2">Sanal dron dosyasında çalıştırma izni yok. Kurulum arşivini yeniden açın.</td>
+      </tr>
+      <tr>
+        <td data-i18n="stl.t1b1">Biçim hatası (Exec format error)</td>
+        <td data-i18n="stl.t1b2">Dosya bu makinenin işlemci mimarisine uygun değil. Makinenizin mimarisine uygun arşivi kullanın.</td>
+      </tr>
+      <tr>
+        <td data-i18n="stl.t1c1">Hemen sonlanıyor</td>
+        <td data-i18n="stl.t1c2">Kayıt dosyasındaki ayrıntı iletisini inceleyin; eksik kitaplık veya port çakışması olabilir.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-flask"></i></span>
+    <div data-i18n="stl.n1" data-i18n-html>Sürü uçuş, rota planı ve joystick ayarlarını <strong>ilk olarak sanal dron ile</strong> sınamanız önerilir. Gerçek uçuşta geri dönüşü olmayan hataların çoğu bu aşamada yakalanır.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ ROTA TEMEL ############ -->
+<article class="yrd-bolum" id="b-rota-temel">
+  <div class="yrd-yol"><span data-i18n="agac.rotalar">Rota Planlama</span><span data-i18n="agac.rotaTemel">Rota Oluşturma</span></div>
+  <h1 data-i18n="rtt.baslik">Rota Oluşturma</h1>
+  <p class="yrd-ozet" data-i18n="rtt.ozet">Rota, hava aracının izleyeceği nokta dizisidir. Rotalar haritada çizilir, kaydedilir ve AUTO kipinde hava aracına yüklenerek kendiliğinden uçurulur.</p>
+
+  <h2 data-i18n="rtt.b1">Yeni rota çizme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="rtt.a1b">Rota kipini açın</strong>
+      <p data-i18n="rtt.a1p">Rotalar menüsünden <em>Yeni Rota</em> seçeneğini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="rtt.a2b">Noktaları işaretleyin</strong>
+      <p data-i18n="rtt.a2p">Haritaya tıklayarak sırayla rota noktalarını ekleyin. Noktalar arası mesafeler etiket olarak gösterilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="rtt.a3b">İrtifa değerlerini girin</strong>
+      <p data-i18n="rtt.a3p">Her nokta için hedef irtifa belirlenir. Tüm rota için tek irtifa da tanımlanabilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="rtt.a4b">Rotayı kaydedin</strong>
+      <p data-i18n="rtt.a4p">Rotaya ad verip kaydedin. Kayıtlı rotalar sonradan yüklenebilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="rtt.a5b">Hava aracına yükleyin</strong>
+      <p data-i18n="rtt.a5p">Rotayı seçili araca gönderin ve AUTO kipine geçin.</p>
+    </li>
+  </ol>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-ruler"></i></span>
+    <div data-i18n="rtt.n1" data-i18n-html>Rota noktaları arasındaki mesafe etiketleri haritada <strong>okunabilir boyutta</strong> gösterilir. Uzun rotalarda toplam mesafe ve tahmini uçuş süresi rota özetinde yer alır.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ ROTA TÜRLERİ ############ -->
+<article class="yrd-bolum" id="b-rota-turleri">
+  <div class="yrd-yol"><span data-i18n="agac.rotalar">Rota Planlama</span><span data-i18n="agac.rotaTurleri">Rota Türleri</span></div>
+  <h1 data-i18n="rtu.baslik">Rota Türleri</h1>
+  <p class="yrd-ozet" data-i18n="rtu.ozet">Görev tipine göre farklı rota kalıpları kullanılır. Sistem üç hazır kalıp ve serbest çizim desteği sunar.</p>
+
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-arrows-turn-right"></i></span>
+      <h4 data-i18n="rtu.k1b">Serbest Form</h4>
+      <p data-i18n="rtu.k1p">Noktaları elle işaretlediğiniz rota. Düzensiz arazi ve özel görev güzergâhları için uygundur.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-hurricane"></i></span>
+      <h4 data-i18n="rtu.k2b">Spiral Rota</h4>
+      <p data-i18n="rtu.k2p">Merkez nokta çevresinde genişleyen dairesel tarama. Alan gözetleme ve arama görevlerinde kullanılır.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-grip-lines"></i></span>
+      <h4 data-i18n="rtu.k3b">Koridor</h4>
+      <p data-i18n="rtu.k3p">Belirli genişlikte bir hat boyunca ileri geri tarama. Sınır hattı, boru hattı ve yol denetiminde kullanılır.</p>
+    </div>
+  </div>
+
+  <h2 data-i18n="rtu.b1">Hangi kalıbı seçmeli</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="rtu.t1h1">Görev</th>
+      <th data-i18n="rtu.t1h2">Önerilen kalıp</th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-i18n="rtu.t1a1">Belirli bir noktanın çevresini gözetleme</td><td data-i18n="rtu.t1a2">Spiral</td></tr>
+      <tr><td data-i18n="rtu.t1b1">Hat boyunca denetim (yol, sınır, boru hattı)</td><td data-i18n="rtu.t1b2">Koridor</td></tr>
+      <tr><td data-i18n="rtu.t1c1">Belirli noktalara sırayla ulaşma</td><td data-i18n="rtu.t1c2">Serbest form</td></tr>
+      <tr><td data-i18n="rtu.t1d1">Alan tarama (düzenli kapsama)</td><td data-i18n="rtu.t1d2">Koridor veya spiral</td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ ROTA YÖNETİM ############ -->
+<article class="yrd-bolum" id="b-rota-yonetim">
+  <div class="yrd-yol"><span data-i18n="agac.rotalar">Rota Planlama</span><span data-i18n="agac.rotaYonetim">Rota Yönetimi</span></div>
+  <h1 data-i18n="rty.baslik">Rota Yönetimi</h1>
+  <p class="yrd-ozet" data-i18n="rty.ozet">Kayıtlı rotalar rotalar panelinde listelenir. Rotalar haritada gösterilip gizlenebilir, düzenlenebilir ve silinebilir.</p>
+
+  <h2 data-i18n="rty.b1">Rotalar paneli</h2>
+  <ul>
+    <li data-i18n="rty.l1"><strong>Rota yükle</strong> — kayıtlı rotayı haritaya çağırır.</li>
+    <li data-i18n="rty.l2"><strong>Tümünü aç / kapat</strong> — tüm rotaların harita üzerinde görünürlüğünü değiştirir.</li>
+    <li data-i18n="rty.l3"><strong>Düzenle</strong> — nokta ekleme, çıkarma ve irtifa değiştirme.</li>
+    <li data-i18n="rty.l4"><strong>Hava aracına gönder</strong> — rotayı seçili araca yükler.</li>
+  </ul>
+
+  <h2 data-i18n="rty.b2">Rota paylaşımı</h2>
+  <p data-i18n="rty.p1">Rotalar kurum düzeyinde saklanır. Aynı kurumun pilotları kayıtlı rotalara erişebilir; böylece bir kez planlanan görev güzergâhı ekipçe kullanılır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ RADAR GENEL ############ -->
+<article class="yrd-bolum" id="b-radar-genel">
+  <div class="yrd-yol"><span data-i18n="agac.radar">Radar Modülü</span><span data-i18n="agac.radarGenel">Radar Nedir</span></div>
+  <h1 data-i18n="rdg.baslik">Radar Modülü</h1>
+  <p class="yrd-ozet" data-i18n="rdg.ozet">Radar modülü alçak irtifa hava sahasındaki hedefleri saptar ve izlerini harita üzerinde gösterir. Hava aracı telemetrisinden bağımsız çalışır; iş birliği yapmayan hedefleri de görür.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-lock"></i></span>
+    <div data-i18n="rdg.n1" data-i18n-html>Radar modülü <strong>yetkiye bağlıdır</strong>. Kurumsal hesaplarda talep üzerine açılır. Bireysel hesaplarda veri tabanı düzeyinde kapalıdır ve hiçbir yolla açılamaz.</div>
+  </div>
+
+  <h2 data-i18n="rdg.b1">Ne sağlar</h2>
+  <ul>
+    <li data-i18n="rdg.l1">Hedef saptama ve iz sürme (konum, irtifa, hız, yön)</li>
+    <li data-i18n="rdg.l2">Hedef sınıflandırma ve süzme</li>
+    <li data-i18n="rdg.l3">Menzil halkaları ve kapsama gösterimi</li>
+    <li data-i18n="rdg.l4">Kayıt alma ve tekrar oynatma</li>
+  </ul>
+
+  <h2 data-i18n="rdg.b2">Menü görünürlüğü</h2>
+  <p data-i18n="rdg.p1">Radar menüsü yalnız iki koşul birlikte sağlandığında görünür: kurumun radar yetkisi açık olmalı ve radar köprüsü çevrimiçi olmalı. Radar görünmüyorsa menü halkaları ve radar simgeleri de haritada gösterilmez.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ RADAR BAĞLANTI ############ -->
+<article class="yrd-bolum" id="b-radar-baglanti">
+  <div class="yrd-yol"><span data-i18n="agac.radar">Radar Modülü</span><span data-i18n="agac.radarBaglanti">Radar Bağlantısı</span></div>
+  <h1 data-i18n="rdb.baslik">Radar Bağlantısı</h1>
+  <p class="yrd-ozet" data-i18n="rdb.ozet">Radar birimine bağlantı merkezden başlatılır. Köprü, merkezden gelen bağlan komutundaki adrese bağlanır; kendiliğinden hiçbir adrese bağlanmaz.</p>
+
+  <h2 data-i18n="rdb.b1">Bağlantı adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="rdb.a1b">Radar köprüsünü başlatın</strong>
+      <p data-i18n="rdb.a1p">Köprü arayüzünden radar sunucusunu çalıştırın.</p>
+    </li>
+    <li>
+      <strong data-i18n="rdb.a2b">Radar ayarlarını açın</strong>
+      <p data-i18n="rdb.a2p">Radar menüsünden ayarlar bölümüne geçin.</p>
+    </li>
+    <li>
+      <strong data-i18n="rdb.a3b">Adresi girin</strong>
+      <p data-i18n="rdb.a3p">Radar biriminin ağ adresini ve portunu yazın. Bu adres köprünün eriştiği ağda olmalıdır.</p>
+    </li>
+    <li>
+      <strong data-i18n="rdb.a4b">Bağlan komutunu verin</strong>
+      <p data-i18n="rdb.a4p">Merkez, komutu köprüye iletir; köprü belirtilen adrese bağlanır.</p>
+    </li>
+  </ol>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-circle-info"></i></span>
+    <div data-i18n="rdb.n1" data-i18n-html>Köprü <strong>komut gelmeden bağlanmaz</strong>. Radar adresini merkezden siz belirlersiniz; köprü kendi başına bir adres denemez. Bağlantı öncesi köprü bilgisayarından radar adresine erişilebildiğini doğrulayın.</div>
+  </div>
+
+  <h2 data-i18n="rdb.b2">Bağlantı sorunları</h2>
+  <table>
+    <thead><tr>
+      <th data-i18n="rdb.t1h1">Belirti</th>
+      <th data-i18n="rdb.t1h2">Çözüm</th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-i18n="rdb.t1a1">Bağlantı kurulamıyor</td><td data-i18n="rdb.t1a2">Köprü bilgisayarından radar adresine erişimi sınayın. Aynı ağda olmalıdır.</td></tr>
+      <tr><td data-i18n="rdb.t1b1">Yanlış adrese bağlanıyor</td><td data-i18n="rdb.t1b2">Radar ayarlarındaki adresi denetleyin; köprü yalnız bu adresi kullanır.</td></tr>
+      <tr><td data-i18n="rdb.t1c1">Menü hiç görünmüyor</td><td data-i18n="rdb.t1c2">Kurumun radar yetkisi kapalı veya köprü çevrimdışı.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ RADAR HEDEF ############ -->
+<article class="yrd-bolum" id="b-radar-hedef">
+  <div class="yrd-yol"><span data-i18n="agac.radar">Radar Modülü</span><span data-i18n="agac.radarHedef">Hedef Takibi</span></div>
+  <h1 data-i18n="rdh.baslik">Hedef Takibi</h1>
+  <p class="yrd-ozet" data-i18n="rdh.ozet">Saptanan hedefler harita üzerinde iz olarak gösterilir. Her hedefin konumu, irtifası, hızı ve yönü izlenir; sınıflandırma ve süzme ile ilgisiz izler ekrandan çıkarılır.</p>
+
+  <h2 data-i18n="rdh.b1">Hedef süzme</h2>
+  <p data-i18n="rdh.p1">Hedef süzgeci ile ilgilenmediğiniz izleri ekrandan çıkarabilirsiniz. Süzme ölçütleri arasında irtifa aralığı, hız aralığı ve hedef sınıfı bulunur. Süzülen hedefler kayda alınmaya devam eder; yalnız gösterimden çıkarılır.</p>
+
+  <h2 data-i18n="rdh.b2">İz ayarları</h2>
+  <ul>
+    <li data-i18n="rdh.l1"><strong>İz uzunluğu</strong> — hedefin geçmiş konumlarının ne kadar geriye kadar çizileceği.</li>
+    <li data-i18n="rdh.l2"><strong>İz solma süresi</strong> — eski konumların ne kadar süre sonra silineceği.</li>
+    <li data-i18n="rdh.l3"><strong>Menzil halkaları</strong> — radar merkezinden uzaklık halkalarının gösterimi.</li>
+  </ul>
+
+  <h2 data-i18n="rdh.b3">Hedef sınıflandırma</h2>
+  <p data-i18n="rdh.p2">Hedefler hız, irtifa ve hareket örüntüsüne göre sınıflandırılır. Sınıflandırma sonucu hedef simgesinin biçimini ve rengini belirler; böylece harekât resminde farklı hedef türleri ayırt edilir.</p>
+
+  <h2 data-i18n="rdh.b4">Hedef panelleri</h2>
+  <p data-i18n="rdh.p3">Radar menüsünden hedef listesi panelini açabilirsiniz. Panel saptanan tüm hedefleri çizelge hâlinde gösterir; bir satıra tıkladığınızda harita o hedefe odaklanır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ RADAR KAYIT ############ -->
+<article class="yrd-bolum" id="b-radar-kayit">
+  <div class="yrd-yol"><span data-i18n="agac.radar">Radar Modülü</span><span data-i18n="agac.radarKayit">Kayıt ve Tekrar Oynatma</span></div>
+  <h1 data-i18n="rdk.baslik">Kayıt ve Tekrar Oynatma</h1>
+  <p class="yrd-ozet" data-i18n="rdk.ozet">Radar verisi kayda alınabilir ve sonradan tekrar oynatılabilir. Bu özellik harekât sonrası inceleme ve eğitim amacıyla kullanılır.</p>
+
+  <h2 data-i18n="rdk.b1">Kayıt alma</h2>
+  <p data-i18n="rdk.p1">Radar menüsündeki kayıt düğmesi ile veri toplamaya başlarsınız. Kayıt sürerken hedef izleri normal biçimde görüntülenmeye devam eder.</p>
+
+  <h2 data-i18n="rdk.b2">Tekrar oynatma</h2>
+  <p data-i18n="rdk.p2">Kayıtlı bir oturumu açtığınızda hedef izleri zaman ekseninde yeniden oynatılır. Oynatma hızını değiştirebilir, belirli bir zamana atlayabilirsiniz. Tekrar oynatma sırasında canlı radar verisi askıya alınır.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-clock-rotate-left"></i></span>
+    <div data-i18n="rdk.n1" data-i18n-html>Tekrar oynatma <strong>yalnız gösterimi</strong> etkiler. Kayıt verisi değiştirilmez; aynı oturum birden çok kez incelenebilir.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ AI GENEL ############ -->
+<article class="yrd-bolum" id="b-ai-genel">
+  <div class="yrd-yol"><span data-i18n="agac.ai">Yapay Zekâ</span><span data-i18n="agac.aiGenel">AI Modülü</span></div>
+  <h1 data-i18n="aig.baslik">Yapay Zekâ Modülü</h1>
+  <p class="yrd-ozet" data-i18n="aig.ozet">Yapay zekâ modülü kamera ve hava aracı görüntülerini işleyerek kişi, araç ve nesne tespiti yapar. Tespitler harita üzerinde konumlandırılır ve harekât resmine katılır.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-credit-card"></i></span>
+    <div data-i18n="aig.n1" data-i18n-html>Yapay zekâ modülü <strong>ücretli bir eklentidir</strong>. Hem kurumsal hem bireysel hesaplarda satın alınarak etkinleştirilir. Modül kapalıysa AI menüsü arayüzde görünmez.</div>
+  </div>
+
+  <h2 data-i18n="aig.b1">Ne yapar</h2>
+  <ul>
+    <li data-i18n="aig.l1">Kişi ve araç tespiti; tespit edilen nesnenin konum tahmini</li>
+    <li data-i18n="aig.l2">Kayıtlı kişi ve araç listesiyle karşılaştırma</li>
+    <li data-i18n="aig.l3">Kayıtsız tespitlerin ayrı listelenmesi</li>
+    <li data-i18n="aig.l4">Tespit geçmişi ve zaman çizelgesi</li>
+    <li data-i18n="aig.l5">Kayıtlı lokasyonlarda düzenli tarama</li>
+  </ul>
+
+  <h2 data-i18n="aig.b2">İşleme nerede yapılır</h2>
+  <p data-i18n="aig.p1">Görüntü işleme yapay zekâ sunucusunda yapılır. Sunucu köprü bilgisayarında veya aynı ağdaki ayrı bir makinede (tipik olarak grafik işlemcili bir makine) çalışabilir. Görüntü merkeze gönderilmeden yerel ağda işlenir; yalnız tespit sonuçları merkeze aktarılır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ AI SUNUCU ############ -->
+<article class="yrd-bolum" id="b-ai-sunucu">
+  <div class="yrd-yol"><span data-i18n="agac.ai">Yapay Zekâ</span><span data-i18n="agac.aiSunucu">AI Sunucuları</span></div>
+  <h1 data-i18n="ais.baslik">Yapay Zekâ Sunucuları</h1>
+  <p class="yrd-ozet" data-i18n="ais.ozet">Yapay zekâ sunucuları köprü altında gruplanır. Sunucu ayrı bir makinedeyse SSH ile uzaktan başlatılabilir ve konsol çıktısı canlı izlenebilir.</p>
+
+  <h2 data-i18n="ais.b1">Sunucu tanımlama</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="ais.a1b">Sunucular bölümünü açın</strong>
+      <p data-i18n="ais.a1p">AI menüsünden <em>Sunucular</em> seçeneğini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="ais.a2b">Köprüyü seçin</strong>
+      <p data-i18n="ais.a2p">Sunucunun hangi köprü altında gruplanacağını belirleyin.</p>
+    </li>
+    <li>
+      <strong data-i18n="ais.a3b">Adres ve oturum bilgilerini girin</strong>
+      <p data-i18n="ais.a3p">Sunucunun ağ adresi ile SSH kullanıcı adı ve şifresini tanımlayın.</p>
+    </li>
+    <li>
+      <strong data-i18n="ais.a4b">Sunucuyu başlatın</strong>
+      <p data-i18n="ais.a4p">Listedeki başlat düğmesi SSH ile bağlanıp sunucuyu uzaktan çalıştırır.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="ais.b2">Konsol izleme</h2>
+  <p data-i18n="ais.p1">Her sunucunun yanındaki konsol düğmesi SSH çıktısını canlı gösterir. Konsolu açıp kapatabilirsiniz; kapatmak sunucuyu durdurmaz, yalnız çıktı izlemeyi sonlandırır.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-key"></i></span>
+    <div data-i18n="ais.n1" data-i18n-html>SSH oturum bilgileri sunucu tanımında saklanır. Yapay zekâ sunucusu için <strong>yalnız gerekli yetkilere sahip ayrı bir kullanıcı</strong> tanımlamanız önerilir; yönetici hesabı kullanmayın.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ AI TESPİT ############ -->
+<article class="yrd-bolum" id="b-ai-tespit">
+  <div class="yrd-yol"><span data-i18n="agac.ai">Yapay Zekâ</span><span data-i18n="agac.aiTespit">Tespit ve Tanıma</span></div>
+  <h1 data-i18n="ait.baslik">Tespit ve Tanıma</h1>
+  <p class="yrd-ozet" data-i18n="ait.ozet">Sistem tespit ettiği kişi ve araçları kayıtlı listelerle karşılaştırır. Eşleşen tespitler tanımlı kayıtla, eşleşmeyenler kayıtsız tespit olarak listelenir.</p>
+
+  <h2 data-i18n="ait.b1">Kişiler ve araçlar</h2>
+  <p data-i18n="ait.p1">AI menüsündeki kişiler ve araçlar bölümlerinde tanımlı kayıtları yönetirsiniz. Her kayda ad, açıklama ve tanıma verisi eklenir. Tespit sırasında bu kayıtlarla karşılaştırma yapılır.</p>
+
+  <h2 data-i18n="ait.b2">Kayıtsız tespitler</h2>
+  <p data-i18n="ait.p2">Tanımlı listelerde karşılığı bulunmayan tespitler ayrı bir listede toplanır. Bu liste üzerinden tespiti inceleyip tanımlı kayda dönüştürebilir veya yok sayabilirsiniz.</p>
+
+  <h2 data-i18n="ait.b3">Tespit geçmişi</h2>
+  <p data-i18n="ait.p3">Tespit geçmişi tüm tespitleri zaman sırasıyla listeler. Kayıt üzerinde tespit anı, konum, kaynak kamera ve güven değeri bulunur. Geçmiş üzerinden süzme yapılarak belirli bir zaman aralığı veya konum incelenebilir.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ AI LOKASYON ############ -->
+<article class="yrd-bolum" id="b-ai-lokasyon">
+  <div class="yrd-yol"><span data-i18n="agac.ai">Yapay Zekâ</span><span data-i18n="agac.aiLokasyon">Kayıtlı Lokasyonlar</span></div>
+  <h1 data-i18n="ail.baslik">Kayıtlı Lokasyonlar</h1>
+  <p class="yrd-ozet" data-i18n="ail.ozet">Kayıtlı lokasyonlar düzenli olarak taranan sabit noktalardır. Her lokasyon için tarama sıklığı ve ilgilenilen tespit türleri tanımlanır.</p>
+
+  <h2 data-i18n="ail.b1">Lokasyon tanımlama</h2>
+  <p data-i18n="ail.p1">Bir lokasyon, harita üzerinde bir konum ve o konumu izleyen kamera ile tanımlanır. Lokasyona ad verilir ve hangi tespit türlerinin izleneceği seçilir.</p>
+
+  <h2 data-i18n="ail.b2">Düzenli tarama</h2>
+  <p data-i18n="ail.p2">Tanımlı lokasyonlar belirlenen sıklıkta taranır. Tarama sonucunda bulunan tespitler lokasyon kaydına bağlanır; böylece belirli bir noktadaki değişimi zaman içinde izleyebilirsiniz.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KAMERA EKLE ############ -->
+<article class="yrd-bolum" id="b-kamera-ekle">
+  <div class="yrd-yol"><span data-i18n="agac.video">Kamera ve Video</span><span data-i18n="agac.kameraEkle">Kamera Ekleme</span></div>
+  <h1 data-i18n="kme.baslik">Kamera Ekleme</h1>
+  <p class="yrd-ozet" data-i18n="kme.ozet">Kameralar köprü altında gruplanır. Ağ kameraları, hava aracı yayınları ve yerel aygıtlar aynı arayüzden yönetilir.</p>
+
+  <h2 data-i18n="kme.b1">Yeni kamera tanımlama</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="kme.a1b">Yeni kamera penceresini açın</strong>
+      <p data-i18n="kme.a1p">Kameralar menüsünden <em>Yeni Kamera</em> seçeneğini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="kme.a2b">Köprüyü seçin</strong>
+      <p data-i18n="kme.a2p">Kamera akışını hangi köprünün taşıyacağını belirleyin.</p>
+    </li>
+    <li>
+      <strong data-i18n="kme.a3b">Akış adresini girin</strong>
+      <p data-i18n="kme.a3p">RTSP, HTTP veya yerel aygıt yolu. Kimlik gerektiren kameralarda kullanıcı adı ve şifre de girilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="kme.a4b">Konumu belirleyin</strong>
+      <p data-i18n="kme.a4p">Sabit kameralar için harita konumu tanımlanır; böylece kamera görüntüsü harekât resminde doğru yerde gösterilir.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="kme.b2">Tüm kameralara bağlanma</h2>
+  <p data-i18n="kme.p1">Kameralar menüsündeki <em>Tüm Kameralara Bağlan</em> komutu tanımlı tüm kameraların akışını tek seferde başlatır. Bu komut harekât başlangıcında zaman kazandırır.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-gear"></i></span>
+    <div data-i18n="kme.n1" data-i18n-html>Video sunucusu <code>ffmpeg</code> gerektirir. Sistemde kurulu değilse konsol çıktısı <strong>kurulum yönergesini</strong> gösterir. Kurulum sonrası video sunucusunu yeniden başlatın.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ VİDEO DUVARI ############ -->
+<article class="yrd-bolum" id="b-video-duvari">
+  <div class="yrd-yol"><span data-i18n="agac.video">Kamera ve Video</span><span data-i18n="agac.videoDuvari">Video Duvarı</span></div>
+  <h1 data-i18n="vdv.baslik">Video Duvarı</h1>
+  <p class="yrd-ozet" data-i18n="vdv.ozet">Video duvarı birden çok kamera görüntüsünü tek ekranda ızgara düzeninde gösterir. Harekât merkezlerinde genel gözetim için kullanılır.</p>
+
+  <h2 data-i18n="vdv.b1">Duvar düzeni</h2>
+  <ul>
+    <li data-i18n="vdv.l1">Izgara boyutu kamera sayısına göre kendiliğinden ayarlanır.</li>
+    <li data-i18n="vdv.l2">Bir görüntüye tıklayarak onu büyütebilirsiniz.</li>
+    <li data-i18n="vdv.l3">Duvar tam ekran yapılabilir.</li>
+    <li data-i18n="vdv.l4">Yapay zekâ modülü etkinse tespit çerçeveleri görüntü üzerinde gösterilir.</li>
+  </ul>
+
+  <h2 data-i18n="vdv.b2">Önizleme görünümü</h2>
+  <p data-i18n="vdv.p1">Kameralar menüsündeki önizleme görünümü, tanımlı kameraların küçük görüntülerini yan yana gösterir. Hangi kameranın çalıştığını hızlıca denetlemek için kullanılır.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ VİDEO KAYIT ############ -->
+<article class="yrd-bolum" id="b-video-kayit">
+  <div class="yrd-yol"><span data-i18n="agac.video">Kamera ve Video</span><span data-i18n="agac.videoKayit">Video Kayıtları</span></div>
+  <h1 data-i18n="vdk.baslik">Video Kayıtları</h1>
+  <p class="yrd-ozet" data-i18n="vdk.ozet">Kamera akışları kayda alınabilir. Kayıtlar merkezde saklanır ve kurumsal panelden izlenebilir.</p>
+
+  <h2 data-i18n="vdk.b1">Kayıt alma</h2>
+  <p data-i18n="vdk.p1">Video sunucusu çalışırken kamera akışları kayda alınır. Kayıt süresi ve saklama ayarları video sunucusu yapılandırmasından yönetilir.</p>
+
+  <h2 data-i18n="vdk.b2">Kayıtları izleme</h2>
+  <p data-i18n="vdk.p2">Kurum yöneticileri kurumsal panelden kurumun tüm video kayıtlarını görebilir. Kayıtlar tarih, kamera ve pilot bilgisine göre süzülebilir.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-hard-drive"></i></span>
+    <div data-i18n="vdk.n1" data-i18n-html>Video kayıtları <strong>disk alanı tüketir</strong>. Uzun süreli kayıt yapıyorsanız saklama süresini sınırlandırmanız ve eski kayıtları düzenli olarak temizlemeniz önerilir.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ GCCDUAL GENEL ############ -->
+<article class="yrd-bolum" id="b-gccdual-genel">
+  <div class="yrd-yol"><span data-i18n="agac.gccdual">Yer Kontrol İstasyonu</span><span data-i18n="agac.gccdualGenel">GCCDual Nedir</span></div>
+  <h1 data-i18n="gcg.baslik">Yer Kontrol İstasyonu Dual (GCCDual)</h1>
+  <p class="yrd-ozet" data-i18n="gcg.ozet">GCCDual, iki ekranlı taşınabilir bir yer kontrol çantasıdır. Çanta içindeki gömülü denetleyici düğme ve kumanda kolu durumlarını sisteme bildirir; harekât arayüzü ve uçuş duvarı iki ekranda ayrı ayrı gösterilir.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-toggle-on"></i></span>
+    <div data-i18n="gcg.n1" data-i18n-html>GCCDual modülü <strong>kurum düzeyinde açılır</strong>. Modül kapalıysa menüde hiç görünmez. Bireysel hesaplarda bu modül <strong>kullanılamaz</strong>.</div>
+  </div>
+
+  <h2 data-i18n="gcg.b1">Donanım yapısı</h2>
+  <ul>
+    <li data-i18n="gcg.l1">Üst ekran: harekât arayüzü (harita, dron panelleri, görev yönetimi)</li>
+    <li data-i18n="gcg.l2">Alt ekran: uçuş duvarı (uçuş göstergeleri, telemetri)</li>
+    <li data-i18n="gcg.l3">Gömülü denetleyici: düğme ve kumanda kolu durumlarını bildirir</li>
+    <li data-i18n="gcg.l4">İki adet iki eksenli kumanda kolu: hava aracı denetimi</li>
+    <li data-i18n="gcg.l5">İki adet kumanda kolu: harita gezinme</li>
+  </ul>
+
+  <h2 data-i18n="gcg.b2">Bağlantı ve görünürlük</h2>
+  <p data-i18n="gcg.p1">GCCDual çantası köprü bilgisayarına bağlanır ve köprü yazılımındaki GroundGCC servisi tarafından yönetilir. Servis çalışır durumdaysa harekât arayüzünde <em>Göktungu</em> menüsü altında <em>Yer Kontrol İstasyonu Dual</em> öğesi görünür. Servis durdurulursa öğe menüden kalkar.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-plug"></i></span>
+    <div data-i18n="gcg.n2" data-i18n-html>Çantanın bağlandığı seri aygıt yolu köprü yazılımı ayarlarından tanımlanır. Öntanımlı değer Linux sistemlerde <code>/dev/ttyACM0</code>, Windows sistemlerde ise <code>COM</code> ile başlayan bir bağlantı noktasıdır.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ GCCDUAL DÜĞMELER ############ -->
+<article class="yrd-bolum" id="b-gccdual-dugmeler">
+  <div class="yrd-yol"><span data-i18n="agac.gccdual">Yer Kontrol İstasyonu</span><span data-i18n="agac.gccdualDugmeler">Düğme Eşlemesi</span></div>
+  <h1 data-i18n="gcd.baslik">Düğme ve Kumanda Kolu Eşlemesi</h1>
+  <p class="yrd-ozet" data-i18n="gcd.ozet">Çanta üzerindeki düğmeler hava aracı komutlarına, kumanda kolları ise hava aracı denetimi ve harita gezinmesine eşlenmiştir.</p>
+
+  <h2 data-i18n="gcd.b1">Uçuş komut düğmeleri</h2>
+  <p data-i18n="gcd.p1">Bu düğmeler yalnız hava aracı kumanda kolu denetimi açıkken etkindir.</p>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P1</span><span data-i18n="gcd.p1a">Motorları kur / kapat</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P2</span><span data-i18n="gcd.p2a">Kalkış / iniş</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P3</span><span data-i18n="gcd.p3a">Kalkış noktasına dönüş</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P4</span><span data-i18n="gcd.p4a">Yönlendirilmiş uçuş kipi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P5</span><span data-i18n="gcd.p5a">Yükseklik koruma kipi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan">P6</span><span data-i18n="gcd.p6a">Görev uçuşu kipi</span></div>
+  </div>
+
+  <h2 data-i18n="gcd.b2">Emniyet anahtarı</h2>
+  <p data-i18n="gcd.p2">T1 anahtarı emniyet kilidini yönetir. Anahtar açık konumdayken P7 ışığı yanar ve kritik komutlar öncesinde onay istenir. Kapalı konumda onay istenmez.</p>
+
+  <div class="yrd-not tehlike">
+    <span class="yrd-ni"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div data-i18n="gcd.n1" data-i18n-html>Emniyet anahtarı <strong>kapalı konumdayken</strong> kritik komutlar onay istemeden uygulanır. Uçuş öncesinde anahtarın konumunu mutlaka doğrulayın.</div>
+  </div>
+
+  <h2 data-i18n="gcd.b3">Harita gezinme düğmeleri</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar">P8</span><span data-i18n="gcd.p8a">Harita kaynağını sırayla değiştir</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar">P9</span><span data-i18n="gcd.p9a">Kullanıcı konumuna git</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar">P10</span><span data-i18n="gcd.p10a">Tüm nesneleri kapsayacak biçimde yakınlaştır</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar">P11</span><span data-i18n="gcd.p11a">Haritadaki noktalar arasında sırayla gez</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar">T2</span><span data-i18n="gcd.t2a">Yukarı: yakınlaştır · Aşağı: uzaklaştır</span></div>
+  </div>
+
+  <h2 data-i18n="gcd.b4">Kumanda kolları</h2>
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-map"></i></span>
+      <h3 data-i18n="gcd.k1b">Harita kolları</h3>
+      <p data-i18n="gcd.k1p">Sol ve sağ kumanda kolları üç boyutlu haritayı denetler: kaydırma, döndürme ve eğme.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-helicopter"></i></span>
+      <h3 data-i18n="gcd.k2b">Hava aracı kolları</h3>
+      <p data-i18n="gcd.k2p">İki eksenli iki kumanda kolu, hava aracı kumanda kolu denetimi açıkken aracı havada yönlendirir.</p>
+    </div>
+  </div>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-sliders"></i></span>
+    <div data-i18n="gcd.n2" data-i18n-html>Kumanda kolu eksen yönleri <strong>pilot ayarlarından</strong> ters çevrilebilir. Farklı pilotlar farklı eksen düzeni kullanabildiği için bu ayar kişiye özeldir. Kollar ortadayken aracın kendiliğinden dönmesi durumunda ölü bölge ayarını artırın.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DJI GENEL ############ -->
+<article class="yrd-bolum" id="b-dji-genel">
+  <div class="yrd-yol"><span data-i18n="agac.dji">DJI Köprüsü</span><span data-i18n="agac.djiGenel">Genel Bakış</span></div>
+  <h1 data-i18n="djg.baslik">DJI Köprü Uygulaması</h1>
+  <p class="yrd-ozet" data-i18n="djg.ozet">DJI köprü uygulaması, DJI hava araçlarını Göktungu harekât resmine bağlayan bir Android uygulamasıdır. Uygulama kumanda cihazına kurulur ve telemetriyi merkeze aktarır.</p>
+
+  <h2 data-i18n="djg.b1">Ne işe yarar</h2>
+  <ul>
+    <li data-i18n="djg.l1">DJI hava aracının konum, yükseklik ve durum bilgisini merkeze aktarır</li>
+    <li data-i18n="djg.l2">Aracı harekât resminde diğer araçlarla aynı haritada gösterir</li>
+    <li data-i18n="djg.l3">Harita üzerinden konum hedefi verilmesini sağlar</li>
+    <li data-i18n="djg.l4">Uçuş kaydını merkez arşivine ekler</li>
+  </ul>
+
+  <h2 data-i18n="djg.b2">Gereksinimler</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet soluk" data-i18n="djg.g1e">Cihaz</span><span data-i18n="djg.g1a">Android kumanda cihazı veya Android telefon bağlı kumanda</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet soluk" data-i18n="djg.g2e">Ağ</span><span data-i18n="djg.g2a">Merkeze erişebilen mobil veri veya kablosuz ağ bağlantısı</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet soluk" data-i18n="djg.g3e">Hesap</span><span data-i18n="djg.g3a">Kurum veya bireysel Göktungu hesabı</span></div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DJI KURULUM ############ -->
+<article class="yrd-bolum" id="b-dji-kurulum">
+  <div class="yrd-yol"><span data-i18n="agac.dji">DJI Köprüsü</span><span data-i18n="agac.djiKurulum">Kurulum ve Kullanım</span></div>
+  <h1 data-i18n="djk.baslik">DJI Köprüsü Kurulumu</h1>
+  <p class="yrd-ozet" data-i18n="djk.ozet">Uygulama kumanda cihazına kurulduktan sonra hesap bilgileriyle giriş yapılır ve merkez bağlantısı kurulur.</p>
+
+  <h2 data-i18n="djk.b1">Kurulum adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="djk.a1b">Uygulamayı kurun</strong>
+      <p data-i18n="djk.a1p">Uygulamayı kumanda cihazına kurun ve gerekli izinleri verin: konum, ağ erişimi ve harici aygıt erişimi.</p>
+    </li>
+    <li>
+      <strong data-i18n="djk.a2b">Hesabınızla giriş yapın</strong>
+      <p data-i18n="djk.a2p">Göktungu hesabınızın e-posta adresi ve şifresiyle giriş yapın. Kurumsal hesaplarda kurum kimliği doğrulanır.</p>
+    </li>
+    <li>
+      <strong data-i18n="djk.a3b">Merkez adresini doğrulayın</strong>
+      <p data-i18n="djk.a3p">Uygulama öntanımlı olarak merkez adresine bağlanır. Kapalı devre kurulumlarda kendi merkez adresinizi girin.</p>
+    </li>
+    <li>
+      <strong data-i18n="djk.a4b">Hava aracını bağlayın</strong>
+      <p data-i18n="djk.a4p">Kumandayı hava aracına bağlayın. Uygulama aracı tanıdığında durum göstergesi yeşile döner ve telemetri akışı başlar.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="djk.b2">Harekât resminde görünüm</h2>
+  <p data-i18n="djk.p1">Bağlantı kurulduğunda hava aracı harekât arayüzündeki haritada belirir. Araç diğer hava araçlarıyla aynı sembol düzenini kullanır; rengi bağlantı durumunu, yönü ise aracın bildirdiği yönü gösterir.</p>
+
+  <h2 data-i18n="djk.b3">Konum hedefi verme</h2>
+  <p data-i18n="djk.p2">Haritada bir noktaya konum hedefi verildiğinde araç o noktaya yönlendirilir. Hedef verme işlemi yalnız aracın uygun uçuş kipinde olması durumunda kabul edilir.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-battery-half"></i></span>
+    <div data-i18n="djk.n1" data-i18n-html>Uygulama sürekli konum ve ağ erişimi kullandığı için <strong>kumanda cihazının pilini hızlı tüketir</strong>. Uzun görevlerde kumandayı harici güç kaynağına bağlı tutun.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KURUMSAL PANEL ############ -->
+<article class="yrd-bolum" id="b-kurumsal-panel">
+  <div class="yrd-yol"><span data-i18n="agac.paneller">Paneller</span><span data-i18n="agac.kurumsalPanel">Kurumsal Panel</span></div>
+  <h1 data-i18n="kpn.baslik">Kurumsal Panel</h1>
+  <p class="yrd-ozet" data-i18n="kpn.ozet">Kurumsal panel, kurum yöneticisinin pilot kadrosunu, aboneliği, uçuş ve video kayıtlarını yönettiği arayüzdür. Yalnız kurum yöneticisi rolündeki kullanıcılar girebilir.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-lock"></i></span>
+    <div data-i18n="kpn.n1" data-i18n-html>Pilot rolündeki kullanıcılar kurumsal panele <strong>giremez</strong>. Bireysel hesaplar da bu paneli kullanmaz; tüm işlemlerini harekât arayüzü içinden yapar.</div>
+  </div>
+
+  <h2 data-i18n="kpn.b1">Panel bölümleri</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m1e">Genel Bakış</span><span data-i18n="kpn.m1a">Kurum özeti, etkin pilot sayısı, abonelik durumu</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m2e">Ekip</span><span data-i18n="kpn.m2a">Pilot ve yönetici kullanıcıların yönetimi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m3e">Uçuşlar</span><span data-i18n="kpn.m3a">Kurumun tüm uçuş kayıtları ve raporları</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m4e">Videolar</span><span data-i18n="kpn.m4a">Kamera kayıtlarının izlenmesi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m5e">Abonelik</span><span data-i18n="kpn.m5a">Koltuk sayısı, modüller ve ödeme geçmişi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m6e">İndirmeler</span><span data-i18n="kpn.m6a">Köprü yazılımı ve lisanslıysa merkez yazılımı</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="kpn.m7e">Destek</span><span data-i18n="kpn.m7a">Destek talebi açma ve takip</span></div>
+  </div>
+
+  <h2 data-i18n="kpn.b2">Panele erişim</h2>
+  <p data-i18n="kpn.p1">Panele iki yoldan erişilir: tanıtım sayfasındaki hesap menüsünden <em>Kurumsal Panel</em> bağlantısı, veya doğrudan panel adresi. Oturum belirli bir süre açık kalır; süre dolduğunda yeniden giriş istenir.</p>
+
+  <h2 data-i18n="kpn.b3">İndirmeler</h2>
+  <p data-i18n="kpn.p2">Köprü yazılımı tüm kurumlara açıktır ve panelden indirilir. Merkez yazılımı yalnız lisans tahsis edilmiş kurumlarda görünür. İndirme bağlantıları tanıtım sayfasında yer almaz; yalnız panel üzerinden verilir.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ EKİP YÖNETİMİ ############ -->
+<article class="yrd-bolum" id="b-ekip-yonetimi">
+  <div class="yrd-yol"><span data-i18n="agac.paneller">Paneller</span><span data-i18n="agac.ekipYonetimi">Ekip Yönetimi</span></div>
+  <h1 data-i18n="eky.baslik">Ekip ve Pilot Yönetimi</h1>
+  <p class="yrd-ozet" data-i18n="eky.ozet">Kurumun tüm kullanıcıları kurumsal panelin ekip bölümünden yönetilir. Kullanıcı ekleme, rol atama ve şifre sıfırlama işlemleri burada yapılır.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-circle-info"></i></span>
+    <div data-i18n="eky.n1" data-i18n-html>Kullanıcı ekleme ve rol yönetimi <strong>yalnız kurumsal panelden</strong> yapılır. Harekât arayüzünde bu menüler bulunmaz.</div>
+  </div>
+
+  <h2 data-i18n="eky.b1">Roller</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet iyi" data-i18n="eky.r1e">Kurum Yöneticisi</span><span data-i18n="eky.r1a">Panele girer, kullanıcı ekler, aboneliği yönetir, tüm uçuşları görür</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="eky.r2e">Pilot</span><span data-i18n="eky.r2a">Harekât arayüzünü kullanır, yalnız kendi uçuşlarını görür</span></div>
+  </div>
+
+  <h2 data-i18n="eky.b2">Kullanıcı ekleme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="eky.a1b">Koltuk durumunu denetleyin</strong>
+      <p data-i18n="eky.a1p">Yeni pilot eklemek için boş koltuk gerekir. Koltuk yoksa abonelik bölümünden koltuk eklenmelidir.</p>
+    </li>
+    <li>
+      <strong data-i18n="eky.a2b">Kullanıcıyı tanımlayın</strong>
+      <p data-i18n="eky.a2p">Ad, soyad, e-posta adresi ve rol girilir. E-posta adresi sistemde tekil olmalıdır.</p>
+    </li>
+    <li>
+      <strong data-i18n="eky.a3b">Şifre belirleyin</strong>
+      <p data-i18n="eky.a3p">Kullanıcıya bir başlangıç şifresi verilir. Kullanıcı ilk girişten sonra şifresini değiştirebilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="eky.a4b">Kullanıcıyı bilgilendirin</strong>
+      <p data-i18n="eky.a4p">Kullanıcı e-posta adresi ve şifresiyle harekât arayüzüne giriş yapabilir.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="eky.b3">Uçuş sahipliği</h2>
+  <p data-i18n="eky.p1">Bir uçuşun sahibi, kalkış komutunu veren kullanıcıdır. Pilotlar yalnız kendi uçuşlarını görür; kurum yöneticileri kurumun tüm uçuşlarını görebilir. Bu kural uçuş kayıtları, grafikler ve raporlar için geçerlidir.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-user-slash"></i></span>
+    <div data-i18n="eky.n2" data-i18n-html>Bir kullanıcı pasife alındığında giriş yapamaz ancak <strong>uçuş kayıtları korunur</strong>. Kullanıcı yeniden etkinleştirildiğinde kayıtlarına erişimi geri döner.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ YÖNETİM PANELİ ############ -->
+<article class="yrd-bolum" id="b-yonetim-paneli">
+  <div class="yrd-yol"><span data-i18n="agac.paneller">Paneller</span><span data-i18n="agac.yonetimPaneli">Yönetim Paneli</span></div>
+  <h1 data-i18n="ypn.baslik">Gökkubbe Yönetim Paneli</h1>
+  <p class="yrd-ozet" data-i18n="ypn.ozet">Yönetim paneli, Gökkubbe personelinin tüm kurumları, abonelikleri, lisansları ve destek taleplerini yönettiği en üst düzey arayüzdür.</p>
+
+  <div class="yrd-not tehlike">
+    <span class="yrd-ni"><i class="fa-solid fa-shield-halved"></i></span>
+    <div data-i18n="ypn.n1" data-i18n-html>Bu panel <strong>yalnız Gökkubbe personeline</strong> açıktır. Müşteri kurumların bu panele erişimi yoktur.</div>
+  </div>
+
+  <h2 data-i18n="ypn.b1">Panel bölümleri</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m1e">Kurumlar</span><span data-i18n="ypn.m1a">Kurum kayıtları, abonelik ve modül yönetimi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m2e">Kullanıcılar</span><span data-i18n="ypn.m2a">Tüm kurumların kullanıcı kayıtları</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m3e">Lisanslar</span><span data-i18n="ypn.m3a">Merkez yazılım lisanslarının tahsisi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m4e">Ödemeler</span><span data-i18n="ypn.m4a">Abonelik ödemeleri ve fatura kayıtları</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m5e">Sürüm Deposu</span><span data-i18n="ypn.m5a">Kurulum paketleri ve sürüm defteri</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m6e">Destek</span><span data-i18n="ypn.m6a">Tüm destek talepleri ve yanıtlar</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m7e">Personel</span><span data-i18n="ypn.m7a">Gökkubbe personel hesapları ve rolleri</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="ypn.m8e">Altyapı</span><span data-i18n="ypn.m8a">Servis durumu ve sistem ayarları</span></div>
+  </div>
+
+  <h2 data-i18n="ypn.b2">Modül tahsisi</h2>
+  <p data-i18n="ypn.p1">Radar ve GCCDual modülleri satın alınamaz; yalnız Gökkubbe sistem yöneticisi tarafından kuruma tahsis edilir. Tahsis edilen modül hem harekât arayüzünde hem de kurumun indirdiği merkez yazılımında etkin olur.</p>
+
+  <h2 data-i18n="ypn.b3">Lisans tahsisi</h2>
+  <p data-i18n="ypn.p2">Merkez yazılım lisansı bir kuruma tahsis edildiğinde kurumsal panelde indirme bağlantısı görünür. Lisanslı kurum yazılımı sınırsız kullanır ve isterse kapalı devre çalıştırabilir.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ PERSONEL YÖNETİMİ ############ -->
+<article class="yrd-bolum" id="b-personel-yonetimi">
+  <div class="yrd-yol"><span data-i18n="agac.paneller">Paneller</span><span data-i18n="agac.personelYonetimi">Personel Yönetimi</span></div>
+  <h1 data-i18n="pyn.baslik">Gökkubbe Personel Yönetimi</h1>
+  <p class="yrd-ozet" data-i18n="pyn.ozet">Yönetim panelindeki personel bölümünden Gökkubbe personel hesapları oluşturulur ve rolleri belirlenir. Her rol farklı yetki düzeyine sahiptir.</p>
+
+  <h2 data-i18n="pyn.b1">Personel rolleri</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet kotu" data-i18n="pyn.r1e">Sistem Yöneticisi</span><span data-i18n="pyn.r1a">Tüm panele erişir; kurum, lisans, personel ve destek yönetir</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="pyn.r2e">Destek Personeli</span><span data-i18n="pyn.r2a">Yalnız destek taleplerini görür ve yanıtlar</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet soluk" data-i18n="pyn.r3e">Gözlemci</span><span data-i18n="pyn.r3a">Salt okuma; değişiklik yapamaz</span></div>
+  </div>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-headset"></i></span>
+    <div data-i18n="pyn.n1" data-i18n-html>Destek personeli rolü <strong>yalnız destek sistemine</strong> erişir. Kurum kayıtlarını, lisansları, ödemeleri veya diğer personel hesaplarını göremez ve değiştiremez.</div>
+  </div>
+
+  <h2 data-i18n="pyn.b2">Personel ekleme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="pyn.a1b">Personel bölümünü açın</strong>
+      <p data-i18n="pyn.a1p">Yönetim panelinde <em>Destek</em> grubu altındaki <em>Personel</em> bölümüne girin.</p>
+    </li>
+    <li>
+      <strong data-i18n="pyn.a2b">Yeni personel penceresini açın</strong>
+      <p data-i18n="pyn.a2p">Ad soyad, unvan, e-posta adresi ve rol bilgilerini girin.</p>
+    </li>
+    <li>
+      <strong data-i18n="pyn.a3b">Rolü seçin</strong>
+      <p data-i18n="pyn.a3p">Rol seçiminde her rolün yetki açıklaması gösterilir. Destek görevlisi için <em>Destek Personeli</em> rolünü seçin.</p>
+    </li>
+    <li>
+      <strong data-i18n="pyn.a4b">E-postayı doğrulayın</strong>
+      <p data-i18n="pyn.a4p">Personel ilk girişte e-posta doğrulaması yapmak zorundadır. Listedeki doğrulama düğmesiyle bu adım yönetici tarafından da tamamlanabilir.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="pyn.b3">Güvenlik kuralları</h2>
+  <ul>
+    <li data-i18n="pyn.l1">Kendi rolünüzü ve hesap durumunuzu değiştiremezsiniz.</li>
+    <li data-i18n="pyn.l2">Kendi hesabınızı silemezsiniz.</li>
+    <li data-i18n="pyn.l3">Sistemdeki son etkin sistem yöneticisi düşürülemez, askıya alınamaz ve silinemez.</li>
+    <li data-i18n="pyn.l4">Silinen personelin destek yazışmaları korunur; yalnız talep ataması boşa çıkar.</li>
+  </ul>
+
+  <div class="yrd-not iyi">
+    <span class="yrd-ni"><i class="fa-solid fa-check"></i></span>
+    <div data-i18n="pyn.n2" data-i18n-html>Bu kurallar sisteme yönetici erişiminin tümden kapanmasını önler. Son yönetici koruması <strong>yalnız gerçekten son kayıt</strong> olduğunda devreye girer.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ MERKEZ GENEL ############ -->
+<article class="yrd-bolum" id="b-merkez-genel">
+  <div class="yrd-yol"><span data-i18n="agac.merkez">Merkez Yazılımı</span><span data-i18n="agac.merkezGenel">Genel Bakış</span></div>
+  <h1 data-i18n="mrg.baslik">Merkez Yazılımı</h1>
+  <p class="yrd-ozet" data-i18n="mrg.ozet">Merkez yazılımı, harekât arayüzünün kurumun kendi sunucusunda çalışan sürümüdür. Lisans tahsis edilen kurumlar bu yazılımı kurarak sistemi kapalı devre işletebilir.</p>
+
+  <h2 data-i18n="mrg.b1">Ne sağlar</h2>
+  <ul>
+    <li data-i18n="mrg.l1">Harekât arayüzünün tamamı kurumun kendi sunucusunda çalışır</li>
+    <li data-i18n="mrg.l2">Sınırsız kullanım hakkı; koltuk sınırı uygulanmaz</li>
+    <li data-i18n="mrg.l3">İnternet bağlantısı olmadan kapalı devre çalışma</li>
+    <li data-i18n="mrg.l4">Kuruma tahsis edilmiş radar ve GCCDual modülleri etkin gelir</li>
+    <li data-i18n="mrg.l5">Aynı bilgisayarda köprü yazılımıyla birlikte çalışabilir</li>
+  </ul>
+
+  <h2 data-i18n="mrg.b2">Lisans</h2>
+  <p data-i18n="mrg.p1">Merkez yazılımı tek seferlik lisans ücretine tabidir. Lisans Gökkubbe tarafından kuruma tahsis edilir; tahsis sonrası kurumsal panelde indirme bağlantısı görünür.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-server"></i></span>
+    <div data-i18n="mrg.n1" data-i18n-html>Merkez yazılımı bir <strong>PostgreSQL veritabanı</strong> gerektirir. Kurulum sihirbazı veritabanı bağlantı bilgilerini sorar ve tabloları kendisi oluşturur.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ MERKEZ KURULUM ############ -->
+<article class="yrd-bolum" id="b-merkez-kurulum">
+  <div class="yrd-yol"><span data-i18n="agac.merkez">Merkez Yazılımı</span><span data-i18n="agac.merkezKurulum">Kurulum</span></div>
+  <h1 data-i18n="mrk.baslik">Merkez Yazılımı Kurulumu</h1>
+  <p class="yrd-ozet" data-i18n="mrk.ozet">Kurulum paketi Windows ve Ubuntu için ayrı hazırlanmıştır. Kurulum sonrası ilk açılışta bir sihirbaz veritabanı ve yönetici hesabını yapılandırır.</p>
+
+  <h2 data-i18n="mrk.b1">Kurulum adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="mrk.a1b">Paketi indirin</strong>
+      <p data-i18n="mrk.a1p">Kurumsal panelin indirmeler bölümünden işletim sisteminize uygun paketi indirin.</p>
+    </li>
+    <li>
+      <strong data-i18n="mrk.a2b">Kurulumu çalıştırın</strong>
+      <p data-i18n="mrk.a2p">Yazılım servis olarak kurulur ve bilgisayar açılışında kendiliğinden başlar. Başlat menüsüne ve masaüstüne arayüz kısayolu eklenir.</p>
+    </li>
+    <li>
+      <strong data-i18n="mrk.a3b">Veritabanı bilgilerini girin</strong>
+      <p data-i18n="mrk.a3p">Sihirbaz PostgreSQL sunucu adresi, kullanıcı adı, şifre ve veritabanı adını sorar. Bağlantı sınandıktan sonra tablolar oluşturulur; ilerleme çubuğu hangi adımın sürdüğünü gösterir.</p>
+    </li>
+    <li>
+      <strong data-i18n="mrk.a4b">Yönetici hesabını belirleyin</strong>
+      <p data-i18n="mrk.a4p">Sihirbaz kurulum sırasında yönetici e-posta adresi ve şifresini sorar. Bu bilgiler merkez kurulumuna özeldir ve bir kez merkez sistemiyle eşitlenebilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="mrk.a5b">Arayüze girin</strong>
+      <p data-i18n="mrk.a5p">Sihirbaz tamamlandığında giriş sayfası açılır. Belirlediğiniz hesap bilgileriyle giriş yapın.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="mrk.b2">Güncelleme</h2>
+  <p data-i18n="mrk.p1">Yeni sürüm kurulduğunda kurulum yeniden yapılmaz: servis durdurulur, dosyalar güncellenir, veritabanı göçleri uygulanır ve servis yeniden başlatılır. Yapılandırma ve veriler korunur.</p>
+
+  <h2 data-i18n="mrk.b3">Köprü ile birlikte çalışma</h2>
+  <p data-i18n="mrk.p2">Aynı bilgisayarda hem merkez hem köprü yazılımı çalıştırılabilir. Bu durumda köprü yazılımı sihirbazında merkez adresi olarak yerel adres girilir; köprü kendi bilgisayarındaki merkeze bağlanır.</p>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-network-wired"></i></span>
+    <div data-i18n="mrk.n1" data-i18n-html>Köprü yazılımı yerel merkeze bağlanırken sihirbazda girilen adres <strong>veritabanı akışında da</strong> kullanılır. Yerel kurulumda adresi tutarlı girmeye dikkat edin.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ FİYATLAR ############ -->
+<article class="yrd-bolum" id="b-fiyatlar">
+  <div class="yrd-yol"><span data-i18n="agac.abonelik">Abonelik</span><span data-i18n="agac.fiyatlar">Fiyatlandırma</span></div>
+  <h1 data-i18n="fyt.baslik">Fiyatlandırma</h1>
+  <!-- GELIR MODELI v2 — sayisal tutar tasimaz: fiyat degisince bu
+     sayfa ESKIMESIN diye tutarlar yazilmaz, fiyatlandirma
+     bolumune yonlendirilir. Yalniz SOZLESME SARTLARI (yillik
+     indirim orani, bakim orani) burada durur. -->
+  <p class="yrd-ozet" data-i18n="fyt.ozet">Sisteme kayıt ücretsizdir. Başlangıç katmanı tek pilot koltuğu ile süresiz kullanılabilir. Ticari harekât için Profesyonel ve Kurumsal Bulut katmanları abonelikle, kapalı devre kurulumlar ise süresiz lisansla sunulur.</p>
+
+  <h2 data-i18n="fyt.b1">Ücretsiz kapsam</h2>
+  <ul>
+    <li data-i18n="fyt.l1">Sisteme kayıt ve hesap açma</li>
+    <li data-i18n="fyt.l2">Başlangıç katmanı: bir pilot koltuğu, sınırsız araç</li>
+    <li data-i18n="fyt.l3">İlk yönetici kullanıcı</li>
+    <li data-i18n="fyt.l4">Köprü yazılımı ve tüm sunucu servisleri</li>
+    <li data-i18n="fyt.l5">Harekât arayüzü, rota planlama, uçuş kayıtları</li>
+  </ul>
+
+  <h2 data-i18n="fyt.b2">Abonelik katmanları</h2>
+  <table>
+    <thead>
+      <tr>
+        <th data-i18n="fyt.t1">Katman</th>
+        <th data-i18n="fyt.t2">Koltuk</th>
+        <th data-i18n="fyt.t3">Kapsam</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td data-i18n="fyt.k1">Başlangıç</td>
+        <td data-i18n="fyt.k1s">1</td>
+        <td data-i18n="fyt.k1a">Ücretsiz. Sınırsız araç, harekât arayüzü,
+            rota planlama ve uçuş kayıtları dahildir.</td>
+      </tr>
+      <tr>
+        <td data-i18n="fyt.k2">Profesyonel</td>
+        <td data-i18n="fyt.k2s">Pilot başına</td>
+        <td data-i18n="fyt.k2a">Aylık abonelik. Koltuk sayısı istenildiği
+            zaman artırılabilir; ücret kullanılan koltuğa göre işler.</td>
+      </tr>
+      <tr>
+        <td data-i18n="fyt.k3">Kurumsal Bulut</td>
+        <td data-i18n="fyt.k3s">25</td>
+        <td data-i18n="fyt.k3a">Kuruluş başına aylık abonelik. Yapay zekâ
+            modülü dahildir.</td>
+      </tr>
+      <tr>
+        <td data-i18n="fyt.k4">Merkez Lisansı</td>
+        <td data-i18n="fyt.k4s">25</td>
+        <td data-i18n="fyt.k4a">Süresiz kullanım hakkı. Kapalı devre
+            kurulum; kuruluşun kendi altyapısında çalışır.</td>
+      </tr>
+      <tr>
+        <td data-i18n="fyt.k5">Radar ve Tam Sistem</td>
+        <td data-i18n="fyt.k5s">Sınırsız</td>
+        <td data-i18n="fyt.k5a">Süresiz lisans. Radar füzyonu ve GCCDual
+            yer kontrol donanımını kapsar; kuruma özel yapılandırılır.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-tag"></i></span>
+    <div data-i18n="fyt.n3" data-i18n-html>Güncel tutarlar
+      <a href="/#fiyatlandirma">fiyatlandırma bölümünde</a> yayımlanır.
+      Kuruluşunuza tanımlı özel fiyat varsa kurumsal panelin abonelik
+      bölümünde <strong>indirimli tutar</strong> olarak görünür.</div>
+  </div>
+
+  <div class="yrd-not iyi">
+    <span class="yrd-ni"><i class="fa-solid fa-percent"></i></span>
+    <div data-i18n="fyt.n1" data-i18n-html>Yıllık ödeme seçildiğinde tüm abonelik katmanlarında <strong>%20 indirim</strong> uygulanır. Süresiz lisanslarda ilk yıl bakım ve güncelleme bedeli fiyata dahildir; sonraki yıllar için <strong>%18</strong> yıllık bakım bedeli uygulanır. Bakım bedeli ödenmezse yazılım <strong>çalışmaya devam eder</strong>, yalnız yeni sürüm ve destek hakkı durur.</div>
+  </div>
+
+  <h2 data-i18n="fyt.b3">Tahsisli modüller</h2>
+  <p data-i18n="fyt.p1">Radar füzyonu ve GCCDual yer kontrol donanımı bulut aboneliğine dahil değildir; süresiz lisans kapsamında, kuruma özel yapılandırma ve teknik değerlendirme sonrasında tahsis edilir. Talebinizi destek sistemi üzerinden iletebilirsiniz.</p>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-user"></i></span>
+    <div data-i18n="fyt.n2" data-i18n-html>Bireysel hesaplarda radar ve GCCDual modülleri <strong>kullanılamaz</strong>. Bu kısıt veritabanı düzeyinde uygulanır ve değiştirilemez.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ KOLTUK ############ -->
+<article class="yrd-bolum" id="b-koltuk">
+  <div class="yrd-yol"><span data-i18n="agac.abonelik">Abonelik</span><span data-i18n="agac.koltuk">Koltuk Yönetimi</span></div>
+  <h1 data-i18n="klt.baslik">Pilot Koltuğu Yönetimi</h1>
+  <p class="yrd-ozet" data-i18n="klt.ozet">Her pilot kullanıcı bir koltuk kullanır. Yeni pilot eklemek için boş koltuk gerekir; koltuklar kurumsal panelin abonelik bölümünden yönetilir.</p>
+
+  <h2 data-i18n="klt.b1">Koltuk nasıl çalışır</h2>
+  <ul>
+    <li data-i18n="klt.l1">Başlangıç katmanında bir koltuk ücretsizdir.</li>
+    <li data-i18n="klt.l2">Etkin her pilot kullanıcı bir koltuk tutar.</li>
+    <li data-i18n="klt.l3">Pasife alınan kullanıcının koltuğu boşalır ve yeni kullanıcıya verilebilir.</li>
+    <li data-i18n="klt.l4">Yönetici kullanıcılar koltuk tüketmez.</li>
+  </ul>
+
+  <h2 data-i18n="klt.b2">Koltuk ekleme</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="klt.a1b">Abonelik bölümünü açın</strong>
+      <p data-i18n="klt.a1p">Kurumsal panelde abonelik bölümüne girin ve mevcut koltuk sayınızı görün.</p>
+    </li>
+    <li>
+      <strong data-i18n="klt.a2b">Koltuk adedini belirleyin</strong>
+      <p data-i18n="klt.a2p">Profesyonel katmanda koltuk adedini istediğiniz sayıda belirleyin; ücret koltuk başına işler. Kurumsal Bulut ve süresiz lisanslarda koltuklar katman kapsamında hazır gelir.</p>
+    </li>
+    <li>
+      <strong data-i18n="klt.a3b">Ödeme dönemini seçin</strong>
+      <p data-i18n="klt.a3p">Aylık veya yıllık ödeme seçin. Yıllık ödemede %20 indirim uygulanır.</p>
+    </li>
+    <li>
+      <strong data-i18n="klt.a4b">Ödemeyi tamamlayın</strong>
+      <p data-i18n="klt.a4p">Ödeme onaylandığında koltuklar hemen kullanıma açılır ve yeni pilot ekleyebilirsiniz.</p>
+    </li>
+  </ol>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ ÖDEME ############ -->
+<article class="yrd-bolum" id="b-odeme">
+  <div class="yrd-yol"><span data-i18n="agac.abonelik">Abonelik</span><span data-i18n="agac.odeme">Ödeme</span></div>
+  <h1 data-i18n="odm.baslik">Ödeme ve Faturalandırma</h1>
+  <p class="yrd-ozet" data-i18n="odm.ozet">Ödemeler kurumsal panelin abonelik bölümünden yapılır. Ödeme geçmişi ve fatura kayıtları aynı bölümde listelenir.</p>
+
+  <h2 data-i18n="odm.b1">Ödeme dönemleri</h2>
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-calendar-day"></i></span>
+      <h3 data-i18n="odm.k1b">Aylık</h3>
+      <p data-i18n="odm.k1p">Her ay yenilenir. Koltuk sayısını ay içinde artırabilirsiniz.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-calendar-check"></i></span>
+      <h3 data-i18n="odm.k2b">Yıllık</h3>
+      <p data-i18n="odm.k2p">%20 indirimli. Yıl boyunca sabit koltuk sayısı için uygundur.</p>
+    </div>
+  </div>
+
+  <h2 data-i18n="odm.b2">Abonelik değişiklikleri</h2>
+  <p data-i18n="odm.p1">Koltuk sayısı artırıldığında yeni koltuklar hemen kullanıma açılır. Modül eklendiğinde ilgili menüler arayüzde görünür hale gelir. Abonelik düşürme işlemleri dönem sonunda geçerli olur.</p>
+
+  <h2 data-i18n="odm.b3">Özel talepler</h2>
+  <p data-i18n="odm.p2">Standart paketlerin dışında bir yapılandırma gerekiyorsa destek sistemi üzerinden talep açabilirsiniz. Ön talep değerlendirilerek kuruma özel abonelik tanımlanabilir.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DESTEK TALEP ############ -->
+<article class="yrd-bolum" id="b-destek-talep">
+  <div class="yrd-yol"><span data-i18n="agac.destek">Destek</span><span data-i18n="agac.destekTalep">Talep Açma</span></div>
+  <h1 data-i18n="dtl.baslik">Destek Talebi Açma</h1>
+  <p class="yrd-ozet" data-i18n="dtl.ozet">Yaşadığınız sorunları destek sistemi üzerinden bildirebilirsiniz. Talep açarken sorunun hangi modülde yaşandığını seçmeniz ve gerekiyorsa ekran görüntüsü eklemeniz yanıt süresini kısaltır.</p>
+
+  <h2 data-i18n="dtl.b1">Talep açma adımları</h2>
+  <ol class="yrd-adim">
+    <li>
+      <strong data-i18n="dtl.a1b">Destek bölümünü açın</strong>
+      <p data-i18n="dtl.a1p">Kurumsal panelde <em>Destek</em> bölümüne girin ve <em>Yeni Talep</em> düğmesini kullanın.</p>
+    </li>
+    <li>
+      <strong data-i18n="dtl.a2b">Modülü seçin</strong>
+      <p data-i18n="dtl.a2p">Sorunun yaşandığı modülü listeden seçin. Doğru modül seçimi talebin ilgili personele yönlendirilmesini sağlar.</p>
+    </li>
+    <li>
+      <strong data-i18n="dtl.a3b">Önceliği belirleyin</strong>
+      <p data-i18n="dtl.a3p">Düşük, normal, yüksek veya kritik. Harekâtı durduran sorunlar için kritik seçilir.</p>
+    </li>
+    <li>
+      <strong data-i18n="dtl.a4b">Sorunu açıklayın</strong>
+      <p data-i18n="dtl.a4p">Konu satırına kısa bir özet, açıklama alanına sorunun ayrıntısını yazın: ne yapmaya çalıştığınız, ne olmasını beklediğiniz ve ne olduğu.</p>
+    </li>
+    <li>
+      <strong data-i18n="dtl.a5b">Dosya ekleyin</strong>
+      <p data-i18n="dtl.a5p">Ekran görüntüsü, günlük dosyası veya ilgili belgeleri ekleyin. Görsel kanıt sorunun anlaşılmasını hızlandırır.</p>
+    </li>
+  </ol>
+
+  <h2 data-i18n="dtl.b2">Modül listesi</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m1e">Harekât Arayüzü</span><span data-i18n="dtl.m1a">Harita, panel ve arayüz sorunları</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m2e">Köprü Yazılımı</span><span data-i18n="dtl.m2a">Kurulum, bağlantı ve servis sorunları</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m3e">Radar</span><span data-i18n="dtl.m3a">Radar bağlantısı, iz ve kalibrasyon</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m4e">GCCDual</span><span data-i18n="dtl.m4a">Yer kontrol çantası ve düğme eşlemesi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m5e">Yapay Zekâ</span><span data-i18n="dtl.m5a">Tespit, tanıma ve AI sunucusu</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m6e">Video</span><span data-i18n="dtl.m6a">Kamera akışı ve kayıtlar</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m7e">Hava Aracı</span><span data-i18n="dtl.m7a">Bağlantı, komut ve telemetri</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m8e">Rota</span><span data-i18n="dtl.m8a">Rota planlama ve görev yüklemesi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m9e">Kurumsal Panel</span><span data-i18n="dtl.m9a">Ekip, abonelik ve kayıt yönetimi</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m10e">Yönetim Paneli</span><span data-i18n="dtl.m10a">Gökkubbe personeline özel</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m11e">Merkez Yazılımı</span><span data-i18n="dtl.m11a">Kurum sunucusundaki kurulum</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m12e">DJI Köprüsü</span><span data-i18n="dtl.m12a">Android uygulaması</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtl.m13e">Ödeme</span><span data-i18n="dtl.m13a">Abonelik ve faturalandırma</span></div>
+  </div>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-paperclip"></i></span>
+    <div data-i18n="dtl.n1" data-i18n-html>Bir talebe en çok <strong>5 dosya</strong> eklenebilir ve her dosya en çok <strong>8 MB</strong> olabilir. Görsel, belge ve günlük dosyaları desteklenir; çalıştırılabilir dosyalar güvenlik nedeniyle kabul edilmez.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ DESTEK TAKİP ############ -->
+<article class="yrd-bolum" id="b-destek-takip">
+  <div class="yrd-yol"><span data-i18n="agac.destek">Destek</span><span data-i18n="agac.destekTakip">Talep Takibi</span></div>
+  <h1 data-i18n="dtk.baslik">Talep Takibi ve Yazışma</h1>
+  <p class="yrd-ozet" data-i18n="dtk.ozet">Açtığınız talepler destek bölümünde listelenir. Her talebin bir numarası ve durumu vardır; talebe girerek yazışmayı izleyebilir ve yanıt yazabilirsiniz.</p>
+
+  <h2 data-i18n="dtk.b1">Talep durumları</h2>
+  <div class="yrd-menu-liste">
+    <div class="yrd-menu-oge"><span class="yrd-rozet siyan" data-i18n="dtk.d1e">Yeni</span><span data-i18n="dtk.d1a">Talep açıldı, henüz ele alınmadı</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet kehribar" data-i18n="dtk.d2e">İşlemde</span><span data-i18n="dtk.d2a">Destek personeli talep üzerinde çalışıyor</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet mor" data-i18n="dtk.d3e">Yanıt Bekliyor</span><span data-i18n="dtk.d3a">Sizden bilgi bekleniyor</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet iyi" data-i18n="dtk.d4e">Çözüldü</span><span data-i18n="dtk.d4a">Sorun giderildi, onayınız bekleniyor</span></div>
+    <div class="yrd-menu-oge"><span class="yrd-rozet soluk" data-i18n="dtk.d5e">Kapandı</span><span data-i18n="dtk.d5a">Talep tamamlandı</span></div>
+  </div>
+
+  <div class="yrd-not uyari">
+    <span class="yrd-ni"><i class="fa-solid fa-reply"></i></span>
+    <div data-i18n="dtk.n1" data-i18n-html>Talebiniz <strong>Yanıt Bekliyor</strong> durumundaysa sizden ek bilgi istenmiş demektir. Yanıt yazana kadar talep üzerinde ilerleme sağlanamaz.</div>
+  </div>
+
+  <h2 data-i18n="dtk.b2">Yazışma</h2>
+  <p data-i18n="dtk.p1">Talep ayrıntısında tüm yazışma zaman sırasıyla görünür. Kendi mesajlarınız ve destek personelinin yanıtları ayrı işaretlenir. Her mesaja dosya ekleyebilirsiniz.</p>
+
+  <h2 data-i18n="dtk.b3">Talebi kapatma</h2>
+  <p data-i18n="dtk.p2">Sorun giderildiğinde destek personeli talebi çözüldü olarak işaretler. Onayınızla talep kapanır. Sorun yeniden yaşanırsa aynı talep üzerinden yazarak yeniden açılmasını isteyebilirsiniz.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ SSS ############ -->
+<article class="yrd-bolum" id="b-sss">
+  <div class="yrd-yol"><span data-i18n="agac.destek">Destek</span><span data-i18n="agac.sss">Sık Sorulan Sorular</span></div>
+  <h1 data-i18n="sss.baslik">Sık Sorulan Sorular</h1>
+  <p class="yrd-ozet" data-i18n="sss.ozet">Kullanıcıların en sık karşılaştığı durumlar ve çözümleri.</p>
+
+  <h2 data-i18n="sss.b1">Giriş ve hesap</h2>
+
+  <h3 data-i18n="sss.s1">Doğru şifreyi girdiğim halde giriş yapamıyorum</h3>
+  <p data-i18n="sss.c1">Hesabınız e-posta doğrulaması bekliyor olabilir. Giriş sayfası bu durumda doğrulama uyarısı gösterir. Doğrulama bağını e-postanızdan açın veya kurum yöneticinizden doğrulama isteyin. Hesabınız pasife alınmış da olabilir; bu durumda kurum yöneticisine başvurun.</p>
+
+  <h3 data-i18n="sss.s2">Doğrulama e-postası gelmedi</h3>
+  <p data-i18n="sss.c2">Gereksiz klasörünü denetleyin. Doğrulama kartındaki tekrar gönder düğmesini kullanabilirsiniz; kısa aralıklarla çok istek gönderilmesi engellenir, bir süre bekleyip yeniden denemeniz gerekir.</p>
+
+  <h3 data-i18n="sss.s3">Bireysel hesapta radar menüsü görünmüyor</h3>
+  <p data-i18n="sss.c3">Bu beklenen davranıştır. Radar ve GCCDual modülleri bireysel hesaplarda kullanılamaz; bu kısıt veritabanı düzeyinde uygulanır.</p>
+
+  <h2 data-i18n="sss.b2">Köprü ve bağlantı</h2>
+
+  <h3 data-i18n="sss.s4">Köprü yazılımı merkeze bağlanamıyor</h3>
+  <p data-i18n="sss.c4">Köprü yazılımının çalıştığı bilgisayarda internet erişimi olduğunu doğrulayın. Köprü giden bağlantı kullanır; güvenlik duvarında gelen bağlantı açmanız gerekmez. Kapalı devre kurulumlarda merkez adresini sihirbazda doğru girdiğinizi denetleyin.</p>
+
+  <h3 data-i18n="sss.s5">Radar sistemi bağlanmıyor</h3>
+  <p data-i18n="sss.c5">Radar bağlantısı köprü bilgisayarı üzerinden kurulur. Köprü bilgisayarından radar adresine erişilebildiğini doğrulayın. Radar servisi köprü yazılımında çalışır durumda olmalıdır; servis durduysa menüde radar öğesi görünmez.</p>
+
+  <h3 data-i18n="sss.s6">Seri bağlantı bulunamıyor</h3>
+  <p data-i18n="sss.c6">Seri aygıtlar köprü bilgisayarında aranır. Bağlantı tanımlarken hangi köprüye ait olduğunu seçtiğinizden emin olun. Linux sistemlerde kullanıcının seri aygıt erişim yetkisi bulunmalıdır.</p>
+
+  <h2 data-i18n="sss.b3">Uçuş ve kayıt</h2>
+
+  <h3 data-i18n="sss.s7">Uçuşum geçmişte görünmüyor</h3>
+  <p data-i18n="sss.c7">Bir uçuşun sahibi kalkış komutunu veren kullanıcıdır. Kalkışı başka bir kullanıcı verdiyse uçuş onun kaydında görünür. Kurum yöneticileri kurumun tüm uçuşlarını görebilir.</p>
+
+  <h3 data-i18n="sss.s8">Video sunucusu başlamıyor</h3>
+  <p data-i18n="sss.c8">Video sunucusu <code>ffmpeg</code> gerektirir. Kurulu değilse konsol çıktısı kurulum yönergesini gösterir. Kurulumdan sonra sunucuyu yeniden başlatın.</p>
+
+  <div class="yrd-gez"></div>
+</article>
+
+<!-- ############ İLETİŞİM ############ -->
+<article class="yrd-bolum" id="b-iletisim">
+  <div class="yrd-yol"><span data-i18n="agac.destek">Destek</span><span data-i18n="agac.iletisim">İletişim</span></div>
+  <h1 data-i18n="ilt.baslik">İletişim</h1>
+  <p class="yrd-ozet" data-i18n="ilt.ozet">Göktungu, Gökkubbe Teknoloji Anonim Şirketi tarafından geliştirilmekte ve işletilmektedir.</p>
+
+  <h2 data-i18n="ilt.b1">Şirket bilgileri</h2>
+  <table>
+    <tbody>
+      <tr>
+        <th data-i18n="ilt.t1">Unvan</th>
+        <td>Gökkubbe Teknoloji Anonim Şirketi</td>
+      </tr>
+      <tr>
+        <th data-i18n="ilt.t2">Adres</th>
+        <td>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara</td>
+      </tr>
+      <tr>
+        <th data-i18n="ilt.t3">Vergi Dairesi</th>
+        <td data-i18n="ilt.v3">Sincan Vergi Dairesi</td>
+      </tr>
+      <tr>
+        <th data-i18n="ilt.t4">Vergi Numarası</th>
+        <td>6290873411</td>
+      </tr>
+      <tr>
+        <th data-i18n="ilt.t5">Ticaret Sicil No</th>
+        <td>418199</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 data-i18n="ilt.b2">Destek kanalları</h2>
+  <div class="yrd-kartlar">
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-ticket"></i></span>
+      <h3 data-i18n="ilt.k1b">Destek Sistemi</h3>
+      <p data-i18n="ilt.k1p">Teknik sorunlar için birincil kanal. Kurumsal panelin destek bölümünden talep açın; yazışma kayıt altına alınır.</p>
+    </div>
+    <div class="yrd-kart">
+      <span class="yrd-ki"><i class="fa-solid fa-envelope"></i></span>
+      <h3 data-i18n="ilt.k2b">E-posta</h3>
+      <p data-i18n="ilt.k2p">Ticari talepler, lisans başvuruları ve modül tahsis istekleri için.</p>
+    </div>
+  </div>
+
+  <div class="yrd-not">
+    <span class="yrd-ni"><i class="fa-solid fa-lightbulb"></i></span>
+    <div data-i18n="ilt.n1" data-i18n-html>Teknik sorunlarda <strong>destek sistemini kullanmanız</strong> önerilir. Talebe eklenen ekran görüntüsü ve günlük dosyaları çözüm süresini belirgin biçimde kısaltır.</div>
+  </div>
+
+  <div class="yrd-gez"></div>
+</article>
+
+  </main>
+  </div>
+</section>
+
+<!-- ============================ ALT BİLGİ ============================ -->
+<footer id="altBilgi">
+  <div class="ic">
+    <div class="ft-ust">
+      <div class="ft-marka">
+        <img class="koyu" src="/img/goktungu_serit.webp" alt="GÖKTUNGU">
+        <img class="acik" src="/img/goktungu_serit_acik.webp" alt="GÖKTUNGU">
+        <p data-i18n="alt.tanim">Alçak irtifa hava sahası komuta kontrol sistemi. Radar, insansız hava aracı, kamera ve yapay zekâ katmanlarını tek harekât resminde birleştirir.</p>
+      </div>
+      <div class="ft-sutun">
+        <h4 data-i18n="alt.urun">Ürün</h4>
+        <a href="/#mimari" data-i18n="menu.mimari">Mimari</a>
+        <a href="/#yetenekler" data-i18n="menu.yetenekler">Yetenekler</a>
+        <a href="/#istemciler" data-i18n="menu.istemciler">İstemciler</a>
+        <a href="/#fiyat" data-i18n="menu.fiyat">Fiyatlandırma</a>
+      </div>
+      <div class="ft-sutun">
+        <h4 data-i18n="alt.yardim">Destek</h4>
+        <a href="/yardim/#genel-bakis" data-i18n="agac.genelBakis">Sistem Nedir</a>
+        <a href="/yardim/#kopru-kurulum" data-i18n="agac.kopruKurulum">Köprü Kurulumu</a>
+        <a href="/yardim/#destek-talep" data-i18n="agac.destekTalep">Destek Talebi</a>
+        <a href="/yardim/#sss" data-i18n="agac.sss">Sık Sorulan Sorular</a>
+      </div>
+      <div class="ft-sutun">
+        <h4 data-i18n="alt.yasal">Yasal</h4>
+        <a href="/yasal/gizlilik/" data-i18n="alt.gizlilik">Gizlilik Politikası</a>
+        <a href="/yasal/kvkk/" data-i18n="alt.kvkk">KVKK Aydınlatma Metni</a>
+        <a href="/yasal/kullanim/" data-i18n="alt.kullanim">Kullanım Şartları</a>
+        <a href="/yasal/cerez/" data-i18n="alt.cerez">Çerez Politikası</a>
+      </div>
+    </div>
+    <div class="ft-alt">
+      <span>&copy; <span id="ftYil">2026</span> Gökkubbe Teknoloji Anonim Şirketi</span>
+      <span class="ft-ayrac">·</span>
+      <a href="https://goktungu.com">goktungu.com</a>
+      <span class="ft-ayrac">·</span>
+      <button class="ft-defter" type="button" aria-label="Site sürüm defterini aç">
+        <span data-i18n="alt.siteSurum">Site sürümü</span>
+        <strong data-surum-panel>v—</strong>
+      </button>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/surum_verisi.js?v=2137"></script>
+<script src="/js/surum_defter.js?v=2137"></script>
+<script src="/js/dil.js?v=2137"></script>
+<script src="/js/tema.js?v=2137"></script>
+<script src="/js/indir.js?v=2137"></script>
+<script src="/js/logo_anim.js?v=2137"></script>
+<script src="/js/destek_baglanti.js?v=2137"></script>
+<script src="/yardim/en.js?v=2138"></script>
+<script src="/yardim/yardim.js?v=2137"></script>
+<!-- FAZ18-AGAC -->
+</body>
+</html>
+
+<!-- FAZ18-IS5-DESTEK-USTCUBUK -->

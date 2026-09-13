@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sayfa Bulunamadı (404) — GÖKTUNGU</title>
+<meta name="description" content="Aradığınız sayfa GÖKTUNGU üzerinde bulunamadı. Ana sayfaya dönebilir veya yardım merkezine göz atabilirsiniz.">
+<meta name="author" content="Gökkubbe Teknoloji Anonim Şirketi">
+<meta name="theme-color" content="#04070c">
+<meta name="robots" content="noindex, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sayfa Bulunamadı (404) — GÖKTUNGU">
+<meta property="og:description" content="Aradığınız sayfa GÖKTUNGU üzerinde bulunamadı.">
+<meta property="og:image" content="/img/favicon_512.png">
+<meta property="og:locale" content="tr_TR">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon_32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/favicon_180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/stil.css?v=2137">
+<link rel="stylesheet" href="/css/logo_anim.css?v=2137">
+<style>
+/* ==================================================================
+   404 SAYFASI — solda taktik kure, sagda mesaj
+   Palet ve tipografi tanitim sayfasindan MIRAS alinir; burada yalniz
+   yerlesim tanimlanir.  Sabit renk YOK: tum degerler `--` degiskeni.
+   ================================================================== */
+.h4-sar {
+  min-height: calc(100vh - 64px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 24px; position: relative; overflow: hidden;
+}
+/* Kure tuvali: solda, metin kutusunun arkasinda degil YANINDA.
+   `hero_taktik.js` yaricapi kabin YUKSEKLIGINDEN hesaplar
+   (`y * 0.47`), bu yuzden sarmalayiciya sinirli yukseklik verilir. */
+.h4-kure {
+  position: absolute; left: clamp(-6%, 2%, 6%);
+  top: 50%; transform: translateY(-50%);
+  width: min(58vw, 720px); height: min(72vh, 640px);
+  pointer-events: none; z-index: 0;
+}
+.h4-kure canvas { width: 100%; height: 100%; display: block; }
+.h4-ic {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 1180px;
+  display: flex; align-items: center; justify-content: flex-end;
+}
+.h4-kart {
+  width: min(560px, 100%);
+  background: color-mix(in srgb, var(--kart) 88%, transparent);
+  border: 1px solid var(--kenar);
+  border-radius: 14px; padding: 34px 32px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .38);
+}
+.h4-logo { display: block; margin-bottom: 22px; }
+.h4-logo img { height: 44px; width: auto; display: block; }
+.h4-logo .acik { display: none; }
+:root[data-tema="acik"] .h4-logo .koyu { display: none; }
+:root[data-tema="acik"] .h4-logo .acik { display: block; }
+.h4-kod {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  font-size: 88px; line-height: 1; font-weight: 700;
+  color: var(--vurgu); letter-spacing: .02em; margin: 0 0 4px;
+}
+.h4-durum {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--soluk); margin: 0 0 18px;
+}
+.h4-baslik {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  font-size: 26px; font-weight: 600; margin: 0 0 12px;
+  color: var(--baslik-renk);
+}
+.h4-metin { color: var(--metin); line-height: 1.72; margin: 0 0 10px; }
+.h4-yol {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 13px; color: var(--siyan);
+  background: color-mix(in srgb, var(--siyan) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--siyan) 26%, transparent);
+  border-radius: 6px; padding: 7px 11px; margin: 14px 0 22px;
+  word-break: break-all; display: block;
+}
+.h4-dugmeler { display: flex; flex-wrap: wrap; gap: 10px; }
+.h4-dg {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  padding: 11px 18px; border-radius: 9px; border: 1px solid var(--kenar);
+  color: var(--metin); background: transparent; transition: .16s;
+}
+.h4-dg:hover { border-color: var(--siyan); color: var(--siyan); }
+.h4-dg.birincil {
+  background: var(--vurgu); border-color: var(--vurgu); color: #fff;
+}
+.h4-dg.birincil:hover { filter: brightness(1.12); color: #fff; }
+.h4-baglar {
+  margin-top: 24px; padding-top: 18px;
+  border-top: 1px solid var(--kenar);
+  display: flex; flex-wrap: wrap; gap: 6px 20px;
+}
+.h4-baglar a {
+  font-size: 13px; color: var(--metin2); text-decoration: none;
+}
+.h4-baglar a:hover { color: var(--siyan); }
+/* Dar ekran: kure arka plana doner, kart tam genislik */
+@media (max-width: 900px) {
+  .h4-kure {
+    left: 50%; transform: translate(-50%, -50%);
+    width: 120vw; height: 60vh; opacity: .5;
+  }
+  .h4-ic { justify-content: center; }
+  .h4-kod { font-size: 68px; }
+}
+</style>
+</head>
+<body>
+<!-- ============================ ÜST ÇUBUK ============================ -->
+<header id="ustCubuk">
+  <div class="ic">
+    <a href="/" class="marka" aria-label="GÖKTUNGU Komuta Kontrol">
+      <img class="koyu" src="/img/goktungu_serit.webp" alt="GÖKTUNGU Komuta Kontrol">
+      <img class="acik" src="/img/goktungu_serit_acik.webp" alt="GÖKTUNGU Komuta Kontrol">
+    </a>
+    <nav id="anaMenu">
+      <a href="/#mimari">Mimari</a>
+      <a href="/#yetenekler">Yetenekler</a>
+      <a href="/yardim/" data-destek-bag="">Destek</a>
+    </nav>
+    <div class="ust-sag">
+      <button type="button" class="tema-dugme" data-tema-dugme></button>
+      <a href="/app/" class="dg dg-birincil">Sisteme Giriş →</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== 404 =============================== -->
+<main class="h4-sar">
+  <div class="h4-kure"><canvas id="heroTuval" aria-hidden="true"></canvas></div>
+
+  <div class="h4-ic">
+    <section class="h4-kart">
+      <a href="/" class="h4-logo" aria-label="GÖKTUNGU ana sayfa">
+        <img class="koyu" src="/img/goktungu_serit.webp" alt="GÖKTUNGU">
+        <img class="acik" src="/img/goktungu_serit_acik.webp" alt="GÖKTUNGU">
+      </a>
+
+      <p class="h4-kod">404</p>
+      <p class="h4-durum">Kaynak bulunamadı</p>
+
+      <h1 class="h4-baslik">Aradığınız sayfa harekât resminde değil</h1>
+      <p class="h4-metin">
+        İstenen adres sunucuda karşılık bulmadı. Bağlantı eski olabilir,
+        adres yanlış yazılmış olabilir ya da sayfa taşınmış olabilir.
+      </p>
+      <code class="h4-yol" id="h4Yol">—</code>
+
+      <div class="h4-dugmeler">
+        <a href="/" class="h4-dg birincil">← Ana sayfaya dön</a>
+        <a href="/yardim/" data-destek-bag="" class="h4-dg">Destek merkezi</a>
+        <a href="/app/" class="h4-dg">Sisteme giriş</a>
+      </div>
+
+      <nav class="h4-baglar" aria-label="Hızlı bağlantılar">
+        <a href="/yardim/#genel-bakis" data-destek-bag="genel-bakis">Sistem nedir</a>
+        <a href="/yardim/#kopru-kurulum" data-destek-bag="kopru-kurulum">Köprü kurulumu</a>
+        <a href="/yardim/#destek-talep" data-destek-bag="destek-talep">Destek talebi</a>
+        <a href="/company/">Kurumsal panel</a>
+      </nav>
+    </section>
+  </div>
+</main>
+
+<!-- ============================ ALT BİLGİ ============================ -->
+<footer id="altBilgi">
+  <div class="ic">
+    <p class="kunye">
+      &copy; <span id="h4Yil">2026</span> Gökkubbe Teknoloji Anonim Şirketi.
+      Tüm hakları saklıdır. GÖKTUNGU, Gökkubbe Teknoloji Anonim Şirketi ürünüdür.
+    </p>
+    <nav class="ft-baglar">
+      <a href="/yasal/gizlilik/">Gizlilik Politikası</a>
+      <a href="/yasal/kvkk/">KVKK Aydınlatma Metni</a>
+      <a href="/yasal/kullanim/">Kullanım Şartları</a>
+      <a href="/yasal/cerez/">Çerez Politikası</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="/js/kita_verisi.js?v=2137"></script>
+<script src="/js/hero_taktik.js?v=2137"></script>
+<script src="/js/tema.js?v=2137"></script>
+<script>
+/* Istenen yolu kullaniciya goster.  `textContent` kullanilir:
+   `innerHTML` olsa adres cubugundaki `<script>` yansitilarak
+   DOM tabanli XSS'e yol acardi. */
+(function () {
+  var y = document.getElementById("h4Yol");
+  if (y) { y.textContent = location.pathname + (location.search || ""); }
+  var yil = document.getElementById("h4Yil");
+  if (yil) { yil.textContent = String(new Date().getFullYear()); }
+})();
+</script>
+<script src="/js/logo_anim.js?v=2137"></script>
+<script src="/js/destek_baglanti.js?v=2137"></script>
+</body>
+</html>

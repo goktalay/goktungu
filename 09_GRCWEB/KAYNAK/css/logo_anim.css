@@ -1,0 +1,171 @@
+/* FAZ15-ANIM-SECICI  animasyon secicileri `svg` -> `img`:
+   Amblem `<img src="...svg">` olarak eklenir, satir ici `<svg>`
+   degil.  Eski secici hic eslesmiyordu; olculen sonuc
+   `animation-name:none` ve `transform-style:flat` oldu -- salinim,
+   fare tepkisi, perde dondurmesi ve azaltilmis hareket korumasi
+   etkisizdi. */
+/* ============================================================
+   GÖKTUNGU — Amblem hareketi ve yükleme perdesi   FAZ15-LOGOANIM
+   ------------------------------------------------------------
+   Amblem `img/goktungu_amblem.svg` olarak ayrı bir öğedir; marka
+   yazısı mevcut WebP'den gelir.  Böylece yalnız amblem döner, marka
+   tipografisi bozulmaz.
+
+   WebGL kullanılmaz: tanıtım sayfası CesiumJS için bir bağlam
+   tutuyor, ikincisi mobilde kare düşürür.  Burada CSS 3B dönüşümü
+   var — donanım hızlandırmalı, ek bağlam açmaz.
+   ============================================================ */
+
+/* --- amblem kabı: 3B sahne --- */
+.gt-amblem{
+  display:inline-block;
+  flex-shrink:0;
+  perspective:420px;
+  /* Yüksekliği marka yazısıyla hizalanır; `.marka img` kuralları
+     amblemi etkilemesin diye kap ayrı bir öğe. */
+  line-height:0;
+}
+.gt-amblem img{
+  display:block;
+  width:auto;
+  transform-style:preserve-3d;
+  will-change:transform;
+  animation:gtAmblemSalinim 9s ease-in-out infinite;
+}
+
+/* Yavaş eksen salınımı: sürekli ama dikkat dağıtmayan bir devinim.
+   Genlik 18° — daha fazlası kalkan kenarını perspektifte kırar. */
+@keyframes gtAmblemSalinim{
+  0%   { transform:rotateY(-16deg) rotateX(3deg); }
+  50%  { transform:rotateY( 16deg) rotateX(-3deg); }
+  100% { transform:rotateY(-16deg) rotateX(3deg); }
+}
+
+/* İmleç markanın üzerine gelince amblem öne çıkar ve hızlanır. */
+.marka:hover .gt-amblem img,
+.marka:focus-visible .gt-amblem img{
+  animation-duration:3.2s;
+  filter:drop-shadow(0 3px 10px rgba(45,140,240,.45));
+}
+
+/* Tıklama anında kısa bir "kilitlenme" — dokunsal geri bildirim. */
+.marka:active .gt-amblem img{
+  animation-play-state:paused;
+  transform:rotateY(0deg) scale(.94);
+  transition:transform .12s ease-out;
+}
+
+/* --- yükleme perdesi --- */
+#gtPerde{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--zemin,#04070c);
+  opacity:1;
+  transition:opacity .42s ease;
+}
+#gtPerde.gt-kapan{
+  opacity:0;
+  /* Solarken altındaki arayüz tıklanabilir olmalı; komuta arayüzünde
+     görünmez bir katmanın girdiyi yutması kabul edilemez. */
+  pointer-events:none;
+}
+#gtPerde .gt-perde-ic{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+}
+#gtPerde .gt-amblem{
+  perspective:600px;
+}
+#gtPerde .gt-amblem img{
+  height:64px;
+  animation:gtPerdeAmblem 1.15s cubic-bezier(.45,.05,.35,1) infinite;
+}
+
+/* Perde animasyonu: amblem kendi ekseninde tam tur atar ve turun
+   sonunda hafifçe büyür — "şıklatma" ritmi. */
+@keyframes gtPerdeAmblem{
+  0%   { transform:rotateY(0deg)   scale(1); }
+  55%  { transform:rotateY(180deg) scale(1.06); }
+  100% { transform:rotateY(360deg) scale(1); }
+}
+
+/* İnce yükleme çizgisi — belirsiz süreli, ilerleme yanılsaması yok. */
+#gtPerde .gt-perde-cizgi{
+  width:132px;
+  height:2px;
+  border-radius:2px;
+  background:color-mix(in srgb, var(--siyan,#5cc8ff) 22%, transparent);
+  overflow:hidden;
+  position:relative;
+}
+#gtPerde .gt-perde-cizgi::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:42%;
+  border-radius:2px;
+  background:var(--siyan,#5cc8ff);
+  animation:gtPerdeCizgi 1.15s ease-in-out infinite;
+}
+@keyframes gtPerdeCizgi{
+  0%   { transform:translateX(-105%); }
+  100% { transform:translateX(240%); }
+}
+
+/* --- erişilebilirlik --- */
+/* `css/stil.css` içinde `*` seçicili genel bir azaltma bloğu var; o
+   blok süreleri `.001ms`'ye indirir.  Perde `opacity` GEÇİŞİNE bağlı
+   olduğu için orada da doğru davranır (anında kaybolur).  Yine de
+   sürekli dönen amblem için açık kural yazılır: hareket kapatılır,
+   amblem sabit ve okunur kalır. */
+@media (prefers-reduced-motion: reduce){
+  .gt-amblem img,
+  #gtPerde .gt-amblem img,
+  #gtPerde .gt-perde-cizgi::after{
+    animation:none !important;
+    transform:none !important;
+  }
+  .marka:hover .gt-amblem img,
+  .marka:focus-visible .gt-amblem img{
+    filter:none;
+  }
+}
+
+/* Mobil: amblem üst şeritte daha küçük durur. */
+@media (max-width:860px){
+  #gtPerde .gt-amblem img{height:54px;}
+}
+
+/* --- FAZ15-AMBLEM-DUZELT: amblem eklenmiş marka --- */
+/* Amblem ayrı bir öğe olduğu için rasterın sol kısmı kırpılır.  Kırpılan
+   bölge yerinde durduğundan `gap` ikinci bir boşluk yaratıyordu; ölçülen
+   toplam ~30 px'ti.  Amblem varken boşluk küçültülür. */
+.marka.gt-amblemli{gap:7px;}
+/* FAZ16-PANEL-AMBLEM
+   Metin markasi (yonetim/kurumsal panel) rasterl DEGIL, yalniz yazi
+   tasir.  Orada kirpma yok, bu yuzden 7px'lik daraltilmis bosluk fazla
+   sikisik duruyor -- kirpilan rasterin ic boslugu yok.  Metin markasi
+   `gt-amblem-metin` sinifiyla isaretlenir ve normal bosluk alir. */
+.marka.gt-amblem-metin{display:inline-flex;align-items:center;gap:10px;}
+.ft-marka.gt-amblem-metin{display:inline-flex;align-items:center;gap:10px;}
+/* Metin markasinda amblem dikey ortalanir; `line-height:0` kabi
+   yaziya gore kaydirabiliyor. */
+.gt-amblem-metin .gt-amblem{align-self:center;}
+.ft-marka.gt-amblemli{gap:7px;}
+
+/* Kırpılan raster kendi kutusunu korur; genişliği daraltılmaz çünkü
+   `clip-path` yerleşimi etkilemez.  Negatif kenar boşluğu ile kırpılan
+   şeridin bıraktığı ölü alan geri alınır. */
+/* FAZ15-AMBLEM-HIZA
+   YÜZDE KULLANILMAZ: CSS `margin-left` yüzdesi KAPSAYICI genişliğine
+   göre hesaplanır, öğenin kendi genişliğine göre değil.  `.marka`
+   genişliği menü diline (TR/EN) göre değiştiği için yüzde değer
+   kararsızdı; ölçülen sonuç yazının amblem üzerine 36 px binmesiydi.
+   Negatif boşluk artık `logo_anim.js` tarafından rasterın kendi
+   ölçülen genişliğinden piksel olarak yazılır. */

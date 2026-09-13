@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr" data-tema="koyu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/favicon_180.png">
+<meta name="description" content="GÖKTUNGU e-posta doğrulama sayfası.">
+<meta name="author" content="Gökkubbe Teknoloji Anonim Şirketi">
+<meta name="theme-color" content="#04070c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="E-posta Doğrulama — GÖKTUNGU">
+<meta property="og:description" content="GÖKTUNGU e-posta doğrulama sayfası.">
+<meta property="og:image" content="/img/favicon_512.png">
+<meta property="og:locale" content="tr_TR">
+<title>Hesap Doğrulama — GÖKTUNGU</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/varlik/logo.png">
+<link rel="stylesheet" href="/css/stil.css?v=2126">
+<style>
+  /* Sayfa TEK KART gosterir; tanitim sayfasinin serit/hero yapisina
+     ihtiyac yoktur.  Yalniz yerlesim kurallari burada, gorsel dil
+     stil.css'ten gelir (tema degiskenleri ortak). */
+  body{display:flex;align-items:center;justify-content:center;
+       min-height:100vh;margin:0;padding:24px;background:var(--arka);}
+  .dg-kap{width:100%;max-width:460px;}
+  .dg-marka{display:flex;align-items:center;gap:11px;
+            justify-content:center;margin-bottom:22px;}
+  .dg-marka img{width:38px;height:38px;}
+  .dg-marka span{font-family:var(--baslik);font-size:21px;
+                 font-weight:700;color:var(--baslik-renk);
+                 letter-spacing:.04em;}
+  .dg-durum{display:flex;justify-content:center;margin-bottom:14px;}
+  .dg-halka{width:58px;height:58px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            border:2px solid var(--cizgi2);color:var(--metin2);}
+  .dg-halka.iyi{border-color:var(--iyi);color:var(--iyi);}
+  .dg-halka.kotu{border-color:var(--kotu);color:var(--kotu);}
+  .dg-halka.bekle{border-top-color:var(--siyan);
+                  animation:dgdon 900ms linear infinite;}
+  @keyframes dgdon{to{transform:rotate(360deg);}}
+  .dg-baslik{font-family:var(--baslik);font-size:19px;font-weight:700;
+             color:var(--baslik-renk);text-align:center;margin:0 0 10px;}
+  .dg-metin{font-size:13px;line-height:1.65;color:var(--metin2);
+            text-align:center;margin:0 0 20px;}
+  .dg-eylem{display:flex;flex-direction:column;gap:10px;}
+  .dg-alt{margin-top:20px;padding-top:16px;
+          border-top:1px solid var(--cizgi);
+          font-size:11.5px;color:var(--soluk);text-align:center;
+          line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="dg-kap">
+  <div class="dg-marka">
+    <img src="/varlik/logo.png" alt="">
+    <span>GÖKTUNGU</span>
+  </div>
+  <div class="gk-kart gk-form">
+    <div class="dg-durum">
+      <div class="dg-halka bekle" id="dgHalka">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none"
+             stroke="currentColor" stroke-width="1.7" id="dgIkon">
+          <rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>
+          <path d="M3 7l9 6 9-6"/>
+        </svg>
+      </div>
+    </div>
+    <h1 class="dg-baslik" id="dgBaslik">Doğrulanıyor…</h1>
+    <p class="dg-metin" id="dgMetin">
+      Hesabınız etkinleştiriliyor, lütfen bekleyin.
+    </p>
+    <div class="dg-eylem" id="dgEylem" hidden>
+      <a class="dg dg-birincil gk-gonder" href="/" id="dgGiris">
+        Giriş sayfasına dön</a>
+    </div>
+    <div class="dg-alt">
+      Gökkubbe Teknoloji Anonim Şirketi<br>
+      Ahi Evren OSB Mah. Büyük Selçuklu Cad. No:2/B Sincan/Ankara
+    </div>
+  </div>
+</div>
+<script>
+/* Dogrulama bagi tuketimi.
+   Bag bicimi: /dogrula?k=<43 karakter urlsafe jeton>
+   Uc: POST /api/dogrulama/onayla {kod}
+   Bag TEK KULLANIMLIK -- sayfa yenilenirse "zaten kullanilmis"
+   yanitini alir.  Bu beklenen davranistir ve kullaniciya basarili
+   durumdan AYRI bildirilir, aksi halde dogru dogrulama yapmis
+   kullanici hata gordugunu sanip destek talebi acar. */
+(function () {
+  "use strict";
+  function el(id) { return document.getElementById(id); }
+  function durum(sinif, baslik, metin, ikon) {
+    var h = el("dgHalka");
+    h.className = "dg-halka " + sinif;
+    el("dgBaslik").textContent = baslik;
+    el("dgMetin").innerHTML = metin;
+    if (ikon) el("dgIkon").innerHTML = ikon;
+    el("dgEylem").hidden = false;
+  }
+  var ONAY = '<path d="M4 12.5l5.2 5.2L20 7"/>';
+  var CARPI = '<path d="M6 6l12 12M18 6L6 18"/>';
+
+  var k = new URLSearchParams(location.search).get("k") || "";
+  if (!k) {
+    durum("kotu", "Doğrulama bağı eksik",
+      "Adres çubuğundaki bağ eksik görünüyor. E-postadaki bağa " +
+      "yeniden tıklayın veya giriş sayfasından yeni bağ isteyin.",
+      CARPI);
+    return;
+  }
+  fetch("/api/dogrulama/onayla", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kod: k })
+  }).then(function (y) {
+    return y.json().catch(function () { return {}; })
+      .then(function (g) { return { kod: y.status, tamam: y.ok, govde: g }; });
+  }).then(function (y) {
+    if (y.tamam) {
+      durum("iyi", "E-postanız doğrulandı",
+        "Hesabınız etkinleştirildi. Artık giriş yapabilirsiniz.", ONAY);
+      return;
+    }
+    var h = (y.govde || {}).hata || "Doğrulama tamamlanamadı.";
+    /* "Zaten kullanilmis" BASARISIZLIK DEGILDIR: kullanici bagi ikinci
+       kez actiysa hesabi coktan dogrulanmistir.  Ayri metin verilir. */
+    if (h.indexOf("zaten kullanilmis") >= 0 ||
+        h.indexOf("zaten kullanılmış") >= 0) {
+      durum("iyi", "Bu bağ daha önce kullanıldı",
+        "Hesabınız zaten doğrulanmış görünüyor. Giriş yapabilirsiniz.",
+        ONAY);
+      return;
+    }
+    durum("kotu", "Doğrulama tamamlanamadı",
+      h + "<br><br>Giriş sayfasından yeni bir doğrulama bağı " +
+      "isteyebilirsiniz.", CARPI);
+  }).catch(function () {
+    durum("kotu", "Sunucuya ulaşılamadı",
+      "Bağlantı kurulamadı. İnternet bağlantınızı denetleyip " +
+      "sayfayı yenileyin.", CARPI);
+  });
+})();
+</script>
+</body>
+</html>

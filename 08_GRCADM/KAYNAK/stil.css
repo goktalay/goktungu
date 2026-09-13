@@ -1,0 +1,569 @@
+/* GÖKTUNGU MERKEZ — yönetim paneli biçemi */
+:root {
+  --zemin: #0b0f16;
+  --zemin2: #111825;
+  --zemin3: #172033;
+  --cerceve: #223046;
+  --yazi: #e6edf7;
+  --yazi2: #93a3bb;
+  --vurgu: #2f81f7;
+  --vurgu2: #1f6feb;
+  --yesil: #2ea043;
+  --sari: #d29922;
+  --kirmizi: #f85149;
+  --mor: #8957e5;
+  --golge: 0 8px 24px rgba(0, 0, 0, .45);
+  --r: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--zemin); color: var(--yazi);
+  font: 13px/1.5 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--vurgu); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Giriş ---------- */
+#giris-katman {
+  position: fixed; inset: 0; z-index: 100;
+  /* DUZEN: kure SOLDA, giris karti SAGDA.  Onceki hal kartı tam
+     ortaya koyuyordu ve kure kartin arkasinda kaliyordu; radar
+     mevzii de kartin altina dusuyordu. */
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: clamp(24px, 9vw, 150px);
+  background: radial-gradient(circle at 30% 20%, #16233a, #070a10 70%);
+}
+/* Dar ekranda saga yaslama anlamsiz -- kart ortalanir, kure arkada
+   kalir (tek kolon duzen). */
+@media (max-width: 900px) {
+  #giris-katman {
+    justify-content: center;
+    padding-right: 0;
+  }
+}
+.giris-kart {
+  width: 380px; padding: 32px 28px; border-radius: 12px;
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  box-shadow: var(--golge);
+}
+.giris-kart h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: .5px; }
+.giris-kart .alt { margin: 0 0 22px; color: var(--yazi2); font-size: 12px; }
+
+label { display: block; margin: 12px 0 4px; font-size: 12px; color: var(--yazi2); }
+input, select, textarea {
+  width: 100%; padding: 9px 11px; border-radius: var(--r);
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+  color: var(--yazi); font: inherit; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--vurgu); }
+
+button {
+  padding: 9px 16px; border-radius: var(--r); border: 1px solid transparent;
+  background: var(--vurgu2); color: #fff; font: inherit; font-weight: 600;
+  cursor: pointer;
+}
+button:hover { background: var(--vurgu); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.ikincil { background: var(--zemin3); border-color: var(--cerceve); color: var(--yazi); }
+button.ikincil:hover { background: #1e2942; }
+button.tehlike { background: #3b1418; border-color: #6b2b30; color: #ffb4ae; }
+button.tehlike:hover { background: #52171d; }
+button.kucuk { padding: 5px 10px; font-size: 12px; font-weight: 500; }
+
+.hata { margin-top: 14px; padding: 9px 11px; border-radius: var(--r);
+        background: #3b1418; border: 1px solid #6b2b30; color: #ffb4ae;
+        font-size: 12px; }
+.hata:empty { display: none; }
+
+/* ---------- Yerleşim ---------- */
+#kabuk { display: none; height: 100%; grid-template-rows: 48px 1fr; }
+#kabuk.acik { display: grid; }
+
+header {
+  display: flex; align-items: center; gap: 16px; padding: 0 16px;
+  background: var(--zemin2); border-bottom: 1px solid var(--cerceve);
+}
+header .marka { font-weight: 700; letter-spacing: 1px; font-size: 14px; }
+header .marka span { color: var(--vurgu); }
+header .bosluk { flex: 1; }
+header .kim { color: var(--yazi2); font-size: 12px; }
+
+#govde { display: grid; grid-template-columns: 210px 1fr; min-height: 0; }
+
+nav {
+  background: var(--zemin2); border-right: 1px solid var(--cerceve);
+  padding: 12px 8px; overflow-y: auto;
+}
+nav .grup { margin: 14px 6px 6px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .8px; color: #5d6b83; }
+nav a.oge {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border-radius: var(--r); color: var(--yazi2); font-size: 13px;
+}
+nav a.oge:hover { background: var(--zemin3); color: var(--yazi); text-decoration: none; }
+nav a.oge.etkin { background: #16305a; color: #cfe2ff; }
+nav a.oge .im { width: 16px; text-align: center; opacity: .85; }
+
+/* ---------- Hakkinda / surum rozeti (nav alt) ----------
+   Panel kendi surum defterini yurutur; rozet metnini
+   /js/surum_defter.js doldurur. */
+nav .nav-alt {
+  margin-top: 16px; padding-top: 10px;
+  border-top: 1px solid var(--cerceve);
+}
+nav .nav-hakkinda {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border: none; border-radius: var(--r);
+  background: transparent; color: var(--yazi2);
+  font: inherit; font-size: 13px; cursor: pointer; text-align: left;
+}
+nav .nav-hakkinda:hover { background: var(--zemin3); color: var(--yazi); }
+nav .nav-hakkinda .im { width: 16px; text-align: center; opacity: .85; }
+nav .nav-surum {
+  margin-left: auto; font-size: 11px; color: var(--vurgu);
+  font-variant-numeric: tabular-nums;
+}
+
+main { padding: 18px 20px 40px; overflow-y: auto; min-width: 0; }
+main h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+main .aciklama { margin: 0 0 18px; color: var(--yazi2); font-size: 12px; }
+
+/* ---------- Kartlar ---------- */
+.kart-izgara { display: grid; gap: 12px;
+               grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.kart {
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: 10px; padding: 14px 16px;
+}
+.kart .etiket { color: var(--yazi2); font-size: 11px; text-transform: uppercase;
+                letter-spacing: .6px; }
+.kart .deger { font-size: 26px; font-weight: 700; margin-top: 6px; }
+.kart .ek { color: var(--yazi2); font-size: 11px; margin-top: 2px; }
+.kart.vurgulu { border-color: #1f4f8f; }
+
+.pano { background: var(--zemin2); border: 1px solid var(--cerceve);
+        border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+.pano h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+
+/* ---------- Tablo ---------- */
+.arac-cubugu { display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
+               flex-wrap: wrap; }
+.arac-cubugu input, .arac-cubugu select { width: auto; min-width: 160px; }
+.arac-cubugu .bosluk { flex: 1; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #1b2537; }
+th { color: var(--yazi2); font-weight: 600; font-size: 11px;
+     text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+tbody tr:hover { background: #141d2e; }
+td.sag, th.sag { text-align: right; }
+td.tek-satir { white-space: nowrap; }
+.bos { padding: 28px; text-align: center; color: var(--yazi2); }
+
+.im-rozet {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; border: 1px solid transparent;
+}
+.r-yesil { background: #0d2818; color: #7ee787; border-color: #1a5c33; }
+.r-kirmizi { background: #3b1418; color: #ffb4ae; border-color: #6b2b30; }
+.r-sari { background: #2e2410; color: #e3b341; border-color: #6b5220; }
+.r-mavi { background: #10233d; color: #79c0ff; border-color: #1f4f8f; }
+.r-gri { background: var(--zemin3); color: var(--yazi2); border-color: var(--cerceve); }
+.r-mor { background: #251a3d; color: #d2a8ff; border-color: #4b2d80; }
+
+.nokta { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+         margin-right: 6px; vertical-align: 1px; }
+.nokta.acik { background: var(--yesil); box-shadow: 0 0 8px #2ea04388; }
+.nokta.kapali { background: #46536b; }
+
+.sayfalama { display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+             margin-top: 12px; color: var(--yazi2); font-size: 12px; }
+
+/* ---------- Açılır pencere ---------- */
+.perde {
+  position: fixed; inset: 0; background: rgba(3, 6, 12, .72);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 60px 20px; z-index: 90; overflow-y: auto;
+}
+.perde.gizli { display: none; }
+.pencere {
+  width: 560px; max-width: 100%; background: var(--zemin2);
+  border: 1px solid var(--cerceve); border-radius: 12px;
+  box-shadow: var(--golge);
+}
+.pencere.genis { width: 940px; }
+.pencere-baslik {
+  display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+  border-bottom: 1px solid var(--cerceve);
+}
+.pencere-baslik h3 { margin: 0; font-size: 14px; flex: 1; }
+.pencere-govde { padding: 16px; }
+.pencere-alt { display: flex; gap: 8px; justify-content: flex-end;
+               padding: 12px 16px; border-top: 1px solid var(--cerceve); }
+.kapat-x { background: none; border: none; color: var(--yazi2); font-size: 18px;
+           padding: 0 4px; cursor: pointer; }
+.kapat-x:hover { color: var(--yazi); background: none; }
+
+.ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ucul { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ---------- Ayrıntı listesi ---------- */
+dl.ozet { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px;
+          margin: 0; font-size: 12.5px; }
+dl.ozet dt { color: var(--yazi2); }
+dl.ozet dd { margin: 0; }
+
+/* ---------- Grafik ---------- */
+.cizim { width: 100%; height: 190px; display: block; }
+.gizli { display: none !important; }
+
+/* ---------- Video ---------- */
+video { width: 100%; max-height: 460px; background: #000; border-radius: var(--r); }
+.uyari-kutu { padding: 10px 12px; border-radius: var(--r); font-size: 12px;
+              background: #2e2410; border: 1px solid #6b5220; color: #e3b341; }
+
+/* ---------- Bildirim ---------- */
+#bildirimler { position: fixed; right: 16px; bottom: 16px; z-index: 200;
+               display: flex; flex-direction: column; gap: 8px; }
+.bildirim { padding: 10px 14px; border-radius: var(--r); font-size: 12.5px;
+            background: var(--zemin3); border: 1px solid var(--cerceve);
+            box-shadow: var(--golge); max-width: 340px; }
+.bildirim.iyi { border-color: #1a5c33; background: #0d2818; color: #7ee787; }
+.bildirim.kotu { border-color: #6b2b30; background: #3b1418; color: #ffb4ae; }
+
+.yukleniyor { color: var(--yazi2); font-size: 12px; padding: 20px; text-align: center; }
+code.kod { background: var(--zemin3); padding: 2px 6px; border-radius: 4px;
+           font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+.gizli-kutu { background: #0d2818; border: 1px solid #1a5c33; color: #7ee787;
+              padding: 10px 12px; border-radius: var(--r); word-break: break-all;
+              font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+
+/* =====================================================================
+   GÜNDÜZ (AÇIK) TEMA
+   ---------------------------------------------------------------------
+   Sözleşme Merkez Uygulama'dan (GCS css/stil.css) alındı:
+   `:root[data-tema="acik"]`. Koyu tema nitelik taşımaz (öntanımlı),
+   gündüz teması niteliği taşır.
+
+   Admin paneli kurumsal panelle aynı iskeleti paylaşır; tek fark vurgu
+   rengidir (mavi, teal değil) — kullanıcı hangi panelde olduğunu
+   karıştırmasın. Açık temada da bu ayrım korunuyor.
+   ===================================================================== */
+:root[data-tema="acik"] {
+  --zemin:   #f4f6fa;
+  --zemin2:  #ffffff;
+  --zemin3:  #eef1f7;
+  --cerceve: #d3dae6;
+  --yazi:    #16202e;
+  --yazi2:   #5a6b82;
+  --vurgu:   #0d5bbf;
+  --vurgu2:  #0a4a9e;
+  --yesil:   #1a7f37;
+  --sari:    #9a6700;
+  --kirmizi: #cf222e;
+  --mor:     #6639ba;
+  --golge:   0 8px 24px rgba(16, 32, 56, .10);
+}
+
+:root[data-tema="acik"] #giris-katman {
+  background: radial-gradient(circle at 30% 20%, #e9eef8, #f7f9fc 70%);
+}
+
+:root[data-tema="acik"] button.ikincil:hover { background: #e6eaf2; }
+:root[data-tema="acik"] button.tehlike {
+  background: #fdeceb; border-color: #f3b9b6; color: #a2231d;
+}
+:root[data-tema="acik"] button.tehlike:hover { background: #fbdcda; }
+:root[data-tema="acik"] .hata {
+  background: #fdeceb; border-color: #f3b9b6; color: #a2231d;
+}
+
+:root[data-tema="acik"] nav .grup { color: #7b8798; }
+:root[data-tema="acik"] nav a.oge.etkin {
+  background: #dce8fb; color: #0a3d80;
+}
+
+:root[data-tema="acik"] .kart.vurgulu { border-color: #9dc2f0; }
+:root[data-tema="acik"] th,
+:root[data-tema="acik"] td { border-bottom-color: #e3e8f0; }
+:root[data-tema="acik"] tbody tr:hover { background: #f0f4fa; }
+
+:root[data-tema="acik"] .r-yesil {
+  background: #e6f6ec; color: #14682c; border-color: #a7e0b8;
+}
+:root[data-tema="acik"] .r-kirmizi {
+  background: #fdeceb; color: #a2231d; border-color: #f3b9b6;
+}
+:root[data-tema="acik"] .r-sari {
+  background: #fdf5e2; color: #7a5200; border-color: #ecd08a;
+}
+:root[data-tema="acik"] .r-mavi {
+  background: #e7f1fd; color: #0a4f9e; border-color: #a9cdf3;
+}
+:root[data-tema="acik"] .r-mor {
+  background: #f1eafc; color: #55299e; border-color: #cdb4f0;
+}
+
+:root[data-tema="acik"] .nokta.acik { box-shadow: 0 0 8px #1a7f3766; }
+:root[data-tema="acik"] .nokta.kapali { background: #a3aebf; }
+
+:root[data-tema="acik"] .perde { background: rgba(22, 32, 46, .42); }
+
+:root[data-tema="acik"] .bildirim.iyi {
+  border-color: #a7e0b8; background: #e6f6ec; color: #14682c;
+}
+:root[data-tema="acik"] .bildirim.kotu {
+  border-color: #f3b9b6; background: #fdeceb; color: #a2231d;
+}
+:root[data-tema="acik"] .gizli-kutu {
+  background: #e6f6ec; border-color: #a7e0b8; color: #14682c;
+}
+:root[data-tema="acik"] .uyari-kutu {
+  background: #fdf5e2; border-color: #ecd08a; color: #7a5200;
+}
+
+/* Video zemini koyu kalır: açık zeminde oynatıcı denetimleri kaybolur. */
+:root[data-tema="acik"] video { background: #1b2230; }
+
+/* Giris ekranindaki tema dugmesi satiri.
+   Dugme kartin en altinda, ortalanmis ve sonuk durur: bir eylem degil,
+   bir tercih anahtaridir; giris dugmesiyle gorsel olarak yarismamali. */
+.giris-tema-satir{
+  display:flex; justify-content:center;
+  margin-top:14px; padding-top:14px;
+  border-top:1px solid var(--cerceve);
+}
+.giris-tema-satir button{
+  width:auto; padding:6px 12px;
+  background:transparent; border:1px solid var(--cerceve);
+  color:var(--yazi2); font-size:12px;
+}
+.giris-tema-satir button:hover{
+  color:var(--yazi); border-color:var(--vurgu);
+}
+:root[data-tema="acik"] .giris-kart{
+  border:1px solid #d5dbe3;
+  box-shadow:0 8px 28px rgba(16,32,56,.10);
+}
+
+/* ================================================================ DESTEK
+   Ticket destek sistemi bileşenleri.
+
+   Renkler YALNIZ CSS değişkenlerinden alınır (--zemin2, --vurgu, ...);
+   sabit renk kodu yazılmaz. Böylece `:root[data-tema="acik"]`
+   değişkenleri ezdiğinde gündüz/gece döngüsü kendiliğinden çalışır.  */
+
+/* ---------- Durum sayaçları (personel görünümü) ---------- */
+.destek-sayaclar {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.destek-sayac {
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px; min-width: 92px;
+  color: var(--yazi); font-weight: 400; text-align: left;
+}
+.destek-sayac:hover { border-color: var(--vurgu); }
+.destek-sayac.etkin { border-color: var(--vurgu); background: var(--zemin3); }
+.destek-sayac-deger { font-size: 22px; font-weight: 700; }
+.destek-sayac-etiket {
+  font-size: 11px; color: var(--yazi2); text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* ---------- Yazışma akışı ---------- */
+.yazisma {
+  margin-top: 14px; max-height: 46vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px; background: var(--zemin); border-radius: var(--r);
+  border: 1px solid var(--cerceve);
+}
+.mesaj {
+  border: 1px solid var(--cerceve); border-radius: 10px;
+  padding: 10px 12px; background: var(--zemin2); max-width: 88%;
+}
+/* Kendi mesajım sağa yaslanır: konuşma yönü göz izini kolaylaştırır. */
+.mesaj.benim { align-self: flex-end; border-color: var(--vurgu); }
+.mesaj.destek { align-self: flex-start; }
+.mesaj.musteri { align-self: flex-start; }
+/* Dahili not görsel olarak AYRIŞIR: personelin yanlışlıkla müşteriye
+   yazdığını sanmasını önler. */
+.mesaj.ic-not {
+  align-self: stretch; max-width: 100%;
+  border-style: dashed; border-color: var(--sari);
+  background: color-mix(in srgb, var(--sari) 8%, var(--zemin2));
+}
+.mesaj-bas {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 6px; font-size: 12px;
+}
+.mesaj-bas .aciklama { margin-left: auto; font-size: 11px; }
+.mesaj-govde { font-size: 12.5px; line-height: 1.55; word-break: break-word; }
+.mesaj-ekler {
+  margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;
+  padding-top: 8px; border-top: 1px solid var(--cerceve);
+}
+
+/* ---------- Ek fişleri ---------- */
+.ek-bag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 9px; border-radius: 6px; font-size: 11.5px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+  color: var(--yazi); text-decoration: none;
+}
+.ek-bag:hover { border-color: var(--vurgu); text-decoration: none; }
+.ek-boyut { color: var(--yazi2); font-size: 10.5px; }
+.ek-alan { margin-top: 8px; }
+.ek-liste { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.ek-fisi {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 6px 4px 9px; border-radius: 6px; font-size: 11.5px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+}
+.ek-sil {
+  padding: 0 4px; background: transparent; border: none;
+  color: var(--yazi2); font-size: 15px; line-height: 1; cursor: pointer;
+  font-weight: 700;
+}
+.ek-sil:hover { color: var(--kirmizi); }
+
+/* ---------- Onay kutusu satırı ---------- */
+/* Küresel `input { width: 100% }` kuralı onay kutusunu de gererdi;
+   burada geri alınır. */
+.onay-satir {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 10px 0 4px; font-size: 12px; color: var(--yazi);
+}
+.onay-satir input[type="checkbox"] {
+  width: auto; margin: 2px 0 0; flex: none;
+}
+
+/* ---------- Personel denetim şeridi ---------- */
+.destek-denetim {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-top: 14px; padding: 12px;
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: var(--r);
+}
+.destek-denetim label { margin-top: 0; }
+
+/* ==================== GİRİŞ ARKA PLAN KÜRESİ ====================
+   Tanitim sayfasindaki taktik kure (js/hero_taktik.js) giris ekranina
+   arka plan olarak yerlestirilir.
+
+   RENK SOZLESMESI: hero_taktik.js su degiskenleri OKUR:
+     --siyan     kita/izgara cizgileri
+     --kehribar  radar huzmesi ve menzil halkalari
+     --vurgu     dron ikonlari
+   Panellerde yalnizca --vurgu tanimliydi; digerleri bulunamayinca
+   betik kendi varsayilanlarina duserdi.  Ucu de burada tanimlanir ki
+   kure tanitim sayfasiyla AYNI palette cizilsin.  Panelin kendi
+   --vurgu degeri (#2f81f7) dron rengi icin fazla mavi kaliyor; kure
+   kapsaminda tanitim paletindeki kirmizi kullanilir.
+
+   OLCU: hero_taktik.js yaricapi ana ogenin YUKSEKLIGINE gore hesaplar.
+   Sarmalayiciya sinirli yukseklik verilir, boylece kure giris kartinin
+   arkasinda dengeli boyutta kalir. */
+.giris-kure {
+  position: absolute;
+  top: 50%;
+  /* KONUM KARARI (olculdu): hero_taktik.js `MEVZI_KAYMA = 0.55` ile
+     radar mevziini (Turkiye) kure MERKEZINE dogru tasir.  Giris karti
+     da tam ortada oldugu icin radar huzmesi, menzil halkalari ve
+     dronlar kartin ARKASINDA kaliyordu -- tarayicida dogrulandi.
+     Betik degistirilmez (tanitim sayfasinda dogru calisiyor); kure
+     yatayda SOLA kaydirilir.  Boylece mevzi kartin soluna cikar,
+     sagda dogu yarim kure kalir ve sahne dengeli gorunur.
+     Kaydirma genis ekranda buyur, dar ekranda kuculur. */
+  /* Kart saga alindigi icin kure SOLA yerlesir; mevzi (Turkiye)
+     kartin solunda, bos alanda gorunur. */
+  left: clamp(2%, 26%, 30%);
+  transform: translate(-50%, -50%);
+  width: min(1250px, 128vw);
+  height: min(760px, 96vh);
+  pointer-events: none;   /* fare olaylari giris kartina gecsin */
+  z-index: 0;
+  --siyan: #5cc8ff;
+  --kehribar: #f2b24a;
+  --vurgu: #b91c1c;
+}
+.giris-kure canvas { display: block; width: 100%; height: 100%; }
+
+/* Kure eklendigi icin katman artik konumlandirma baglami olmali. */
+#giris-katman { position: fixed; }
+
+/* Kart kurenin USTUNDE kalir ve yari saydam zeminle kure hafifce
+   gorunur; tamamen opak biraksak kure kartin arkasinda kaybolurdu. */
+#giris-katman .giris-kart {
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(3px);
+  background: color-mix(in srgb, var(--zemin2) 88%, transparent);
+}
+
+/* color-mix desteklemeyen tarayicida kart tamamen opak kalir;
+   okunabilirlik bozulmaz. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  #giris-katman .giris-kart { background: var(--zemin2); }
+}
+
+/* Acik temada kure cizgileri koyu zemin icin secilmis; acik zeminde
+   soluk kalmamasi icin biraz koyulastirilir. */
+/* ACIK TEMA KONTRASTI: ilk deger soluk kaliyordu (tarayicida
+   dogrulandi -- kita cizgileri zar zor goruluyordu).  Cizgiler
+   koyulastirilir ve `opacity` kaldirilir; acik zeminde kure ancak
+   boyle okunur oluyor. */
+:root[data-tema="acik"] .giris-kure {
+  --siyan: #0f5c86;
+  --kehribar: #8f5c12;
+  --vurgu: #8e1a15;
+}
+
+/* Acik temada duz beyaza yakin gradyan kureye kontrast birakmiyordu;
+   zemin hafifce koyulastirilir ve maviye cekilir. */
+:root[data-tema="acik"] #giris-katman {
+  background: radial-gradient(circle at 30% 20%, #dbe4f2, #eef2f9 70%);
+}
+
+/* Kucuk ekranda kure kartin arkasinda gurultu yaratir; kaldirilir. */
+@media (max-width: 560px) {
+  .giris-kure { display: none; }
+}
+
+/* ================= GIRIS KARTI LOGOSU =================
+   Kart basligi metin yerine GOKTUNGU logo seridi tasir.  Varliklar
+   tanitim sayfasindakiyle ayni (`/img/goktungu_serit*.webp`) ve ayni
+   `.koyu` / `.acik` sinif kalibi izlenir (bkz. css/stil.css:109-112).
+   Logo urun adini kendi icinde tasidigi icin panel adi (MERKEZ /
+   MUSTERI) logonun ALTINA kucuk bir etiket olarak alinir. */
+.giris-logo {
+  display: block;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+.giris-logo img {
+  height: 44px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+.giris-logo .acik { display: none; }
+:root[data-tema="acik"] .giris-logo .koyu { display: none; }
+:root[data-tema="acik"] .giris-logo .acik { display: block; }
+
+/* Panel adi: logo altinda mono, harf araligi genis bir bant.
+   `h1` olarak kalir (erisilebilirlik: sayfanin tek h1'i). */
+.giris-kart h1.giris-panel-ad {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--vurgu);
+  margin: 0 0 4px;
+}

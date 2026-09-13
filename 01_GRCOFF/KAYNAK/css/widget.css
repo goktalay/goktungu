@@ -1,0 +1,1232 @@
+/* ============================================================
+   GOKTUNGU GCS — WIDGET STILLERI
+   v2.4.31
+
+   Widget'lar SABIT BOYUTLUDUR: bilerek `resize` ozelligi ve
+   boyutlandirma tutamaci yoktur (kullanici gereksinimi).
+
+   `#widgetKatman` isaretci olaylarini gecirir (`pointer-events:none`);
+   yalnizca widget'larin kendisi olay alir. Boylece katman haritanin
+   uzerinde olmasina karsin harita etkilesimini engellemez.
+
+   ------------------------------------------------------------
+   v2.4.31 — TEMA UYUMU (KRITIK DUZELTME)
+   ------------------------------------------------------------
+   v2.4.29-2.4.30'da koyu tema kurallari `body.tema-koyu` seciciyle
+   yazilmisti; bu sinif PROJEDE HIC KULLANILMIYOR, dolayisiyla kural
+   hic eslesmedi ve widget'lar her iki temada beyaz kaldi.
+
+   Projenin gercek tema sozlesmesi (`js/tema.js` + `css/stil.css`):
+     KOYU tema = VARSAYILAN, `data-tema` niteligi YOK
+     ACIK tema = `:root[data-tema="acik"]`
+
+   Bu dosya artik ayni sozlesmeyi izler ve renkleri `stil.css`
+   degiskenlerinden (`--panel-arka`, `--metin`, `--soluk`, `--cizgi`,
+   `--interceptor`, `--kotu`) alir. Boylece tema degistiginde widget
+   renkleri KENDILIGINDEN dogru degeri alir; ayrica bir JS tazelemesi
+   gerekmez.
+
+   Widget'a ozgu turetilmis degiskenler `.widget` uzerinde tanimlanir;
+   govde icindeki tum renkler bunlari kullanir. SVG icinde sabit renk
+   yazilmasi gereken yerlerde `currentColor` veya `var()` tercih edilir.
+
+   ------------------------------------------------------------
+   v2.4.31b — IKINCI PALET KALDIRILDI
+   ------------------------------------------------------------
+   Ilk v2.4.31 denemesinde widget renkleri KENDI sabit degerleriyle
+   yazilmisti (koyu icin bir set, acik icin bir set). Sonuc olcumle
+   dogrulandi: paneller `rgba(245,247,250,.95)` iken widget
+   `rgba(252,252,253,0.94)` cikiyordu; metin `#2a3542` iken widget
+   `#3a4250` idi. Yani widget "beyaz" olarak dogruydu ama panellerle
+   AYNI beyaz degildi ve tema uyumsuz gorunuyordu.
+
+   Bu surumde ikinci palet TAMAMEN kaldirildi. Turetilmis degiskenler
+   artik yalnizca `stil.css`in tek kaynak degiskenlerinden hesaplanir:
+     --panel-arka  govde zemini      --metin   ana metin
+     --cizgi       kenar/ayirici     --soluk   ikincil metin
+     --interceptor vurgu             --kotu    kirmizi (saniye ibresi)
+     --dugme-arka  dugme zemini      --beyaz   guclu metin (buyuk sayi)
+   Boylece tema hangi degeri secerse widget BIREBIR onu gosterir; acik
+   tema override blogu da gereksiz hale geldigi icin silindi.
+   ============================================================ */
+
+#widgetKatman{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 55;              /* harita uzeri, yuzen paneller (1200+) alti */
+}
+
+/* ------------------------------------------------------------
+   WIDGET TURETILMIS RENKLER
+   Tamami `stil.css` degiskenlerine baglidir; tema override'i o
+   dosyada yapildigi icin burada tema basina ayri blok YOKTUR.
+   ------------------------------------------------------------ */
+.widget{
+  /* Tumu `stil.css` tek kaynak degiskenlerinden turetilir. Hicbiri
+     sabit renk icermez; bu sayede tema degistiginde widget panellerle
+     BIREBIR ayni rengi alir ve ayri bir JS tazelemesi gerekmez. */
+  --w-arka:       var(--panel-arka);
+  --w-kenar:      var(--cizgi);
+  --w-baslik:     var(--pencere-baslik-arka);
+  --w-baslik-cizgi: var(--cizgi);
+  --w-ad:         var(--metin);
+  --w-dugme:      var(--soluk);
+  --w-dugme-hover:var(--metin);
+  --w-dugme-zemin:var(--dugme-hover);
+  --w-guclu:      var(--beyaz);   /* buyuk sayilar (saat, sicaklik) */
+  --w-metin:      var(--metin);
+  --w-soluk:      var(--soluk);
+  --w-vurgu:      var(--interceptor);
+  --w-kirmizi:    var(--kotu);    /* saniye ibresi */
+  --w-kutucuk:    var(--dugme-arka);
+  --w-golge:      0 6px 22px rgba(0, 0, 0, 0.35);
+  /* Saat kadrani — kadran zemini panelden bir ton ayrisir */
+  --w-kadran:     var(--dugme-arka);
+  --w-kadran-ken: var(--cizgi);
+  --w-kadran-ic:  var(--dugme-hover);
+  --w-cizgi-buyuk:var(--metin);
+  --w-cizgi-kucuk:var(--soluk);
+  --w-ibre:       var(--metin);
+  --w-ibre-dak:   var(--soluk);
+
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--w-arka);
+  border: 1px solid var(--w-kenar);
+  box-shadow: var(--w-golge);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  font-family: inherit;
+  color: var(--w-metin);
+  user-select: none;
+}
+
+/* ACIK TEMA icin ayri bir override BLOGU YOKTUR ve OLMAMALIDIR.
+   Yukaridaki turetilmis degiskenler `stil.css` degiskenlerine
+   baglandigi icin `:root[data-tema="acik"]` tanimlari kendiliginden
+   akar. Buraya sabit renkli bir acik tema blogu EKLENMEMELIDIR;
+   aksi halde widget yeniden panellerden farkli bir ton gosterir. */
+
+.widget.popup-gizli{ display: none !important; }
+
+/* Tasima sirasinda gecisleri kapat: yapisma aninda gecikme olmasin */
+.widget.widget-tasiniyor{
+  transition: none !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+}
+
+/* Gruba yapismis widget: kenarda ince bir isaret */
+.widget.widget-grupta{
+  border-color: color-mix(in srgb, var(--w-vurgu) 55%, transparent);
+}
+
+/* ---------------- BASLIK ----------------
+   Yalnizca ad + (miknatisi boz) + kapat bulunur. */
+.widget-baslik{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0 6px 0 9px;
+  background: var(--w-baslik);
+  border-bottom: 1px solid var(--w-baslik-cizgi);
+  cursor: move;
+  touch-action: none;      /* pointer olaylari icin kaydirmayi engelle */
+}
+
+.widget-ad{
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--w-ad);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget-bosluk{ flex: 1 1 auto; }
+
+.widget-baslik button{
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--w-dugme);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.widget-baslik button:hover{
+  background: var(--w-dugme-zemin);
+  color: var(--w-dugme-hover);
+}
+.widget-mik-boz:hover{ color: var(--uyari) !important; }
+.widget-kapat:hover{ color: var(--w-kirmizi) !important; }
+
+/* ------------------------------------------------------------
+   v2.4.33: TEKIL YENILEME DUGMESI (BASLIK, KIRMIZI)
+   ------------------------------------------------------------
+   Kullanici istegi: "Widget'larda ki yenileme her widget'ta ayni
+   olsun, header'a ikon olarak gelsin ve kirmizi olsun."
+
+   Onceki surumde her widget yenilemeyi KENDI GOVDESINDE ayri bir
+   bicimle ciziyordu: `hava-bayat-btn` ve `konum-bayat-btn` govdenin
+   sag-alt kosesinde yuzen bir daire, `wg-pilot-yenile` ise ust
+   seritte kucuk gri bir dugme idi. Uc ayri konum, uc ayri boyut,
+   iki ayri renk. Ayrica hava/konum widget'larinda dugme icerik
+   akisinin uzerine binerek son satiri kapatiyordu.
+
+   Artik dugme baslikta, kapat/miknatis dugmeleriyle ayni olcude
+   ve daima ayni yerde. Belirdiginde nabiz atar (operator veriyi
+   bayat bilmek ZORUNDA), fare uzerine gelince nabiz durur.
+   ------------------------------------------------------------ */
+.widget-yenile{
+  color: var(--w-kirmizi) !important;
+  animation: wgYenileNabiz 1.6s ease-in-out infinite;
+}
+.widget-yenile:hover{
+  background: var(--w-kirmizi) !important;
+  color: var(--beyaz) !important;
+  animation: none;
+}
+/* Istek suruyor: nabiz yerine donen ikon */
+.widget-yenile.donuyor{ animation: none; }
+.widget-yenile.donuyor i{ animation: wgYenileDon .7s linear infinite; }
+
+@keyframes wgYenileNabiz{
+  0%, 100%{ opacity: 1; }
+  50%     { opacity: .35; }
+}
+@keyframes wgYenileDon{
+  from{ transform: rotate(0deg); }
+  to  { transform: rotate(360deg); }
+}
+
+/* ---------------- GOVDE ---------------- */
+.widget-govde{
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   SAAT WIDGET
+   v2.4.31: boyut hava durumu ile esitlendi (226x224). Kadran ve
+   dijital yazi olculeri buyuyen alana gore artirildi; aksi halde
+   ortada kucuk bir kadran ve genis bos alan kaliyordu.
+   ============================================================ */
+.saat-sarmal{
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.saat-kip-btn{
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 5px;
+  background: var(--w-kutucuk);
+  color: var(--w-soluk);
+  font-size: 9px;
+  cursor: pointer;
+  z-index: 2;
+}
+.saat-kip-btn:hover{ background: var(--w-dugme-zemin); color: var(--w-dugme-hover); }
+
+/* Dijital */
+.saat-dijital{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.saat-dij-zaman{
+  font-family: "Consolas", "Menlo", monospace;
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--w-guclu);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.saat-dij-saniye{ font-size: 26px; color: var(--w-vurgu); }
+.saat-dij-tarih{
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--w-soluk);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Analog */
+.saat-analog{ display: block; }
+
+/* Analog kadran ogeleri: renkler temadan gelir (SVG'de var() calisir) */
+.saat-kadran-zemin{ fill: var(--w-kadran); stroke: var(--w-kadran-ken); }
+.saat-kadran-ic{ stroke: var(--w-kadran-ic); }
+.saat-cizgi-buyuk{ stroke: var(--w-cizgi-buyuk); }
+.saat-cizgi-kucuk{ stroke: var(--w-cizgi-kucuk); }
+.saat-sayi{ fill: var(--w-cizgi-buyuk); }
+.saat-ibre-saat{ stroke: var(--w-ibre); }
+.saat-ibre-dak{ stroke: var(--w-ibre-dak); }
+.saat-ibre-san{ stroke: var(--w-kirmizi); }
+.saat-gobek{ fill: var(--w-ibre); }
+.saat-gobek-ic{ fill: var(--w-kirmizi); }
+
+/* ============================================================
+   HAVA DURUMU WIDGET
+   ============================================================ */
+.hava-sarmal{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 9px 8px;
+  gap: 5px;
+  overflow: hidden;
+}
+
+/* v2.4.33: "Sicaklik ve Ruzgar Yonu ortada dursun" (kullanici istegi).
+   Onceki surumde `.hava-ust` ve `.hava-orta` varsayilan
+   `justify-content: flex-start` ile sola dayaniyordu; ikon + metin
+   blogu widget'in solunda toplanip sagda genis bir bosluk
+   birakiyordu. Ikisi de artik yatayda ortalanir ve ic metin
+   bloklari kendi iclerinde de ortalanir. */
+.hava-ust{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+/* Sicaklik / durum / hissedilen sutunu: kendi icinde ortali */
+.hava-ust-metin{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  text-align: center;
+}
+
+.hava-sicaklik{
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--w-guclu);
+  font-variant-numeric: tabular-nums;
+}
+.hava-durum-metin{
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--w-metin);
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.hava-hissedilen{ font-size: 9px; color: var(--w-soluk); font-weight: 500; }
+
+.hava-ikon-kutu{
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  position: relative;
+}
+
+.hava-orta{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Ruzgar gulu (SVG) */
+.ruzgar-gulu{ flex: 0 0 auto; }
+
+/* Ruzgar gulu ogeleri: renkler temadan */
+.rg-zemin{ fill: var(--w-kadran); stroke: var(--w-kadran-ken); }
+.rg-ic-halka{ stroke: var(--w-kadran-ic); }
+.rg-cizgi-buyuk{ stroke: var(--w-cizgi-buyuk); }
+.rg-cizgi-kucuk{ stroke: var(--w-cizgi-kucuk); }
+.rg-harf{ fill: var(--w-soluk); }
+.rg-ibre-govde{ fill: var(--w-vurgu); stroke: var(--w-vurgu); }
+.rg-akis{ stroke: var(--w-vurgu); }
+
+/* v2.4.33: ruzgar sayilari ve yon yazisi ortali.
+   `flex: 1 1 auto` KALDIRILDI: blok tum artan alani yiyip kendini
+   sola yapistiriyordu; artik icerigi kadar yer alir ve ust kapsayici
+   `justify-content: center` ile gulu + bilgi ikilisini ortalar. */
+.ruzgar-bilgi{
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  text-align: center;
+}
+.ruzgar-knot{
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--w-guclu);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ruzgar-knot span{ font-size: 9px; font-weight: 600; color: var(--w-soluk); margin-left: 2px; }
+.ruzgar-kmh{
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--w-vurgu);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ruzgar-kmh span{ font-size: 8.5px; color: var(--w-soluk); margin-left: 2px; }
+.ruzgar-yon-metin{
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--w-soluk);
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.hava-alt{
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+.hava-kutucuk{
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  background: var(--w-kutucuk);
+}
+.hava-kutucuk i{ font-size: 10px; color: var(--w-vurgu); }
+.hava-kutucuk b{
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--w-guclu);
+  font-variant-numeric: tabular-nums;
+}
+.hava-kutucuk small{
+  font-size: 7.5px;
+  color: var(--w-soluk);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hava-konum{
+  font-size: 8px;
+  color: var(--w-soluk);
+  text-align: center;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hava-yukleniyor, .hava-hata{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--w-soluk);
+  text-align: center;
+  padding: 8px;
+}
+.hava-hata i{ font-size: 15px; color: var(--uyari); }
+.hava-yenile-btn{
+  margin-top: 3px;
+  padding: 3px 9px;
+  border: 1px solid var(--w-kenar);
+  border-radius: 5px;
+  background: var(--w-kutucuk);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--w-metin);
+  cursor: pointer;
+}
+.hava-yenile-btn:hover{ background: var(--w-dugme-zemin); color: var(--w-dugme-hover); }
+
+/* ---------------- ANIMASYONLAR ----------------
+   Tumu CSS ile yapilir; JS zamanlayici kullanilmaz (dusuk maliyet). */
+
+/* Gunes: yavas donen isinlar */
+@keyframes hava-don{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+.hv-gunes-isin{ animation: hava-don 22s linear infinite; transform-origin: 50% 50%; }
+
+/* Bulut: yatay suzulme */
+@keyframes hava-suzul{
+  0%{ transform: translateX(-1.5px); }
+  50%{ transform: translateX(1.5px); }
+  100%{ transform: translateX(-1.5px); }
+}
+.hv-bulut{ animation: hava-suzul 4.5s ease-in-out infinite; }
+
+/* Yagmur damlasi / kar tanesi: dusme */
+@keyframes hava-damla{
+  0%{ transform: translateY(-3px); opacity: 0; }
+  25%{ opacity: 1; }
+  100%{ transform: translateY(10px); opacity: 0; }
+}
+.hv-damla{ animation: hava-damla 1.15s linear infinite; }
+.hv-damla:nth-of-type(2){ animation-delay: .38s; }
+.hv-damla:nth-of-type(3){ animation-delay: .76s; }
+
+/* Simsek: yanip sonme */
+@keyframes hava-simsek{
+  0%, 62%, 100%{ opacity: .25; }
+  66%, 72%{ opacity: 1; }
+}
+.hv-simsek{ animation: hava-simsek 2.4s ease-in-out infinite; }
+
+/* Sis: yatay kayan seritler */
+@keyframes hava-sis{
+  0%{ transform: translateX(-2.5px); opacity: .45; }
+  50%{ transform: translateX(2.5px); opacity: .95; }
+  100%{ transform: translateX(-2.5px); opacity: .45; }
+}
+.hv-sis{ animation: hava-sis 3.2s ease-in-out infinite; }
+.hv-sis:nth-of-type(2){ animation-delay: .5s; }
+.hv-sis:nth-of-type(3){ animation-delay: 1s; }
+
+/* Ruzgar gulu ibresi: yumusak yon gecisi */
+.ruzgar-ibre{ transition: transform .75s cubic-bezier(.34,1.36,.64,1); }
+
+/* Ruzgar hizini gosteren donen fan: hiz JS ile ayarlanir */
+@keyframes ruzgar-fan{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+.ruzgar-fan{ transform-origin: 50% 50%; }
+
+/* Ruzgar cizgileri: yon dogrultusunda akan izler */
+@keyframes ruzgar-akis{
+  0%{ stroke-dashoffset: 22; opacity: 0; }
+  22%{ opacity: .95; }
+  100%{ stroke-dashoffset: 0; opacity: 0; }
+}
+.ruzgar-akis-cizgi{
+  stroke-dasharray: 7 15;
+  animation: ruzgar-akis 1.5s linear infinite;
+}
+.ruzgar-akis-cizgi:nth-of-type(2){ animation-delay: .5s; }
+.ruzgar-akis-cizgi:nth-of-type(3){ animation-delay: 1s; }
+
+/* Hareket duyarliligi: kullanici azaltilmis hareket istiyorsa durdur */
+@media (prefers-reduced-motion: reduce){
+  .hv-gunes-isin, .hv-bulut, .hv-damla, .hv-simsek, .hv-sis,
+  .ruzgar-fan, .ruzgar-akis-cizgi{ animation: none !important; }
+  .ruzgar-ibre{ transition: none !important; }
+}
+
+/* ============================================================
+   v2.4.33 — EKSIK WIDGET STILLERI
+   v2.4.32'de Pusula ve Konum widget'lari yazildi ancak CSS'leri
+   eklenmedi. Sonuc: SVG ogeleri tarayici varsayilanlariyla
+   cizildi. Tarayici varsayilanlari sunlardir:
+     <circle>  fill = SIYAH,  stroke = yok
+     <line>    stroke = YOK  (yani tamamen gorunmez)
+     <path>    fill = SIYAH,  stroke = yok
+     <text>    fill = SIYAH
+   Bu nedenle pusula "ortada siyah daire" olarak gorundu: dis
+   cember siyaha boyandi, kadran cizgileri hic cizilmedi.
+   Cizim kodu dogruydu; eksik olan yalnizca bu bolumdu.
+
+   SVG renkleri saat widget'indaki kalibin aynisiyla verilir:
+   fill/stroke CSS'ten gelir, boylece tema degisiminde yeniden
+   cizim gerekmez (SVG'de var() canli cozulur).
+   ============================================================ */
+
+/* ---------------- PUSULA ---------------- */
+.pusula-govde{
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 6px;
+}
+
+/* ============================================================
+   v2.4.35 — GERCEK 3B PUSULA
+
+   Kadran duzlemi CSS 3D transform ile uzayda egilir. Yerlesim:
+
+     .pusula-sahne     perspective + preserve-3d  (konumlandirici)
+       .pusula-duzlem  rotateX/rotateZ            -> EGILIR
+         .pusula-svg-alt   dis cember, zemin, kadran
+       .pusula-svg-ust  konumu sabit               -> EGILMEZ
+
+   NEDEN WEBGL DEGIL? Pusula icin ayri bir WebGL baglami acmak,
+   Cesium'un zaten kullandigi GPU'dan pay caldigi icin harita
+   akiciligini dusururdu. CSS 3D transform kompozit katmanda
+   islenir: GPU'da neredeyse bedava, ayri baglam gerektirmez.
+   Ayrica SVG metinleri keskin kalir (WebGL'de doku olurdu).
+
+   NEDEN UST KATMAN AYRI? HSI mantigi: ibre ve lubber isareti
+   operatorun sabit referansidir, egilmemelidir. SVG icindeki
+   <g> ogelerine 3D transform guvenilir bicimde uygulanmadigi
+   icin egilen katmanin ayri bir HTML <div> olmasi gerekir.
+   ============================================================ */
+.pusula-sahne{
+  position: relative;
+  width: 100%;
+  max-width: 168px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  /* Govde `overflow: hidden` ve widget yuksekligi sabit (224px).
+     aspect-ratio tek basina kullanilirsa sahne 168px yukseklik
+     isteyip alt satirla birlikte govdeyi tasirir ve kadranin alti
+     kirpilir. `flex: 1 1 auto` + `min-height: 0` sahnenin
+     daralmasina izin verir: tasma yerine olceklenerek sigar. */
+  flex: 1 1 auto;
+  min-height: 0;
+  perspective: 420px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+
+.pusula-duzlem{
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  /* Gecis yumusatmasi: kamera olaylari kesikli gelir, gecis
+     olmadan kadran zipliyor gorunur. Kisa tutulur; uzun gecis
+     pusulanin gercek yonelimden geri kalmasina yol acar. */
+  transition: transform 120ms linear;
+}
+
+.pusula-svg{
+  display: block;
+  width: 100%;
+  max-width: 168px;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* Sahne icindeki iki SVG ust uste bindirilir */
+.pusula-sahne .pusula-svg{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+}
+
+/* Ust katman olaylari yakalamamalidir: cift tik sahnede dinlenir,
+   ayrica alt katmanin gorunurlugunu engellememesi gerekir. */
+.pusula-svg-ust{
+  pointer-events: none;
+}
+
+/* 3B kipte kadran duzlemine hafif derinlik golgesi: egildiginde
+   duzlem hissi olusur. 2B kipte uygulanmaz. */
+.pusula-3b .pusula-duzlem{
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* 2B/3B anahtar dugmesi */
+.pusula-3b-btn{
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.5;
+  color: var(--w-soluk);
+  background: var(--w-kadran);
+  border: 1px solid var(--w-kadran-ken);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 120ms linear, color 120ms linear;
+}
+.pusula-3b-btn:hover{
+  opacity: 1;
+  color: var(--interceptor);
+  border-color: var(--interceptor);
+}
+
+/* Dis cember: yalnizca kenar. fill:none SART — aksi halde
+   tarayici varsayilani siyah dolgu uygular. */
+.pusula-dis{
+  fill: none;
+  stroke: var(--w-kadran-ken);
+  stroke-width: 2;
+}
+/* Ic zemin: kadranin okunurlugunu artiran hafif dolgu */
+.pusula-ic-zemin{
+  fill: var(--w-kadran);
+  stroke: var(--w-kadran-ic);
+  stroke-width: 1;
+}
+
+/* Derece cizgileri */
+.pusula-cizgi{
+  stroke: var(--w-cizgi-kucuk);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.pusula-cizgi-buyuk{
+  stroke: var(--w-cizgi-buyuk);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* Yon harfleri */
+.pusula-yon{
+  fill: var(--w-metin);
+  font-size: 17px;
+  font-weight: 700;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+/* Kuzey vurgulu: operator kuzeyi bir bakista bulmali */
+.pusula-yon-k{
+  fill: var(--w-kirmizi);
+  font-size: 19px;
+}
+
+/* Kuzey ucgeni: kadranla doner */
+.pusula-kuzey-ucgen{
+  fill: var(--w-kirmizi);
+  stroke: none;
+}
+
+/* Sabit ibre: operatorun onu. Kadran doner, bu durur. */
+.pusula-ibre{
+  fill: var(--w-vurgu);
+  stroke: none;
+}
+.pusula-gobek{
+  fill: var(--w-ibre);
+  stroke: var(--w-kadran);
+  stroke-width: 1.5;
+}
+/* Lubber line: ibrenin okundugu sabit ust isaret */
+.pusula-lubber{
+  fill: var(--w-cizgi-buyuk);
+  stroke: none;
+}
+
+/* Egim olcegi (sag kenarda dikey) */
+.pusula-egim-eksen{
+  stroke: var(--w-cizgi-kucuk);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.pusula-egim-isaret{
+  fill: var(--w-vurgu);
+  stroke: none;
+  transition: transform .18s ease-out;
+}
+
+/* v2.4.33: `.pusula-okuma` KALDIRILDI — derece sayisi kadran
+   ortasindan alt satirin sol alanina tasindi (kullanici istegi:
+   "Derece solda bakis sagda ... ayni satirda olsun"). Kadranin
+   ortasinda artik yalnizca yon kisaltmasi durur. */
+.pusula-yon-ad{
+  fill: var(--w-soluk);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* ------------------------------------------------------------
+   v2.4.33: ALT SATIR — DERECE SOLDA / BAKIS SAGDA
+   ------------------------------------------------------------
+   Onceki yerlesim yan yana iki KUTU idi ve her kutunun icinde
+   deger ile etiket ALT ALTA (`flex-direction: column`) diziliydi.
+   Kullanici bunu tek satirda, etiket ve degerin yan yana
+   durdugu bir duzen olarak istedi.
+
+   Sonuc:
+     DERECE 137°                     BAKIŞ 45°
+   `justify-content: space-between` ile sol blok sola, sag blok
+   saga yasir; arada tek bir dikey ayirici cizgi durur.
+   Kaldirilan kurallar: `.pusula-alt-kutu`, `.pusula-alt-kutu b`,
+   `.pusula-alt-kutu small`.
+   ------------------------------------------------------------ */
+.pusula-alt{
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--w-kutucuk);
+  box-sizing: border-box;
+}
+/* Etiket + deger AYNI SATIRDA (yatay) */
+.pusula-alan{
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.pusula-alan-sol{ justify-content: flex-start; }
+.pusula-alan-sag{ justify-content: flex-end; }
+/* Sag alanin solunda ince ayirici: iki okumayi gorsel olarak ayirir */
+.pusula-alan-sag{
+  padding-left: 8px;
+  border-left: 1px solid color-mix(in srgb, var(--w-kenar) 60%, transparent);
+}
+.pusula-alan-etiket{
+  flex: 0 0 auto;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--w-soluk);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.pusula-alan-deger{
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--w-guclu);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- KONUM (ADRES) ---------------- */
+.konum-govde{
+  position: relative;
+}
+.konum-sarmal{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 9px 8px;
+  gap: 5px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------
+   v2.4.33: TABLO YERLESIMI
+   ------------------------------------------------------------
+   Kullanici istegi: "font bir tik kucuk olsun, aralarinda birer
+   satir olsun, Adres / Lokasyon / Kapsam, widget icinde ikon
+   olmasin tablo seklinde gosterelim."
+
+   Onceki yerlesim pin ikonu + serbest metin blogu + ikonlu iki
+   olcu kutucugu idi; kurallar (`konum-ust`, `konum-pin`,
+   `konum-baslik-satir`, `konum-alt-satir`, `konum-ayrinti`,
+   `konum-olcu*`) KALDIRILDI.
+
+   Yeni yapi iki sutunlu bir izgara: sol sutun etiket (sabit
+   genislik, buyuk harf, soluk), sag sutun deger. Satirlar arasi
+   bosluk `row-gap` ile "birer satir" hissi verir; ayrica ince bir
+   ayirici cizgi tablo okunurlugunu artirir.
+   ------------------------------------------------------------ */
+.konum-tablo{
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  row-gap: 7px;
+  column-gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+/* Her satir izgaraya iki hucre olarak yayilir (display:contents),
+   boylece etiket sutunu tum satirlarda AYNI genislikte kalir. */
+.konum-satir{ display: contents; }
+
+.konum-etiket{
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--w-soluk);
+  line-height: 1.35;
+  padding-top: 1px;
+  white-space: nowrap;
+}
+/* Deger sutunu: font onceki basliktan (13px) bir tik kucuk */
+.konum-deger{
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--w-metin);
+  line-height: 1.35;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Adres ve Lokasyon uzun olabilir: iki satira kadar sarar */
+.konum-deger-sar{
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+/* Satir ayiricilari: son satirda cizgi yok */
+.konum-satir:not(:last-child) .konum-etiket,
+.konum-satir:not(:last-child) .konum-deger{
+  padding-bottom: 7px;
+  border-bottom: 1px solid color-mix(in srgb, var(--w-kenar) 55%, transparent);
+}
+
+/* Veri bayatken govde solar: kullanici "bu artik gecerli degil"
+   bilgisini renkten okur, yaziyi okumasi gerekmez. */
+.konum-solgun .konum-tablo{ opacity: .45; }
+.konum-deger.konum-hata{ color: var(--w-kirmizi); }
+
+/* Yukleniyor perdesi */
+.konum-perde{
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--w-arka) 72%, transparent);
+  color: var(--w-vurgu);
+  font-size: 15px;
+  z-index: 2;
+}
+.konum-perde.gorunur{ display: flex; }
+
+/* v2.4.33: `.konum-bayat-btn` ve `.hava-bayat-btn` KURALLARI
+   KALDIRILDI. Yenileme artik baslikta tek bir dugmede toplaniyor
+   (`.widget-yenile`, yukari bakiniz). Ilgili DOM ogeleri de
+   widget_hava.js / widget_konum.js icinden cikarildi. */
+
+/* Bayat konum yazisi kirmiziya kayar (yazi isareti korunur) */
+.hava-konum-bayat{ color: var(--w-kirmizi) !important; }
+
+@media (prefers-reduced-motion: reduce){
+  .widget-yenile{ animation: none !important; }
+  .widget-yenile.donuyor i{ animation: none !important; }
+  /* v2.4.35: 3B kadran gecisi de kapatilir (donus hissi rahatsiz
+     edici olabilir); egim yine uygulanir, yalniz animasyon yok. */
+  .pusula-duzlem{ transition: none !important; }
+  .pusula-egim-isaret{ transition: none !important; }
+}
+
+/* ============================================================
+   SAYAC (KRONOMETRE) WIDGET — v2.4.33
+   ------------------------------------------------------------
+   Kullanici istegi: play/pause/stop dugmeli, milisaniyeli sayac.
+
+   TASARIM NOTLARI
+   ---------------
+   - `font-variant-numeric: tabular-nums` ZORUNLU: orantili
+     rakamlarda 1 ile 8 farkli genislikte oldugu icin sayi her
+     tik'te yatay olarak titrer. Tabular rakamlar sabit genislikte
+     oldugu icin okuma sabit kalir.
+   - Milisaniye ogesi ayri span: kucuk punto + soluk renk ile
+     asil okumanin goz yormasi engellenir. Sabit genislik
+     (`min-width`) verilir, aksi halde ".00" -> ".99" gecisinde
+     buyuk okuma yatay kayar.
+   - Dugmeler dairesel ve esit boyutlu; PLAY duraklatilmis
+     durumda `.sayac-yanan` ile vurgulanir (kullanici istegi:
+     "pause dugmesine basinca dursun play dugmesi yansin").
+   ============================================================ */
+
+.sayac-govde{
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 6px 8px 8px;
+}
+.sayac-sarmal{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 0;
+}
+
+/* ---------------- OKUMA ---------------- */
+.sayac-okuma{
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  padding: 2px 0 0;
+}
+.sayac-buyuk{
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--w-guclu);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+.sayac-ms{
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--w-vurgu);
+  font-variant-numeric: tabular-nums;
+  /* Sabit genislik: ".00" -> ".99" gecisinde buyuk okuma kaymasin */
+  min-width: 30px;
+  text-align: left;
+}
+
+/* ---------------- DURUM ---------------- */
+.sayac-durum{
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--w-soluk);
+  line-height: 1;
+}
+.sayac-durum-calisiyor{ color: #22c55e; }
+.sayac-durum-duraklatildi{ color: #f59e0b; }
+
+/* ---------------- DUGMELER ---------------- */
+.sayac-dugmeler{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 1px 0 2px;
+}
+.sayac-btn{
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--w-kenar);
+  border-radius: 50%;
+  background: var(--w-kutucuk);
+  color: var(--w-metin);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  transition: background .14s ease, color .14s ease,
+              border-color .14s ease, transform .1s ease;
+}
+.sayac-btn:hover:not(:disabled){
+  background: color-mix(in srgb, var(--w-vurgu) 22%, var(--w-kutucuk));
+  border-color: var(--w-vurgu);
+  color: var(--w-guclu);
+}
+.sayac-btn:active:not(:disabled){ transform: scale(.93); }
+.sayac-btn:disabled{
+  opacity: .34;
+  cursor: default;
+}
+
+/* PLAY: yesil vurgulu; duraklatilmisken "yanar" (nabiz) */
+.sayac-btn-play{
+  border-color: color-mix(in srgb, #22c55e 55%, var(--w-kenar));
+  color: #22c55e;
+}
+.sayac-btn-play:hover:not(:disabled){
+  background: color-mix(in srgb, #22c55e 20%, var(--w-kutucuk));
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.sayac-btn-play.sayac-yanan{
+  background: color-mix(in srgb, #22c55e 26%, var(--w-kutucuk));
+  border-color: #22c55e;
+  color: #4ade80;
+  animation: sayacNabiz 1.5s ease-in-out infinite;
+}
+@keyframes sayacNabiz{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(34,197,94,.42); }
+  50%    { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+
+/* PAUSE: amber */
+.sayac-btn-pause{
+  border-color: color-mix(in srgb, #f59e0b 55%, var(--w-kenar));
+  color: #f59e0b;
+}
+.sayac-btn-pause:hover:not(:disabled){
+  background: color-mix(in srgb, #f59e0b 20%, var(--w-kutucuk));
+  border-color: #f59e0b;
+}
+
+/* STOP: kirmizi */
+.sayac-btn-stop{
+  border-color: color-mix(in srgb, var(--w-kirmizi) 55%, var(--w-kenar));
+  color: var(--w-kirmizi);
+}
+.sayac-btn-stop:hover:not(:disabled){
+  background: color-mix(in srgb, var(--w-kirmizi) 20%, var(--w-kutucuk));
+  border-color: var(--w-kirmizi);
+}
+
+/* TUR: notr */
+.sayac-btn-tur{ font-size: 11px; }
+
+/* ---------------- TUR LISTESI ---------------- */
+.sayac-tur-liste{
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Bos iken cerceve gosterilmez (gorsel gurultu olusturur) */
+.sayac-tur-liste.sayac-tur-dolu{
+  border-top: 1px solid color-mix(in srgb, var(--w-kenar) 70%, transparent);
+  padding-top: 4px;
+}
+.sayac-tur-satir{
+  display: grid;
+  grid-template-columns: 24px 1fr 1fr;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.sayac-tur-no{
+  color: var(--w-soluk);
+  font-weight: 700;
+  font-size: 9px;
+}
+.sayac-tur-fark{
+  color: var(--w-guclu);
+  font-weight: 600;
+  text-align: right;
+}
+.sayac-tur-toplam{
+  color: var(--w-soluk);
+  text-align: right;
+}
+
+/* Ince kaydirma cubugu (widget icinde standart kaydirma cok kalin) */
+.sayac-tur-liste::-webkit-scrollbar{ width: 5px; }
+.sayac-tur-liste::-webkit-scrollbar-track{ background: transparent; }
+.sayac-tur-liste::-webkit-scrollbar-thumb{
+  background: color-mix(in srgb, var(--w-kenar) 85%, transparent);
+  border-radius: 3px;
+}
+
+/* ============================================================
+   SISTEM KAYNAKLARI WIDGET (v2.4.34)
+
+   Kullanici istegi: "calisan browser'in cpu, ram ve network'unu
+   gorsel gosteren bir widget koy, canli olsun ki sisteme ne kadar
+   yuklendigimizi gorelim"
+
+   Yerlesim: her satir iki katmanlidir — ustte etiket + deger, altta
+   sparkline. Sparkline yuksekligi 22 px'te sabit; daha kucugunde
+   egim okunmaz hale gelir.
+
+   Renkler tema degiskenlerinden gelir. Sparkline cizgi renkleri
+   JS'te sabittir (canvas gradyani icin rgb() gerekir) ve her iki
+   temada okunabilir tonlardan secilmistir.
+   ============================================================ */
+.kyn-govde{
+  padding: 6px 8px 7px;
+  display: flex;
+  flex-direction: column;
+}
+.kyn-sarmal{
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+}
+.kyn-satir{
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.kyn-ust{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  line-height: 1.2;
+}
+.kyn-etiket{
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--w-soluk);
+  white-space: nowrap;
+}
+.kyn-deger{
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--w-guclu);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Esik asimlari: operator bakmadan da fark etsin */
+.kyn-deger.kyn-uyari{ color: var(--uyari); }
+.kyn-deger.kyn-kritik{ color: var(--kotu); }
+/* Olculemeyen deger (Firefox'ta JS yigin, psutil yoksa sunucu):
+   sifir gostermek yanlis bilgi olurdu, soluk italik metin yazilir */
+.kyn-deger.kyn-yok{
+  color: var(--w-soluk);
+  font-size: 10px;
+  font-weight: 500;
+  font-style: italic;
+}
+.kyn-spark{
+  display: block;
+  width: 100%;
+  height: 22px;
+  background: color-mix(in srgb, var(--w-kutucuk) 55%, transparent);
+  border-radius: 3px;
+}
+/* Sunucu bolumu ayraci */
+.kyn-ayrac{
+  margin-top: 2px;
+  padding-top: 3px;
+  border-top: 1px solid color-mix(in srgb, var(--w-kenar) 70%, transparent);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--w-soluk);
+}
+/* Takilma dipnotu: 200 ms'yi asan kare olustugunda gorunur */
+.kyn-dipnot{
+  min-height: 11px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--w-soluk);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.kyn-dipnot.kyn-dipnot-uyari{ color: var(--uyari); }

@@ -1,0 +1,250 @@
+/* =================================================================
+   GOKTUNGU - SANAL DRON (SITL) SIHIRBAZI STILI     FAZ18 / v2.4.74
+   -----------------------------------------------------------------
+   TEMA SOZLESMESI: sabit renk YASAK. Tum renkler App'in tema
+   degiskenlerinden gelir (css/stil.css :root ve [data-tema="acik"]).
+   Kullanilan degiskenler: --panel --cizgi --interceptor --vurgu
+   --metin --soluk --iyi --kotu --uyari --giris-arka --dugme-arka
+   --dugme-hover
+   `color:#fff` KULLANILMAZ; tema duyarli `--beyaz` vardir ve acik
+   temada #111820 doner.
+   ================================================================= */
+
+#swSarmal {
+  padding: 2px 0 4px;
+}
+
+/* ---------------- Adim gostergesi ---------------- */
+.sw-adimlar {
+  display: flex; align-items: center; gap: 6px;
+  margin: 2px 0 12px;
+}
+.sw-adim {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: .04em;
+  color: var(--soluk); white-space: nowrap;
+}
+.sw-adim-no {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  border: 1px solid var(--cizgi);
+  background: var(--dugme-arka); color: var(--soluk);
+  transition: background .18s, color .18s, border-color .18s;
+}
+.sw-adim.etkin { color: var(--metin); }
+.sw-adim.etkin .sw-adim-no {
+  border-color: var(--vurgu); color: var(--vurgu);
+  background: color-mix(in srgb, var(--vurgu) 16%, transparent);
+}
+.sw-adim.bitti .sw-adim-no {
+  border-color: var(--iyi); color: var(--iyi);
+  background: color-mix(in srgb, var(--iyi) 16%, transparent);
+}
+.sw-adim-cizgi {
+  flex: 1; height: 1px; background: var(--cizgi); min-width: 8px;
+}
+
+.sw-adim-govde { min-height: 168px; }
+
+.sw-ipucu {
+  font-size: 12px; color: var(--soluk);
+  margin-bottom: 12px; line-height: 1.5;
+}
+
+/* ---------------- Adim 1: tip kartlari ---------------- */
+.sw-kartlar {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
+}
+.sw-kart {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 9px 5px 8px;
+  background: var(--dugme-arka);
+  border: 1px solid var(--cizgi); border-radius: 6px;
+  color: var(--metin); cursor: pointer; text-align: center;
+  transition: border-color .16s, background .16s, transform .12s;
+}
+.sw-kart:hover {
+  background: var(--dugme-hover); border-color: var(--vurgu);
+  transform: translateY(-1px);
+}
+.sw-kart.secili {
+  border-color: var(--vurgu);
+  background: color-mix(in srgb, var(--vurgu) 12%, var(--dugme-arka));
+  box-shadow: inset 0 0 0 1px var(--vurgu);
+}
+.sw-kart-gorsel {
+  display: block; width: 56px; height: 56px; color: var(--soluk);
+  transition: color .16s;
+}
+.sw-kart-gorsel svg { width: 100%; height: 100%; display: block; }
+.sw-kart:hover .sw-kart-gorsel,
+.sw-kart.secili .sw-kart-gorsel { color: var(--vurgu); }
+.sw-kart-ad {
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  line-height: 1.25;
+}
+.sw-kart-ack {
+  font-size: 10.5px; color: var(--soluk); line-height: 1.3;
+}
+
+/* ---------------- Adim 2: hazirlik / indirme ---------------- */
+.sw-durum-satir {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 11px;
+  background: var(--giris-arka);
+  border: 1px solid var(--cizgi); border-radius: 6px;
+}
+.sw-durum-ikon {
+  font-size: 19px; color: var(--soluk); margin-top: 1px;
+  flex: 0 0 auto;
+}
+.sw-durum-ikon.iyi   { color: var(--iyi); }
+.sw-durum-ikon.kotu  { color: var(--kotu); }
+.sw-durum-ikon.bekle { color: var(--vurgu); }
+.sw-durum-ikon.fa-spinner { animation: sw-dondur 1s linear infinite; }
+@keyframes sw-dondur { to { transform: rotate(360deg); } }
+.sw-durum-metin { min-width: 0; }
+.sw-durum-baslik {
+  font-size: 12px; font-weight: 600; color: var(--metin);
+  line-height: 1.3;
+}
+.sw-durum-alt {
+  font-size: 10px; color: var(--soluk); line-height: 1.4;
+  margin-top: 2px; word-break: break-word;
+}
+
+.sw-cubuk-cerceve {
+  margin-top: 9px; height: 7px; border-radius: 4px;
+  background: var(--dugme-arka);
+  border: 1px solid var(--cizgi); overflow: hidden;
+}
+.sw-cubuk {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--vurgu) 62%, transparent), var(--vurgu));
+  transition: width .2s linear;
+}
+/* Content-Length yoksa: kayan belirsiz cubuk */
+.sw-cubuk.belirsiz {
+  background: repeating-linear-gradient(90deg,
+    var(--vurgu) 0 14px,
+    color-mix(in srgb, var(--vurgu) 30%, transparent) 14px 28px);
+  animation: sw-kay .9s linear infinite;
+}
+@keyframes sw-kay {
+  from { background-position: 0 0; }
+  to   { background-position: 28px 0; }
+}
+.sw-cubuk-bilgi {
+  margin-top: 5px; font-size: 10px; color: var(--soluk);
+  font-family: Consolas, "IBM Plex Mono", monospace;
+  min-height: 12px;
+}
+
+/* FAZ18-IS1-SIHIRBAZ-DUZELT: gorunurluk `hidden` niteligiyle yonetilir.
+   `display:none` KALDIRILDI: JS `style.display=""` yazdiginda
+   satir ici bildirim kalkiyor ve bu kural yeniden gecerli olup
+   dugmeyi gizliyordu. */
+.sw-yeniden[hidden] { display: none !important; }
+.sw-yeniden {
+  display: block; margin-top: 10px; width: 100%; padding: 9px;
+  font-size: 11px; font-weight: 600; letter-spacing: .05em;
+  background: var(--dugme-arka); color: var(--metin);
+  border: 1px solid var(--cizgi); border-radius: 5px;
+  cursor: pointer;
+}
+.sw-yeniden:hover {
+  background: var(--dugme-hover); border-color: var(--vurgu);
+}
+
+/* ---------------- Adim 3: ozet ---------------- */
+.sw-ozet {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 7px 10px; margin-bottom: 4px;
+  background: var(--giris-arka);
+  border: 1px solid var(--cizgi); border-radius: 5px;
+}
+.sw-ozet-etiket {
+  font-size: 10px; color: var(--soluk); letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.sw-ozet-deger {
+  font-size: 11px; font-weight: 600; color: var(--vurgu);
+}
+
+/* ---------------- Gezinme ---------------- */
+/* FAZ18-IS1-SIHIRBAZ-DUZELT: GERI solda, ILERI sagda. `flex: 1` yerine
+   sabit taban genislik + `space-between`: dugmeler kenarlara
+   yaslanir, tek dugme kalan adimda oteki kaymaz. */
+.sw-gezinme {
+  display: flex; gap: 12px; margin-top: 14px;
+  justify-content: space-between; align-items: center;
+}
+.sw-gezinme button {
+  flex: 0 1 46%; min-width: 132px; padding: 11px 14px;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .06em; border-radius: 5px; cursor: pointer;
+  background: var(--dugme-arka); color: var(--metin);
+  border: 1px solid var(--cizgi);
+}
+.sw-gezinme button:hover {
+  background: var(--dugme-hover); border-color: var(--vurgu);
+}
+.sw-ileri {
+  border-color: var(--vurgu) !important;
+  color: var(--vurgu) !important;
+}
+.sw-ileri.kilitli,
+.sw-gezinme button:disabled {
+  opacity: .45; cursor: not-allowed;
+  border-color: var(--cizgi) !important; color: var(--soluk) !important;
+}
+
+/* Dar ekran: kartlar iki kolona duser */
+@media (max-width: 420px) {
+  .sw-kartlar { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* =================================================================
+   FAZ18-IS1-SIHIRBAZ-DUZELT - GENIS SIHIRBAZ KUTUSU
+   -----------------------------------------------------------------
+   `#bagEkleKutu` genisligi `css/stil.css` icinde `width: 360px`.
+   O deger SERI/TCP/UDP/DJI/MERKEZ kipleri icin DOGRU ve stil.css'e
+   DOKUNULMUYOR. Sihirbaz kipinde kutuya `sw-genis` sinifi eklenir
+   (JS: `sitlSihirbazAc`) ve genislik yalniz o kipte ezilir.
+   Kullanici: "Sihirbazin boyutunu daha buyuk yapmalisin".
+   ================================================================= */
+#bagEkleKutu.sw-genis {
+  width: 620px;
+  max-width: calc(100vw - 32px);
+}
+#bagEkleKutu.sw-genis .lok-kaydet-icerik {
+  /* Uzun ekranlarda tasma yerine kutu icinde kaydirma */
+  max-height: calc(100vh - 132px);
+  overflow-y: auto;
+}
+#bagEkleKutu.sw-genis .sw-kart {
+  padding: 14px 8px 12px;
+  gap: 7px;
+}
+#bagEkleKutu.sw-genis .sw-kartlar {
+  gap: 11px;
+}
+#bagEkleKutu.sw-genis .sw-adimlar {
+  margin: 4px 0 16px;
+}
+#bagEkleKutu.sw-genis .sw-adim { font-size: 11px; }
+#bagEkleKutu.sw-genis .sw-adim-no { width: 21px; height: 21px; }
+#bagEkleKutu.sw-genis .sw-durum-satir { padding: 13px 14px; }
+#bagEkleKutu.sw-genis .sw-durum-baslik { font-size: 13px; }
+#bagEkleKutu.sw-genis .sw-durum-alt { font-size: 11px; }
+
+/* Dar ekranda kutu tam genisligi alir, kartlar iki kolona duser */
+@media (max-width: 660px) {
+  #bagEkleKutu.sw-genis { width: calc(100vw - 24px); }
+  #bagEkleKutu.sw-genis .sw-kartlar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sw-gezinme button { min-width: 0; }
+}

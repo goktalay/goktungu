@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Kabloyla takildiginda uygulamayi one alacak USB cihazlar.
+
+  ## Neden hem sinif hem satici suzgeci var
+
+  Iki farkli tanima yolu gerekir:
+
+  1. **Sinif suzgeci** (`class="2"` = CDC iletisim sinifi): Pixhawk,
+     CubePilot, Matek, Holybro gibi STM32 tabanli ucus
+     kontrolcularinin BUYUK COGUNLUGU standart CDC-ACM olarak
+     gorunur.  Satici kimlikleri cok cesitli oldugu icin tek tek
+     listelemek olanaksiz; sinif suzgeci hepsini yakalar.
+
+  2. **Satici suzgeci**: FTDI / CP210x / CH34x kopruleri CDC sinifi
+     bildirmez, satici ozel sinif kullanir.  Bunlar SiK telemetri
+     radyolarinda ve eski kartlarda yaygin, bu yuzden satici
+     kimligiyle acikca listelenir.
+
+  Not: Bu suzgec yalniz "kablo takilinca uygulamayi one al"
+  kolayligini saglar.  Cihaz taramasi calisma aninda
+  `UsbManager.deviceList` uzerinden yapildigi icin burada listelenmeyen
+  bir cihaz da elle TARA ile bulunur.
+-->
+<resources>
+    <!-- CDC iletisim sinifi: STM32 tabanli ucus kontrolculari -->
+    <usb-device class="2" />
+
+    <!-- CDC veri sinifi: bazi kartlar veri arayuzunu one cikarir -->
+    <usb-device class="10" />
+
+    <!-- FTDI (SiK telemetri radyolari, eski kartlar) -->
+    <usb-device vendor-id="1027" />
+
+    <!-- Silicon Labs CP210x -->
+    <usb-device vendor-id="4292" />
+
+    <!-- WCH CH340 / CH341 -->
+    <usb-device vendor-id="6790" />
+
+    <!--
+      ArduPilot / PX4 ortak satici kimlikleri.
+
+      3D Robotics (0x26AC = 9900) ve Hex/ProfiCNC (0x2DAE = 11694)
+      kartlari kimi yazilim surumlerinde CDC sinifi bildirmeden
+      numaralandirilir; acikca eklendi.
+    -->
+    <usb-device vendor-id="9900" />
+    <usb-device vendor-id="11694" />
+</resources>

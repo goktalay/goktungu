@@ -1,0 +1,44 @@
+# --- Sırlar ve çalışma verisi (ASLA depoya girmez) ---
+*.pem
+*.key
+*.jks
+*.keystore
+*.p12
+*.pfx
+imza.properties
+pg.json
+merkez_ayar.json
+merkez_lisans.json
+ai_isci_anahtari
+ilk_giris.txt
+.env
+.env.*
+*_gizli*.pem
+
+# --- Üretilen paketler / büyük ikili çalışma zamanı ---
+dagitim/
+*.deb
+*.exe
+*.zip
+# Gömülü Windows Python çalışma zamanı — gomulu_merkez_hazirla.py ile üretilir
+01_GRCOFF/KAYNAK/gomulu_merkez/calisma/
+01_GRCOFF/KAYNAK/gomulu_merkez/teker/
+01_GRCOFF/KAYNAK/gomulu_merkez/*.zip
+# AI model dosyaları — Release ekinden indirilir
+*.onnx
+
+# --- Loglar, önbellek, geçici ---
+*.log
+__pycache__/
+*.pyc
+ai_kayitlar/
+track_verisi.ndjson
+
+# --- Yedek dosyaları ---
+*.yedek*
+*yedek_*
+*.bak
+*.bak_*
+*.orijinal
+*.faz[0-9]*
+*.yayin_*

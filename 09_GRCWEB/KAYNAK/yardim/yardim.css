@@ -1,0 +1,630 @@
+/* =================================================================
+   GOKTUNGU -- Yardim Merkezi bicemi (M21)
+   Gokkubbe Teknoloji Anonim Sirketi
+   -----------------------------------------------------------------
+   YALNIZ /css/stil.css icinde tanimli degiskenler kullanilir.
+   Sabit renk YAZILMAZ -- aksi halde `:root[data-tema="acik"]`
+   gunduz temasi bu sayfada calismaz.
+   Kullanilan degiskenler:
+     --arka --arka2 --arka3 --kart --cizgi --cizgi2
+     --metin --metin2 --soluk
+     --vurgu --vurgu2 --siyan --siyan2 --siyan-d
+     --kehribar --kehribar-d --iyi --kotu
+     --govde --baslik --mono --radius --gecis --ic-genislik
+   ================================================================= */
+
+/* ---------------- sayfa iskeleti ---------------- */
+.yrd-sayfa{
+  padding:88px 0 0;
+  min-height:100vh;
+}
+.yrd-kabuk{
+  display:grid;
+  grid-template-columns:296px 1fr;
+  gap:0;
+  max-width:var(--ic-genislik);
+  margin:0 auto;
+  align-items:start;
+}
+
+/* ---------------- sol agac ---------------- */
+.yrd-yan{
+  position:sticky;
+  top:88px;
+  max-height:calc(100vh - 96px);
+  overflow-y:auto;
+  padding:20px 22px 40px 0;
+  border-right:1px solid var(--cizgi);
+}
+.yrd-yan::-webkit-scrollbar{width:8px;}
+.yrd-yan::-webkit-scrollbar-thumb{
+  background:var(--cizgi2);border-radius:4px;
+}
+
+/* arama */
+.yrd-arama{position:relative;margin-bottom:16px;}
+.yrd-arama input{
+  width:100%;
+  padding:9px 32px 9px 11px;
+  background:var(--arka2);
+  border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+  color:var(--metin);
+  font:500 13px/1.4 var(--govde);
+  transition:border-color .18s;
+}
+.yrd-arama input:focus{
+  outline:none;border-color:var(--siyan);
+}
+.yrd-arama input::placeholder{color:var(--soluk);}
+.yrd-arama .yrd-temizle{
+  position:absolute;right:6px;top:50%;
+  transform:translateY(-50%);
+  width:22px;height:22px;
+  display:none;place-items:center;
+  background:none;border:none;cursor:pointer;
+  color:var(--soluk);font-size:15px;line-height:1;
+  border-radius:4px;
+}
+.yrd-arama .yrd-temizle:hover{color:var(--metin);background:var(--arka3);}
+.yrd-arama.dolu .yrd-temizle{display:grid;}
+
+.yrd-arama-sonuc{
+  font:500 11px/1.4 var(--mono);
+  color:var(--soluk);
+  margin:-8px 0 12px;
+  letter-spacing:.02em;
+}
+
+/* agac */
+.yrd-agac{list-style:none;margin:0;padding:0;}
+.yrd-agac ul{
+  list-style:none;
+  margin:0;
+  padding:0 0 0 12px;
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .26s cubic-bezier(.22,.61,.36,1);
+}
+.yrd-dal.acik > ul{max-height:2200px;}
+
+.yrd-dal > .yrd-bas{
+  display:flex;align-items:center;gap:8px;
+  width:100%;
+  padding:7px 8px;
+  background:none;border:none;
+  color:var(--metin);
+  font:600 13px/1.35 var(--baslik);
+  text-align:left;
+  cursor:pointer;
+  border-radius:6px;
+  transition:background .16s,color .16s;
+  letter-spacing:.01em;
+}
+.yrd-dal > .yrd-bas:hover{background:var(--arka3);}
+.yrd-dal > .yrd-bas .yrd-ok{
+  flex-shrink:0;
+  width:12px;text-align:center;
+  color:var(--soluk);
+  font-size:10px;
+  transition:transform .22s;
+}
+.yrd-dal.acik > .yrd-bas .yrd-ok{transform:rotate(90deg);}
+.yrd-dal > .yrd-bas .yrd-ikon{
+  flex-shrink:0;width:15px;text-align:center;
+  color:var(--siyan);font-size:12px;
+}
+.yrd-dal.acik > .yrd-bas{color:var(--siyan2);}
+
+.yrd-agac a{
+  display:block;
+  padding:6px 8px 6px 22px;
+  color:var(--metin2);
+  font:400 12.5px/1.45 var(--govde);
+  text-decoration:none;
+  border-radius:6px;
+  border-left:2px solid transparent;
+  transition:color .16s,background .16s,border-color .16s;
+}
+.yrd-agac a:hover{color:var(--metin);background:var(--arka3);}
+.yrd-agac a.etkin{
+  color:var(--siyan2);
+  background:var(--siyan-d);
+  border-left-color:var(--siyan);
+  font-weight:600;
+}
+/* arama gizleme */
+.yrd-agac .yrd-gizli{display:none;}
+.yrd-agac mark{
+  background:var(--kehribar-d);
+  color:var(--kehribar);
+  padding:0 1px;border-radius:2px;
+}
+
+/* ---------------- sag icerik ---------------- */
+.yrd-icerik{
+  padding:20px 0 96px 34px;
+  min-width:0;
+}
+.yrd-yol{
+  display:flex;align-items:center;gap:7px;
+  font:500 11px/1.4 var(--mono);
+  color:var(--soluk);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+.yrd-yol span:not(:last-child)::after{
+  content:"/";margin-left:7px;color:var(--cizgi2);
+}
+
+.yrd-bolum{display:none;}
+.yrd-bolum.etkin{display:block;animation:yrdGir .3s cubic-bezier(.22,.61,.36,1);}
+@keyframes yrdGir{
+  from{opacity:0;transform:translateY(6px);}
+  to{opacity:1;transform:none;}
+}
+
+.yrd-bolum h1{
+  font:700 clamp(22px,3vw,31px)/1.2 var(--baslik);
+  color:var(--baslik-renk);
+  margin:0 0 10px;
+  letter-spacing:-.01em;
+}
+.yrd-bolum h2{
+  font:600 clamp(17px,2.2vw,21px)/1.3 var(--baslik);
+  color:var(--baslik-renk);
+  margin:34px 0 12px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--cizgi);
+}
+.yrd-bolum h3{
+  font:600 15px/1.35 var(--baslik);
+  color:var(--metin);
+  margin:24px 0 9px;
+}
+.yrd-bolum p{
+  font:400 14px/1.72 var(--govde);
+  color:var(--metin2);
+  margin:0 0 13px;
+  max-width:76ch;
+}
+.yrd-bolum .yrd-ozet{
+  font-size:15px;
+  color:var(--metin);
+  margin-bottom:22px;
+  max-width:74ch;
+}
+.yrd-bolum ul,.yrd-bolum ol{
+  margin:0 0 15px;padding-left:20px;
+  font:400 14px/1.7 var(--govde);
+  color:var(--metin2);
+  max-width:74ch;
+}
+.yrd-bolum li{margin-bottom:6px;}
+.yrd-bolum li::marker{color:var(--siyan);}
+.yrd-bolum strong{color:var(--metin);font-weight:600;}
+.yrd-bolum code{
+  font:500 12.5px/1.5 var(--mono);
+  background:var(--arka3);
+  border:1px solid var(--cizgi);
+  border-radius:4px;
+  padding:1px 5px;
+  color:var(--siyan2);
+}
+.yrd-bolum a:not(.yrd-dg){
+  color:var(--siyan);text-decoration:none;
+  border-bottom:1px solid transparent;
+  transition:border-color .16s;
+}
+.yrd-bolum a:not(.yrd-dg):hover{border-bottom-color:var(--siyan);}
+
+/* tablo */
+.yrd-bolum table{
+  width:100%;
+  border-collapse:collapse;
+  margin:0 0 20px;
+  font:400 13px/1.5 var(--govde);
+}
+.yrd-bolum th{
+  text-align:left;
+  padding:9px 12px;
+  background:var(--arka3);
+  color:var(--metin);
+  font:600 11.5px/1.3 var(--mono);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--cizgi2);
+  white-space:nowrap;
+}
+.yrd-bolum td{
+  padding:9px 12px;
+  color:var(--metin2);
+  border-bottom:1px solid var(--cizgi);
+  vertical-align:top;
+}
+.yrd-bolum tbody tr:hover td{background:var(--arka2);}
+.yrd-bolum td code{white-space:nowrap;}
+
+/* uyari/bilgi kutulari */
+.yrd-not{
+  display:flex;gap:12px;
+  padding:13px 16px;
+  margin:0 0 18px;
+  background:var(--arka2);
+  border:1px solid var(--cizgi);
+  border-left:3px solid var(--siyan);
+  border-radius:var(--radius);
+  font:400 13.5px/1.65 var(--govde);
+  color:var(--metin2);
+  max-width:76ch;
+}
+.yrd-not .yrd-ni{
+  flex-shrink:0;color:var(--siyan);font-size:14px;margin-top:2px;
+}
+.yrd-not.uyari{border-left-color:var(--kehribar);}
+.yrd-not.uyari .yrd-ni{color:var(--kehribar);}
+.yrd-not.tehlike{border-left-color:var(--kotu);}
+.yrd-not.tehlike .yrd-ni{color:var(--kotu);}
+.yrd-not.iyi{border-left-color:var(--iyi);}
+.yrd-not.iyi .yrd-ni{color:var(--iyi);}
+.yrd-not strong{color:var(--metin);}
+
+/* adim listesi */
+.yrd-adim{
+  list-style:none;
+  margin:0 0 20px;padding:0;
+  counter-reset:yrdAdim;
+  max-width:76ch;
+}
+.yrd-adim > li{
+  counter-increment:yrdAdim;
+  position:relative;
+  padding:0 0 16px 38px;
+  border-left:1px solid var(--cizgi);
+  margin-left:12px;
+}
+.yrd-adim > li:last-child{border-left-color:transparent;padding-bottom:0;}
+.yrd-adim > li::before{
+  content:counter(yrdAdim);
+  position:absolute;left:-12px;top:0;
+  width:24px;height:24px;
+  display:grid;place-items:center;
+  background:var(--arka);
+  border:1px solid var(--siyan);
+  border-radius:50%;
+  color:var(--siyan);
+  font:600 11.5px/1 var(--mono);
+}
+.yrd-adim > li > strong{
+  display:block;
+  color:var(--metin);
+  font:600 13.5px/1.4 var(--baslik);
+  margin-bottom:4px;
+}
+.yrd-adim > li p{margin:0 0 6px;font-size:13.5px;}
+
+/* kart izgarasi */
+.yrd-kartlar{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
+  gap:13px;
+  margin:0 0 22px;
+}
+.yrd-kart{
+  padding:15px 16px;
+  background:var(--kart);
+  border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+  transition:border-color .18s,transform .18s;
+}
+.yrd-kart:hover{border-color:var(--cizgi2);transform:translateY(-2px);}
+.yrd-kart .yrd-ki{
+  color:var(--siyan);font-size:16px;margin-bottom:9px;display:block;
+}
+.yrd-kart h4{
+  font:600 13.5px/1.35 var(--baslik);
+  color:var(--metin);
+  margin:0 0 5px;
+}
+.yrd-kart p{
+  font:400 12.5px/1.6 var(--govde);
+  color:var(--metin2);
+  margin:0;max-width:none;
+}
+
+/* menu envanteri */
+.yrd-menu-liste{
+  display:grid;gap:5px;
+  margin:0 0 20px;
+}
+.yrd-menu-oge{
+  display:grid;
+  grid-template-columns:210px 1fr;
+  gap:14px;
+  padding:9px 13px;
+  background:var(--arka2);
+  border:1px solid var(--cizgi);
+  border-radius:7px;
+  font:400 13px/1.55 var(--govde);
+  color:var(--metin2);
+}
+.yrd-menu-oge > b{
+  color:var(--metin);
+  font:600 12.5px/1.55 var(--baslik);
+}
+@media(max-width:640px){
+  .yrd-menu-oge{grid-template-columns:1fr;gap:3px;}
+}
+
+/* rozet */
+.yrd-rozet{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:20px;
+  font:600 10.5px/1.5 var(--mono);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  border:1px solid;
+  white-space:nowrap;
+}
+.yrd-rozet.siyan{color:var(--siyan);border-color:var(--siyan);background:var(--siyan-d);}
+.yrd-rozet.kehribar{color:var(--kehribar);border-color:var(--kehribar);background:var(--kehribar-d);}
+.yrd-rozet.iyi{color:var(--iyi);border-color:var(--iyi);background:rgba(61,220,151,.1);}
+.yrd-rozet.kotu{color:var(--kotu);border-color:var(--kotu);background:rgba(242,109,109,.1);}
+.yrd-rozet.soluk{color:var(--soluk);border-color:var(--cizgi2);}
+
+/* sonraki/onceki gezinme */
+.yrd-gez{
+  display:flex;gap:12px;
+  margin-top:44px;padding-top:22px;
+  border-top:1px solid var(--cizgi);
+}
+.yrd-gez a{
+  flex:1;
+  padding:13px 16px;
+  background:var(--arka2);
+  border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+  text-decoration:none;
+  transition:border-color .18s;
+}
+.yrd-gez a:hover{border-color:var(--siyan);}
+.yrd-gez a .yrd-ge{
+  display:block;
+  font:500 10.5px/1.4 var(--mono);
+  color:var(--soluk);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.yrd-gez a .yrd-gb{
+  font:600 13.5px/1.35 var(--baslik);
+  color:var(--metin);
+}
+.yrd-gez a.sag{text-align:right;}
+
+/* FAZ16-DESTEK-MENU
+   Kirmizi yuzen yuvarlak duğme kaldirildi.  Icindekiler duğmesi ust
+   cubukta, hamburger (`#menuAc`) ile ayni gorsel dilde: saydam zemin,
+   `--metin` rengi, dikdortgen.  `--vurgu` (marka kirmizisi) gezinme
+   oğesinde KULLANILMAZ -- o renk uyari/marka icin ayrilmistir.
+   `#menuAc` kurallari `css/stil.css`'te ve tanitim sayfasiyla
+   PAYLASILIYOR; oraya dokunulmaz, burada yalniz yeni duğme tanimlanir. */
+#icindekilerDg{
+  display:none;
+  background:none;border:none;
+  color:var(--metin);
+  font-size:17px;line-height:1;
+  cursor:pointer;padding:7px 9px;
+  border-radius:8px;
+}
+#icindekilerDg:hover{background:var(--zemin3, rgba(127,127,127,.12));}
+#icindekilerDg:focus-visible{
+  outline:2px solid var(--siyan);outline-offset:2px;
+}
+#icindekilerDg[aria-expanded="true"]{
+  background:var(--zemin3, rgba(127,127,127,.16));
+  color:var(--siyan);
+}
+
+/* ---------------- duyarli ---------------- */
+@media(max-width:960px){
+  .yrd-kabuk{grid-template-columns:1fr;}
+  .yrd-yan{
+    position:fixed;
+    top:0;left:0;bottom:0;
+    width:290px;
+    max-height:none;
+    z-index:70;
+    background:var(--arka);
+    border-right:1px solid var(--cizgi2);
+    padding:78px 18px 30px;
+    transform:translateX(-100%);
+    transition:transform .26s cubic-bezier(.22,.61,.36,1);
+  }
+  .yrd-yan.acik{transform:none;}
+  .yrd-icerik{padding:20px 18px 96px;}
+  /* FAZ16-DESTEK-MENU  ust cubuk icindekiler duğmesi */
+  #icindekilerDg{display:block;}
+  .yrd-perde{
+    position:fixed;inset:0;z-index:65;
+    background:rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;
+    transition:opacity .22s;
+  }
+  .yrd-perde.acik{opacity:1;pointer-events:auto;}
+}
+@media(max-width:560px){
+  .yrd-sayfa{padding-top:74px;}
+  .yrd-gez{flex-direction:column;}
+  .yrd-gez a.sag{text-align:left;}
+  .yrd-bolum table{font-size:12px;}
+  .yrd-bolum th,.yrd-bolum td{padding:7px 9px;}
+}
+
+/* =================================================================
+   FAZ17-DESTEK-BAGIMSIZ -- Destek sitesine ait ust cubuk menusu
+   =================================================================
+   Destek artik tanitim sayfasi menusunu tasimiyor.  `#anaMenu` yerine
+   `#destekMenu` var; icinde YALNIZ belge sitesine ait ogeler bulunur:
+   ana siteye donus, dil, tema, sisteme giris.
+
+   Kullanici bilgileri / oturum kabugu (`.gk-kul`) BURAYA KONULMAZ --
+   Destek'te oturum yoktur, `oturum.js` de yuklenmez.
+
+   KRITIK: `#icindekilerDg` uzerindeki `margin-left:auto` bos alani
+   KENDISINDEN ONCE toplar, boylece dugme saga gider.  Onceki surumde bu
+   is `#anaMenu`nun `margin-left:auto` kuralina birakilmisti; mobilde
+   `#anaMenu` `position:fixed` olup akistan CIKTIGI icin kural etkisiz
+   kaliyor ve dugme amblemin hemen yaninda, ekranin ortasinda duruyordu.
+   ----------------------------------------------------------------- */
+#destekMenu{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+#destekMenu .dm-baglanti{
+  color:var(--metin2);text-decoration:none;font-size:14px;
+  padding:6px 10px;border-radius:6px;
+  transition:color var(--gecis), background var(--gecis);
+}
+#destekMenu .dm-baglanti:hover{
+  color:var(--metin);background:var(--zemin3, rgba(127,127,127,.12));
+}
+#destekMenu .dm-baglanti:focus-visible{
+  outline:2px solid var(--siyan);outline-offset:2px;
+}
+/* FAZ18-IS16-USTBAR-SAG -- bosluk toplayici AKISTA OLAN ogeye tasindi.
+   ONCEKI SURUM HATASI:  `margin-left:auto` `#icindekilerDg` uzerindeydi.
+   O dugme 960px USTUNDE `display:none` (bkz. media 960 blogu) ve
+   display:none olan oge flex akisindan TAMAMEN CIKAR -- uzerindeki
+   `margin-left:auto` ETKISIZ kalir.  Sonuc: masaustunde bosluk hic
+   toplanmiyordu, `#destekMenu` markanin hemen yaninda duruyordu.
+   Gercek tarayici olcumu (viewport 1280px):
+       .ic sag kenar = 1243px , .tema-dugme sag kenar = 417px
+       SAG BOSLUK    = 826px      <-- dil/tema ORTADA kaliyordu
+   Ayni tuzak bu dosyada `#anaMenu` icin zaten yorumlanmis
+   (position:fixed ile akistan cikma) ama bu ogede YINELENMIS.
+   Toplayici artik HER GENISLIKTE akista olan `#destekMenu`da:
+       olcum sonrasi SAG BOSLUK = 30px  (`.ic` ic payi + 2px margin)
+   960px ALTI: `#destekMenu` bosluğu topladiginda sag blok birlikte
+   saga gider, `#icindekilerDg` onun SOLUNA yapisir -- FAZ16'da
+   amaclanan davranisin aynisi. */
+#destekMenu{margin-left:auto;}
+
+/* 720px alti: dar ekranda "Ana Site" yazisi ve giris dugmesi metni
+   siğmiyor.  Ana Site gizlenir (amblem zaten `/` adresine gider),
+   giris dugmesi ikon boyutuna iner. */
+@media (max-width: 720px){
+  #destekMenu .dm-baglanti{display:none;}
+  #destekMenu{gap:6px;}
+}
+/* FAZ18/IS5: `.dg-birincil` kurallari KALDIRILDI (720px ve 480px).
+   O sinif Destek ust cubugunda YALNIZ "Sisteme Giris" dugmesinde
+   kullaniliyordu; dugme kaldirildi.  Kurallar birakilsa OLU kalirdi ve
+   ileride biri ayni sinifi Destek ust cubugunda kullandiginda 480px
+   altinda SESSIZCE gizlenirdi -- tanimsiz tema degiskeni turu bir tuzak.
+   Daralan ekran davranisi artik: 960px altinda icindekiler dugmesi
+   gorunur, 720px altinda "Ana Site" yazisi gizlenir (amblem zaten `/`
+   adresine gider), dil + tema HER GENISLIKTE kalir. */
+
+/* yazdirma */
+@media print{
+  /* FAZ16-DESTEK-MENU  eski `.yrd-agac-dugme` secicisi
+     `#icindekilerDg` ile degistirildi. */
+  .yrd-yan,#icindekilerDg,#destekMenu,.yrd-gez,#ustCubuk,footer{display:none!important;}
+  .yrd-kabuk{grid-template-columns:1fr;}
+  .yrd-icerik{padding:0;}
+  .yrd-bolum{display:block!important;}
+  .yrd-sayfa{padding-top:0;}
+}
+
+
+/* =====================================================================
+   FAZ18-AGAC  —  Agac gorunumu: sag girinti + (+/-) gostergesi
+   ---------------------------------------------------------------------
+   KOK NEDEN (olculdu):
+     Dal basligi metninin sol kenari = padding 8 + .yrd-ok 12 + gap 8
+     + .yrd-ikon 15 + gap 8 = 51 px
+     Alt baglanti metninin sol kenari = ul padding-left 12 + a padding-left 22
+     = 34 px
+     Yani alt ogeler ust ogenin 17 px SOLUNDA basliyordu; agac tersine
+     gorunuyordu. Alt `ul` girintisi, dal basligindaki iki ikonun
+     genisligini telafi edecek sekilde hizalanir ve uzerine bir kademe
+     girinti eklenir.
+
+   GOSTERGE:
+     `.yrd-ok` icindeki Font Awesome chevron gizlenir; yerine CSS
+     `::before` ile "+" / "−" basilir. Isaretlemeye dokunulmaz, boylece
+     13 dalin tamami tek kuraldan beslenir (ve `destek` dalindaki yanlis
+     ikon da etkisiz kalir).
+   ===================================================================== */
+
+/* --- 1. Alt oge girintisi: ust ogenin SAGINDA --- */
+.yrd-agac{
+  /* dal basligi ikon telafisi: .yrd-ok(12) + gap(8) + .yrd-ikon(15) + gap(8) */
+  --yrd-ikon-telafi:43px;
+  /* her seviyede eklenecek girinti kademesi */
+  --yrd-kademe:14px;
+}
+.yrd-agac ul{
+  padding:0 0 0 calc(var(--yrd-ikon-telafi) + var(--yrd-kademe));
+  position:relative;
+}
+/* `a` kendi sol yastigini birakir; girinti artik `ul` uzerinde */
+.yrd-agac a{
+  padding-left:10px;
+}
+
+/* --- 2. Dikey agac cizgisi --- */
+.yrd-agac ul::before{
+  content:"";
+  position:absolute;
+  left:calc(var(--yrd-ikon-telafi) - 12px);
+  top:2px;bottom:6px;
+  width:1px;
+  background:var(--cizgi);
+  opacity:.85;
+}
+/* her cocuk icin kisa yatay dal cizgisi */
+.yrd-agac ul > li{position:relative;}
+.yrd-agac ul > li::before{
+  content:"";
+  position:absolute;
+  left:-12px;
+  top:15px;
+  width:9px;height:1px;
+  background:var(--cizgi);
+  opacity:.85;
+}
+
+/* --- 3. (+/-) gostergesi --- */
+/* FA ikonu gizlenir; kural tum dallar icin tek kaynaktan calisir */
+.yrd-dal > .yrd-bas .yrd-ok > i{display:none;}
+.yrd-dal > .yrd-bas .yrd-ok{
+  /* donme kaldirildi: artik isaret degisiyor, ikon donmuyor */
+  transform:none!important;
+  width:14px;height:14px;
+  display:grid;place-items:center;
+  border:1px solid var(--cizgi2);
+  border-radius:3px;
+  background:var(--arka2);
+  color:var(--metin2);
+  font:700 11px/1 var(--mono);
+  transition:border-color .16s,color .16s,background .16s;
+}
+.yrd-dal > .yrd-bas .yrd-ok::before{content:"+";}
+.yrd-dal.acik > .yrd-bas .yrd-ok::before{content:"\2212";}  /* eksi isareti */
+.yrd-dal.acik > .yrd-bas .yrd-ok{
+  border-color:var(--siyan);
+  color:var(--siyan);
+  background:var(--siyan-d);
+}
+.yrd-dal > .yrd-bas:hover .yrd-ok{
+  border-color:var(--siyan);
+  color:var(--siyan);
+}
+
+/* --- 4. Arama kipinde cizgiler karismasin --- */
+.yrd-agac .yrd-gizli::before{display:none;}
+
+/* FAZ18-IS5-DESTEK-USTCUBUK */

@@ -1,0 +1,267 @@
+/* =====================================================================
+   PENCERE DOK STILLERI (v2.4.24)
+   Sekme birlestirme / ayirma / ikiye bolme gorsel katmani.
+   Olculer stil.css :root degiskenlerinden gelir (tek kaynak).
+   ===================================================================== */
+
+/* ---------------------------------------------------------------
+   BIRAKMA GOSTERGESI (drop indicator)
+   Surukleme sirasinda nereye birakilacagini gosteren yaridonuk alan
+   --------------------------------------------------------------- */
+.dok-gosterge {
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  z-index: 2480;                 /* pencerelerin ustunde, ust barin altinda */
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--interceptor) 22%, transparent);
+  border: 2px solid var(--interceptor);
+  border-radius: 4px;
+  transition: left .07s linear, top .07s linear,
+              width .07s linear, height .07s linear;
+}
+.dok-gosterge.dok-sekme {
+  border-radius: var(--pencere-radius) var(--pencere-radius) 0 0;
+  background: color-mix(in srgb, var(--interceptor) 32%, transparent);
+}
+
+/* ---------------------------------------------------------------
+   KAPSAYICI (sekmeli veya bolunmus pencere)
+   --------------------------------------------------------------- */
+.dok-kapsayici {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* IS51-DOK-MIN-OLCU: kullanici sozlesmesi 400x300 */
+  min-width: 400px;
+  min-height: 300px;
+  background: var(--panel-arka);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--pencere-radius);
+  box-shadow: 0 10px 36px rgba(0,0,0,.5);
+  overflow: hidden;
+  color: var(--metin);
+  z-index: 1400;
+}
+
+/* ---------------------------------------------------------------
+   SEKME CUBUGU (Chrome tarzi)
+   --------------------------------------------------------------- */
+.dok-sekme-cubuk {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  box-sizing: border-box;
+  min-height: var(--pencere-baslik-y);
+  padding: 3px 4px 0;
+  background: var(--pencere-baslik-arka);
+  border-bottom: 1px solid var(--cizgi);
+  /* Bos alandan surukleyerek TUM kapsayici tasinir */
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  flex: 0 0 auto;
+}
+.dok-sekme-cubuk::-webkit-scrollbar { height: 0; }
+:root[data-tema="acik"] .dok-sekme-cubuk { background: rgba(0,0,0,.06); }
+
+.dok-sekme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: 190px;
+  min-width: 92px;
+  padding: 0 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  font-size: 11px;
+  font-weight: var(--pencere-baslik-fw);
+  letter-spacing: var(--pencere-baslik-ls);
+  color: var(--soluk);
+  cursor: move;                  /* surukleyerek ayirma */
+  touch-action: none;
+  user-select: none;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  transition: background .15s, color .15s;
+}
+.dok-sekme:hover {
+  background: color-mix(in srgb, var(--metin) 10%, transparent);
+  color: var(--metin);
+}
+.dok-sekme.aktif {
+  background: var(--panel-arka);
+  border-color: var(--cizgi);
+  color: var(--metin);
+  /* Aktif sekme govdeyle birlesik gorunur */
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+}
+.dok-sekme i[class*="fa-"] {
+  font-size: 11px;
+  opacity: .85;
+  flex: 0 0 auto;
+}
+.dok-sekme-ad {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dok-sekme-kapat {
+  background: none !important;
+  border: none !important;
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 3px;
+  line-height: 1;
+  border-radius: 3px;
+  opacity: .6;
+  flex: 0 0 auto;
+}
+.dok-sekme-kapat:hover {
+  opacity: 1;
+  color: var(--kotu);
+  background: color-mix(in srgb, var(--kotu) 18%, transparent) !important;
+}
+
+/* Sekme govdesi: aktif pencere burada */
+.dok-govde {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+}
+
+/* -----------------------------------------------------------------
+   v2.4.28 - YIGIN BAGLAMI (STACKING CONTEXT) SINIRI
+
+   Olculen kusur: birlesmis pencere fare ile BOYUTLANDIRILAMIYORDU.
+   Olcum (v2.4.27, tarayici, dokKap_1 uzerinde):
+
+     panel   z-index = 1213   (popup_tasima.js:enUsteGetir yazdi)
+     tutamac z-index = 5      (.popup-boyut-tutamac)
+     elementFromPoint(tutamac merkezi) -> .sabit-icerik (panel icerigi)
+     erisilebilir: false
+
+   .dok-kapsayici ve .dok-govde z-index:auto oldugu icin yigin baglami
+   OLUSTURMUYORDU; panel ile kapsayicinin tutamaci ayni baglamda
+   karsilastiriliyor ve 1213 > 5 oldugundan panel tutamacin ustune
+   biniyordu. Tutamac DOM'da govdeden SONRA gelmesine ragmen z-index
+   siralamayi belirledigi icin altta kaliyordu.
+
+   Cozum: govde ve gozenekler z-index:0 alir. `auto` DEGIL sayisal
+   deger yigin baglami olusturur; boylece panelin z-index'i ne olursa
+   olsun govdenin ICINDE kalir ve kapsayicinin tutamaciyla
+   karsilastirilamaz.
+   ----------------------------------------------------------------- */
+.dok-govde,
+.dok-gozeneki {
+  z-index: 0;
+}
+/* Tutamac ve ayirici her zaman govdenin ustundedir */
+.dok-kapsayici > .popup-boyut-tutamac {
+  z-index: 6;
+}
+
+/* Kapsayici icindeki pencereler kendi golge/kenarligini birakir */
+.dok-govde > *,
+.dok-gozeneki > * {
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------
+   BOLME (SPLIT)
+
+   Yerlesim CSS Grid ile kurulur. Gozenekler nth-of-type ile DEGIL,
+   acik .dok-g1 / .dok-g2 siniflariyla konumlandirilir: kapsayicinin
+   ilk cocugu baslik oldugu icin nth-of-type sayimi kayiyor ve
+   gozenekler ters siraya dusuyordu (sag'a birakilan pencere solda
+   aciliyordu).
+   --------------------------------------------------------------- */
+.dok-bolme-baslik {
+  /* geometri ortak .popup-baslik kuralindan gelir */
+  box-sizing: border-box;
+}
+.dok-gozeneki {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-width: 60px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+.dok-ayirici {
+  background: var(--cizgi);
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  transition: background .15s;
+}
+.dok-ayirici:hover,
+.dok-ayirici:active {
+  background: var(--interceptor);
+}
+
+/* Kapsayici: baslik satiri + gozenek alani */
+.dok-kapsayici.dok-bolmeli {
+  display: grid;
+}
+.dok-kapsayici.dok-bolmeli > .dok-bolme-baslik {
+  grid-row: 1;
+  grid-column: 1 / -1;
+}
+
+/* --- DIKEY BOLME: yan yana (sol | ayirici | sag) --- */
+.dok-kapsayici.dok-bolmeli.dok-dikey {
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr auto 1fr;
+}
+.dok-kapsayici.dok-bolmeli.dok-dikey > .dok-g1 {
+  grid-row: 2; grid-column: 1;
+}
+.dok-kapsayici.dok-bolmeli.dok-dikey > .dok-ayirici {
+  grid-row: 2; grid-column: 2;
+  width: 6px;
+  cursor: col-resize;
+}
+.dok-kapsayici.dok-bolmeli.dok-dikey > .dok-g2 {
+  grid-row: 2; grid-column: 3;
+}
+
+/* --- YATAY BOLME: ust / ayirici / alt --- */
+.dok-kapsayici.dok-bolmeli.dok-yatay {
+  grid-template-rows: auto 1fr auto 1fr;
+  grid-template-columns: 1fr;
+}
+.dok-kapsayici.dok-bolmeli.dok-yatay > .dok-g1 {
+  grid-row: 2; grid-column: 1;
+}
+.dok-kapsayici.dok-bolmeli.dok-yatay > .dok-ayirici {
+  grid-row: 3; grid-column: 1;
+  height: 6px;
+  cursor: row-resize;
+}
+.dok-kapsayici.dok-bolmeli.dok-yatay > .dok-g2 {
+  grid-row: 4; grid-column: 1;
+}
+
+/* Surukleme sirasinda kaynak pencere yaridonuk olsun */
+.dok-suruklenen {
+  opacity: .78;
+}

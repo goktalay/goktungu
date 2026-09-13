@@ -1,0 +1,944 @@
+/* GÖKTUNGU MÜŞTERİ — kurum paneli biçemi
+   Admin panelinden türetildi; vurgu rengi bilinçli olarak
+   farklıdır (teal) — kullanıcı hangi panelde olduğunu
+   karıştırmasın. */
+:root {
+  --zemin: #0b0f16;
+  --zemin2: #111825;
+  --zemin3: #172033;
+  --cerceve: #223046;
+  --yazi: #e6edf7;
+  --yazi2: #93a3bb;
+  --vurgu: #1f9e8f;
+  --vurgu2: #17806f;
+  --yesil: #2ea043;
+  --sari: #d29922;
+  --kirmizi: #f85149;
+  --mor: #8957e5;
+  --golge: 0 8px 24px rgba(0, 0, 0, .45);
+  /* Vurgu zeminli ogelerin (dolu dugme, rozet) yazi rengi.
+   * Sabit #fff yerine degisken: vurgu paleti ileride acilirsa
+   * tek yerden karsilanir. Iki kipte de beyaz cunku --vurgu ve
+   * --vurgu2 her iki palette de koyu yesil. */
+  --dugme-yazi: #ffffff;
+  --r: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--zemin); color: var(--yazi);
+  font: 13px/1.5 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--vurgu); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Giriş ---------- */
+#giris-katman {
+  position: fixed; inset: 0; z-index: 100;
+  /* DUZEN: kure SOLDA, giris karti SAGDA.  Onceki hal kartı tam
+     ortaya koyuyordu ve kure kartin arkasinda kaliyordu; radar
+     mevzii de kartin altina dusuyordu. */
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: clamp(24px, 9vw, 150px);
+  background: radial-gradient(circle at 30% 20%, #16233a, #070a10 70%);
+}
+/* Dar ekranda saga yaslama anlamsiz -- kart ortalanir, kure arkada
+   kalir (tek kolon duzen). */
+@media (max-width: 900px) {
+  #giris-katman {
+    justify-content: center;
+    padding-right: 0;
+  }
+}
+.giris-kart {
+  width: 380px; padding: 32px 28px; border-radius: 12px;
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  box-shadow: var(--golge);
+}
+.giris-kart h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: .5px; }
+.giris-kart .alt { margin: 0 0 22px; color: var(--yazi2); font-size: 12px; }
+
+label { display: block; margin: 12px 0 4px; font-size: 12px; color: var(--yazi2); }
+input, select, textarea {
+  width: 100%; padding: 9px 11px; border-radius: var(--r);
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+  color: var(--yazi); font: inherit; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--vurgu); }
+
+button {
+  padding: 9px 16px; border-radius: var(--r); border: 1px solid transparent;
+  background: var(--vurgu2); color: var(--dugme-yazi); font: inherit; font-weight: 600;
+  cursor: pointer;
+}
+button:hover { background: var(--vurgu); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.ikincil { background: var(--zemin3); border-color: var(--cerceve); color: var(--yazi); }
+button.ikincil:hover { background: #1e2942; }
+button.tehlike { background: #3b1418; border-color: #6b2b30; color: #ffb4ae; }
+button.tehlike:hover { background: #52171d; }
+button.kucuk { padding: 5px 10px; font-size: 12px; font-weight: 500; }
+
+.hata { margin-top: 14px; padding: 9px 11px; border-radius: var(--r);
+        background: #3b1418; border: 1px solid #6b2b30; color: #ffb4ae;
+        font-size: 12px; }
+.hata:empty { display: none; }
+
+/* ---------- Yerleşim ---------- */
+#kabuk { display: none; height: 100%; grid-template-rows: 48px 1fr; }
+#kabuk.acik { display: grid; }
+
+header {
+  display: flex; align-items: center; gap: 16px; padding: 0 16px;
+  background: var(--zemin2); border-bottom: 1px solid var(--cerceve);
+}
+header .marka { font-weight: 700; letter-spacing: 1px; font-size: 14px; }
+header .marka span { color: var(--vurgu); }
+header .bosluk { flex: 1; }
+header .kim { color: var(--yazi2); font-size: 12px; }
+
+#govde { display: grid; grid-template-columns: 210px 1fr; min-height: 0; }
+
+nav {
+  background: var(--zemin2); border-right: 1px solid var(--cerceve);
+  padding: 12px 8px; overflow-y: auto;
+}
+nav .grup { margin: 14px 6px 6px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .8px; color: #5d6b83; }
+nav a.oge {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border-radius: var(--r); color: var(--yazi2); font-size: 13px;
+}
+nav a.oge:hover { background: var(--zemin3); color: var(--yazi); text-decoration: none; }
+nav a.oge.etkin { background: #16305a; color: #cfe2ff; }
+nav a.oge .im { width: 16px; text-align: center; opacity: .85; }
+
+/* ---------- Hakkinda / surum rozeti (nav alt) ----------
+   Panel kendi surum defterini yurutur; rozet metnini
+   /js/surum_defter.js doldurur. */
+nav .nav-alt {
+  margin-top: 16px; padding-top: 10px;
+  border-top: 1px solid var(--cerceve);
+}
+nav .nav-hakkinda {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border: none; border-radius: var(--r);
+  background: transparent; color: var(--yazi2);
+  font: inherit; font-size: 13px; cursor: pointer; text-align: left;
+}
+nav .nav-hakkinda:hover { background: var(--zemin3); color: var(--yazi); }
+nav .nav-hakkinda .im { width: 16px; text-align: center; opacity: .85; }
+nav .nav-surum {
+  margin-left: auto; font-size: 11px; color: var(--vurgu);
+  font-variant-numeric: tabular-nums;
+}
+
+main { padding: 18px 20px 40px; overflow-y: auto; min-width: 0; }
+main h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+main .aciklama { margin: 0 0 18px; color: var(--yazi2); font-size: 12px; }
+
+/* ---------- Kartlar ---------- */
+.kart-izgara { display: grid; gap: 12px;
+               grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.kart {
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: 10px; padding: 14px 16px;
+}
+.kart .etiket { color: var(--yazi2); font-size: 11px; text-transform: uppercase;
+                letter-spacing: .6px; }
+.kart .deger { font-size: 26px; font-weight: 700; margin-top: 6px; }
+.kart .ek { color: var(--yazi2); font-size: 11px; margin-top: 2px; }
+.kart.vurgulu { border-color: #1f4f8f; }
+
+.pano { background: var(--zemin2); border: 1px solid var(--cerceve);
+        border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+.pano h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+
+/* ---------- Tablo ---------- */
+.arac-cubugu { display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
+               flex-wrap: wrap; }
+.arac-cubugu input, .arac-cubugu select { width: auto; min-width: 160px; }
+.arac-cubugu .bosluk { flex: 1; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #1b2537; }
+th { color: var(--yazi2); font-weight: 600; font-size: 11px;
+     text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+tbody tr:hover { background: #141d2e; }
+td.sag, th.sag { text-align: right; }
+td.tek-satir { white-space: nowrap; }
+.bos { padding: 28px; text-align: center; color: var(--yazi2); }
+
+.im-rozet {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; border: 1px solid transparent;
+}
+.r-yesil { background: #0d2818; color: #7ee787; border-color: #1a5c33; }
+.r-kirmizi { background: #3b1418; color: #ffb4ae; border-color: #6b2b30; }
+.r-sari { background: #2e2410; color: #e3b341; border-color: #6b5220; }
+.r-mavi { background: #10233d; color: #79c0ff; border-color: #1f4f8f; }
+.r-gri { background: var(--zemin3); color: var(--yazi2); border-color: var(--cerceve); }
+.r-mor { background: #251a3d; color: #d2a8ff; border-color: #4b2d80; }
+
+.nokta { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+         margin-right: 6px; vertical-align: 1px; }
+.nokta.acik { background: var(--yesil); box-shadow: 0 0 8px #2ea04388; }
+.nokta.kapali { background: #46536b; }
+
+.sayfalama { display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+             margin-top: 12px; color: var(--yazi2); font-size: 12px; }
+
+/* ---------- Açılır pencere ---------- */
+.perde {
+  position: fixed; inset: 0; background: rgba(3, 6, 12, .72);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 60px 20px; z-index: 90; overflow-y: auto;
+}
+.perde.gizli { display: none; }
+.pencere {
+  width: 560px; max-width: 100%; background: var(--zemin2);
+  border: 1px solid var(--cerceve); border-radius: 12px;
+  box-shadow: var(--golge);
+}
+.pencere.genis { width: 940px; }
+.pencere-baslik {
+  display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+  border-bottom: 1px solid var(--cerceve);
+}
+.pencere-baslik h3 { margin: 0; font-size: 14px; flex: 1; }
+.pencere-govde { padding: 16px; }
+.pencere-alt { display: flex; gap: 8px; justify-content: flex-end;
+               padding: 12px 16px; border-top: 1px solid var(--cerceve); }
+.kapat-x { background: none; border: none; color: var(--yazi2); font-size: 18px;
+           padding: 0 4px; cursor: pointer; }
+.kapat-x:hover { color: var(--yazi); background: none; }
+
+.ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ucul { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ---------- Ayrıntı listesi ---------- */
+dl.ozet { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px;
+          margin: 0; font-size: 12.5px; }
+dl.ozet dt { color: var(--yazi2); }
+dl.ozet dd { margin: 0; }
+
+/* ---------- Grafik ---------- */
+.cizim { width: 100%; height: 190px; display: block; }
+.gizli { display: none !important; }
+
+/* ---------- Video ---------- */
+video { width: 100%; max-height: 460px; background: #000; border-radius: var(--r); }
+.uyari-kutu { padding: 10px 12px; border-radius: var(--r); font-size: 12px;
+              background: #2e2410; border: 1px solid #6b5220; color: #e3b341; }
+
+/* ---------- Bildirim ---------- */
+#bildirimler { position: fixed; right: 16px; bottom: 16px; z-index: 200;
+               display: flex; flex-direction: column; gap: 8px; }
+.bildirim { padding: 10px 14px; border-radius: var(--r); font-size: 12.5px;
+            background: var(--zemin3); border: 1px solid var(--cerceve);
+            box-shadow: var(--golge); max-width: 340px; }
+.bildirim.iyi { border-color: #1a5c33; background: #0d2818; color: #7ee787; }
+.bildirim.kotu { border-color: #6b2b30; background: #3b1418; color: #ffb4ae; }
+
+.yukleniyor { color: var(--yazi2); font-size: 12px; padding: 20px; text-align: center; }
+code.kod { background: var(--zemin3); padding: 2px 6px; border-radius: 4px;
+           font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+.gizli-kutu { background: #0d2818; border: 1px solid #1a5c33; color: #7ee787;
+              padding: 10px 12px; border-radius: var(--r); word-break: break-all;
+              font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+
+/* ---------- Müşteri paneline özgü ---------- */
+.marka-vurgu { color: var(--vurgu); }
+.giris-not {
+  margin: 18px 0 0; padding-top: 14px; font-size: 11px;
+  line-height: 1.6; color: var(--yazi2);
+  border-top: 1px solid var(--cerceve);
+}
+.firma-etiket {
+  margin-left: 14px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(31, 158, 143, .12); border: 1px solid rgba(31, 158, 143, .35);
+  color: var(--vurgu); font-size: 11px; font-weight: 600;
+  white-space: nowrap; max-width: 320px; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.istasyon-izgara {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.istasyon-kart {
+  padding: 14px 16px; border-radius: var(--r); background: var(--zemin2);
+  border: 1px solid var(--cerceve);
+}
+.istasyon-kart.cevrimici { border-color: rgba(46, 160, 67, .55); }
+.istasyon-kart h4 {
+  margin: 0 0 8px; font-size: 14px; display: flex; align-items: center;
+  gap: 8px;
+}
+.nokta {
+  width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px;
+  background: var(--yazi2);
+}
+.nokta.acik { background: var(--yesil); box-shadow: 0 0 0 3px rgba(46,160,67,.2); }
+.istasyon-kart dl.ozet { margin: 0; }
+.istasyon-kart .arac-cubugu { margin-top: 12px; }
+.bos-durum {
+  padding: 40px 24px; text-align: center; color: var(--yazi2);
+  background: var(--zemin2); border: 1px dashed var(--cerceve);
+  border-radius: var(--r);
+}
+.bos-durum h3 { margin: 0 0 8px; color: var(--yazi); font-size: 15px; }
+.bos-durum p { margin: 0 auto; max-width: 520px; line-height: 1.7; font-size: 12px; }
+.yerel-baglanti {
+  display: inline-block; margin-top: 10px; padding: 7px 14px;
+  border-radius: var(--r); background: var(--zemin3);
+  border: 1px solid var(--cerceve); color: var(--yazi);
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+}
+
+/* ================= KURUMSAL KAYIT FORMU =================
+   Kayıt kartı giriş kartından daha geniştir: iki kolonlu alan çiftleri
+   (ad/soyad, şifre/şifre-tekrar) 380px'e sığmıyor, alanlar eziliyordu. */
+.kayit-kart { width: 520px; max-height: 92vh; overflow-y: auto; }
+.kayit-bolum {
+  margin: 22px 0 2px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--cerceve);
+  font-size: 11px; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--yazi2);
+}
+.kayit-bolum:first-of-type { margin-top: 8px; }
+.kayit-ipucu { margin: 8px 0 0; font-size: 11px; color: var(--yazi2); }
+.zorunlu { color: var(--kirmizi); }
+
+/* ---------- Kurum logosu seçici ----------
+   Tarayıcının varsayılan dosya düğmesi biçimlendirilemez ve koyu
+   temada okunmaz görünür; bu yüzden gerçek <input type="file"> gizlenir
+   ve tıklama bu kutudan yönlendirilir. Kutu aynı zamanda sürükle-bırak
+   hedefidir. */
+.logo-alan {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--r);
+  background: var(--zemin3); border: 1px dashed var(--cerceve);
+  cursor: pointer; user-select: none; outline: none;
+}
+.logo-alan:hover, .logo-alan:focus { border-color: var(--vurgu); }
+.logo-alan.uzerinde { border-color: var(--vurgu); background: #1b2740; }
+.logo-alan.dolu { border-style: solid; }
+.logo-onizleme {
+  width: 46px; height: 46px; flex: 0 0 46px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: #0d1420;
+  border: 1px solid var(--cerceve); color: var(--yazi2);
+  overflow: hidden;
+}
+.logo-onizleme img {
+  max-width: 100%; max-height: 100%; object-fit: contain; display: block;
+}
+.logo-metin { flex: 1; min-width: 0; display: flex;
+              flex-direction: column; gap: 2px; }
+.logo-metin strong { font-size: 12px; font-weight: 600;
+                     overflow: hidden; text-overflow: ellipsis;
+                     white-space: nowrap; }
+.logo-metin span { font-size: 11px; color: var(--yazi2); }
+.logo-sil {
+  flex: 0 0 auto; width: 24px; height: 24px; padding: 0;
+  border-radius: 50%; background: var(--zemin2);
+  border: 1px solid var(--cerceve); color: var(--yazi2);
+  font-size: 15px; line-height: 1;
+}
+.logo-sil:hover { background: #3b1418; border-color: #6b2b30;
+                  color: #ffb4ae; }
+
+/* ---------- Başlıkta kurum logosu ----------
+   Boş olduğunda (logo yüklenmemiş kurum) hiç yer kaplamaması için
+   `:empty` ile gizlenir; aksi halde marka ile firma etiketi arasında
+   açıklanamayan bir boşluk oluşurdu. */
+.basli-logo { display: flex; align-items: center; height: 24px; }
+.basli-logo:empty { display: none; }
+.basli-logo img { max-height: 24px; max-width: 120px; display: block; }
+
+/* ---------- Kurum kimliği panosu ---------- */
+.kurum-logo-satir { display: flex; align-items: center; gap: 16px;
+                    padding: 14px; }
+.kurum-logo-kutu {
+  width: 84px; height: 84px; flex: 0 0 84px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: #0d1420;
+  border: 1px solid var(--cerceve); overflow: hidden;
+}
+.kurum-logo-kutu img { max-width: 100%; max-height: 100%;
+                       object-fit: contain; display: block; }
+.kurum-logo-yok { font-size: 11px; color: var(--yazi2); }
+.kurum-logo-metin { display: flex; flex-direction: column; gap: 4px;
+                    min-width: 0; }
+.kurum-logo-metin strong { font-size: 14px; }
+.kurum-logo-metin span { font-size: 12px; color: var(--yazi2); }
+.kurum-logo-islem { display: flex; align-items: center; gap: 10px;
+                    margin-top: 4px; }
+.kurum-logo-durum { font-size: 11px; color: var(--yazi2); }
+/* Başarı kutusu .hata kutusunun karşılığıdır; boşken gizlenir. */
+.basari { margin-top: 14px; padding: 9px 11px; border-radius: var(--r);
+          background: #10291a; border: 1px solid #1f5c33; color: #7ee2a0;
+          font-size: 12px; }
+.basari:empty { display: none; }
+
+/* ================= ABONELİK / MERKEZ UYGULAMA (v2.5.0) =================
+   Koltuk, özellik yetkileri ve Merkez Uygulama lisansı sayfaları.
+   Renkler kurum panelinin teal vurgusuna bağlıdır (--vurgu). */
+
+/* ---------- Yetki özeti ---------- */
+.yetki-izgara {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.yetki-ad { color: var(--yazi2); font-size: 11px; text-transform: uppercase;
+            letter-spacing: .6px; margin-bottom: 5px; }
+.yetki-not { color: var(--yazi2); font-size: 11.5px; line-height: 1.65;
+             margin-top: 12px; }
+
+/* ---------- Fiyat kartları ---------- */
+.fiyat-izgara {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 12px;
+}
+.fiyat-sahip {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 15px; border-radius: 10px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+}
+.fiyat-sahip:hover { border-color: rgba(31, 158, 143, .45); }
+.fiyat-ad { font-size: 13px; font-weight: 600; }
+.fiyat-tutar { font-size: 22px; font-weight: 700; color: var(--vurgu);
+               line-height: 1.2; }
+.fiyat-yillik { font-size: 11.5px; color: var(--yazi2); }
+.fiyat-islem { margin-top: auto; padding-top: 10px; }
+.fiyat-not { color: var(--yazi2); font-size: 11.5px; line-height: 1.65;
+             margin-top: 12px; }
+/* ---------- GELIR MODELI v2 -- fiyat kart ve para birimi ---------- */
+/* OLCULEN KUSUR: `.fiyat-kart` HIC tanimli degildi. Kart stili
+ * `.fiyat-sahip` sinifina yazilmis, ama o sinif yalniz "Zaten
+ * sahipsiniz" ETIKETINE veriliyor -> satin alinabilir kartlar
+ * cerceveisiz/zeminsiz goruluyordu. Kart stili dogru sinifa tasindi;
+ * `.fiyat-sahip` KALDIRILMADI (baska kullanimlar bozulmasin). */
+.fiyat-kart {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 15px; border-radius: 10px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+  transition: border-color .15s ease;
+}
+.fiyat-kart:hover { border-color: var(--vurgu); }
+.fiyat-kart.sahip { border-color: var(--yesil); }
+/* Sahip etiketi -- kart degil, kart ICINDEKI durum satiri. */
+.fiyat-kart .fiyat-sahip {
+  padding: 0; border: 0; background: none; margin-top: auto;
+  padding-top: 10px; font-size: 11.5px; color: var(--yesil);
+  font-weight: 600;
+}
+/* Iskonto oncesi ham fiyat -- ustu cizili, soluk. Musteri indirimi
+ * GORMELI; aksi halde odeme ekranindaki tutar farkli cikar. */
+.fiyat-ham {
+  font-size: 15px; font-weight: 600; color: var(--yazi2);
+  opacity: .7; margin-right: 6px; text-decoration-thickness: 1.5px;
+}
+.fiyat-iskonto {
+  font-size: 11px; font-weight: 600; color: var(--yesil);
+  letter-spacing: .01em;
+}
+/* Para birimi secici -- pano basligi icinde saga yasli. */
+.para-secici {
+  display: inline-flex; gap: 0; margin-left: auto;
+  border: 1px solid var(--cerceve); border-radius: 8px; overflow: hidden;
+}
+.para-btn {
+  background: var(--zemin2); color: var(--yazi2); border: 0;
+  padding: 4px 11px; font: inherit; font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: background .15s ease, color .15s ease;
+}
+.para-btn + .para-btn { border-left: 1px solid var(--cerceve); }
+.para-btn:hover { color: var(--yazi); }
+/* ETKIN durum: zemin `--vurgu`. Yazi rengi SABIT beyaz YAZILMAZ --
+ * panelin gece/gunduz dongusu var ve acik temada okunmaz. `--zemin`
+ * kullanilir: koyu temada acik, acik temada koyu -> her iki temada
+ * karsitlik korunur. */
+.para-btn.etkin { background: var(--vurgu); color: var(--zemin); }
+.pano-baslik { display: flex; align-items: center; gap: 10px; }
+
+
+/* ---------- Merkez Uygulama / Köprü paketleri ---------- */
+
+/* OLCULEN KUSUR (2026-08-16): `a.dugme` sinifi HIC tanimli degildi (ne
+ * yerel kopyada ne canlida) ama uygulama.js paket satirlarinda kullaniyor.
+ * "Indir" baglantilari bu yuzden stilsiz duz link olarak cikiyordu;
+ * kullanicinin "indirme linkini goremiyorum" bildiriminin bir parcasi
+ * budur.  `button` gorunumu birebir taklit edilir. */
+.dugme {
+  display: inline-block; padding: 9px 16px; border-radius: var(--r);
+  background: var(--vurgu2); border: 1px solid transparent;
+  color: var(--dugme-yazi); font: inherit; font-weight: 600; line-height: 1.2;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.dugme:hover { background: var(--vurgu); text-decoration: none; color: var(--dugme-yazi); }
+/* `button.ikincil` yalniz `button` seciciyle tanimlidir; baglantilar
+ * bu kuraldan yararlanamaz. */
+.dugme.ikincil {
+  background: var(--zemin3); border-color: var(--cerceve); color: var(--yazi);
+}
+.dugme.ikincil:hover { background: #1e2942; color: var(--yazi); }
+
+.paket-satir {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 8px;
+  padding: 11px 13px; border-radius: var(--r);
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+}
+.paket-bilgi { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.paket-ts { font-size: 11.5px; color: var(--yazi2); }
+
+/* En guncel surum satiri vurgulanir; kullanici dogru paketi bir bakista
+ * ayirt etsin. */
+.paket-satir.paket-guncel {
+  background: #14262c; border-color: var(--vurgu2);
+}
+.paket-etiket {
+  display: inline-block; margin-left: 8px; padding: 2px 8px;
+  border-radius: 999px; background: var(--vurgu2); color: var(--dugme-yazi);
+  font-size: 10.5px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; vertical-align: 1px;
+}
+
+/* Onceki surumler katlanmis bolumde durur. */
+.paket-eski { margin: 2px 0 10px; }
+.paket-eski > summary {
+  cursor: pointer; padding: 7px 2px; color: var(--yazi2);
+  font-size: 12.5px; font-weight: 500; list-style: none;
+}
+.paket-eski > summary::-webkit-details-marker { display: none; }
+.paket-eski > summary::before {
+  content: "\25B8"; display: inline-block; margin-right: 7px;
+  transition: transform .15s ease;
+}
+.paket-eski[open] > summary::before { transform: rotate(90deg); }
+.paket-eski > summary:hover { color: var(--yazi); }
+.paket-eski .aciklama { margin: 6px 2px 0; }
+
+/* ---------- Uyarı satırı ---------- */
+.uyari-satir {
+  margin-top: 12px; padding: 10px 12px; border-radius: var(--r);
+  background: #2e2410; border: 1px solid #6b5220; color: #e3b341;
+  font-size: 12px; line-height: 1.6;
+}
+
+/* ---------- Genel yardımcılar ---------- */
+.madde { margin: 6px 0; line-height: 1.6; }
+.ince-bag { font-size: 12px; }
+.tam { width: 100%; }
+.form-izgara {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 4px 12px;
+}
+
+/* Satın al / talep et düğmeleri: birincil düğmenin türevleri */
+button.satin-al { background: var(--vurgu2); }
+button.satin-al:hover { background: var(--vurgu); }
+button.talep-et { background: var(--zemin3); border-color: var(--cerceve);
+                  color: var(--yazi); }
+button.talep-et:hover { background: #1e2942; }
+
+/* =====================================================================
+   GÜNDÜZ (AÇIK) TEMA
+   ---------------------------------------------------------------------
+   Sözleşme Merkez Uygulama'dan (GCS css/stil.css) alındı:
+   `:root[data-tema="acik"]`. Koyu tema nitelik taşımaz (öntanımlı),
+   gündüz teması niteliği taşır — mevcut kuralların hiçbiri değişmez.
+
+   İKİ KATMAN GEREKİYOR (ölçüldü): değişken paleti tek başına yetmez,
+   bu dosyada 48 satır rengi değişken dışında yazılmıştı (rozetler,
+   bildirimler, tehlike düğmeleri). Koyu rozet zeminleri açık zeminde
+   okunmaz kalırdı; hepsi ayrıca karşılanıyor.
+   ===================================================================== */
+:root[data-tema="acik"] {
+  --zemin:   #f4f6fa;
+  --zemin2:  #ffffff;
+  --zemin3:  #eef1f7;
+  --cerceve: #d3dae6;
+  --yazi:    #16202e;
+  --yazi2:   #5a6b82;
+  --vurgu:   #12796d;
+  --vurgu2:  #0e6357;
+  --yesil:   #1a7f37;
+  --sari:    #9a6700;
+  --kirmizi: #cf222e;
+  --mor:     #6639ba;
+  --golge:   0 8px 24px rgba(16, 32, 56, .10);
+  --dugme-yazi: #ffffff;
+}
+
+:root[data-tema="acik"] #giris-katman {
+  background: radial-gradient(circle at 30% 20%, #e9eef8, #f7f9fc 70%);
+}
+
+:root[data-tema="acik"] button.ikincil:hover { background: #e6eaf2; }
+:root[data-tema="acik"] button.tehlike {
+  background: #fdeceb; border-color: #f3b9b6; color: #a2231d;
+}
+:root[data-tema="acik"] button.tehlike:hover { background: #fbdcda; }
+:root[data-tema="acik"] .dugme.ikincil:hover {
+  background: #e6eaf2; color: var(--yazi);
+}
+:root[data-tema="acik"] button.talep-et:hover { background: #e6eaf2; }
+:root[data-tema="acik"] .hata {
+  background: #fdeceb; border-color: #f3b9b6; color: #a2231d;
+}
+
+:root[data-tema="acik"] nav .grup { color: #7b8798; }
+:root[data-tema="acik"] nav a.oge.etkin {
+  background: #dce8fb; color: #0a3d80;
+}
+
+:root[data-tema="acik"] .kart.vurgulu { border-color: #9dc2f0; }
+:root[data-tema="acik"] th,
+:root[data-tema="acik"] td { border-bottom-color: #e3e8f0; }
+:root[data-tema="acik"] tbody tr:hover { background: #f0f4fa; }
+
+:root[data-tema="acik"] .r-yesil {
+  background: #e6f6ec; color: #14682c; border-color: #a7e0b8;
+}
+:root[data-tema="acik"] .r-kirmizi {
+  background: #fdeceb; color: #a2231d; border-color: #f3b9b6;
+}
+:root[data-tema="acik"] .r-sari {
+  background: #fdf5e2; color: #7a5200; border-color: #ecd08a;
+}
+:root[data-tema="acik"] .r-mavi {
+  background: #e7f1fd; color: #0a4f9e; border-color: #a9cdf3;
+}
+:root[data-tema="acik"] .r-mor {
+  background: #f1eafc; color: #55299e; border-color: #cdb4f0;
+}
+
+:root[data-tema="acik"] .nokta.acik { box-shadow: 0 0 8px #1a7f3766; }
+:root[data-tema="acik"] .nokta.kapali { background: #a3aebf; }
+
+:root[data-tema="acik"] .perde { background: rgba(22, 32, 46, .42); }
+
+:root[data-tema="acik"] .bildirim.iyi {
+  border-color: #a7e0b8; background: #e6f6ec; color: #14682c;
+}
+:root[data-tema="acik"] .bildirim.kotu {
+  border-color: #f3b9b6; background: #fdeceb; color: #a2231d;
+}
+:root[data-tema="acik"] .gizli-kutu {
+  background: #e6f6ec; border-color: #a7e0b8; color: #14682c;
+}
+:root[data-tema="acik"] .uyari-kutu {
+  background: #fdf5e2; border-color: #ecd08a; color: #7a5200;
+}
+:root[data-tema="acik"] .basari {
+  background: #e6f6ec; border-color: #a7e0b8; color: #14682c;
+}
+
+:root[data-tema="acik"] .logo-alan.uzerinde { background: #e3ecfa; }
+:root[data-tema="acik"] .logo-onizleme,
+:root[data-tema="acik"] .kurum-logo-kutu { background: #eef1f7; }
+:root[data-tema="acik"] .logo-sil:hover {
+  background: #fdeceb; border-color: #f3b9b6; color: #a2231d;
+}
+
+:root[data-tema="acik"] .firma-etiket {
+  background: rgba(18, 121, 109, .10);
+  border-color: rgba(18, 121, 109, .32);
+}
+:root[data-tema="acik"] .istasyon-kart.cevrimici {
+  border-color: rgba(26, 127, 55, .5);
+}
+:root[data-tema="acik"] .nokta.acik {
+  box-shadow: 0 0 0 3px rgba(26, 127, 55, .18);
+}
+/* Gunduz kipinde en guncel paket satiri: koyu #14262c zemini
+ * acik zeminle degistirilir. ONCEKI HALINDE bu kural
+ * eski adiyla ONCEKI-SECICI sinifina bagliydi; o sinif hicbir
+ * yerde uretilmiyordu (JS `.paket-guncel` uretir), bu yuzden
+ * kural olu
+ * kaldi ve gunduz kipinde surum/dosya adi yazilari okunmadi.
+ * FAZ19-IS38-GUNDUZ-KONTRAST */
+:root[data-tema="acik"] .paket-satir.paket-guncel {
+  background: #e4f4f0; border-color: var(--vurgu2);
+}
+
+/* Video zemini koyu kalır: açık zeminde oynatıcı denetimleri kaybolur
+   ve görüntünün kenarı belirsizleşir. */
+:root[data-tema="acik"] video { background: #1b2230; }
+
+/* Giris ekranindaki tema dugmesi satiri.
+   Dugme kartin en altinda, ortalanmis ve sonuk durur: bir eylem degil,
+   bir tercih anahtaridir; giris dugmesiyle gorsel olarak yarismamali. */
+.giris-tema-satir{
+  display:flex; justify-content:center;
+  margin-top:14px; padding-top:14px;
+  border-top:1px solid var(--cerceve);
+}
+.giris-tema-satir button{
+  width:auto; padding:6px 12px;
+  background:transparent; border:1px solid var(--cerceve);
+  color:var(--yazi2); font-size:12px;
+}
+.giris-tema-satir button:hover{
+  color:var(--yazi); border-color:var(--vurgu);
+}
+:root[data-tema="acik"] .giris-kart{
+  border:1px solid #d5dbe3;
+  box-shadow:0 8px 28px rgba(16,32,56,.10);
+}
+
+/* ================================================================ DESTEK
+   Ticket destek sistemi bileşenleri.
+
+   Renkler YALNIZ CSS değişkenlerinden alınır (--zemin2, --vurgu, ...);
+   sabit renk kodu yazılmaz. Böylece `:root[data-tema="acik"]`
+   değişkenleri ezdiğinde gündüz/gece döngüsü kendiliğinden çalışır.  */
+
+/* ---------- Durum sayaçları (personel görünümü) ---------- */
+.destek-sayaclar {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.destek-sayac {
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px; min-width: 92px;
+  color: var(--yazi); font-weight: 400; text-align: left;
+}
+.destek-sayac:hover { border-color: var(--vurgu); }
+.destek-sayac.etkin { border-color: var(--vurgu); background: var(--zemin3); }
+.destek-sayac-deger { font-size: 22px; font-weight: 700; }
+.destek-sayac-etiket {
+  font-size: 11px; color: var(--yazi2); text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* ---------- Yazışma akışı ---------- */
+.yazisma {
+  margin-top: 14px; max-height: 46vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px; background: var(--zemin); border-radius: var(--r);
+  border: 1px solid var(--cerceve);
+}
+.mesaj {
+  border: 1px solid var(--cerceve); border-radius: 10px;
+  padding: 10px 12px; background: var(--zemin2); max-width: 88%;
+}
+/* Kendi mesajım sağa yaslanır: konuşma yönü göz izini kolaylaştırır. */
+.mesaj.benim { align-self: flex-end; border-color: var(--vurgu); }
+.mesaj.destek { align-self: flex-start; }
+.mesaj.musteri { align-self: flex-start; }
+/* Dahili not görsel olarak AYRIŞIR: personelin yanlışlıkla müşteriye
+   yazdığını sanmasını önler. */
+.mesaj.ic-not {
+  align-self: stretch; max-width: 100%;
+  border-style: dashed; border-color: var(--sari);
+  background: color-mix(in srgb, var(--sari) 8%, var(--zemin2));
+}
+.mesaj-bas {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 6px; font-size: 12px;
+}
+.mesaj-bas .aciklama { margin-left: auto; font-size: 11px; }
+.mesaj-govde { font-size: 12.5px; line-height: 1.55; word-break: break-word; }
+.mesaj-ekler {
+  margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;
+  padding-top: 8px; border-top: 1px solid var(--cerceve);
+}
+
+/* ---------- Ek fişleri ---------- */
+.ek-bag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 9px; border-radius: 6px; font-size: 11.5px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+  color: var(--yazi); text-decoration: none;
+}
+.ek-bag:hover { border-color: var(--vurgu); text-decoration: none; }
+.ek-boyut { color: var(--yazi2); font-size: 10.5px; }
+.ek-alan { margin-top: 8px; }
+.ek-liste { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.ek-fisi {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 6px 4px 9px; border-radius: 6px; font-size: 11.5px;
+  background: var(--zemin3); border: 1px solid var(--cerceve);
+}
+.ek-sil {
+  padding: 0 4px; background: transparent; border: none;
+  color: var(--yazi2); font-size: 15px; line-height: 1; cursor: pointer;
+  font-weight: 700;
+}
+.ek-sil:hover { color: var(--kirmizi); }
+
+/* ---------- Onay kutusu satırı ---------- */
+/* Küresel `input { width: 100% }` kuralı onay kutusunu de gererdi;
+   burada geri alınır. */
+.onay-satir {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 10px 0 4px; font-size: 12px; color: var(--yazi);
+}
+.onay-satir input[type="checkbox"] {
+  width: auto; margin: 2px 0 0; flex: none;
+}
+
+/* ---------- Personel denetim şeridi ---------- */
+.destek-denetim {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-top: 14px; padding: 12px;
+  background: var(--zemin2); border: 1px solid var(--cerceve);
+  border-radius: var(--r);
+}
+.destek-denetim label { margin-top: 0; }
+
+/* ==================== GİRİŞ ARKA PLAN KÜRESİ ====================
+   Tanitim sayfasindaki taktik kure (js/hero_taktik.js) giris ekranina
+   arka plan olarak yerlestirilir.
+
+   RENK SOZLESMESI: hero_taktik.js su degiskenleri OKUR:
+     --siyan     kita/izgara cizgileri
+     --kehribar  radar huzmesi ve menzil halkalari
+     --vurgu     dron ikonlari
+   Panellerde yalnizca --vurgu tanimliydi; digerleri bulunamayinca
+   betik kendi varsayilanlarina duserdi.  Ucu de burada tanimlanir ki
+   kure tanitim sayfasiyla AYNI palette cizilsin.  Panelin kendi
+   --vurgu degeri (#2f81f7) dron rengi icin fazla mavi kaliyor; kure
+   kapsaminda tanitim paletindeki kirmizi kullanilir.
+
+   OLCU: hero_taktik.js yaricapi ana ogenin YUKSEKLIGINE gore hesaplar.
+   Sarmalayiciya sinirli yukseklik verilir, boylece kure giris kartinin
+   arkasinda dengeli boyutta kalir. */
+.giris-kure {
+  position: absolute;
+  top: 50%;
+  /* KONUM KARARI (olculdu): hero_taktik.js `MEVZI_KAYMA = 0.55` ile
+     radar mevziini (Turkiye) kure MERKEZINE dogru tasir.  Giris karti
+     da tam ortada oldugu icin radar huzmesi, menzil halkalari ve
+     dronlar kartin ARKASINDA kaliyordu -- tarayicida dogrulandi.
+     Betik degistirilmez (tanitim sayfasinda dogru calisiyor); kure
+     yatayda SOLA kaydirilir.  Boylece mevzi kartin soluna cikar,
+     sagda dogu yarim kure kalir ve sahne dengeli gorunur.
+     Kaydirma genis ekranda buyur, dar ekranda kuculur. */
+  /* Kart saga alindigi icin kure SOLA yerlesir; mevzi (Turkiye)
+     kartin solunda, bos alanda gorunur. */
+  left: clamp(2%, 26%, 30%);
+  transform: translate(-50%, -50%);
+  width: min(1250px, 128vw);
+  height: min(760px, 96vh);
+  pointer-events: none;   /* fare olaylari giris kartina gecsin */
+  z-index: 0;
+  --siyan: #5cc8ff;
+  --kehribar: #f2b24a;
+  --vurgu: #b91c1c;
+}
+.giris-kure canvas { display: block; width: 100%; height: 100%; }
+
+/* Kure eklendigi icin katman artik konumlandirma baglami olmali. */
+#giris-katman { position: fixed; }
+
+/* Kart kurenin USTUNDE kalir ve yari saydam zeminle kure hafifce
+   gorunur; tamamen opak biraksak kure kartin arkasinda kaybolurdu. */
+#giris-katman .giris-kart {
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(3px);
+  background: color-mix(in srgb, var(--zemin2) 88%, transparent);
+}
+
+/* color-mix desteklemeyen tarayicida kart tamamen opak kalir;
+   okunabilirlik bozulmaz. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  #giris-katman .giris-kart { background: var(--zemin2); }
+}
+
+/* Acik temada kure cizgileri koyu zemin icin secilmis; acik zeminde
+   soluk kalmamasi icin biraz koyulastirilir. */
+/* ACIK TEMA KONTRASTI: ilk deger soluk kaliyordu (tarayicida
+   dogrulandi -- kita cizgileri zar zor goruluyordu).  Cizgiler
+   koyulastirilir ve `opacity` kaldirilir; acik zeminde kure ancak
+   boyle okunur oluyor. */
+:root[data-tema="acik"] .giris-kure {
+  --siyan: #0f5c86;
+  --kehribar: #8f5c12;
+  --vurgu: #8e1a15;
+}
+
+/* Acik temada duz beyaza yakin gradyan kureye kontrast birakmiyordu;
+   zemin hafifce koyulastirilir ve maviye cekilir. */
+:root[data-tema="acik"] #giris-katman {
+  background: radial-gradient(circle at 30% 20%, #dbe4f2, #eef2f9 70%);
+}
+
+/* Kucuk ekranda kure kartin arkasinda gurultu yaratir; kaldirilir. */
+@media (max-width: 560px) {
+  .giris-kure { display: none; }
+}
+
+/* ================= GIRIS KARTI LOGOSU =================
+   Kart basligi metin yerine GOKTUNGU logo seridi tasir.  Varliklar
+   tanitim sayfasindakiyle ayni (`/img/goktungu_serit*.webp`) ve ayni
+   `.koyu` / `.acik` sinif kalibi izlenir (bkz. css/stil.css:109-112).
+   Logo urun adini kendi icinde tasidigi icin panel adi (MERKEZ /
+   MUSTERI) logonun ALTINA kucuk bir etiket olarak alinir. */
+.giris-logo {
+  display: block;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+.giris-logo img {
+  height: 44px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+.giris-logo .acik { display: none; }
+:root[data-tema="acik"] .giris-logo .koyu { display: none; }
+:root[data-tema="acik"] .giris-logo .acik { display: block; }
+
+/* Panel adi: logo altinda mono, harf araligi genis bir bant.
+   `h1` olarak kalir (erisilebilirlik: sayfanin tek h1'i). */
+.giris-kart h1.giris-panel-ad {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--vurgu);
+  margin: 0 0 4px;
+}
+
+
+/* =====================================================================
+   PAKET GUNCELLIK UYARISI  [IS52-APP-SURUM-V1]
+
+   Merkez Uygulamasi paketleri artik istek uzerine yayimlaniyor; paket
+   canli App surumunun gerisinde kalabilir. Uyari kartin EN USTUNDE,
+   indirme dugmesinden ONCE gorunur.
+
+   IS 38 DERSI: o iste gunduz duzeltmesi arayuzun HIC uretmedigi bir
+   sinif adina baglanmisti; kural olu kaldi, kusur canli kaldi. Buradaki
+   `paket-uyari` sinifi `guncellikSeridi()` tarafindan GERCEKTEN
+   uretiliyor ve tarayicida olculdu.
+
+   SABIT RENK YOK: tum degerler tema degiskenlerinden turer, boylece
+   gunduz kipinde de okunur kalir.
+   ===================================================================== */
+.paket-uyari {
+  margin: 0 0 10px; padding: 9px 12px;
+  border: 1px solid var(--cerceve);
+  border-left: 3px solid var(--sari);
+  border-radius: var(--r);
+  background: var(--zemin3); color: var(--yazi);
+  font-size: 12.5px; line-height: 1.55;
+}
+.paket-uyari strong { color: var(--sari); }
+.paket-uyari code.kod { font-size: 12px; }
+
+/* Surum karsiligi depoda yoksa: ayni yerlesim, notr vurgu.
+   Sari "geride kaldi" demektir; "bilinmiyor" bundan AYRI bir durumdur
+   ve ayni rengi kullanmak yaniltici olurdu. */
+.paket-uyari-bilinmiyor { border-left-color: var(--yazi2); }
+.paket-uyari-bilinmiyor strong { color: var(--yazi); }

@@ -1,0 +1,1 @@
+BRDTLM aynı köprü çekirdeğini BRDIMG ile paylaşır. Ortak kaynak: ../03_BRDIMG/ORTAK_KOPRU_KAYNAGI

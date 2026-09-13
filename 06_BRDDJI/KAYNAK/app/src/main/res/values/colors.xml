@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v3 taktik harekat temasi. Merkez arayuzle AYNI palet.
+         Kaynak: merkez_web/css/stil.css (BULGU_css_sozlesme.md).
+         Bu degerler marka sozlesmesidir, degistirilmemeli. -->
+    <color name="zemin">#04070C</color>
+    <color name="zemin_kart">#0A1119</color>
+    <color name="zemin_yukseltilmis">#111A25</color>
+    <color name="siyan">#5CC8FF</color>
+    <color name="kehribar">#F2B24A</color>
+    <color name="vurgu">#B91C1C</color>
+    <color name="baslik_renk">#FFFFFF</color>
+    <color name="govde_renk">#D6DEE8</color>
+    <color name="soluk">#7B8EA6</color>
+    <color name="cizgi">#1E2A3A</color>
+
+    <!-- Durum renkleri (iyi / uyari / kotu) -->
+    <color name="iyi">#4ADE80</color>
+    <color name="uyari">#F2B24A</color>
+    <color name="kotu">#EF4444</color>
+</resources>

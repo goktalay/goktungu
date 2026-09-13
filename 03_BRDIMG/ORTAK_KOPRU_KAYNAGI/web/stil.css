@@ -1,0 +1,508 @@
+/* =====================================================================
+   GÖKTUNGU KÖPRÜ — panel stili
+
+   Düzen: üst şerit (program adı, saat, merkez durumu) + sol menü
+   (kurum logosu + beş sunucu) + ana alan (başlat/durdur üstte,
+   büyük konsol altta).
+
+   Palet, merkez müşteri paneli (/company/) ile aynıdır: kullanıcı iki
+   arayüz arasında geçtiğinde aynı ürünü kullandığını hissetmelidir.
+   ===================================================================== */
+:root{
+  --zemin:#0f1620;
+  --zemin2:#161f2c;
+  --kart:#1b2634;
+  --kart2:#212d3d;
+  --cizgi:#2b394c;
+  --cizgi2:#2b394c80;
+  --yazi:#dbe4ef;
+  --sonuk:#8598ad;
+  --sonuk2:#67788c;
+  --vurgu:#4f9d84;
+  --vurgu2:#63c0a1;
+  --uyari:#c85a54;
+  --uyari-zemin:#3a2222;
+  --basari:#4f9d84;
+  --sari:#c9a227;
+  --konsol-zemin:#0a1017;
+  --gol:0 10px 30px rgba(0,0,0,.45);
+  --yuvarlak:10px;
+  --ust-yuksek:54px;
+  --yan-genis:256px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--zemin);
+  color:var(--yazi);
+  font:14px/1.5 "Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
+}
+.gizli{display:none !important}
+code{font-family:"Cascadia Mono",Consolas,monospace;font-size:12px}
+.kucuk{font-size:12px}
+.sonuk{color:var(--sonuk)}
+b{color:#fff;font-weight:600}
+
+/* ---------------------------------------------------------------- MARKA */
+.marka{display:flex;align-items:baseline;gap:8px}
+.marka-ad{font-size:26px;font-weight:800;letter-spacing:1px}
+.marka-alt{font-size:26px;font-weight:300;color:var(--vurgu2);
+  letter-spacing:2px}
+
+/* ---------------------------------------------------------------- GİRİŞ */
+.giris-sarmal{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:radial-gradient(1200px 600px at 50% -10%,#1a2736,var(--zemin));
+}
+.giris-kart{
+  width:100%;max-width:380px;background:var(--kart);
+  border:1px solid var(--cizgi);border-radius:14px;padding:26px;
+  box-shadow:var(--gol);
+}
+.giris-kart .marka-ad,.giris-kart .marka-alt{font-size:24px}
+.giris-aciklama{color:var(--sonuk);font-size:13px;margin:10px 0 18px}
+.giris-dip{
+  display:flex;justify-content:space-between;gap:10px;margin-top:14px;
+  padding-top:12px;border-top:1px solid var(--cizgi);
+}
+
+/* ---------------------------------------------------------------- ALAN */
+.alan{display:block;margin-bottom:14px}
+.alan>span{display:block;font-size:12px;color:var(--sonuk);
+  margin-bottom:5px}
+.alan>span i{font-style:normal}
+input[type=text],input[type=email],input[type=password],
+input[type=number]{
+  width:100%;padding:10px 12px;background:var(--zemin2);
+  border:1px solid var(--cizgi);border-radius:8px;color:var(--yazi);
+  font-size:14px;outline:none;font-family:inherit;
+}
+input:focus{border-color:var(--vurgu);
+  box-shadow:0 0 0 2px rgba(79,157,132,.18)}
+.onay{display:inline-flex;align-items:center;gap:8px;font-size:13px;
+  margin:8px 0;cursor:pointer}
+.onay input{accent-color:var(--vurgu);width:16px;height:16px;cursor:pointer}
+.onay-satir{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:6px}
+.izgara{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:0 16px}
+/* v1.5.8: izgara icinde TUM kolonlari kaplayan aciklama satiri.
+   Yerel (kapali devre) Merkez Uygulama adresinde PORT yazilmazsa
+   ws:// 80, wss:// 443 varsayilir ve baglanti sessizce reddedilir;
+   ipucu bu yuzden adres alanlarinin hemen altinda durur. */
+.alan-not{grid-column:1/-1;margin:-4px 0 14px;font-size:11px;
+  line-height:1.55;color:var(--sonuk)}
+.alan-not i{font-style:normal}
+.alan-not code{background:var(--zemin2);border:1px solid var(--cizgi);
+  padding:1px 5px;border-radius:3px;color:var(--yazi);white-space:nowrap}
+.alt-baslik{font-size:12px;color:var(--sonuk);margin:14px 0 4px;
+  text-transform:uppercase;letter-spacing:.6px}
+
+/* ---------------------------------------------------------------- DÜĞME */
+.dugme{
+  padding:9px 15px;background:var(--kart2);color:var(--yazi);
+  border:1px solid var(--cizgi);border-radius:8px;cursor:pointer;
+  font-size:13px;font-family:inherit;transition:.15s;
+  text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap;
+}
+.dugme:hover:not(:disabled){background:#2a3a4e;border-color:#3d5068}
+.dugme:disabled{opacity:.45;cursor:not-allowed}
+.dugme.birincil{background:var(--vurgu);border-color:var(--vurgu);
+  color:#fff;font-weight:600}
+.dugme.birincil:hover:not(:disabled){background:var(--vurgu2);
+  border-color:var(--vurgu2)}
+.dugme.tam{width:100%;justify-content:center}
+.dugme.ince{padding:6px 11px;font-size:12px}
+.dugme.kucuk{padding:6px 10px;font-size:11.5px;font-weight:600;
+  letter-spacing:.3px}
+.dugme.sessiz{background:transparent;color:var(--sonuk)}
+.dugme.sessiz:hover:not(:disabled){background:var(--kart2);color:var(--yazi)}
+.dugme.tehlike{border-color:#5a3230;color:#e79a95;background:transparent}
+.dugme.tehlike:hover:not(:disabled){background:#3a2222}
+.dugme-satir{display:flex;gap:9px;flex-wrap:wrap;align-items:center;
+  margin-top:12px}
+
+/* ---------------------------------------------------------------- UYARI */
+.uyari{
+  background:var(--uyari-zemin);border:1px solid #5a3230;
+  color:#f0b4b0;padding:10px 12px;border-radius:8px;font-size:13px;
+  margin:0 0 10px;
+}
+.uyari.bilgi{background:#1f2f3a;border-color:#2f4b5c;color:#a9cfe0}
+.uyari.basari{background:#1d2f28;border-color:#2f5c48;color:#a7dcc5}
+
+/* --------------------------------------------------------------- ETİKET */
+.etiket{
+  display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;
+  padding:3px 10px;border-radius:999px;border:1px solid var(--cizgi);
+  background:var(--zemin2);color:var(--sonuk);
+}
+.etiket.bagli{background:#1d2f28;border-color:#2f5c48;color:#7fd3b3}
+.etiket.kopuk{background:var(--uyari-zemin);border-color:#5a3230;color:#f0b4b0}
+.etiket.bekle{background:#332b16;border-color:#5c4a1f;color:#e0c165}
+
+/* --------------------------------------------------------- SÜRÜM ETİKETİ */
+.surum-etiket{
+  background:transparent;border:1px solid var(--cizgi);color:var(--sonuk);
+  border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;
+  font-family:"Cascadia Mono",Consolas,monospace;cursor:pointer;
+  transition:.15s;
+}
+.surum-etiket:hover{border-color:var(--vurgu);color:var(--vurgu2)}
+
+/* ---------------------------------------------------------------- KABUK */
+.kabuk{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ------------------------------------------------------------ ÜST ŞERİT */
+.ust{
+  height:var(--ust-yuksek);flex:0 0 auto;
+  display:flex;align-items:center;gap:16px;padding:0 18px;
+  background:var(--kart);border-bottom:1px solid var(--cizgi);
+}
+.ust-sol{display:flex;align-items:baseline;gap:9px;flex:0 0 auto}
+.ust-sol .marka-ad{font-size:18px}
+.ust-sol .marka-alt{font-size:13px;letter-spacing:2px}
+.ust-orta{display:flex;align-items:center;gap:12px;flex:1 1 auto;
+  min-width:0;overflow:hidden}
+.ust-sag{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+
+.merkez-durum{
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;
+  color:var(--sonuk);background:var(--zemin2);
+  border:1px solid var(--cizgi);border-radius:999px;padding:4px 12px;
+  white-space:nowrap;
+}
+.nokta{width:8px;height:8px;border-radius:50%;background:var(--sonuk2);
+  flex:0 0 auto}
+.nokta.iyi{background:var(--basari);box-shadow:0 0 7px rgba(79,157,132,.6)}
+.nokta.kotu{background:var(--uyari)}
+.nokta.beklet{background:var(--sari)}
+
+.zaman{display:flex;flex-direction:column;align-items:flex-end;
+  line-height:1.15}
+.saat{font-family:"Cascadia Mono",Consolas,monospace;font-size:15px;
+  font-weight:600;letter-spacing:.5px}
+.tarih{font-size:10.5px;color:var(--sonuk2)}
+.ust-kullanici{font-size:12px;color:var(--sonuk);max-width:210px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------------------------------------------------------------- GÖVDE */
+.govde{flex:1 1 auto;display:flex;min-height:0}
+
+/* ------------------------------------------------------------- SOL MENÜ */
+.yan{
+  width:var(--yan-genis);flex:0 0 var(--yan-genis);
+  background:var(--kart);border-right:1px solid var(--cizgi);
+  display:flex;flex-direction:column;min-height:0;
+}
+.kurum{padding:18px 16px 16px;border-bottom:1px solid var(--cizgi2);
+  text-align:center}
+.kurum-logo-kap{height:66px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:10px}
+.kurum-logo{max-height:66px;max-width:100%;object-fit:contain}
+.kurum-logo-yok{
+  width:52px;height:52px;border-radius:9px;border:1px dashed var(--cizgi);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sonuk2);font-size:18px;
+}
+.kurum-unvan{font-size:12px;font-weight:600;line-height:1.35;
+  word-break:break-word}
+
+.yan-baslik{padding:14px 16px 7px;font-size:10.5px;font-weight:700;
+  letter-spacing:1.1px;color:var(--sonuk2)}
+.menu{list-style:none;margin:0;padding:0 8px;flex:1 1 auto;
+  overflow-y:auto;min-height:0}
+.menu li{margin-bottom:3px}
+.menu button{
+  appearance:none;width:100%;text-align:left;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-radius:8px;
+  padding:9px 11px;color:var(--sonuk);font:inherit;font-size:13px;
+  display:flex;align-items:center;gap:9px;transition:.13s;
+}
+.menu button:hover{background:var(--kart2);color:var(--yazi)}
+.menu button.etkin{background:var(--kart2);border-color:var(--cizgi);
+  color:var(--yazi);font-weight:600}
+.menu .m-nokta{width:8px;height:8px;border-radius:50%;
+  background:var(--sonuk2);flex:0 0 auto}
+.menu .m-nokta.iyi{background:var(--basari);
+  box-shadow:0 0 6px rgba(79,157,132,.6)}
+.menu .m-nokta.kotu{background:var(--uyari)}
+.menu .m-ad{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.menu .m-surum{font-size:10px;color:var(--sonuk2);
+  font-family:"Cascadia Mono",Consolas,monospace}
+
+.yan-alt{flex:0 0 auto;padding:12px 14px 14px;
+  border-top:1px solid var(--cizgi2);
+  display:flex;flex-direction:column;gap:8px}
+.yan-alt-satir{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;font-size:11.5px;color:var(--sonuk)}
+.yan-alt-dugmeler{display:flex;gap:7px}
+.yan-alt-dugmeler .dugme{flex:1 1 0;justify-content:center}
+
+/* ------------------------------------------------------------- ANA ALAN */
+.ana{
+  flex:1 1 auto;min-width:0;min-height:0;
+  display:flex;flex-direction:column;gap:14px;
+  padding:18px 20px 20px;
+}
+.ana-ust{flex:0 0 auto;display:flex;align-items:flex-start;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ana-ust-sol{min-width:0}
+.servis-baslik{margin:0 0 4px;font-size:23px;font-weight:700}
+.servis-aciklama{margin:0;font-size:12.5px;color:var(--sonuk);
+  max-width:72ch}
+.ana-ust-sag{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+
+.olcum-serit{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:9px}
+.olcum{background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:8px;padding:8px 13px;min-width:118px}
+.olcum .o-ad{font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--sonuk2);margin-bottom:3px}
+.olcum .o-deger{font-size:15px;font-weight:600;
+  font-family:"Cascadia Mono",Consolas,monospace}
+.olcum .o-deger.iyi{color:#7fd3b3}
+.olcum .o-deger.kotu{color:#f0b4b0}
+
+/* ------------------------------------------------- UCUS KANALLARI */
+/* Kanal tablosu konsolun ustunde durur ve KENDI yuksekligi kadar yer
+   kaplar: konsol esnek (flex:1) oldugu icin tablo buyudukce konsol
+   kucultur, ama en az 200px konsol korunur (bkz. .konsol-kap). */
+.kanal-kap{
+  flex:0 0 auto;background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--yuvarlak);overflow:hidden;
+}
+.kanal-ust{
+  display:flex;align-items:center;gap:9px;padding:7px 13px;
+  background:var(--kart2);border-bottom:1px solid var(--cizgi);
+}
+.kanal-baslik{font-size:10.5px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--sonuk)}
+.kanal-sayi{
+  min-width:20px;padding:1px 7px;border-radius:9px;font-size:11px;
+  font-weight:700;text-align:center;background:var(--vurgu);color:#08120e;
+}
+.kanal-tablo{width:100%;border-collapse:collapse;font-size:12.5px}
+.kanal-tablo th{
+  text-align:left;padding:6px 13px;font-size:10px;font-weight:700;
+  letter-spacing:.7px;text-transform:uppercase;color:var(--sonuk2);
+  border-bottom:1px solid var(--cizgi2);
+}
+.kanal-tablo td{
+  padding:7px 13px;border-bottom:1px solid var(--cizgi2);
+  font-family:"Cascadia Mono",Consolas,monospace;
+}
+.kanal-tablo tr:last-child td{border-bottom:0}
+.kanal-tablo .tek-satir{white-space:nowrap}
+.kanal-durum{
+  display:inline-block;padding:1px 8px;border-radius:9px;font-size:10.5px;
+  font-weight:700;letter-spacing:.5px;font-family:inherit;
+}
+.kanal-durum.iyi{background:#1f3b32;color:#7fd3b3}
+.kanal-durum.kotu{background:var(--uyari-zemin);color:#f0b4b0}
+/* Merkez kopukken kanal ne "iyi" ne "kotu"dur: veri akiyor ama merkeze
+   ulasmiyor. Ucuncu bir gorsel durum olmadan pilot bunu ayirt edemez. */
+.kanal-durum.bekliyor{background:#3d3320;color:#e8c98a}
+.kanal-kesik td{background:rgba(232,201,138,.06)}
+.kanal-kayip{color:#f0b4b0;font-weight:600}
+.kanal-hata-satir td{
+  color:#f0b4b0;font-size:11.5px;padding-top:0;padding-bottom:8px;
+  border-bottom:1px solid var(--cizgi2);
+}
+
+/* --------------------------------------------------------------- KONSOL */
+.konsol-kap{
+  flex:1 1 auto;min-height:200px;display:flex;flex-direction:column;
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--yuvarlak);overflow:hidden;
+}
+.konsol-ust{
+  flex:0 0 auto;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;padding:8px 13px;
+  background:var(--kart2);border-bottom:1px solid var(--cizgi);
+}
+.konsol-baslik{font-size:10.5px;font-weight:700;letter-spacing:1.1px;
+  color:var(--sonuk)}
+.konsol-araclar{display:flex;align-items:center;gap:13px}
+.konsol-araclar .onay{margin:0}
+.konsol{
+  flex:1 1 auto;min-height:0;margin:0;padding:12px 14px;overflow:auto;
+  background:var(--konsol-zemin);color:#b9c7d6;
+  font:12.5px/1.62 "Cascadia Mono",Consolas,monospace;
+  white-space:pre-wrap;word-break:break-word;
+}
+.konsol .satir{white-space:pre-wrap;word-break:break-word}
+.konsol .satir.hata{color:#f0b4b0}
+.konsol .satir.uyari{color:#e0c165}
+.konsol .satir.basari{color:#7fd3b3}
+.konsol .satir.sistem{color:var(--sonuk);font-style:italic}
+.konsol .bos{color:var(--sonuk2);font-style:italic}
+
+/* -------------------------------------------------------------- PENCERE */
+.ortu{
+  position:fixed;inset:0;background:rgba(6,10,16,.72);
+  display:flex;align-items:center;justify-content:center;z-index:60;
+  padding:20px;
+}
+.pencere{
+  width:100%;max-width:440px;max-height:86vh;background:var(--kart);
+  border:1px solid var(--cizgi);border-radius:14px;box-shadow:var(--gol);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.pencere.genis{max-width:600px}
+.pencere-baslik{
+  flex:0 0 auto;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;padding:13px 16px;
+  border-bottom:1px solid var(--cizgi);background:var(--kart2);
+}
+.pencere-baslik h3{margin:0;font-size:14px}
+.kapat{background:none;border:none;color:var(--sonuk);font-size:22px;
+  cursor:pointer;line-height:1;padding:0 4px}
+.kapat:hover{color:var(--yazi)}
+.pencere-govde{flex:1 1 auto;overflow-y:auto;min-height:0;padding:16px}
+.pencere-dip{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:flex-end;
+  gap:9px;padding:13px 16px;border-top:1px solid var(--cizgi);
+  background:var(--kart2);
+}
+.pencere-dip .kucuk{margin-right:auto}
+
+.yol-bilgi{margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--cizgi);font-size:12px;color:var(--sonuk)}
+.yol-bilgi div{margin:3px 0}
+.yol-bilgi code{word-break:break-all;color:var(--yazi)}
+
+/* -------------------------------------------------------- SÜRÜM GEÇMİŞİ */
+.gecmis-kayit{padding:11px 0;border-bottom:1px solid var(--cizgi2)}
+.gecmis-kayit:last-child{border-bottom:none}
+.gecmis-ust{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.gecmis-surum{font-family:"Cascadia Mono",Consolas,monospace;
+  font-size:12.5px;font-weight:700;color:var(--vurgu2)}
+.gecmis-tarih{font-size:11px;color:var(--sonuk2)}
+.gecmis-kayit ul{margin:0;padding-left:19px}
+.gecmis-kayit li{font-size:12.5px;color:var(--sonuk);margin-bottom:3px}
+
+/* ------------------------------------------------------------ HAKKINDA
+   Surum defterinin USTUNDE bilesenin kimligi durur: kurum logosu,
+   bilesen adi, surum + tarih, firma unvani ve telif. Logo /api/logo
+   vekilinden gelir; yuklenemezse betik ogeyi gizler (kirik gorsel
+   gostermek yerine). */
+.hakkinda{padding:2px 0 14px;margin-bottom:8px;text-align:center;
+  border-bottom:1px solid var(--cizgi)}
+.hk-logo{display:block;margin:0 auto 10px;max-width:130px;max-height:50px;
+  object-fit:contain}
+.hk-ad{font-size:14.5px;font-weight:700;color:var(--yazi);
+  letter-spacing:.02em}
+.hk-surum{margin-top:5px;font-size:12px;color:var(--sonuk)}
+.hk-surum b{color:var(--vurgu2);font-weight:700;
+  font-family:"Cascadia Mono",Consolas,monospace}
+.hk-firma{margin-top:7px;font-size:12px;color:var(--sonuk)}
+.hk-telif{margin-top:7px;font-size:11px;color:var(--sonuk2)}
+
+/* --------------------------------------------------------------- MOBİL */
+@media (max-width:900px){
+  :root{--yan-genis:212px}
+  .servis-baslik{font-size:19px}
+  .ust-kullanici,.tarih{display:none}
+}
+@media (max-width:680px){
+  .kabuk{height:auto;min-height:100vh;overflow:visible}
+  .govde{flex-direction:column}
+  .yan{width:100%;flex:0 0 auto;border-right:none;
+    border-bottom:1px solid var(--cizgi)}
+  .menu{overflow:visible}
+  .ust{flex-wrap:wrap;height:auto;padding:10px 12px;gap:10px}
+  .konsol-kap{min-height:340px}
+  .ana{padding:14px 12px 16px}
+}
+
+/* =====================================================================
+   GÜNDÜZ (AÇIK) TEMA
+   ---------------------------------------------------------------------
+   Sözleşme Merkez Uygulama'dan (GCS css/stil.css) alındı:
+   `:root[data-tema="acik"]`. Koyu tema nitelik taşımaz (öntanımlı),
+   gündüz teması niteliği taşır.
+
+   Köprü paneli kendi palet adlarını kullanır (--kart/--cizgi/--sonuk),
+   kurumsal panelin adlarıyla (--zemin2/--cerceve/--yazi2) aynı değil.
+   Bu blok köprünün kendi adlarını çevirir.
+
+   Konsol zemini bilinçle koyu kalır: köprü konsolu terminal çıktısıdır,
+   açık zeminde ANSI benzeri renk kodları (hata kırmızısı, uyarı sarısı)
+   okunmaz hale gelir ve operatör canlı akışı takip edemez.
+   ===================================================================== */
+:root[data-tema="acik"]{
+  --zemin:#f2f5f9;
+  --zemin2:#ffffff;
+  --kart:#ffffff;
+  --kart2:#eef2f7;
+  --cizgi:#d6dde8;
+  --cizgi2:#d6dde880;
+  --yazi:#17212e;
+  --sonuk:#5b6b7f;
+  --sonuk2:#7d8b9d;
+  --vurgu:#1c7d66;
+  --vurgu2:#146353;
+  --uyari:#c02b26;
+  --uyari-zemin:#fdecea;
+  --basari:#1a7f52;
+  --sari:#8a6d0f;
+  --gol:0 10px 30px rgba(20,32,48,.12);
+}
+
+:root[data-tema="acik"] b{color:#0d1622}
+
+:root[data-tema="acik"] .giris-katman,
+:root[data-tema="acik"] .giris{
+  background:radial-gradient(1200px 600px at 50% -10%,#e6ecf5,var(--zemin))}
+
+:root[data-tema="acik"] .dugme:hover:not(:disabled){
+  background:#e4eaf3;border-color:#bcc8d8}
+:root[data-tema="acik"] .dugme.birincil{color:#fff}
+:root[data-tema="acik"] .dugme.tehlike{
+  border-color:#e8b4b1;color:#a8231e;background:transparent}
+:root[data-tema="acik"] .dugme.tehlike:hover:not(:disabled){
+  background:#fdecea}
+
+:root[data-tema="acik"] .uyari{
+  border-color:#e8b4b1;color:#a8231e}
+:root[data-tema="acik"] .uyari.bilgi{
+  background:#e8f2f8;border-color:#b3d4e5;color:#125a7a}
+:root[data-tema="acik"] .uyari.basari{
+  background:#e7f5ee;border-color:#a8dcc2;color:#12654a}
+
+:root[data-tema="acik"] .etiket.bagli{
+  background:#e7f5ee;border-color:#a8dcc2;color:#12654a}
+:root[data-tema="acik"] .etiket.kopuk{
+  background:#fdecea;border-color:#e8b4b1;color:#a8231e}
+:root[data-tema="acik"] .etiket.bekle{
+  background:#fdf4e0;border-color:#e6cf94;color:#7a5c0a}
+
+:root[data-tema="acik"] .olcum .o-deger.iyi{color:#12654a}
+:root[data-tema="acik"] .olcum .o-deger.kotu{color:#a8231e}
+
+:root[data-tema="acik"] .kanal-durum.iyi{background:#e7f5ee;color:#12654a}
+:root[data-tema="acik"] .kanal-durum.kotu{background:#fdecea;color:#a8231e}
+:root[data-tema="acik"] .kanal-durum.bekliyor{
+  background:#fdf4e0;color:#7a5c0a}
+:root[data-tema="acik"] .kanal-kayip{color:#a8231e}
+:root[data-tema="acik"] .kanal-not{color:#a8231e}
+
+/* Konsol: zemin koyu kalır (yukarıdaki gerekçe). Yalnız çerçevesi
+   açık temaya uyarlanır ki panelin içinde yamalı görünmesin. */
+:root[data-tema="acik"] .konsol{
+  border-color:#c3ccd9;box-shadow:inset 0 1px 3px rgba(20,32,48,.14)}
+
+:root[data-tema="acik"] .alan-not code{
+  background:#e7ecf3;color:#17212e}
+
+/* v1.6.0 — Kurulum sihirbazi karti.
+   Giris kartindan GENIS: iki secenek, adres alanlari ve aciklama
+   metni standart giris genisliginde sikisip okunmaz hale gelirdi. */
+.giris-kart.genis-kart{ max-width: 560px; }
+.giris-kart.genis-kart .izgara{
+  display: grid; grid-template-columns: 1fr; gap: 10px;
+}
+.giris-kart.genis-kart details{ margin-top: 8px; }
+.giris-kart.genis-kart details summary{ cursor: pointer; }

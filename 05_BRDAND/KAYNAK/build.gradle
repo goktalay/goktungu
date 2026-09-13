@@ -1,0 +1,41 @@
+// GOKTUNGU MAVLink Koprusu -- kok Gradle yapilandirmasi
+//
+// AGP / Gradle / JDK ucluSu birlikte degistirilmelidir; uyusmazlik en
+// sik gorulen derleme kusurudur.  Bu surumler DJI koprusunde
+// dogrulanmis birlesimden devralindi.
+
+buildscript {
+    ext {
+        agp_surum = '8.5.2'
+        // MSDK kalktigi icin Kotlin 2.1.0 zorunlulugu da kalkti,
+        // ancak dogrulanmis birlesimi bozmamak icin ayni surum
+        // korunuyor.
+        kotlin_surum = '2.1.0'
+        // Play Store: 31 Agu 2026'dan SONRA yeni uygulamalar ve
+        // guncellemeler API 36 (Android 16) hedeflemek ZORUNDA.
+        hedef_sdk = 36
+        derleme_sdk = 36
+        // USB Host API cok eski surumlerde de var; en dusuk surum
+        // `foregroundServiceType` ve modern izin akisina gore secildi.
+        en_dusuk_sdk = 24
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_surum"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_surum"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

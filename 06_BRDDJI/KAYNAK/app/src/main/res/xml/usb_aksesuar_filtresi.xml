@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DJI kumanda USB aksesuar kimligi.  SDK ornek uygulamasinda da
+         bu deger kullanilir; kumanda kabloyla baglaninca Android
+         uygulamayi one alir. -->
+    <usb-accessory
+        model="DJI-RC"
+        manufacturer="DJI" />
+</resources>

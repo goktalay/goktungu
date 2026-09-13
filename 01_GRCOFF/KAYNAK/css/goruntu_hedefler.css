@@ -1,0 +1,263 @@
+/* GOKTUNGU GCS — goruntu_hedefler.css
+ * FAZ20-IS93-CSS-v1
+ *
+ * `js/goruntu_hedefler.js` tarafindan uretilen Goruntu Hedefleri
+ * panelinin gorsel sozlesmesi.
+ *
+ * KURALLAR (proje sozlesmesi)
+ * ---------------------------
+ * - SABIT RENK YASAK. Tum renkler CSS degiskeninden gelir.
+ *   Dogrudan beyaz renk atamasi OZELLIKLE yasak; `--baslik-renk` kullanilir.
+ * - Gunduz kipi otomatik calisir; ayri bir `:root[data-tema="acik"]`
+ *   blogu YAZILMAZ cunku tum degerler zaten degiskenden okunuyor.
+ * - Panel govdesi kayar, ust bar ve baslik SABIT kalir.
+ * - `--iyi-zemin` DIYE BIR DEGISKEN YOK (olculdu). Yesil zemin
+ *   gerektiginde `--iyi` uzerinden `color-mix` kullanilir.
+ *
+ * stil.css, pencere_dok.css, dugme_birlik.css ve panel_ustbar.css'ten
+ * SONRA yuklenir.
+ */
+
+/* --- Pencere ------------------------------------------------- */
+#goruntuHedeflerPopup {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  /* Kullanici istegi: en az 400x300, acilista ekranin ortasinda */
+  min-width: min(400px, calc(100vw - 32px));
+  min-height: min(300px, calc(100vh - 88px));
+  width: 620px;
+  height: 460px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 88px);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-arka);
+  border: 1px solid var(--kenar);
+  border-radius: var(--pencere-radius);
+  box-shadow: var(--w-golge);
+  overflow: hidden;
+}
+
+/* Panelin kimlik seçicili `display:flex` kuralı genel `.popup-gizli`
+   sınıfını ezmemelidir; kapatma düğmesi kök paneli kesin olarak gizler. */
+#goruntuHedeflerPopup.popup-gizli {
+  display: none;
+}
+
+/* --- Ust bar (panel_ustbar sozlesmesi) ----------------------- */
+/* Kullanici istegi: header'da IKON YOK, font KOYU DEGIL,
+   baslik panel adiyla AYNI DEGIL. */
+.gh-ustbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--cizgi);
+  background: var(--panel);
+}
+
+.gh-ustbar-baslik {
+  font-size: 11px;
+  font-weight: 400;          /* koyu DEGIL */
+  letter-spacing: .06em;
+  color: var(--soluk);
+}
+
+.gh-ustbar-sag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- Govde ---------------------------------------------------- */
+.gh-govde {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px 10px 10px;
+}
+
+/* --- Kamera basligi ------------------------------------------ */
+.gh-kamera-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--cizgi);
+}
+
+.gh-kamera-baslik:first-child { margin-top: 0; }
+
+.gh-kamera-ad {
+  font-size: 12px;
+  color: var(--metin);
+  letter-spacing: .02em;
+}
+
+/* --- Kalibrasyon rozeti -------------------------------------- */
+/* Kalibre DEGIL varsayilan durumdur (yeni kurulumda hicbir kamera
+   kalibre degildir), bu yuzden temel bicim uyari rengindedir. */
+.gh-kalibre-rozet {
+  flex: 0 0 auto;
+  font-size: 10px;
+  letter-spacing: .08em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--uyari);
+  color: var(--uyari);
+  background: transparent;
+}
+
+.gh-kalibre-rozet.tamam {
+  border-color: var(--iyi);
+  color: var(--iyi);
+}
+
+.gh-kalibre-uyari {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--soluk);
+  border-left: 2px solid var(--uyari);
+  padding: 4px 0 4px 8px;
+  margin: 0 0 8px;
+}
+
+/* --- Hedef satiri --------------------------------------------- */
+.gh-hedef {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  margin-bottom: 5px;
+  border: 1px solid var(--cizgi);
+  border-radius: 6px;
+  background: var(--kart-arka);
+}
+
+.gh-hedef-sol {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 116px;
+}
+
+.gh-hedef-ikon {
+  font-size: 13px;
+  color: var(--vurgu);
+}
+
+.gh-hedef-kimlik {
+  font-size: 12px;
+  color: var(--metin);
+}
+
+/* --- Olcumler -------------------------------------------------- */
+.gh-hedef-olcum {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.gh-olcum {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.gh-olcum-etiket {
+  font-size: 9px;
+  letter-spacing: .06em;
+  color: var(--soluk);
+  text-transform: uppercase;
+}
+
+.gh-olcum-deger {
+  font-size: 12px;
+  color: var(--metin);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Eylemler --------------------------------------------------- */
+.gh-hedef-eylem {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Kilitli angajman dugmesi: gorunur ama tiklanamaz.
+   Gizlemek YANLIS olurdu -- operator dugmenin neden yok oldugunu
+   anlayamaz. Sonuk gosterip `title` ile gerekce vermek dogru. */
+.gh-hedef-eylem button:disabled {
+  opacity: .38;
+  cursor: not-allowed;
+}
+
+.gh-btn-angajman:not(:disabled) {
+  border-color: var(--kotu);
+  color: var(--kotu);
+}
+
+/* --- Angajman popup: goruntu konumu ---------------------------- */
+.ang-goruntu-konum {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--soluk);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- İş 99: görüntü angajmanı kaynak bağlamı ------------------- */
+.ang-kutu {
+  width: min(520px, calc(100vw - 24px));
+  min-width: min(400px, calc(100vw - 24px));
+  max-height: min(90vh, 680px);
+}
+
+.ang-goruntu-kaynak {
+  display: grid;
+  gap: 6px;
+}
+
+.ang-goruntu-kaynak-satir {
+  display: grid;
+  grid-template-columns: minmax(132px, 1fr) minmax(0, 1.6fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.ang-goruntu-kaynak-satir > span {
+  color: var(--soluk);
+}
+
+.ang-goruntu-kaynak-satir > strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.ang-dron-satir.kaynak-dron {
+  border-color: var(--vurgu);
+}
+
+@media (max-width: 480px) {
+  .ang-kutu {
+    min-width: 0;
+  }
+
+  .ang-goruntu-kaynak-satir {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .ang-goruntu-kaynak-satir > strong {
+    text-align: left;
+  }
+}

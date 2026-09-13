@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Ag: merkez sunucuya MAVLink UDP gonderimi -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!--
+      Konum izni.
+
+      OLCULDU: Kopru aracin konumunu MAVLink cercevesinden okur, cihaz
+      GPS'inden OKUMAZ.  Ancak Android 10+ surumlerinde bagli USB
+      cihazlarin urun/satici adini okumak konum izni gerektirir
+      (USB cihaz numaralandirmasi konum sizdirabilecegi icin).  Cihaz
+      secim listesinde ad gosterebilmek icin istenir; reddedilirse
+      kopru yine calisir, yalnizca cihaz adi yerine satici/urun kodu
+      gorunur.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Ucus surerken koprunun kapanmamasi icin on plan hizmeti -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!--
+      USB Host destegi.
+
+      `required="true"` cunku bu kopru USB seri baglanti OLMADAN
+      hicbir ise yaramaz: ucus kontrolcusunden MAVLink cercevelerini
+      kabloyla alir.  USB Host desteklemeyen cihazlarda uygulamanin
+      Play Store'da gorunmemesi DOGRU davranistir; kurulup
+      calismamasindan yegdir.
+
+      Not: DJI koprusunde bu deger `false` idi cunku DJI araci Wi-Fi
+      ile de baglanabiliyordu.  MAVLink koprusunde boyle bir yol yok.
+    -->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="true" />
+
+    <application
+        android:name=".GoktunguMavUygulama"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/uygulama_adi"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:theme="@style/Tema.Goktungu"
+        android:networkSecurityConfig="@xml/ag_guvenligi"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="35">
+
+        <activity
+            android:name=".arayuz.AnaEtkinlik"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+              Ucus kontrolcusu kabloyla takilinca uygulamayi one al.
+
+              `USB_DEVICE_ATTACHED` kullanilir (`USB_ACCESSORY_ATTACHED`
+              DEGIL): ucus kontrolcusu bir USB *cihazdir*, telefon ana
+              makine (host) rolundedir.  DJI kumandasi ise aksesuar
+              rolunde calisiyordu; bu ayrim gozden kacirilirsa niyet
+              suzgeci HIC tetiklenmez.
+            -->
+            <intent-filter>
+                <action
+                    android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_cihaz_filtresi" />
+        </activity>
+
+        <!-- Ucus surerken koprunun yasamasini saglayan on plan hizmeti -->
+        <service
+            android:name=".kopru.KopruHizmeti"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+    </application>
+</manifest>

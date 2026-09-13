@@ -1,0 +1,454 @@
+/* =================================================================
+   GOKTUNGU - UCUS DUVARI (/flight)   v2.4.32
+
+   Ikinci ekran icin bagimsiz stil. GCS temasindan bilincli olarak
+   AYRI tutulur: bu sayfa daima koyu (kokpit) gorunumdedir, cunku
+   ucus gostergeleri (PFD) acik zeminde okunamaz ve ikinci ekran
+   genelde karanlik ortamda izlenir.
+
+   Yerlesimler CSS Grid ile kurulur; panel gizleme display:none
+   yerine grid alani dagitimi ile yapilir, boylece gizli panellerin
+   canvas'i da yeniden boyutlanmaz.
+   ================================================================= */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #05070a;
+  color: #e8eef6;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+/* ---------------- Ust cubuk ---------------- */
+#fwUst {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, #0d131c, #080c12);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  user-select: none;
+}
+
+.fw-marka {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 210px;
+}
+.fw-logo {
+  /* FAZ18-IS3: yer tutucu karakter (U+25C8) yerine gercek urun
+     logosu. Yukseklik ust bar (index.html #logo, 24px) ile ayni
+     tutuldu; genislik en-boy oraniyla serbest. `flex-shrink:0`
+     yoksa marka blogu daralinca logo eziliyor. */
+  height: 24px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+.fw-ad {
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 16px;
+}
+.fw-alt {
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  color: rgba(232,238,246,0.50);
+  border-left: 1px solid rgba(255,255,255,0.16);
+  padding-left: 8px;
+}
+
+/* ---------------- Yerlesim dugmeleri ---------------- */
+.fw-yerlesimler {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.fw-yb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 52px;
+  padding: 5px 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: rgba(232,238,246,0.72);
+  cursor: pointer;
+  transition: background .13s, border-color .13s, color .13s;
+}
+.fw-yb:hover {
+  background: rgba(57,215,255,0.12);
+  border-color: rgba(57,215,255,0.42);
+  color: #e8eef6;
+}
+.fw-yb svg {
+  width: 30px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+.fw-yb span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .6px;
+}
+.fw-yb-aktif {
+  background: rgba(57,215,255,0.20);
+  border-color: #39d7ff;
+  color: #ffffff;
+}
+.fw-yb-aktif svg { stroke: #39d7ff; }
+
+/* ---------------- Sag durum ---------------- */
+.fw-sag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fw-sayac {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(232,238,246,0.62);
+}
+.fw-ws {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.fw-ws-bagli {
+  color: #25e07a;
+  background: rgba(37,224,122,0.10);
+  border-color: rgba(37,224,122,0.38);
+}
+.fw-ws-kopuk {
+  color: #ff4d4d;
+  background: rgba(255,77,77,0.10);
+  border-color: rgba(255,77,77,0.38);
+}
+
+/* ---------------- Izgara ---------------- */
+#fwIzgara {
+  height: calc(100% - 52px);
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+}
+
+/* Panel sirasi izgarada 1..6; her yerlesim kendi sablonunu tanimlar.
+   Kullanilmayan paneller gizlenir. */
+
+/* Tekli */
+.fw-yer-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.fw-yer-1 .fw-panel:nth-child(n+2) { display: none; }
+
+/* Ikili */
+.fw-yer-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+.fw-yer-2 .fw-panel:nth-child(n+3) { display: none; }
+
+/* Uclu: solda tek buyuk, sagda iki alt alta */
+.fw-yer-3 {
+  grid-template-columns: 1.55fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.fw-yer-3 .fw-panel:nth-child(1) { grid-area: 1 / 1 / 3 / 2; }
+.fw-yer-3 .fw-panel:nth-child(2) { grid-area: 1 / 2 / 2 / 3; }
+.fw-yer-3 .fw-panel:nth-child(3) { grid-area: 2 / 2 / 3 / 3; }
+.fw-yer-3 .fw-panel:nth-child(n+4) { display: none; }
+
+/* Dortlu: 2x2 */
+.fw-yer-4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.fw-yer-4 .fw-panel:nth-child(n+5) { display: none; }
+
+/* Besli: solda tek buyuk, sagda 2x2 dort kucuk */
+.fw-yer-5 {
+  grid-template-columns: 1.5fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.fw-yer-5 .fw-panel:nth-child(1) { grid-area: 1 / 1 / 3 / 2; }
+.fw-yer-5 .fw-panel:nth-child(2) { grid-area: 1 / 2 / 2 / 3; }
+.fw-yer-5 .fw-panel:nth-child(3) { grid-area: 1 / 3 / 2 / 4; }
+.fw-yer-5 .fw-panel:nth-child(4) { grid-area: 2 / 2 / 3 / 3; }
+.fw-yer-5 .fw-panel:nth-child(5) { grid-area: 2 / 3 / 3 / 4; }
+.fw-yer-5 .fw-panel:nth-child(6) { display: none; }
+
+/* Altili: 3x2 */
+.fw-yer-6 {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* ---------------- Panel ---------------- */
+.fw-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #070a0f;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.fw-p-kopuk {
+  border-color: rgba(255,77,77,0.55);
+}
+
+.fw-p-baslik {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 7px;
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex: 0 0 auto;
+}
+
+.fw-p-no {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background: rgba(57,215,255,0.16);
+  color: #39d7ff;
+  font-size: 10px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.fw-p-secim {
+  flex: 0 1 auto;
+  max-width: 190px;
+  height: 21px;
+  background: #0d131c;
+  color: #e8eef6;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 0 4px;
+  cursor: pointer;
+}
+.fw-p-secim:focus {
+  outline: none;
+  border-color: #39d7ff;
+}
+
+.fw-p-ad {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .7px;
+  color: rgba(232,238,246,0.58);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fw-p-govde {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.fw-p-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* =================================================================
+   v2.4.45 — TAM EKRAN (ucus duvari)
+   =================================================================
+   Iki dugme ailesi vardir:
+     #fwTamEkran  : ust seritte, SAYFA tam ekrani
+     .fw-p-tam    : panel basliginda, PANEL tam ekrani
+   Her dugmede iki SVG bulunur; hangisinin gorunecegi .fw-tam-aktif
+   sinifina baglidir (ac / kapa ikonu). Boylece durum bir bakista
+   anlasilir ve ek ikon dosyasi gerekmez (sahada internet yok).
+   ================================================================= */
+
+.fw-tam-btn,
+.fw-p-tam {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.fw-tam-btn { width: 30px; height: 26px; }
+.fw-p-tam   { width: 24px; height: 20px; margin-left: auto; }
+
+.fw-tam-btn:hover,
+.fw-p-tam:hover {
+  background: rgba(57,215,255,0.16);
+  border-color: rgba(57,215,255,0.55);
+}
+
+.fw-tam-btn svg,
+.fw-p-tam svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: #9fb4c8;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fw-p-tam svg { width: 12px; height: 12px; }
+
+.fw-tam-btn:hover svg,
+.fw-p-tam:hover svg { stroke: #39d7ff; }
+
+/* Ikon degisimi: normalde "ac" ikonu, tam ekranda "kapa" ikonu */
+.fw-tam-kapa { display: none; }
+.fw-tam-aktif .fw-tam-ac   { display: none; }
+.fw-tam-aktif .fw-tam-kapa { display: inline; }
+
+.fw-tam-aktif {
+  background: rgba(57,215,255,0.20);
+  border-color: rgba(57,215,255,0.65);
+}
+.fw-tam-aktif svg { stroke: #39d7ff; }
+
+/* -----------------------------------------------------------------
+   PANEL tam ekran
+   -----------------------------------------------------------------
+   Fullscreen API kabul edilirse tarayici paneli zaten tum ekrana
+   tasir; :fullscreen kurallari o durumda gecerlidir. API reddedilirse
+   (kiosk, iframe, izin yok) .fw-panel-tam sinifi position:fixed ile
+   ayni gorunumu CSS ile saglar — islev her kosulda calisir.
+   ----------------------------------------------------------------- */
+.fw-panel.fw-panel-tam {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  border-radius: 0;
+  border: none;
+  display: flex !important;   /* gizli yerlesimde bile gorunur kalir */
+}
+
+/* Panel tam ekranda ust serit gizlenir: ikinci ekranda tek dron
+   izlenirken 52px'lik serit alan israfidir. */
+body.fw-panel-tam-acik #fwUst { display: none; }
+
+/* Tarayici gercek tam ekrani verdiginde panelin arka plani sayfa
+   arka planiyla ayni olsun (varsayilan beyaz flas onlenir). */
+.fw-panel:fullscreen,
+.fw-panel:-webkit-full-screen {
+  background: #070a0f;
+  width: 100%;
+  height: 100%;
+}
+
+/* -----------------------------------------------------------------
+   SAYFA tam ekran (yalniz API reddedildiginde: sahte kip)
+   ----------------------------------------------------------------- */
+body.fw-sayfa-tam #fwUst { display: none; }
+body.fw-sayfa-tam #fwIzgara { height: 100%; }
+
+/* FAZ18-IS3-FW-LOGO */
+
+/* =================================================================
+   FAZ18-IS25 — GECE / GUNDUZ TEMASI
+   Bu dosya baslangicta bilincli olarak tek temali (koyu) yazilmisti;
+   gerekce dosya basindaki yorumda duruyor: "ucus gostergeleri (PFD)
+   acik zeminde okunamaz". O kisit KORUNUYOR - PFD canvas'i
+   (flight_pfd.js) kendi renk paletini tasir ve temadan etkilenmez;
+   canvas `inset:0` ile panel govdesini tamamen kapladigi icin acik
+   temada da kokpit gorunumu bozulmaz.
+   Tema yalniz KABUK ogelerine uygulanir: sayfa zemini, ust cubuk,
+   yerlesim dugmeleri, panel cercevesi ve panel basligi.
+   Sabit renk kullanimi YASAK (tema sozlesmesi); asagidaki
+   degiskenler uzerinden gidilir.
+   ================================================================= */
+:root {
+  --fw-zemin:        #05070a;
+  --fw-yazi:         #e8eef6;
+  --fw-yazi-sonuk:   rgba(232,238,246,0.58);
+  --fw-ust-ust:      #0d131c;
+  --fw-ust-alt:      #080c12;
+  --fw-cerceve:      rgba(255,255,255,0.10);
+  --fw-panel-zemin:  #070a0f;
+  --fw-vurgu:        #39d7ff;
+  --fw-dugme-yazi:   #ffffff;
+  --fw-ikon:         #9fb4c8;
+  --fw-iyi:          #25e07a;
+  --fw-kotu:         #ff4d4d;
+}
+html[data-tema="acik"] {
+  --fw-zemin:        #eef2f7;
+  --fw-yazi:         #12202f;
+  --fw-yazi-sonuk:   rgba(18,32,47,0.62);
+  --fw-ust-ust:      #ffffff;
+  --fw-ust-alt:      #e6ecf3;
+  --fw-cerceve:      rgba(18,32,47,0.16);
+  --fw-panel-zemin:  #f7f9fc;
+  --fw-vurgu:        #0a7ea4;
+  --fw-dugme-yazi:   #0b1520;
+  --fw-ikon:         #4a6076;
+  --fw-iyi:          #0f9d58;
+  --fw-kotu:         #d32f2f;
+}
+/* --- kabuk ogelerine degisken uygulama --- */
+html[data-tema="acik"] body { background: var(--fw-zemin); color: var(--fw-yazi); }
+html[data-tema="acik"] #fwUst {
+  background: linear-gradient(180deg, var(--fw-ust-ust), var(--fw-ust-alt));
+  border-bottom-color: var(--fw-cerceve);
+}
+html[data-tema="acik"] .fw-yb { color: var(--fw-yazi); }
+html[data-tema="acik"] .fw-yb svg { stroke: var(--fw-ikon); }
+html[data-tema="acik"] .fw-yb-aktif {
+  border-color: var(--fw-vurgu);
+  color: var(--fw-dugme-yazi);
+}
+html[data-tema="acik"] .fw-yb-aktif svg { stroke: var(--fw-vurgu); }
+html[data-tema="acik"] .fw-sayac { color: var(--fw-yazi); }
+html[data-tema="acik"] .fw-ws-iyi { color: var(--fw-iyi); }
+html[data-tema="acik"] .fw-ws-kopuk { color: var(--fw-kotu); }
+html[data-tema="acik"] .fw-panel {
+  background: var(--fw-panel-zemin);
+  border-color: var(--fw-cerceve);
+}
+html[data-tema="acik"] .fw-p-baslik {
+  background: var(--fw-ust-ust);
+  color: var(--fw-yazi);
+}
+html[data-tema="acik"] .fw-p-ad { color: var(--fw-yazi-sonuk); }
+html[data-tema="acik"] .fw-p-no { color: var(--fw-vurgu); }
+html[data-tema="acik"] .fw-p-tam svg,
+html[data-tema="acik"] .fw-tam-btn svg { stroke: var(--fw-ikon); }
+html[data-tema="acik"] .fw-p-tam:hover svg,
+html[data-tema="acik"] .fw-tam-btn:hover svg { stroke: var(--fw-vurgu); }
+/* PFD panel govdesi acik temada da KOYU kalir: canvas kendi zeminini
+   cizer (flight_pfd.js:420 -> #05070a) ve govdeyi tamamen kaplar.
+   Govde rengi yalniz canvas henuz cizilmeden gorunur; beyaz flas
+   olmasin diye koyu sabitlenir. */
+html[data-tema="acik"] .fw-p-govde { background: #05070a; }
+/* --- tema dugmesi: ikon duruma gore --- */
+#fwTema .fw-tema-gunes { display: none; }
+#fwTema.fw-tema-acik .fw-tema-ay { display: none; }
+#fwTema.fw-tema-acik .fw-tema-gunes { display: block; }

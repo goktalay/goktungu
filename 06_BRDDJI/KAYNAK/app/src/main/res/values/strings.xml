@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="uygulama_adi">GOKTUNGU</string>
+    <string name="uygulama_alt_adi">DJI Bridge</string>
+
+    <string name="durum_baslik">Status</string>
+    <string name="durum_sdk_kayit_bekliyor">Awaiting SDK registration…</string>
+    <string name="durum_sdk_kayit_tamam">SDK registered</string>
+    <string name="durum_sdk_kayit_hata">SDK registration failed: %1$s</string>
+    <string name="durum_sdk_anahtar_yok">DJI API key is not configured. The app cannot connect to an aircraft.</string>
+    <string name="durum_arac_yok">No aircraft connected</string>
+    <string name="durum_arac_bagli">Aircraft connected: %1$s</string>
+    <string name="durum_arac_seri">Serial: %1$s</string>
+    <string name="durum_merkez_kopuk">No central connection</string>
+    <string name="durum_merkez_baglaniyor">Connecting to central…</string>
+    <string name="durum_merkez_bagli">Connected to central: %1$s</string>
+    <string name="durum_merkez_hata">Central connection error: %1$s</string>
+
+    <string name="yapilandirma_baslik">Central Server</string>
+    <string name="yapilandirma_adres">Server address</string>
+    <string name="yapilandirma_adres_ipucu">e.g. 192.168.1.50 or goktungu.com</string>
+    <string name="yapilandirma_port">Bridge port</string>
+    <string name="yapilandirma_kullanici">E-mail</string>
+    <string name="yapilandirma_belirtec">Köprü belirteci</string>
+    <string name="yapilandirma_belirtec_ipucu">Merkez arayüzü → Program Ayarları → DJI köprü belirteci. Yerel kurulumda boş bırakılabilir.</string>
+    <string name="yapilandirma_kaydet">Save and Connect</string>
+    <string name="yapilandirma_kes">Disconnect</string>
+    <string name="yapilandirma_oto">Connect automatically on launch</string>
+    <string name="yapilandirma_tls">Use TLS</string>
+
+    <string name="hata_adres_bos">Server address is empty</string>
+    <string name="hata_port_gecersiz">Port must be between 1 and 65535</string>
+    <string name="hata_kullanici_bos">E-mail is empty</string>
+
+    <string name="koord_reddedildi">Position command rejected: %1$s</string>
+    <string name="koord_belirsiz">Warning: the target latitude and longitude are nearly equal; an axis swap cannot be distinguished.</string>
+
+    <string name="hizmet_kanal_adi">GOKTUNGU Bridge</string>
+    <string name="hizmet_kanal_aciklama">Keeps the bridge connection alive during flight</string>
+    <string name="hizmet_bildirim_baslik">GOKTUNGU Bridge active</string>
+    <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
+
+    <string name="gunluk_baslik">Log</string>
+    <string name="gunluk_temizle">Clear</string>
+    <string name="gunluk_bos">No entries yet</string>
+
+    <string name="tel_baslik">Telemetry</string>
+    <string name="tel_konum">Position</string>
+    <string name="tel_irtifa">Altitude</string>
+    <string name="tel_hiz">Speed</string>
+    <string name="tel_yon">Heading</string>
+    <string name="tel_batarya">Battery</string>
+    <string name="tel_uydu">Satellites</string>
+    <string name="tel_mod">Flight mode</string>
+    <string name="tel_ornek">Samples sent</string>
+    <string name="tel_deger_yok">—</string>
+    <string name="tel_konum_yok">No GPS lock</string>
+    <string name="tel_birim_m">%1$.1f m</string>
+    <string name="tel_birim_ms">%1$.1f m/s</string>
+    <string name="tel_birim_derece">%1$.0f°</string>
+    <string name="tel_birim_yuzde">%1$d%%</string>
+
+    <string name="izin_baslik">Permissions required</string>
+    <string name="izin_govde">The bridge needs location and notification permissions to report the aircraft position to the centre and to keep running during flight.</string>
+    <string name="izin_ver">Grant permission</string>
+    <string name="izin_reddedildi">Location permission denied; telemetry cannot be reported.</string>
+
+    <string name="hakkinda_baslik">About</string>
+    <string name="hakkinda_surum">Version %1$s</string>
+    <string name="hakkinda_telif">Gokkubbe Teknoloji A.S.</string>
+    <string name="hakkinda_lisans">Third-Party Licences</string>
+    <string name="hakkinda_lisans_metni">This application uses DJI Mobile SDK v5. The DJI Android SDK links dynamically against unmodified FFmpeg libraries licensed under LGPL v2.1. FFmpeg source code and build instructions: https://github.com/dji-sdk/FFmpeg — DJI sample code is provided under the MIT licence.</string>
+    <string name="hakkinda_kapat">Close</string>
+    <string name="hizmet_merkez_bagli">Center connected, samples</string>
+    <string name="hizmet_merkez_hata">Center error</string>
+</resources>

@@ -1,0 +1,274 @@
+/* ============================================================
+   GOKTUNGU GCS — MESAJLASMA VE PILOTLAR STILI (v2.4.32)
+
+   TEMA KURALI (v2.4.31 dersi)
+   ---------------------------
+   Bu dosyada IKINCI BIR PALET TANIMLANMAZ. Butun renkler stil.css'in
+   tek kaynak degiskenlerinden gelir. v2.4.31'de widget.css kendi
+   paletini tanimladigi icin paneller ile widget'lar farkli beyaz
+   uretiyordu (olculdu: panel rgba(245,247,250,.95) / widget
+   rgba(252,252,253,.94)); ayni hata burada tekrarlanmamalidir.
+
+   Projenin tema sozlesmesi:
+     KOYU tema = VARSAYILAN (`data-tema` niteligi yok)
+     ACIK tema = `:root[data-tema="acik"]`
+   `body.tema-koyu` gibi bir secici PROJEDE YOKTUR; kullanilmamalidir.
+
+   Kullanilan gercek degiskenler (stil.css):
+     --panel-arka  pencere zemini      --metin       ana metin
+     --cizgi       kenar/ayirici       --soluk       ikincil metin
+     --interceptor vurgu               --kotu        kirmizi
+     --dugme-arka  dugme zemini        --giris-arka  girdi zemini
+     --iyi         yesil (cevrimici)   --beyaz       guclu metin
+     --pencere-baslik-arka  baslik zemini
+     --pencere-baslik-y     baslik yuksekligi
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   HEADER MESAJ IKONU
+   ------------------------------------------------------------ */
+#btnMesajlar .uyari-rozet {
+  position: absolute; top: 1px; right: 1px;
+}
+/* Kullanici istegi: okunmamis mesaj varsa ikon KIRMIZI olsun */
+#btnMesajlar.mesaj-var i.fa-comment-dots {
+  color: var(--kotu);
+}
+@keyframes msjTitre {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.14); }
+}
+#btnMesajlar.mesaj-var i.fa-comment-dots {
+  animation: msjTitre 1.6s ease-in-out 3;
+  display: inline-block;
+}
+
+/* ------------------------------------------------------------
+   HEADER ACILIR PANELI (okunmamis mesaj listesi)
+   ------------------------------------------------------------ */
+.msj-panel {
+  position: fixed;
+  /* Uyari merkezi paneliyle ayni katman duzeni */
+  z-index: 4200;
+  width: 320px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-arka);
+  color: var(--metin);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--pencere-radius, 8px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .55);
+  overflow: hidden;
+  font-size: 12px;
+  backdrop-filter: blur(6px);
+}
+.msj-panel-bas {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  height: var(--pencere-baslik-y, 30px);
+  padding: 0 var(--pencere-baslik-pad-x, 9px);
+  background: var(--pencere-baslik-arka);
+  border-bottom: 1px solid var(--cizgi);
+  font-size: var(--pencere-baslik-fs, 12px);
+  font-weight: var(--pencere-baslik-fw, 600);
+  letter-spacing: var(--pencere-baslik-ls, .06em);
+  flex-shrink: 0;
+}
+.msj-panel-kapat {
+  background: none; border: none; cursor: pointer;
+  color: var(--soluk); font-size: 13px; padding: 0 2px;
+}
+.msj-panel-kapat:hover { color: var(--metin); }
+.msj-panel-liste {
+  overflow-y: auto;
+  padding: 3px 0;
+}
+.msj-panel-bos {
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--soluk);
+  font-size: 11px;
+}
+.msj-panel-satir {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--cizgi);
+}
+.msj-panel-satir:last-child { border-bottom: none; }
+.msj-panel-satir:hover { background: var(--dugme-hover); }
+.msj-panel-sol { flex: 1; min-width: 0; }
+.msj-panel-ad {
+  font-weight: 700; font-size: 12px;
+  color: var(--metin);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msj-panel-metin {
+  color: var(--soluk); font-size: 11px;
+  margin-top: 2px;
+  /* Uzun mesaj iki satirda kesilir */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.msj-panel-sag {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  flex-shrink: 0;
+}
+.msj-panel-zaman {
+  color: var(--soluk); font-size: 10px; white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   SOHBET PENCERESI
+   `.bolum-popup` sinifini tasidigi icin zemin, kenar, baslik ve
+   pencere yonetimi (tasima/boyutlandirma/dok) hazir gelir. Burada
+   yalnizca ic yerlesim tanimlanir.
+   ------------------------------------------------------------ */
+.msj-sohbet .msj-sohbet-govde {
+  display: flex; flex-direction: column;
+  /* Baslik yuksekligi degiskenden cikarilir; sabit sayi yazilmasi
+     header incelmesi gibi degisimlerde yerlesimi bozardi. */
+  height: calc(100% - var(--pencere-baslik-y, 30px));
+  overflow: hidden;
+}
+.msj-sohbet-durum {
+  display: inline-block;
+  width: 7px; height: 7px; border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+  background: var(--soluk);
+}
+.msj-sohbet-durum.msj-online {
+  background: var(--iyi);
+  box-shadow: 0 0 6px var(--iyi);
+}
+.msj-sohbet-durum.msj-offline { background: var(--soluk); opacity: .5; }
+.msj-sohbet-ad { color: var(--metin); }
+
+.msj-sohbet-liste {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.msj-balon-sar { display: flex; }
+.msj-balon-sar.msj-ben   { justify-content: flex-end; }
+.msj-balon-sar.msj-karsi { justify-content: flex-start; }
+.msj-balon {
+  max-width: 78%;
+  padding: 6px 9px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  border: 1px solid var(--cizgi);
+  background: var(--dugme-arka);
+  color: var(--metin);
+}
+.msj-ben .msj-balon {
+  /* Kendi mesajlari vurgu renginde. Vurgu her iki temada da koyu
+     zemin uretmedigi icin metin `--dunya` degil sabit kontrast
+     gerektirir; bu nedenle vurgu uzerine beyaz yazilir ve vurgu
+     acik temada koyulastirilir (asagida override). */
+  background: var(--interceptor);
+  border-color: var(--interceptor);
+  color: #05141b;
+}
+:root[data-tema="acik"] .msj-ben .msj-balon {
+  color: #ffffff;
+}
+.msj-balon-metin { white-space: pre-wrap; word-break: break-word; }
+.msj-balon-zaman {
+  font-size: 9px; opacity: .7; margin-top: 3px; text-align: right;
+}
+
+.msj-sohbet-alt {
+  display: flex; align-items: flex-end; gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--cizgi);
+  background: var(--pencere-baslik-arka);
+  flex-shrink: 0;
+}
+.msj-sohbet-girdi {
+  flex: 1;
+  resize: none;
+  font-family: inherit; font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--cizgi);
+  background: var(--giris-arka);
+  color: var(--metin);
+  max-height: 90px;
+}
+.msj-sohbet-girdi:focus { outline: none; border-color: var(--interceptor); }
+.msj-sohbet-gonder {
+  flex-shrink: 0;
+  width: 32px; height: 30px;
+  border: none; border-radius: 6px;
+  background: var(--interceptor); color: #05141b;
+  cursor: pointer; font-size: 13px;
+}
+:root[data-tema="acik"] .msj-sohbet-gonder { color: #ffffff; }
+.msj-sohbet-gonder:hover { filter: brightness(1.12); }
+
+/* ------------------------------------------------------------
+   PILOTLAR WIDGET'I
+   ------------------------------------------------------------ */
+.wg-pilot-govde {
+  display: flex; flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+/* v2.4.33: yenileme dugmesi bu seritten kaldirildi ve widget
+   basligina tasindi (`.widget-yenile`, css/widget.css). Serit artik
+   yalnizca sayaci tasidigi icin `space-between` yerine sola hizalanir;
+   aksi halde tek oge ortada asili kaliyordu. */
+.wg-pilot-ust {
+  display: flex; align-items: center;
+  padding: 4px 8px 5px;
+  border-bottom: 1px solid var(--cizgi);
+  flex-shrink: 0;
+}
+.wg-pilot-sayac {
+  font-size: 10px; letter-spacing: .3px;
+  color: var(--soluk);
+}
+.wg-pilot-liste {
+  flex: 1;
+  /* Widget sabit boyutlu oldugu icin tasma listede cozulur */
+  overflow-y: auto;
+}
+.wg-pilot-bos {
+  padding: 16px 10px; text-align: center;
+  color: var(--soluk); font-size: 10px;
+}
+.wg-pilot-satir {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--cizgi);
+}
+.wg-pilot-satir:last-child { border-bottom: none; }
+.wg-pilot-satir:hover { background: var(--dugme-hover); }
+.wg-pilot-nokta {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--soluk); opacity: .45;
+}
+.wg-pilot-satir.wg-online .wg-pilot-nokta {
+  background: var(--iyi); opacity: 1;
+  box-shadow: 0 0 6px var(--iyi);
+}
+.wg-pilot-orta { flex: 1; min-width: 0; }
+.wg-pilot-ad {
+  font-size: 11px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--soluk);
+}
+.wg-pilot-satir.wg-online .wg-pilot-ad { color: var(--metin); }
+.wg-pilot-alt {
+  font-size: 9px; color: var(--soluk);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.wg-pilot-rozet { flex-shrink: 0; }

@@ -1,0 +1,107 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.gokkubbetech.goktungumav'
+    compileSdk rootProject.ext.derleme_sdk
+
+    defaultConfig {
+        // AYRI PAKET ADI (bilincli karar).
+        //
+        // DJI koprusu `com.gokkubbetech.goktungu` kullaniyor.  Play
+        // Store paket adini benzersiz kimlik olarak alir; ayni adla
+        // ikinci uygulama YAYIMLANAMAZ ve mevcut DJI koprusunun
+        // uzerine yazardi.  Bu yuzden MAVLink koprusu ayri uygulama
+        // olarak yayimlanir.
+        applicationId 'com.gokkubbetech.goktungumav'
+        minSdk rootProject.ext.en_dusuk_sdk
+        targetSdk rootProject.ext.hedef_sdk
+        versionCode 1
+        versionName '1.0.0'
+
+        // Multidex GEREKMEZ: MSDK kalktigi icin yontem sayisi 64K
+        // sinirinin cok altinda.  Kaldirmak acilis suresini kisaltir.
+
+        // ABI suzgeci GEREKMEZ: yerel (native) kutuphane yok.  Saf
+        // Kotlin/JVM kodu tum ABI'lerde calisir; boylece x86 tabanli
+        // cihazlar ve oykunucular da desteklenir.
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    signingConfigs {
+        // Yayin imzasi imza.properties'ten okunur; dosya yoksa yayin
+        // derlemesi imzasiz kalir (yerel dogrulama icin yeterli).
+        release {
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                def p = new Properties()
+                imzaDosya.withInputStream { p.load(it) }
+                storeFile rootProject.file(p.getProperty("anahtar.deposu"))
+                storePassword p.getProperty("depo.sifresi")
+                keyAlias p.getProperty("anahtar.adi")
+                keyPassword p.getProperty("anahtar.sifresi")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile(
+                'proguard-android-optimize.txt'), 'proguard-rules.pro'
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix '.hata'
+            versionNameSuffix '-hata'
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    // --- Android temel ---
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-service:2.8.4'
+
+    // Es zamanlilik
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+
+    // --- Olcum ---
+    //
+    // USB seri surucusu ve cerceve ayristiricisi kendi kodumuz oldugu
+    // icin dis kutuphane yok.  `usb-serial-for-android` yerine Android
+    // USB Host API dogrudan kullanildi: paket kucuk kaldi ve surucu
+    // davranisi kaynak kodda acikca gorunur.
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}

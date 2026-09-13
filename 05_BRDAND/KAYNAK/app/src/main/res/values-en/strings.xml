@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="uygulama_adi">GOKTUNGU</string>
+    <string name="uygulama_alt_adi">MAVLINK BRIDGE</string>
+
+    <!-- Card headings -->
+    <string name="durum_baslik">STATUS</string>
+    <string name="yapilandirma_baslik">CONFIGURATION</string>
+    <string name="telemetri_baslik">TELEMETRY</string>
+    <string name="gunluk_baslik">LOG</string>
+
+    <!-- Status messages -->
+    <string name="durum_usb_yok">USB serial link closed</string>
+    <string name="durum_usb_acik">USB open: %1$s @ %2$d</string>
+    <string name="durum_usb_hata">USB error: %1$s</string>
+    <string name="durum_arac_yok">No vehicle</string>
+    <string name="durum_arac_bagli">Vehicle connected: %1$s</string>
+    <string name="durum_merkez_kopuk">Central: disconnected</string>
+    <string name="durum_merkez_bagli">Central: %1$s</string>
+
+    <!-- Field labels -->
+    <string name="alan_cihaz">USB serial device</string>
+    <string name="alan_hiz">Line speed (baud)</string>
+    <string name="alan_adres">Central address</string>
+    <string name="alan_port">MAVLink UDP port</string>
+    <string name="alan_oto_baglan">Connect automatically on launch</string>
+    <string name="ipucu_adres">192.168.1.10</string>
+    <string name="ipucu_port">14550</string>
+    <string name="cihaz_yok">No USB serial device attached</string>
+
+    <!-- Buttons -->
+    <string name="dg_tara">SCAN</string>
+    <string name="dg_baglan">START BRIDGE</string>
+    <string name="dg_kes">STOP</string>
+    <string name="dg_gunluk_temizle">Clear</string>
+
+    <!-- Telemetry fields -->
+    <string name="tel_konum">Position</string>
+    <string name="tel_konum_yok">No position (awaiting GPS lock)</string>
+    <string name="tel_irtifa">Altitude</string>
+    <string name="tel_yon">Heading</string>
+    <string name="tel_batarya">Battery</string>
+    <string name="tel_arm">Motors</string>
+    <string name="tel_arm_acik">ARMED</string>
+    <string name="tel_arm_kapali">disarmed</string>
+    <string name="tel_mod">Mode</string>
+    <string name="tel_deger_yok">—</string>
+
+    <!-- Warnings -->
+    <string name="hata_baslik">Connection refused</string>
+    <string name="hata_adres_bos">Central address cannot be empty.</string>
+    <string name="hata_port_gecersiz">Port must be between 1 and 65535.</string>
+    <string name="hata_cihaz_yok">No USB serial device found. Attach the cable and press SCAN.</string>
+    <string name="hata_usb_izin">USB permission denied; the bridge cannot start.</string>
+    <string name="usb_izin_isteniyor">Requesting USB permission…</string>
+    <string name="kopru_baslatildi">Bridge started</string>
+    <string name="tarama_sonuc">%1$d USB serial device(s) found</string>
+
+    <!-- Log -->
+    <string name="gunluk_bos">No entries</string>
+
+    <!-- Foreground service -->
+    <string name="hizmet_kanal_adi">Bridge status</string>
+    <string name="hizmet_kanal_aciklama">Keeps the bridge alive during flight</string>
+    <string name="hizmet_bildirim_baslik">GOKTUNGU MAVLink Bridge</string>
+    <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
+    <string name="hizmet_arac_bagli">sys %1$d %2$s</string>
+    <string name="hizmet_arac_bekleniyor">Awaiting vehicle</string>
+    <string name="hizmet_merkez_bagli">%1$d frames sent</string>
+    <string name="hizmet_merkez_hata">Bridge error</string>
+
+    <!-- About -->
+    <string name="hakkinda_baslik">About</string>
+    <string name="hakkinda_kapat">Close</string>
+    <string name="hakkinda_surum">Version %1$s</string>
+    <string name="hakkinda_telif">Gokkubbe Teknoloji Anonim Sirketi</string>
+    <string name="hakkinda_lisans">Terms of use</string>
+    <string name="hakkinda_lisans_metni">This application is a MAVLink bridge for the GOKTUNGU ground control system. It carries MAVLink frames from the flight controller to the central software without modification. Because telemetry is sent unencrypted, connections are permitted only to private network addresses. Flight safety remains the responsibility of the operator; the bridge performs no flight control, it only carries communication.</string>
+</resources>

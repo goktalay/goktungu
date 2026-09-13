@@ -1,0 +1,26 @@
+[Unit]
+Description=GOKTUNGU Merkez Sunucu
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=goktungu
+Group=goktungu
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/goktungu /var/log
+WorkingDirectory=/opt/goktungu/merkez/python
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3.11 /opt/goktungu/merkez/python/main.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/goktungu-merkez.log
+StandardError=append:/var/log/goktungu-merkez.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GÖKTUNGU Köprü</title>
+<!-- Onbellek etiketi KOPRU SURUMUNE baglidir (1.5.7 -> 157).
+     Onceden sabit "?v=2" idi: kurulu kopruler yeni panel dosyalarini
+     tarayici onbelleginden ESKI haliyle sunuyordu ve arayuz
+     duzeltmeleri kullaniciya hic gorunmuyordu. -->
+<link rel="stylesheet" href="stil.css?v=157">
+</head>
+<body>
+
+<!-- =================================================================
+     KURULUM SİHİRBAZI (v1.6.0) — GİRİŞ EKRANINDAN ÖNCE
+
+     KULLANICI İSTEĞİ (birebir): "bu güncelleme sonrasında köprü
+     yazılımında da ilk girdiğimizde sihirbaz gelmeli ve ip bilgilerini
+     sormalı, yoksa merkeze merkez kullanıcı ile bağlanıp sonra lokal
+     kullanıcıyla devam etmesi saçma olacaktır."
+
+     NEDEN GİRİŞTEN ÖNCE: köprü kimliği merkezde doğrulanır. Varsayılan
+     merkez GÖKTUNGU bulutudur. Kapalı devre kurulumda kullanıcının hesabı
+     KENDİ Merkez Uygulamasındadır; bulutta yoktur. Adres sorulmadan
+     giriş denenirse şifre doğru olsa bile "kullanıcı bulunamadı" alınır.
+     ================================================================= -->
+<div id="kurulumEkran" class="giris-sarmal gizli">
+  <form id="kurulumForm" class="giris-kart genis-kart">
+    <div class="marka">
+      <span class="marka-ad">GÖKTUNGU</span>
+      <span class="marka-alt">KÖPRÜ</span>
+    </div>
+    <p class="giris-aciklama">
+      <b>Kurulum sihirbazı.</b> Bu köprünün hangi merkeze bağlanacağını
+      seçin. Giriş bilgileriniz <b>seçtiğiniz merkezde</b> doğrulanır;
+      bu yüzden adres girişten önce sorulur.
+    </p>
+
+    <label class="onay">
+      <input type="radio" name="kurSecim" id="kurBulut" value="bulut"
+             checked>
+      <span><b>GÖKTUNGU bulutu</b> — goktungu.com üzerinde
+        barındırılan merkez (öntanımlı)</span>
+    </label>
+    <label class="onay">
+      <input type="radio" name="kurSecim" id="kurKendi" value="kendi">
+      <span><b>Kendi merkez sunucum</b> — satın aldığınız
+        <b>Merkez Uygulaması</b>nın kurulu olduğu sunucu</span>
+    </label>
+
+    <div id="kurKendiAlan" class="gizli">
+      <label class="alan">
+        <span>Merkez sunucu adresi (IP veya alan adı)</span>
+        <input type="text" id="kurIp" placeholder="192.168.1.50"
+               autocomplete="off">
+      </label>
+      <p class="alan-not">
+        Merkez Uygulaması <b>bu bilgisayarda</b> çalışıyorsa
+        <code>127.0.0.1</code> yazın. Adresi yazmanız yeterlidir:
+        WebSocket ve HTTP adresleri standart portlarla otomatik
+        oluşturulur. Gelişmiş kullanım için aşağıdan elle
+        değiştirebilirsiniz.
+      </p>
+      <details id="kurGelismis">
+        <summary class="kucuk sonuk">Gelişmiş: adresleri elle gir</summary>
+        <div class="izgara">
+          <label class="alan">
+            <span>Merkez WebSocket adresi</span>
+            <input type="text" id="kurAdres"
+                   placeholder="ws://127.0.0.1:8765/kopru">
+          </label>
+          <label class="alan">
+            <span>Merkez HTTP adresi</span>
+            <input type="text" id="kurHttp"
+                   placeholder="http://127.0.0.1:8000">
+          </label>
+        </div>
+      </details>
+    </div>
+
+    <div id="kurulumHata" class="uyari gizli"></div>
+    <div id="kurulumUzak" class="uyari gizli">
+      Kurulum sihirbazı yalnızca <b>köprünün kurulu olduğu
+      bilgisayardan</b> tamamlanabilir. Merkez adresi kalıcı olarak
+      yazıldığı için ağdan değiştirilmesine izin verilmez.
+    </div>
+    <button type="submit" id="kurulumDugme" class="dugme birincil tam">
+      Kaydet ve Devam Et
+    </button>
+    <div class="giris-dip">
+      <span class="kucuk sonuk">Sürüm <b id="kurulumSurum">—</b></span>
+      <button data-tema-dugme></button>
+    </div>
+  </form>
+</div>
+
+<!-- =================================================================
+     GİRİŞ EKRANI
+     Kimlik merkezde doğrulanır; köprü yerel kullanıcı tutmaz.
+     ================================================================= -->
+<div id="girisEkran" class="giris-sarmal gizli">
+  <form id="girisForm" class="giris-kart" autocomplete="on">
+    <div class="marka">
+      <span class="marka-ad">GÖKTUNGU</span>
+      <span class="marka-alt">KÖPRÜ</span>
+    </div>
+    <p class="giris-aciklama">
+      Merkez hesabınızla giriş yapın. Bu panel yalnızca bu bilgisayardaki
+      sunucuları yönetir.
+    </p>
+    <label class="alan">
+      <span>E-posta</span>
+      <input type="email" id="gEposta" required autocomplete="username"
+             placeholder="ad.soyad@kurum.com">
+    </label>
+    <label class="alan">
+      <span>Şifre</span>
+      <input type="password" id="gSifre" required
+             autocomplete="current-password" placeholder="••••••••">
+    </label>
+    <div id="girisHata" class="uyari gizli"></div>
+    <button type="submit" id="girisDugme" class="dugme birincil tam">
+      Giriş Yap
+    </button>
+    <div class="giris-dip">
+      <span id="girisKimlikDurum" class="kucuk sonuk"></span>
+      <span class="kucuk sonuk">Sürüm <b id="girisSurum">—</b></span>
+      <!-- Tema dugmesi giris ekraninda da bulunur: operator oturum
+           acmadan once de gunduz/gece secebilsin. -->
+      <button data-tema-dugme></button>
+    </div>
+  </form>
+</div>
+
+<!-- =================================================================
+     PANEL — üst şerit + sol menü + ana alan
+     ================================================================= -->
+<div id="panelEkran" class="kabuk gizli">
+
+  <!-- ------------------------- ÜST ŞERİT ------------------------- -->
+  <header class="ust">
+    <div class="ust-sol">
+      <span class="marka-ad">GÖKTUNGU</span>
+      <span class="marka-alt">KÖPRÜ</span>
+      <button type="button" id="kopruSurumDugme" class="surum-etiket"
+              title="Hakkında ve köprü sürüm geçmişi">v—</button>
+    </div>
+
+    <div class="ust-orta">
+      <div class="merkez-durum" id="merkezDurum" title="Merkez bağlantısı">
+        <span class="nokta" id="merkezNokta"></span>
+        <span id="merkezMetin">merkez: —</span>
+      </div>
+      <span id="ustMakine" class="etiket sonuk"></span>
+    </div>
+
+    <div class="ust-sag">
+      <div class="zaman">
+        <span id="saat" class="saat">--:--:--</span>
+        <span id="tarih" class="tarih">—</span>
+      </div>
+      <span id="ustKullanici" class="ust-kullanici"></span>
+      <a id="merkezBag" class="dugme ince" target="_blank" rel="noopener"
+         href="#">Merkez Arayüzü</a>
+      <!-- Gunduz/gece dongusu: ikon ve baslik tema.js tarafindan
+           doldurulur; secim tarayicida saklanir. -->
+      <button data-tema-dugme></button>
+      <button type="button" id="cikisDugme" class="dugme ince">Çıkış</button>
+    </div>
+  </header>
+
+  <div class="govde">
+
+    <!-- ------------------------ SOL MENÜ ------------------------ -->
+    <nav class="yan">
+      <div class="kurum">
+        <div class="kurum-logo-kap" id="kurumLogoKap">
+          <img id="kurumLogo" class="kurum-logo gizli" alt="">
+          <div id="kurumLogoYok" class="kurum-logo-yok">—</div>
+        </div>
+        <div id="kurumUnvan" class="kurum-unvan"></div>
+      </div>
+
+      <div class="yan-baslik">SUNUCULAR</div>
+      <ul id="menuListe" class="menu"></ul>
+
+      <div class="yan-alt">
+        <div class="yan-alt-satir">
+          <span>Merkez ajanı</span>
+          <span id="ajanEtiket" class="etiket">—</span>
+        </div>
+        <div class="yan-alt-dugmeler">
+          <button type="button" id="ajanBaslat" class="dugme kucuk">BAĞLAN</button>
+          <button type="button" id="ajanDurdur" class="dugme kucuk sessiz">KES</button>
+        </div>
+        <button type="button" id="kayitAc" class="dugme kucuk tam birincil">
+          MERKEZE KAYDET
+        </button>
+        <button type="button" id="ayarDugme" class="dugme kucuk tam sessiz">
+          AYARLAR
+        </button>
+      </div>
+    </nav>
+
+    <!-- ------------------------ ANA ALAN ------------------------ -->
+    <main class="ana">
+      <div class="ana-ust">
+        <div class="ana-ust-sol">
+          <h1 id="servisBaslik" class="servis-baslik">—</h1>
+          <p id="servisAciklama" class="servis-aciklama"></p>
+        </div>
+        <div class="ana-ust-sag">
+          <button type="button" id="servisSurumDugme" class="surum-etiket"
+                  title="Hakkında ve bu sunucunun sürüm geçmişi">v—</button>
+          <button type="button" id="baslatDugme" class="dugme birincil">BAŞLAT</button>
+          <button type="button" id="durdurDugme" class="dugme tehlike">DURDUR</button>
+          <button type="button" id="m50Yonet" class="dugme sessiz gizli">M50 YÖNETİMİ</button>
+        </div>
+      </div>
+
+      <div class="olcum-serit" id="olcumSerit"></div>
+      <div id="servisHata" class="uyari gizli"></div>
+
+      <!-- Acik ucus kanallari: yalniz Dron Sunucusu secildiginde ve
+           en az bir kanal varken gorunur. Pilot hangi porta
+           baglandigini ve veri akip akmadigini gormeden ariza
+           ayiklayamaz. -->
+      <div id="kanalKap" class="kanal-kap gizli">
+        <div class="kanal-ust">
+          <span class="kanal-baslik">AÇIK UÇUŞ KANALLARI</span>
+          <span id="kanalSayi" class="kanal-sayi">0</span>
+        </div>
+        <table class="kanal-tablo">
+          <thead>
+            <tr>
+              <th>Kanal</th><th>Kaynak</th><th>Durum</th>
+              <th>Merkeze</th><th>Merkezden</th>
+              <th title="Merkez erişilemezken diske yazılan ham uçuş verisi">Yerel kayıt</th>
+              <th>Son veri</th>
+            </tr>
+          </thead>
+          <tbody id="kanalGovde"></tbody>
+        </table>
+      </div>
+
+      <div class="konsol-kap">
+        <div class="konsol-ust">
+          <span class="konsol-baslik">KONSOL</span>
+          <div class="konsol-araclar">
+            <label class="onay">
+              <input type="checkbox" id="otoKaydir" checked>
+              <span>otomatik kaydır</span>
+            </label>
+            <button type="button" id="konsolTemizle" class="dugme kucuk sessiz">
+              EKRANI TEMİZLE
+            </button>
+          </div>
+        </div>
+        <pre id="konsol" class="konsol"></pre>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- =================================================================
+     SÜRÜM GEÇMİŞİ PENCERESİ
+     ================================================================= -->
+<div id="surumPencere" class="ortu gizli">
+  <div class="pencere">
+    <div class="pencere-baslik">
+      <h3 id="surumBaslik">Hakkında</h3>
+      <button type="button" id="surumKapat" class="kapat">×</button>
+    </div>
+    <div class="pencere-govde" id="surumIcerik"></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     MERKEZE KAYIT PENCERESİ
+     ================================================================= -->
+<div id="kayitPencere" class="ortu gizli">
+  <form id="kayitForm" class="pencere">
+    <div class="pencere-baslik">
+      <h3>Bu Bilgisayarı Merkeze Kaydet</h3>
+      <button type="button" id="kayitKapat" class="kapat">×</button>
+    </div>
+    <div class="pencere-govde">
+      <p class="kucuk sonuk">
+        Kayıt, bu bilgisayara merkezde bir <b>kurulum kimliği</b> verir.
+        Kimlik yalnızca bu makinede saklanır ve merkez şifreniz diske
+        <b>yazılmaz</b>.
+      </p>
+      <label class="alan">
+        <span>Kurulum adı</span>
+        <input type="text" id="kAd" placeholder="Örn. Saha Aracı 1">
+      </label>
+      <label class="alan">
+        <span>Merkez şifresi (doğrulama için)</span>
+        <input type="password" id="kSifre" required
+               autocomplete="current-password">
+      </label>
+      <label class="onay">
+        <input type="checkbox" id="kYenile">
+        <span>Bu makine zaten kayıtlıysa kimliği <b>yenile</b></span>
+      </label>
+      <div id="kayitHata" class="uyari gizli"></div>
+    </div>
+    <div class="pencere-dip">
+      <button type="button" id="kayitVazgec" class="dugme">Vazgeç</button>
+      <button type="submit" id="kayitOnay" class="dugme birincil">Kaydet</button>
+    </div>
+  </form>
+</div>
+
+<!-- =================================================================
+     AYAR PENCERESİ
+     ================================================================= -->
+<div id="ayarPencere" class="ortu gizli">
+  <form id="ayarForm" class="pencere genis">
+    <div class="pencere-baslik">
+      <h3>Ayarlar</h3>
+      <button type="button" id="ayarKapat" class="kapat">×</button>
+    </div>
+    <div class="pencere-govde">
+      <div class="izgara">
+        <label class="alan">
+          <span>Merkez WebSocket adresi</span>
+          <input type="text" id="ayMerkezAdres"
+                 placeholder="wss://goktungu.com/kopru">
+        </label>
+        <label class="alan">
+          <span>Merkez HTTP adresi</span>
+          <input type="text" id="ayMerkezHttp"
+                 placeholder="https://goktungu.com">
+        </label>
+        <!-- v1.5.8: Yerel (kapali devre) Merkez Uygulama'ya baglanirken
+             en sik yapilan hata PORTU YAZMAMAK. Port yoksa ws:// 80,
+             wss:// 443 varsayar; yerel merkez ise 8765'te dinler ve
+             baglanti sessizce reddedilir. Ipucu bu yuzden alanlarin
+             hemen altinda, ayri bir aciklama satiri olarak durur. -->
+        <div class="alan-not">
+          <i class="sonuk">Kapalı devre (yerel) Merkez Uygulama için:
+          WebSocket <code>ws://SUNUCU_IP:8765/kopru</code>,
+          HTTP <code>http://SUNUCU_IP:8000</code>. Port numarasını
+          mutlaka yazın; yazılmazsa 80/443 varsayılır ve
+          bağlantı reddedilir. Adres ve kimlik bilgilerini Merkez
+          Uygulama → Program Ayarları → Köprü Kimlikleri
+          bölümünden alın.</i>
+        </div>
+        <label class="alan">
+          <span>Panel portu <i class="sonuk">(yeniden başlatmada)</i></span>
+          <input type="number" id="ayPanelPort" min="1024" max="65535">
+        </label>
+        <label class="alan">
+          <span>Panel arayüzü <i class="sonuk">(127.0.0.1 önerilir)</i></span>
+          <input type="text" id="ayPanelArayuz">
+        </label>
+      </div>
+      <label class="onay">
+        <input type="checkbox" id="aySertifika">
+        <span>TLS sertifikasını doğrula (uzak merkez için açık tutun)</span>
+      </label>
+      <div class="alt-baslik">Açılışta otomatik başlat</div>
+      <div class="onay-satir" id="acilisOnaylar"></div>
+      <div id="ayarHata" class="uyari gizli"></div>
+      <div class="yol-bilgi">
+        <div><b>Veri dizini:</b> <code id="ayVeriDizin">—</code></div>
+        <div><b>Günlük dizini:</b> <code id="ayGunlukDizin">—</code></div>
+      </div>
+    </div>
+    <div class="pencere-dip">
+      <span id="ayarBilgi" class="kucuk sonuk"></span>
+      <button type="submit" id="ayarKaydet" class="dugme birincil">Kaydet</button>
+    </div>
+  </form>
+</div>
+
+<!-- =================================================================
+     M50 ELEKTRO-OPTİK YÖNETİMİ
+     ================================================================= -->
+<div id="m50Pencere" class="ortu gizli">
+  <form id="m50Form" class="pencere genis">
+    <div class="pencere-baslik">
+      <h3>M50 Elektro-Optik Yönetimi</h3>
+      <button type="button" id="m50Kapat" class="kapat" aria-label="Kapat">×</button>
+    </div>
+    <div class="pencere-govde">
+      <p class="kucuk sonuk">
+        Fiziksel M50 oturumu yalnız <b>Windows x64 saha Köprüsü</b> üzerinde
+        resmi HVS SDK ile açılır. Parola yalnız bu açık bağlantı isteğinde RAM'de
+        kullanılır; kaydedilmez, durum paketine veya Merkez'e gönderilmez.
+      </p>
+      <div class="olcum-serit" id="m50OlcumSerit"></div>
+      <div class="alt-baslik">Yerel SDK ve görüntü kaynakları</div>
+      <p class="kucuk sonuk">Görünür ve termal akışlar yalnız yerel Görüntü Köprüsüne eklenmelidir; ham SDK video verisi tarayıcıya veya Merkez'e aktarılmaz.</p>
+      <div class="izgara">
+        <label class="alan"><span>Resmi M50 SDK dizini</span>
+          <input type="text" id="m50SdkDizin" placeholder="C:\\M50SDK">
+        </label>
+        <label class="alan"><span>Görünür RTSP(S) URI <i class="sonuk">(isteğe bağlı)</i></span>
+          <input type="text" id="m50RtspGorunur" placeholder="rtsp://192.0.2.10/gorunur">
+        </label>
+        <label class="alan"><span>Termal RTSP(S) URI <i class="sonuk">(isteğe bağlı)</i></span>
+          <input type="text" id="m50RtspTermal" placeholder="rtsps://192.0.2.10/termal">
+        </label>
+      </div>
+      <div class="pencere-dip">
+        <span id="m50AyarBilgi" class="kucuk sonuk"></span>
+        <button type="button" id="m50AyarKaydet" class="dugme">YEREL AYARLARI KAYDET</button>
+      </div>
+      <div class="alt-baslik">Açık cihaz bağlantısı</div>
+      <div class="izgara">
+        <label class="alan"><span>M50 IP adresi</span>
+          <input type="text" id="m50Ip" inputmode="decimal" placeholder="Operatör tarafından girilir">
+        </label>
+        <label class="alan"><span>Port</span>
+          <input type="number" id="m50Port" min="1" max="65535" value="8000">
+        </label>
+        <label class="alan"><span>Kullanıcı adı</span>
+          <input type="text" id="m50Kullanici" autocomplete="username">
+        </label>
+        <label class="alan"><span>Parola <i class="sonuk">(kaydedilmez)</i></span>
+          <input type="password" id="m50Parola" autocomplete="current-password">
+        </label>
+      </div>
+      <div class="pencere-dip">
+        <span class="kucuk sonuk">Cihaz taraması yapılmaz; bağlantı yalnız bu açık komutla başlar.</span>
+        <span><button type="button" id="m50Kes" class="dugme tehlike">BAĞLANTIYI KES</button>
+        <button type="button" id="m50Baglan" class="dugme birincil">BAĞLAN</button></span>
+      </div>
+      <div id="m50KontrolKap" class="gizli">
+        <div class="alt-baslik">PTZ ve lens denetimi</div>
+        <div class="izgara">
+          <label class="alan"><span>PTZ hızı <i class="sonuk">(1–10)</i></span>
+            <input type="number" id="m50PtzHiz" min="1" max="10" value="5">
+          </label>
+          <label class="alan"><span>Lens kanalı</span>
+            <select id="m50LensKanal"><option value="gorunur">Görünür</option><option value="termal">Termal</option></select>
+          </label>
+        </div>
+        <p class="kucuk sonuk">Hareket düğmesine basılı tutun; bıraktığınızda durur. Bu ekran yalnız PTZ/lens denetimi sunar.</p>
+        <div class="onay-satir" id="m50PtzDugmeleri">
+          <button type="button" data-m50-ptz="sol_yukari" class="dugme">↖</button><button type="button" data-m50-ptz="yukari" class="dugme">↑</button><button type="button" data-m50-ptz="sag_yukari" class="dugme">↗</button>
+          <button type="button" data-m50-ptz="sol" class="dugme">←</button><button type="button" data-m50-ptz="dur" class="dugme">DUR</button><button type="button" data-m50-ptz="sag" class="dugme">→</button>
+          <button type="button" data-m50-ptz="sol_asagi" class="dugme">↙</button><button type="button" data-m50-ptz="asagi" class="dugme">↓</button><button type="button" data-m50-ptz="sag_asagi" class="dugme">↘</button>
+        </div>
+        <div class="onay-satir" id="m50LensDugmeleri">
+          <button type="button" data-m50-lens="zoom_artir" class="dugme">ZOOM +</button><button type="button" data-m50-lens="zoom_azalt" class="dugme">ZOOM −</button>
+          <button type="button" data-m50-lens="odak_yakin" class="dugme">ODAK YAKIN</button><button type="button" data-m50-lens="odak_uzak" class="dugme">ODAK UZAK</button>
+          <button type="button" data-m50-lens="iris_ac" class="dugme">İRİS AÇ</button><button type="button" data-m50-lens="iris_kapat" class="dugme">İRİS KAPAT</button>
+        </div>
+        <div class="alt-baslik">Açı konumlandırma</div>
+        <div class="izgara">
+          <label class="alan"><span>Azimut <i class="sonuk">(−360…360)</i></span><input type="number" id="m50Azimut" min="-360" max="360" step="0.1"></label>
+          <label class="alan"><span>Eğim <i class="sonuk">(−90…90)</i></span><input type="number" id="m50Egim" min="-90" max="90" step="0.1"></label>
+          <label class="alan"><span>Hız <i class="sonuk">(1–10)</i></span><input type="number" id="m50AciHiz" min="1" max="10" value="5"></label>
+        </div>
+        <div class="pencere-dip"><span class="kucuk sonuk">Konum hedefi operatör tarafından açıkça girilir.</span><button type="button" id="m50AciGit" class="dugme">AÇIYA GİT</button></div>
+        <div class="alt-baslik">Manuel hedef seçimiyle takip</div>
+        <p class="kucuk sonuk">Önce yerel RTSP görüntüsünde operatörün seçtiği piksel dikdörtgenini girin. Otomatik hedef edinimi, silah, atış ve angajman bu hizmette yoktur.</p>
+        <div class="izgara">
+          <label class="alan"><span>Takip kanalı</span><select id="m50TakipKanal"><option value="gorunur">Görünür</option><option value="termal">Termal</option></select></label>
+          <label class="alan"><span>Takip modu</span><select id="m50TakipMod"><option value="hava_yari_otomatik">Hava — yarı otomatik</option><option value="kara_manuel">Kara — manuel</option><option value="kara_yari_otomatik">Kara — yarı otomatik</option></select></label>
+        </div>
+        <div class="izgara">
+          <label class="alan"><span>Video alanı — sol, üst, sağ, alt</span><input type="text" id="m50VideoDikdortgen" placeholder="0,0,1920,1080"></label>
+          <label class="alan"><span>Operatör seçimi — sol, üst, sağ, alt</span><input type="text" id="m50SecimDikdortgen" placeholder="800,300,980,520"></label>
+        </div>
+        <div class="pencere-dip"><span class="kucuk sonuk">Seçim, video alanı içinde dört tam piksel sınırıyla verilmelidir.</span><span><button type="button" id="m50TakipDurdur" class="dugme tehlike">TAKİBİ DURDUR</button><button type="button" id="m50TakipSec" class="dugme">SEÇİMİ ONAYLA</button><button type="button" id="m50TakipBaslat" class="dugme birincil">TAKİBİ BAŞLAT</button></span></div>
+      </div>
+      <div id="m50Hata" class="uyari gizli"></div>
+    </div>
+  </form>
+</div>
+
+<!-- =================================================================
+     MERKEZ SUNUCU SEÇİMİ PENCERESİ (v1.5.6)
+
+     Yalnız Merkez Uygulama lisansı olan firmanın YÖNETİCİSİNE,
+     giriş sonrası BİR KEZ görünür. Lisansı olmayan firmada hiç
+     açılmaz: kullanıcıların büyük bölümü kendi merkezini değil
+     GÖKTUNGU bulutunu kullanır ve soru onlar için anlamsızdır.
+     Kapatma düğmesi YOKTUR: seçim yapılmadan geçilirse telemetri
+     yanlış merkeze akmaya devam eder. "Şimdilik GÖKTUNGU bulutu"
+     seçeneği bilinçli bir yanıt olarak sunulur.
+     ================================================================= -->
+<div id="merkezSecimPencere" class="ortu gizli">
+  <form id="merkezSecimForm" class="pencere genis">
+    <div class="pencere-baslik">
+      <h3>Merkez Sunucu Bağlantısı</h3>
+    </div>
+    <div class="pencere-govde">
+      <p class="kucuk sonuk">
+        Firmanız <b>Merkez Uygulama</b> lisansına sahip. Bu köprünün
+        telemetriyi <b>nereye</b> göndereceğini seçin. Bu soru yalnızca
+        bir kez sorulur; daha sonra <b>Ayarlar</b>'dan değiştirebilirsiniz.
+      </p>
+      <label class="onay">
+        <input type="radio" name="msSecim" id="msBulut" value="bulut" checked>
+        <span><b>GÖKTUNGU bulutu</b> — goktungu.com üzerinde
+          barındırılan merkez (öntanımlı)</span>
+      </label>
+      <label class="onay">
+        <input type="radio" name="msSecim" id="msKendi" value="kendi">
+        <span><b>Kendi merkez sunucum</b> — satın aldığınız Merkez
+          Uygulamasının kurulu olduğu sunucu</span>
+      </label>
+      <div id="msKendiAlan" class="gizli">
+        <div class="izgara">
+          <label class="alan">
+            <span>Merkez WebSocket adresi</span>
+            <input type="text" id="msAdres"
+                   placeholder="wss://merkez.firmaniz.com/kopru">
+          </label>
+          <label class="alan">
+            <span>Merkez HTTP adresi</span>
+            <input type="text" id="msHttp"
+                   placeholder="https://merkez.firmaniz.com">
+          </label>
+        </div>
+        <p class="kucuk sonuk">
+          Merkez Uygulaması <b>bu bilgisayarda</b> çalışıyorsa
+          <code>wss://127.0.0.1:9443/kopru</code> yazın. Köprü paneli
+          8790, merkez 8000/8765 portunu kullanır; çakışma olmaz ve
+          ikisi aynı makinede birlikte çalışabilir.
+        </p>
+      </div>
+      <div id="merkezSecimHata" class="uyari gizli"></div>
+    </div>
+    <div class="pencere-dip">
+      <span class="kucuk sonuk">Seçim ayar dosyasına yazılır.</span>
+      <button type="submit" id="merkezSecimOnay" class="dugme birincil">
+        Kaydet ve Devam Et
+      </button>
+    </div>
+  </form>
+</div>
+
+<script src="tema.js?v=161"></script>
+<script src="guncelleme.js?v=161"></script>
+<script src="uygulama.js?v=161"></script>
+</body>
+</html>

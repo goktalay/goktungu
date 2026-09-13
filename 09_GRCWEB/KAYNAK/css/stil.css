@@ -1,0 +1,2023 @@
+/* =================================================================
+   GOKTUNGU v2.12.3 - Gokkubbe Teknoloji Anonim Sirketi
+   Tanitim sitesi stil dosyasi
+   -----------------------------------------------------------------
+   TAKTIK HAREKAT TEMASI (v3)
+   Palet murekkep laciverdi zemin uzerine kurulur.  Birincil taktik
+   vurgu celik-siyan (dost / sistem), ikincil vurgu kehribar
+   (iz / uyari); ikisi de C2 sembolojisinden turetilmistir.
+   Marka kirmizisi MARKA kimligi olarak korunur: logo,
+   birincil eylem dugmesi ve baslik vurgusunda kirmizi kalir, taktik
+   gostergeler siyan ve kehribara devredilir.
+   Tipografi: Chakra Petch (baslik), IBM Plex Sans (govde),
+   IBM Plex Mono (olcum / kod / etiket).
+   ================================================================= */
+
+:root{
+  /* --- zemin katmanlari (v3: ink / ink2 / panel / panel2) --- */
+  --arka:        #04070c;
+  --arka2:       #060b12;
+  --arka3:       #0a1119;
+  --kart:        #0d1622;
+  /* --- cizgiler: v3 saydam celik mavisi --- */
+  --cizgi:       rgba(146,180,216,.14);
+  --cizgi2:      rgba(146,180,216,.26);
+  /* --- metin katmanlari --- */
+  --metin:       #d7e2ee;
+  --metin2:      #8299b3;
+  /* #5a6f88 idi: istatistik adlari/mono etiketler 3.82:1 ile WCAG
+     esiginin (4.5:1) ALTINDA kaliyordu -> 5.88:1'e cekildi. */
+  --soluk:       #7b8ea6;
+  /* Baslik / sayi rengi.  Once `color:#fff` SABIT yaziliydi; acik
+     temada beyaz zeminde h1, h2, h3 ve istatistik sayilari GORUNMEZ
+     oluyordu.  Gozle yakalandi -- olcum yalniz `body` zeminini
+     olctugu icin kaciriyordu. */
+  --baslik-renk: #ffffff;
+  /* --- marka kirmizisi (korunur) --- */
+  --vurgu:       #b91c1c;   /* marka kirmizisi */
+  --vurgu2:      #dc2626;
+  --vurgu3:      #7f1414;
+  /* --- taktik gostergeler (v3) --- */
+  --siyan:       #5cc8ff;   /* dost / sistem */
+  --siyan2:      #8fdcff;
+  --siyan-d:     rgba(92,200,255,.12);
+  --kehribar:    #f2b24a;   /* iz / uyari */
+  --kehribar-d:  rgba(242,178,74,.12);
+  --iyi:         #3ddc97;
+  --kotu:        #f26d6d;
+  /* --mavi geriye donuk ad: artik siyan ile ayni deger */
+  --mavi:        #5cc8ff;
+  /* --- tipografi (v3) --- */
+  --govde:       "IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --baslik:      "Chakra Petch","IBM Plex Sans","Segoe UI",sans-serif;
+  --mono:        "IBM Plex Mono",Consolas,monospace;
+  --radius:      10px;
+  --gecis:       .45s cubic-bezier(.22,.61,.36,1);
+  --ic-genislik: 1220px;
+}
+
+*{box-sizing:border-box;}
+
+html{scroll-behavior:smooth;scroll-padding-top:96px;}
+
+body{
+  margin:0;
+  background:var(--arka);
+  color:var(--metin);
+  font-family:var(--govde);
+  font-size:15.5px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+::selection{background:rgba(92,200,255,.28);color:#fff;}
+
+a{color:inherit;text-decoration:none;}
+
+.ic{max-width:var(--ic-genislik);margin:0 auto;padding:0 28px;}
+
+/* -----------------------------------------------------------------
+   UST CUBUK
+   ----------------------------------------------------------------- */
+#ustCubuk{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:66px;
+  display:flex;align-items:center;
+  background:rgba(4,7,12,.82);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color var(--gecis), background var(--gecis);
+}
+#ustCubuk.kaydi{
+  border-bottom-color:var(--cizgi);
+  background:rgba(4,7,12,.95);
+}
+#ustCubuk .ic{
+  display:flex;align-items:center;gap:26px;width:100%;
+}
+.marka{display:flex;align-items:center;gap:13px;flex-shrink:0;}
+/* v2.12.3 marka gecisi: firma logosu + ayrac + urun yazisi ucusu
+   kaldirildi; tek GOKTUNGU logosu var.  Logo urun adini kendi icinde
+   tasidigi icin `.urun`/`.ayirac` kurallari da silindi.
+
+   Tema secimi: iki <img> HTML'de yan yana durur, biri gizlenir.  Tek
+   dosya iki zeminde de AA karsitlik veremedigi icin (olculdu) tema
+   basina ayri dosya tutuluyor; secim CSS ile yapilir, JS gerekmez --
+   boylece tema degisiminde logo GECIKMESIZ degisir ve JS kapali
+   tarayicida da dogru logo gorunur. */
+.marka img{height:36px;width:auto;display:block;}
+.marka .acik{display:none;}
+:root[data-tema="acik"] .marka .koyu{display:none;}
+:root[data-tema="acik"] .marka .acik{display:block;}
+
+/* v2.12.2: oturum kabugu artik nav DISINDA (bkz. index.html yorumu).
+   `margin-left:auto` nav'da KALIR -- menuyu markadan ayirip saga iter.
+   Kabuk nav'in hemen sagina yapisir; aralarindaki bosluk `.ic` gap'i
+   (26px) yerine daha dar tutulur, yoksa ikon seridin sagindan uzak
+   durur ve dil secici ile arasinda bosluk olusur. */
+#anaMenu{
+  display:flex;align-items:center;gap:4px;margin-left:auto;
+}
+/* Oturum kabugu: seridin kalici parcasi.  `flex-shrink:0` ZORUNLU --
+   aksi halde dar ekranda ikon esneyip yuvarlakligini kaybediyor ve
+   dokunma hedefi 24px altina dusuyor. */
+#ustCubuk .ic > .gk-kul{flex-shrink:0;}
+/* Nav ile kabuk arasindaki 26px `.ic` gap'i fazla: menu maddeleri
+   ikondan kopuk duruyordu. */
+#anaMenu + .gk-kul{margin-left:-14px;}
+/* `:not(.dg)` ZORUNLU.  Once secici `#anaMenu a` idi; kimlik tasidigi
+   icin ozgullugu (1,0,1) `.dg-birincil` kuralini (0,1,0) yeniyordu ve
+   ust seritteki "Sisteme Giris" dugmesinin yazisi kirmizi zemin uzerinde
+   gri-maviye (--metin2) donuyordu -> 1.9:1, OKUNMUYOR.  Hero'daki ayni
+   dugme #anaMenu icinde olmadigi icin dogru gorunuyordu; bu yuzden kusur
+   yalniz ust seritte ortaya cikiyordu. */
+#anaMenu a:not(.dg){
+  padding:8px 14px;border-radius:var(--radius);
+  font-size:13px;font-weight:500;color:var(--metin2);
+  letter-spacing:.02em;
+  /* Duz menu maddeleri TEK SATIR kalmali.  Olcum 1000-1440px arasi tum
+     genisliklerde "Fiyatlandirma"nin iki satira kirildigini yakaladi:
+     esnek satirda madde kendi genisliginin altina sikistiginda kelime
+     kirilmasi olusuyor ve ust serit yukseligi bozuluyor. */
+  white-space:nowrap;
+  transition:color var(--gecis), background var(--gecis);
+}
+#anaMenu a:not(.dg):hover{color:var(--metin);background:rgba(255,255,255,.05);}
+
+.dg{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:var(--radius);
+  font-family:var(--baslik);
+  font-size:13.5px;font-weight:600;letter-spacing:.05em;
+  cursor:pointer;border:1px solid transparent;
+  transition:all var(--gecis);white-space:nowrap;
+}
+.dg-birincil{
+  background:var(--vurgu);color:#fff;border-color:var(--vurgu2);
+}
+.dg-birincil:hover{
+  background:var(--vurgu2);
+  box-shadow:0 0 20px rgba(220,38,38,.4);
+  transform:translateY(-1px);
+}
+.dg-ikincil{
+  background:transparent;color:var(--metin);border-color:var(--cizgi2);
+}
+.dg-ikincil:hover{
+  border-color:var(--vurgu2);color:#fff;
+  background:rgba(220,38,38,.08);
+}
+.dg-buyuk{padding:13px 26px;font-size:14px;}
+
+#menuAc{
+  display:none;background:none;border:none;color:var(--metin);
+  font-size:22px;cursor:pointer;padding:6px;
+}
+
+/* -----------------------------------------------------------------
+   HERO
+   ----------------------------------------------------------------- */
+#hero{
+  position:relative;padding:150px 0 90px;overflow:hidden;
+}
+#hero::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(185,28,28,.14), transparent 60%),
+    radial-gradient(ellipse 60% 55% at 88% 20%, rgba(92,200,255,.10), transparent 60%);
+  pointer-events:none;
+}
+/* Radar izgara dokusu */
+#hero::after{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(146,180,216,.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(146,180,216,.5) 1px, transparent 1px);
+  /* FAZ15-IZGARA-HIYERARSI: 56px -> 64px.  Cizgi seyreklesir, kure
+     daha cok bos alanda durur. */
+  background-size:64px 64px;
+  /* Olculen kusur: kare izgara alfa .50 ile ciziliyordu, kurenin kendi
+     izgarasi .20 ile.  Dekoratif arka plan, ana ogeden 2,5 kat
+     belirgindi -- kullanici "dunya geri planda kaliyor" dedi.
+     .32 opaklik etkin alfayi ~.16'ya indirir; kure izgarasi (.26)
+     ve kita cizgisi (.56) artik ondan belirgin.
+     Acik tema kurali (`:root[data-tema="acik"]`) daha ozgul oldugu
+     icin kendi .30 degerini korur -- orada sikayet yoktu. */
+  opacity:.32;
+  mask-image:radial-gradient(ellipse 80% 65% at 50% 30%, #000 25%, transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 65% at 50% 30%, #000 25%, transparent 78%);
+  pointer-events:none;
+}
+#hero .ic{position:relative;z-index:2;}
+
+.rozet{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:6px 14px;border-radius:100px;
+  border:1px solid var(--cizgi2);
+  background:var(--siyan-d);
+  font-family:var(--mono);
+  font-size:11px;font-weight:500;letter-spacing:.16em;
+  color:var(--metin2);text-transform:uppercase;
+  margin-bottom:28px;
+}
+.rozet i{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--iyi);
+  box-shadow:0 0 8px 1px rgba(61,220,151,.7);
+  animation:nabiz 2.4s ease-in-out infinite;
+}
+@keyframes nabiz{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.45;transform:scale(.82);}
+}
+
+h1{
+  margin:0 0 22px;
+  font-family:var(--baslik);
+  font-size:clamp(2.3rem, 5.4vw, 4.05rem);
+  line-height:1.12;font-weight:600;letter-spacing:-.01em;
+  color:var(--baslik-renk);
+  max-width:930px;
+}
+h1 em{
+  font-style:normal;
+  background:linear-gradient(100deg, var(--vurgu2) 10%, #f26d6d 55%, var(--mavi) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero-alt{
+  font-size:clamp(1rem, 1.5vw, 1.16rem);
+  color:var(--metin2);max-width:680px;margin:0 0 38px;
+}
+.hero-dg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px;}
+
+/* Hero istatistik seridi */
+.istatistik{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--cizgi);
+  border:1px solid var(--cizgi);border-radius:var(--radius);
+  overflow:hidden;
+}
+.istatistik > div{
+  background:var(--arka2);padding:22px 20px;
+}
+.istatistik .sayi{
+  font-family:var(--baslik);
+  font-size:1.95rem;font-weight:700;letter-spacing:-.01em;
+  color:var(--baslik-renk);line-height:1.1;
+}
+.istatistik .sayi span{color:var(--siyan);font-size:1.05rem;}
+.istatistik .ad{
+  font-family:var(--mono);
+  font-size:11px;color:var(--soluk);
+  letter-spacing:.14em;text-transform:uppercase;margin-top:6px;
+}
+
+/* -----------------------------------------------------------------
+   BOLUM ORTAK
+   ----------------------------------------------------------------- */
+section{padding:88px 0;position:relative;}
+section.koyu{background:var(--arka2);border-top:1px solid var(--cizgi);
+  border-bottom:1px solid var(--cizgi);}
+
+.bolum-bas{margin-bottom:52px;max-width:760px;}
+/* Kesit etiketi: v3'te siniflandirma bandi gibi mono ve siyan */
+.bolum-etiket{
+  font-family:var(--mono);
+  font-size:11.5px;font-weight:500;letter-spacing:.22em;
+  color:var(--siyan);text-transform:uppercase;margin-bottom:14px;
+}
+h2{
+  margin:0 0 16px;
+  font-family:var(--baslik);
+  font-size:clamp(1.6rem, 3vw, 2.3rem);
+  font-weight:600;letter-spacing:-.005em;line-height:1.18;
+  color:var(--baslik-renk);
+}
+h3{font-family:var(--baslik);font-weight:600;color:var(--baslik-renk);}
+.bolum-bas p{color:var(--metin2);margin:0;font-size:1.02rem;}
+
+/* -----------------------------------------------------------------
+   MIMARI SEMASI
+   ----------------------------------------------------------------- */
+.mimari{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  gap:28px;align-items:center;margin-top:12px;
+}
+.mim-kutu{
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:26px;
+}
+.mim-kutu h3{
+  margin:0 0 6px;font-size:14px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--metin);
+}
+.mim-kutu .not{font-size:12px;color:var(--soluk);margin-bottom:18px;}
+.mim-liste{list-style:none;padding:0;margin:0;}
+.mim-liste li{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:9px 0;font-size:13px;color:var(--metin2);
+  border-top:1px solid var(--cizgi);
+}
+.mim-liste li:first-child{border-top:none;}
+.mim-liste .ik{
+  flex:0 0 20px;height:20px;border-radius:3px;
+  display:grid;place-items:center;font-size:10px;
+  background:rgba(185,28,28,.15);color:var(--vurgu2);
+  margin-top:1px;
+}
+.mim-ok{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--soluk);font-size:11px;letter-spacing:.1em;
+}
+.mim-ok .cizgi{
+  width:2px;height:38px;
+  background:linear-gradient(180deg,transparent,var(--vurgu2),transparent);
+}
+.mim-ok .etiket{white-space:nowrap;font-weight:600;color:var(--metin2);}
+
+/* -----------------------------------------------------------------
+   YETENEK KARTLARI
+   ----------------------------------------------------------------- */
+.kartlar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));
+  gap:20px;
+}
+.kart{
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:26px;
+  transition:border-color var(--gecis), transform var(--gecis);
+}
+.kart:hover{border-color:var(--cizgi2);transform:translateY(-2px);}
+.kart .ikon{
+  width:50px;height:50px;border-radius:var(--radius);
+  display:grid;place-items:center;
+  /* Kirmizi (`--vurgu`) taktik arayuzde UYARI/TEHDIT rengidir; yetenek
+     ikonlarinda kullanilmasi yanlis sinyal verir ve alti kart bir
+     alarm panosu gibi gorunur.  Yetenek ikonlari siyan (bilgi/sistem)
+     renginde; kirmizi yalniz gercek uyari ogelerine ayrildi. */
+  background:rgba(92,200,255,.11);color:var(--siyan);
+  border:1px solid rgba(92,200,255,.20);
+  margin-bottom:16px;
+}
+/* -----------------------------------------------------------------
+   IKON DIZGESI (js/ikon.js)
+   Onceki durum: Unicode geometrik karakterler (&#9678; &#9650; ...).
+   Iki kart BIREBIR AYNI karakteri kullaniyordu ve bu karakterler
+   yazi tipine gore farkli/hic cizilmiyordu.  Artik cizgi tabanli
+   SVG; renk `currentColor` ile kapsayicidan gelir, tema uyumludur.
+   ----------------------------------------------------------------- */
+.gz-ikon{display:inline-grid;place-items:center;line-height:0;}
+.gz-ikon > svg{display:block;width:22px;height:22px;}
+/* 50px kutuda 23px cizim zayif duruyordu: kart olceginde ikon
+   govdesi 27px'e cikarildi. */
+.kart .gz-ikon > svg{width:27px;height:27px;}
+/* Ikonlar cizgi tabanli: koyu temada hafif parlaklik, acik temada
+   tam opak -- ince cizgiler acik zeminde solgun gorunuyordu. */
+:root[data-tema="acik"] .kart .ikon{
+  background:rgba(15,108,158,.09);
+  border-color:rgba(15,108,158,.20);
+}
+.kart h3{margin:0 0 9px;font-size:15px;font-weight:700;}
+.kart p{margin:0;font-size:13.5px;color:var(--metin2);line-height:1.6;}
+
+/* -----------------------------------------------------------------
+   EKRAN GORUNTULERI
+   ----------------------------------------------------------------- */
+.ss-cerceve{
+  border:1px solid var(--cizgi);border-radius:var(--radius);
+  overflow:hidden;background:var(--arka3);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.ss-baslik{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 14px;border-bottom:1px solid var(--cizgi);
+  background:var(--arka2);
+}
+.ss-baslik .nokta{width:9px;height:9px;border-radius:50%;}
+.ss-baslik .n1{background:#e0605a;}
+.ss-baslik .n2{background:#d9a13b;}
+.ss-baslik .n3{background:#3ddc97;}
+.ss-baslik .yol{
+  margin-left:12px;font-family:var(--mono);font-size:11px;
+  color:var(--soluk);
+}
+.ss-cerceve img{display:block;width:100%;height:auto;}
+
+/* -----------------------------------------------------------------
+   VITRIN  (js/vitrin.js)
+   Eski `.ss-izgara` / `.ss-kucuk` ikilisi kaldirildi: bes gorsel
+   esit agirlikta yan yana diziliyor, hiyerarsi kurmuyor ve hepsi
+   birden yukleniyordu.  Yerine solda sekme listesi + sagda tek
+   buyuk gorsel geldi.
+   ----------------------------------------------------------------- */
+.vitrin{
+  display:grid;grid-template-columns:minmax(260px,340px) 1fr;
+  gap:24px;align-items:start;
+}
+.vitrin-secim{display:flex;flex-direction:column;gap:8px;}
+.vs{
+  display:flex;gap:13px;align-items:flex-start;text-align:left;
+  padding:14px 15px;border-radius:var(--radius);
+  border:1px solid var(--cizgi);background:var(--kart);
+  color:inherit;font:inherit;cursor:pointer;
+  transition:border-color var(--gecis), background var(--gecis);
+}
+.vs:hover{border-color:var(--cizgi2);}
+.vs .vs-ikon{
+  flex:0 0 auto;width:34px;height:34px;border-radius:9px;
+  background:rgba(92,200,255,.10);color:var(--siyan);
+}
+.vs .vs-ikon > svg{width:19px;height:19px;}
+.vs-yazi{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.vs-ad{
+  font-family:var(--baslik);font-size:13.5px;font-weight:600;
+  letter-spacing:.02em;color:var(--baslik-renk);
+}
+.vs-alt{font-size:12px;line-height:1.5;color:var(--metin2);}
+/* Secili sekme: sol kenarda siyan seritle isaretlenir.  Renk tek
+   ayirt edici olmasin diye kenarlik + zemin de degisir (WCAG 1.4.1). */
+.vs[aria-selected="true"]{
+  border-color:var(--siyan);
+  background:linear-gradient(90deg,rgba(92,200,255,.10),transparent 70%);
+  box-shadow:inset 3px 0 0 var(--siyan);
+}
+.vs[aria-selected="true"] .vs-ikon{
+  background:rgba(92,200,255,.18);
+}
+.vs:focus-visible{outline:2px solid var(--siyan);outline-offset:2px;}
+
+.ss-kareler{position:relative;}
+.vk{margin:0;}
+.vk img{display:block;width:100%;height:auto;}
+/* Alt yazi: gorselin altinda ince bir serit.  Mono yazi tipi teknik
+   olcut oldugunu belli eder; `--soluk` WCAG 4.5:1 uzerinde kalir. */
+.vk-alt{
+  padding:10px 14px;font-family:var(--mono);font-size:11.5px;
+  line-height:1.55;color:var(--soluk);
+  border-top:1px solid var(--cizgi);background:var(--arka2);
+}
+
+@media (max-width:900px){
+  .vitrin{grid-template-columns:1fr;gap:18px;}
+  /* Kucuk ekranda sekmeler yatay kaydirilabilir seride toplanir;
+     dikey liste tum ekrani yiyordu. */
+  .vitrin-secim{
+    flex-direction:row;overflow-x:auto;gap:10px;
+    padding-bottom:4px;scrollbar-width:thin;
+  }
+  .vs{flex:0 0 auto;width:210px;}
+  .vs-alt{display:none;}
+}
+
+/* -----------------------------------------------------------------
+   ISTEMCI INDIRME
+   ----------------------------------------------------------------- */
+.ist-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));
+  gap:20px;
+}
+.ist-kart{
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:26px;
+  display:flex;flex-direction:column;
+}
+.ist-kart .ust{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.ist-kart .simge{
+  width:46px;height:46px;border-radius:9px;flex-shrink:0;
+  display:grid;place-items:center;font-size:19px;color:#fff;
+}
+.ist-kart.dron .simge{background:linear-gradient(150deg,#1f6fbd,#124a80);}
+.ist-kart.radar .simge{background:linear-gradient(150deg,#1f9d74,#0f6a4c);}
+.ist-kart.ai .simge{background:linear-gradient(150deg,#9d3fb5,#6a2380);}
+.ist-kart h3{margin:0;font-size:15px;font-weight:700;}
+.ist-kart .surum{
+  font-family:var(--mono);font-size:11px;color:var(--soluk);
+}
+.ist-kart p{margin:0 0 20px;font-size:13px;color:var(--metin2);flex:1;}
+
+/* v2.6.0: satir icerigi IKI KATMAN halinde dizilir.
+   Eskiden tek satirda yan yanaydi ve uzun platform adlari
+   ("Debian / Ubuntu paketi (.deb)") icerigi kartin disina tasiriyordu;
+   olcumde 321px kart icinde icerik 432px'e uzuyor, indirme butonu
+   etiket ve boyut yazisinin uzerine biniyordu. */
+.indir-satir{
+  display:flex;flex-direction:column;align-items:stretch;
+  gap:8px;padding:10px 12px;
+  border:1px solid var(--cizgi);border-radius:var(--radius);
+  margin-bottom:8px;background:var(--arka2);
+  transition:border-color var(--gecis), background var(--gecis);
+}
+.indir-satir:hover{border-color:var(--cizgi2);background:var(--arka3);}
+/* ust katman: platform adi (+ onerilen etiketi) */
+.indir-satir .ust-sat{
+  display:flex;align-items:center;gap:8px;min-width:0;
+  flex-wrap:wrap;
+}
+/* alt katman: boyut solda, indirme butonu sagda */
+.indir-satir .alt-sat{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-width:0;
+}
+/* .sol eski yapidan kalan kural; geriye uyum icin korunur */
+.indir-satir .sol{display:flex;align-items:center;gap:10px;min-width:0;}
+.indir-satir .plat{
+  font-size:12.5px;font-weight:600;color:var(--metin);
+  min-width:0;overflow-wrap:anywhere;
+}
+.indir-satir .boyut{
+  font-family:var(--mono);font-size:11px;color:var(--soluk);
+}
+.indir-satir .dgi{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:3px;
+  background:rgba(185,28,28,.14);border:1px solid rgba(220,38,38,.3);
+  color:#f0a5a5;font-size:11.5px;font-weight:600;
+  white-space:nowrap;transition:all var(--gecis);
+}
+.indir-satir .dgi:hover{
+  background:var(--vurgu);border-color:var(--vurgu2);color:#fff;
+}
+
+/* v2.6.0: kurulum paketi (onerilen) / tasinabilir arsiv (ikincil)
+   Her platform icin iki satir sunulur; kurulum paketi one cikarilir. */
+.indir-satir.onerilen{
+  background:rgba(92,200,255,.06);border-color:rgba(92,200,255,.28);
+}
+.indir-satir.onerilen:hover{
+  background:rgba(92,200,255,.1);border-color:rgba(92,200,255,.45);
+}
+.indir-satir.ikincil{
+  margin-bottom:14px;
+}
+.indir-satir.ikincil .plat{color:var(--metin2);font-weight:500;}
+.onerilen-et{
+  font-size:9.5px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;white-space:nowrap;
+  padding:2px 6px;border-radius:2px;
+  background:rgba(92,200,255,.16);color:#8fdcff;
+  border:1px solid rgba(92,200,255,.3);
+}
+.dgi.dgi-ikincil{
+  background:transparent;border-color:var(--cizgi2);color:var(--metin2);
+}
+.dgi.dgi-ikincil:hover{
+  background:var(--arka3);border-color:var(--metin2);color:var(--metin);
+}
+
+.ist-not{
+  margin-top:8px;padding:12px 14px;border-radius:var(--radius);
+  background:rgba(92,200,255,.07);border:1px solid rgba(92,200,255,.2);
+  font-size:12px;color:var(--metin2);line-height:1.55;
+}
+.ist-not strong{color:var(--metin);}
+
+/* ---------------------------------------------------------------
+   v2.9.0 -- INDIRME KAPISI
+   Kurulum dosyalari siteden dagitilmaz; bu blok kullaniciyi
+   kurumsal panele yonlendirir.  Eski .ist-izgara kartlarinin
+   yerini alir.
+   --------------------------------------------------------------- */
+.ist-kapi{
+  margin-bottom:26px;padding:30px 32px;border-radius:var(--r,10px);
+  background:linear-gradient(150deg,rgba(92,200,255,.08),rgba(92,200,255,.02));
+  border:1px solid rgba(92,200,255,.24);
+  position:relative;overflow:hidden;
+}
+/* kehribar kenar seridi: taktik "uyari/iz" dili */
+.ist-kapi::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--siyan),var(--kehribar));
+}
+.ist-kapi-ic{
+  display:grid;grid-template-columns:1.35fr 1fr;gap:34px;align-items:start;
+}
+.ist-kapi-yazi h3{
+  margin:0 0 12px;font-family:var(--baslik);font-size:19px;
+  font-weight:600;color:var(--baslik-renk);line-height:1.3;
+}
+.ist-kapi-yazi p{
+  margin:0 0 20px;font-size:13.5px;color:var(--metin2);line-height:1.65;
+}
+.ist-kapi-dg{display:flex;gap:12px;flex-wrap:wrap;}
+/* adim listesi: mono numaralar, sinifladirma bandi hissi */
+.ist-kapi-liste{
+  list-style:none;margin:0;padding:0;
+  display:flex;flex-direction:column;gap:12px;
+}
+.ist-kapi-liste li{
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:12.5px;color:var(--metin2);line-height:1.5;
+}
+.ist-kapi-liste .ik{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  background:rgba(92,200,255,.14);color:var(--siyan2);
+  border:1px solid rgba(92,200,255,.30);
+}
+@media (max-width:900px){
+  .ist-kapi{padding:24px 20px;}
+  .ist-kapi-ic{grid-template-columns:1fr;gap:24px;}
+}
+/* acik tema karsiliklari */
+:root[data-tema="acik"] .ist-kapi{
+  background:linear-gradient(150deg,rgba(15,108,158,.07),rgba(15,108,158,.02));
+  border-color:rgba(15,108,158,.22);
+}
+:root[data-tema="acik"] .ist-kapi-yazi h3{color:var(--metin);}
+:root[data-tema="acik"] .ist-kapi-liste .ik{
+  background:rgba(15,108,158,.10);color:var(--siyan);
+  border-color:rgba(15,108,158,.26);
+}
+
+/* v2.6.0 yenilikleri kutusu */
+.yenilik-kutu{
+  margin-bottom:28px;padding:22px 24px;border-radius:var(--radius);
+  background:linear-gradient(150deg,rgba(92,200,255,.07),rgba(92,200,255,.02));
+  border:1px solid rgba(92,200,255,.22);
+}
+.yenilik-bas{
+  display:flex;align-items:center;gap:11px;margin-bottom:18px;
+}
+.yenilik-rozet{
+  font-size:9.5px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;
+  background:var(--vurgu);color:#fff;
+}
+.yenilik-bas h3{
+  margin:0;font-size:15px;font-weight:700;letter-spacing:.01em;
+}
+.yenilik-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:18px 26px;
+}
+.yenilik h4{
+  margin:0 0 6px;font-size:13px;font-weight:700;color:var(--metin);
+}
+.yenilik h4::before{
+  content:"\2022";color:var(--vurgu);font-weight:700;
+  margin-right:7px;
+}
+.yenilik p{
+  margin:0;font-size:12.5px;line-height:1.6;color:var(--metin2);
+}
+
+/* SHA-256 kutusu */
+.sha-kutu{
+  margin-top:24px;padding:18px 20px;border-radius:var(--radius);
+  background:var(--arka3);border:1px solid var(--cizgi);
+}
+.sha-kutu h4{
+  margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--metin2);
+}
+.sha-kutu table{width:100%;border-collapse:collapse;
+  font-family:var(--mono);font-size:11px;}
+.sha-kutu td{padding:5px 8px;border-bottom:1px solid var(--cizgi);
+  color:var(--soluk);}
+.sha-kutu td:first-child{color:var(--metin2);white-space:nowrap;}
+.sha-kutu td:last-child{word-break:break-all;}
+.sha-kutu tr:last-child td{border-bottom:none;}
+
+/* -----------------------------------------------------------------
+   KURULUM ADIMLARI
+   ----------------------------------------------------------------- */
+.adimlar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;counter-reset:adim;
+}
+.adim{
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:24px;position:relative;
+}
+.adim::before{
+  counter-increment:adim;content:counter(adim);
+  position:absolute;top:-1px;left:-1px;
+  width:34px;height:34px;border-radius:var(--radius) 0 var(--radius) 0;
+  display:grid;place-items:center;
+  background:var(--vurgu);color:#fff;
+  font-size:14px;font-weight:800;
+}
+.adim h3{margin:22px 0 8px;font-size:14px;font-weight:700;}
+.adim p{margin:0;font-size:13px;color:var(--metin2);}
+.adim code{
+  display:block;margin-top:10px;padding:8px 10px;
+  background:var(--arka);border:1px solid var(--cizgi);border-radius:3px;
+  font-family:var(--mono);font-size:11.5px;color:#8fdcff;
+  overflow-x:auto;
+}
+
+/* -----------------------------------------------------------------
+   GUVENLIK / SERTIFIKA
+   ----------------------------------------------------------------- */
+.guv-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:18px;
+}
+.guv{
+  display:flex;gap:14px;padding:20px;
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+}
+.guv .ik{
+  flex:0 0 34px;height:34px;border-radius:var(--radius);
+  display:grid;place-items:center;font-size:14px;
+  background:rgba(61,220,151,.12);color:var(--iyi);
+}
+.guv h4{margin:0 0 5px;font-size:13.5px;font-weight:700;}
+.guv p{margin:0;font-size:12.5px;color:var(--metin2);line-height:1.55;}
+
+/* -----------------------------------------------------------------
+   CTA
+   ----------------------------------------------------------------- */
+#cta{
+  padding:80px 0;text-align:center;position:relative;overflow:hidden;
+  border-top:1px solid var(--cizgi);
+}
+#cta::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 55% 75% at 50% 50%,
+    rgba(185,28,28,.13), transparent 68%);
+}
+#cta .ic{position:relative;z-index:2;}
+#cta h2{margin-bottom:14px;}
+#cta p{color:var(--metin2);max-width:560px;margin:0 auto 32px;}
+#cta .dgler{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+
+/* -----------------------------------------------------------------
+   ALT BILGI
+   ----------------------------------------------------------------- */
+footer{
+  padding:52px 0 34px;background:var(--arka2);
+  border-top:1px solid var(--cizgi);
+}
+.ft-ust{
+  display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;
+  gap:36px;padding-bottom:34px;border-bottom:1px solid var(--cizgi);
+}
+/* Alt bilgi: alt yazili TAM logo surumu (30 px'te okunuyor). */
+.ft-marka img{height:40px;margin-bottom:16px;display:block;}
+.ft-marka .acik{display:none;}
+:root[data-tema="acik"] .ft-marka .koyu{display:none;}
+:root[data-tema="acik"] .ft-marka .acik{display:block;}
+.ft-marka p{margin:0;font-size:12.5px;color:var(--soluk);line-height:1.7;}
+.ft-kol h5{
+  margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--metin2);
+}
+.ft-kol a, .ft-kol div{
+  display:block;font-size:12.5px;color:var(--soluk);
+  padding:4px 0;transition:color var(--gecis);
+}
+.ft-kol a:hover{color:var(--metin);}
+.ft-alt{
+  padding-top:24px;display:flex;justify-content:space-between;
+  gap:18px;flex-wrap:wrap;font-size:12px;color:var(--soluk);
+}
+.ft-alt .kunye{max-width:660px;line-height:1.7;}
+/* Site surum defteri dugmesi: URUN surumu rozetinin yaninda durur ve
+   SITENIN kendi surumunu gosterir (js/surum_verisi.js). Ikisi ayri
+   yurutulur; karistirilmamalidir. */
+.ft-defter{
+  display:inline-flex;align-items:center;gap:7px;
+  background:transparent;border:1px solid var(--cizgi2);
+  border-radius:var(--radius);padding:5px 10px;
+  color:var(--metin2);font:inherit;font-size:12px;
+  cursor:pointer;transition:color var(--gecis),border-color var(--gecis);
+}
+.ft-defter:hover{color:var(--metin);border-color:var(--mavi);}
+.ft-defter [data-surum-rozet]{
+  color:var(--mavi);font-variant-numeric:tabular-nums;
+}
+
+/* -----------------------------------------------------------------
+   DUYARLI
+   ----------------------------------------------------------------- */
+@media (max-width: 1000px){
+  .mimari{grid-template-columns:1fr;}
+  .mim-ok{flex-direction:row;padding:6px 0;}
+  .mim-ok .cizgi{
+    width:60px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--vurgu2),transparent);
+  }
+  .ft-ust{grid-template-columns:1fr 1fr;}
+  .istatistik{grid-template-columns:1fr 1fr;}
+}
+@media (max-width: 900px){
+  #anaMenu{
+    position:fixed;top:66px;left:0;right:0;
+    flex-direction:column;align-items:stretch;gap:0;
+    background:var(--arka2);border-bottom:1px solid var(--cizgi);
+    padding:8px 20px 16px;display:none;
+  }
+  #anaMenu.acik{display:flex;}
+  #anaMenu a{padding:12px 8px;border-bottom:1px solid var(--cizgi);}
+  #anaMenu .dg{margin-top:10px;justify-content:center;}
+  /* v2.12.2: nav `position:fixed` oldugu icin akistan CIKAR ve
+     `margin-left:auto` etkisiz kalir.  Oturum kabugu ile hamburgeri
+     saga itme isini artik kabuk yapar; hamburgerdeki `margin-left:auto`
+     KALDIRILDI, yoksa kabuk ile hamburger arasina tum bos alan girip
+     ikon ekranin ortasinda kaliyor. */
+  #ustCubuk .ic > .gk-kul{margin-left:auto;}
+  #anaMenu + .gk-kul{margin-left:auto;}
+  #menuAc{display:block;}
+  #hero{padding:120px 0 62px;}
+  section{padding:62px 0;}
+  .ft-ust{grid-template-columns:1fr;gap:26px;}
+}
+/* =================================================================
+   GOKTUNGU v2.5.1 -- M19 tanitim sitesi eklentileri
+   Gokkubbe Teknoloji Anonim Sirketi
+   -----------------------------------------------------------------
+   Bu dosya stil.css sonuna eklenir.  Mevcut :root degiskenleri
+   kullanilir; yeni renk tanimi yapilmaz.
+   ================================================================= */
+
+/* -----------------------------------------------------------------
+   DIL SECICI (ust cubuk)
+   ----------------------------------------------------------------- */
+.dil-sec{
+  display:inline-flex;align-items:center;
+  border:1px solid var(--cizgi2);border-radius:var(--radius);
+  overflow:hidden;flex-shrink:0;
+}
+.dil-sec button{
+  background:none;border:none;cursor:pointer;
+  padding:7px 11px;font-size:11.5px;font-weight:700;
+  letter-spacing:.1em;color:var(--soluk);
+  font-family:inherit;
+  transition:color var(--gecis), background var(--gecis);
+}
+.dil-sec button + button{border-left:1px solid var(--cizgi2);}
+.dil-sec button:hover{color:var(--metin);background:rgba(255,255,255,.05);}
+.dil-sec button.etkin{
+  color:#fff;background:var(--vurgu);
+}
+
+/* -----------------------------------------------------------------
+   HERO ROZETI -- surum ve canli durum
+   ----------------------------------------------------------------- */
+.rozet .rozet-surum{color:var(--metin);font-weight:700;}
+.rozet i.canli{background:var(--iyi);}
+.rozet .cevrim{display:none;}
+.rozet.cevrimici .cevrim{display:inline;}
+
+/* -----------------------------------------------------------------
+   GORUNUME GIRME GECISI
+   -----------------------------------------------------------------
+   sayfa.js satir ici stil yerine bu siniflari kullanir.
+   ----------------------------------------------------------------- */
+.gorunume-gir{
+  opacity:0;transform:translateY(14px);
+  transition:opacity .5s ease, transform .5s ease;
+}
+.gorunume-gir.gorundu{opacity:1;transform:none;}
+
+/* -----------------------------------------------------------------
+   SERVER-DRIVEN GOREV DAGITIMI (GZ-PROTO-251)
+   ----------------------------------------------------------------- */
+.proto-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:18px;
+}
+.proto-kart{
+  position:relative;
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:24px 22px 22px;
+  overflow:hidden;
+  transition:border-color var(--gecis), transform var(--gecis);
+}
+.proto-kart::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--vurgu2),transparent);
+}
+.proto-kart:hover{border-color:var(--cizgi2);transform:translateY(-2px);}
+.proto-kart .no{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.16em;color:var(--vurgu2);
+  display:block;margin-bottom:12px;
+}
+.proto-kart h3{margin:0 0 9px;font-size:14.5px;font-weight:700;}
+.proto-kart p{margin:0;font-size:13px;color:var(--metin2);line-height:1.62;}
+
+/* Eski/yeni karsilastirma seridi */
+.proto-kiyas{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:0;
+  align-items:stretch;margin-bottom:34px;
+  border:1px solid var(--cizgi);border-radius:var(--radius);
+  overflow:hidden;
+}
+.proto-kiyas > div{padding:20px 22px;background:var(--arka2);}
+.proto-kiyas .eski{border-right:1px solid var(--cizgi);}
+.proto-kiyas .yeni{border-left:1px solid var(--cizgi);
+  background:rgba(61,220,151,.05);}
+.proto-kiyas h4{
+  margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.proto-kiyas .eski h4{color:var(--soluk);}
+.proto-kiyas .yeni h4{color:var(--iyi);}
+.proto-kiyas ul{list-style:none;padding:0;margin:0;}
+.proto-kiyas li{
+  font-size:12.5px;color:var(--metin2);line-height:1.5;
+  padding:5px 0 5px 18px;position:relative;
+}
+.proto-kiyas .eski li::before{
+  content:"\00D7";position:absolute;left:0;top:4px;
+  color:var(--vurgu2);font-weight:700;
+}
+.proto-kiyas .yeni li::before{
+  content:"\2713";position:absolute;left:0;top:4px;
+  color:var(--iyi);font-weight:700;
+}
+.proto-kiyas .orta{
+  display:grid;place-items:center;padding:0 16px;
+  background:var(--arka3);
+}
+.proto-kiyas .orta span{
+  font-size:18px;color:var(--vurgu2);
+}
+
+/* -----------------------------------------------------------------
+   DESTEKLENEN PLATFORMLAR (M18 dron gorselleri)
+   ----------------------------------------------------------------- */
+.plat-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));
+  gap:20px;
+}
+.plat-kart{
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:border-color var(--gecis), transform var(--gecis);
+}
+.plat-kart:hover{border-color:var(--cizgi2);transform:translateY(-3px);}
+.plat-gorsel{
+  position:relative;aspect-ratio:16/10;overflow:hidden;
+  background:linear-gradient(160deg,#0a1420,#060a10);
+}
+.plat-gorsel img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .6s cubic-bezier(.2,0,.2,1);
+}
+.plat-kart:hover .plat-gorsel img{transform:scale(1.05);}
+.plat-gorsel::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 52%,rgba(4,7,12,.92));
+}
+.plat-tip{
+  position:absolute;bottom:10px;left:14px;z-index:2;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;color:var(--mavi);
+  background:rgba(4,7,12,.72);border:1px solid rgba(92,200,255,.32);
+  border-radius:3px;padding:3px 8px;
+}
+.plat-govde{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1;}
+.plat-govde h3{margin:0 0 9px;font-size:15px;font-weight:700;}
+.plat-govde p{margin:0;font-size:13px;color:var(--metin2);line-height:1.6;}
+
+/* -----------------------------------------------------------------
+   INDIRME MERKEZI -- satir ici stillerin karsiligi
+   ----------------------------------------------------------------- */
+.indir-satir .bu-plat{color:var(--iyi);font-size:10px;cursor:help;}
+/* Yesil nokta isaretinin anlamini yazan not; isaret kullanildiginda
+   kartin altinda gorunur.  Isaret onceden aciklamasizdi. */
+.ist-kart .plat-notu{
+  margin-top:4px;font-size:10.5px;line-height:1.45;
+  color:var(--soluk);
+}
+.ist-kart .plat-notu::first-letter{color:var(--iyi);}
+.sha-kutu td.sha-son{padding-top:10px;color:var(--metin2);}
+.sha-kutu td.sha-son a{color:#8fdcff;}
+.ist-not.ist-hata{
+  grid-column:1/-1;
+  background:rgba(185,28,28,.08);
+  border-color:rgba(220,38,38,.3);
+}
+.indir-tarih{margin-top:8px;font-size:11px;color:var(--soluk);}
+
+/* -----------------------------------------------------------------
+   CEREZ BILDIRIM BANDI
+   -----------------------------------------------------------------
+   Yalniz zorunlu cerez/yerel depolama kullanildigi icin ONAY degil
+   BILGILENDIRME sunulur (KVKK ve cerez mevzuati).
+   ----------------------------------------------------------------- */
+#cerezBandi{
+  position:fixed;left:0;right:0;bottom:0;z-index:200;
+  background:rgba(6,11,18,.97);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--cizgi2);
+  padding:16px 0;
+  transform:translateY(110%);
+  transition:transform .35s cubic-bezier(.2,0,.2,1);
+}
+#cerezBandi.acik{transform:none;}
+
+/* KUSUR (v2.12.3 olcumuyle yakalandi, marka gecisinden ONCE de vardi):
+   bant `position:fixed; bottom:0` oldugu icin sayfa akisindan cikar ve
+   sayfanin EN ALTINDAKI icerigi ORTER.  Alt bilgideki telif/sahiplik
+   satiri ile 20.954 px^2 ortusuyordu -- yani ilk ziyarette, bant henuz
+   kabul edilmemisken, sahiplik satiri OKUNAMIYORDU.  Marka gecisiyle
+   firma kunyesi yalnizca bu satirda kaldigi icin bu kusur artik
+   dogrudan sahiplik bildirimini gizler.
+
+   Cozum: bant acikken alt bilgiye bant yuksekligi kadar bosluk konur.
+   Yukseklik JS'ten `--cerez-yuk` ozel ozelligine yazilir; band metni
+   dile ve ekran genisligine gore 1-3 satir arasi degistigi icin sabit
+   bir deger yeterli olmaz.  Yedek deger olarak 96px kullanilir. */
+body:has(#cerezBandi.acik) .ft-alt{
+  padding-bottom:calc(var(--cerez-yuk, 96px) + 16px);
+}
+#cerezBandi .ic{
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+}
+#cerezBandi p{
+  margin:0;flex:1;min-width:260px;
+  font-size:12.5px;color:var(--metin2);line-height:1.6;
+}
+#cerezBandi .cerez-dgler{display:flex;align-items:center;gap:14px;}
+#cerezBandi a{
+  font-size:12.5px;color:#8fdcff;text-decoration:underline;
+  text-underline-offset:3px;
+}
+#cerezBandi a:hover{color:var(--metin);}
+
+/* -----------------------------------------------------------------
+   YASAL SAYFALAR (M20)
+   ----------------------------------------------------------------- */
+.yasal-sayfa{padding:128px 0 78px;}
+.yasal-sayfa .ic{max-width:880px;}
+.yasal-bas{
+  padding-bottom:26px;margin-bottom:34px;
+  border-bottom:1px solid var(--cizgi);
+}
+.yasal-bas h1{
+  font-size:clamp(1.8rem,3.4vw,2.5rem);margin-bottom:14px;max-width:none;
+}
+.yasal-bas .ust-veri{
+  display:flex;gap:22px;flex-wrap:wrap;
+  font-size:12px;color:var(--soluk);
+}
+.yasal-bas .ust-veri span strong{color:var(--metin2);font-weight:600;}
+.yasal-icerik h2{
+  font-size:1.16rem;margin:38px 0 14px;font-weight:700;
+  padding-bottom:9px;border-bottom:1px solid var(--cizgi);
+}
+.yasal-icerik h3{font-size:.98rem;margin:26px 0 10px;font-weight:700;
+  color:var(--metin);}
+.yasal-icerik p{
+  margin:0 0 14px;font-size:14px;color:var(--metin2);line-height:1.78;
+}
+.yasal-icerik ul, .yasal-icerik ol{
+  margin:0 0 16px;padding-left:22px;
+}
+.yasal-icerik li{
+  font-size:14px;color:var(--metin2);line-height:1.72;margin-bottom:7px;
+}
+.yasal-icerik strong{color:var(--metin);}
+.yasal-icerik table{
+  width:100%;border-collapse:collapse;margin:0 0 20px;
+  font-size:13px;
+}
+.yasal-icerik th, .yasal-icerik td{
+  padding:10px 12px;border:1px solid var(--cizgi);
+  text-align:left;vertical-align:top;
+}
+.yasal-icerik th{
+  background:var(--arka3);color:var(--metin);font-weight:700;
+  font-size:12px;letter-spacing:.04em;
+}
+.yasal-icerik td{color:var(--metin2);line-height:1.6;}
+.yasal-icerik a{color:#8fdcff;text-decoration:underline;
+  text-underline-offset:3px;}
+.yasal-icerik a:hover{color:var(--metin);}
+.yasal-not{
+  margin:26px 0;padding:16px 18px;border-radius:var(--radius);
+  background:rgba(92,200,255,.07);border:1px solid rgba(92,200,255,.2);
+  font-size:13px;color:var(--metin2);line-height:1.68;
+}
+.yasal-not strong{color:var(--metin);}
+.yasal-uyari{
+  margin:26px 0;padding:16px 18px;border-radius:var(--radius);
+  background:rgba(185,28,28,.08);border:1px solid rgba(220,38,38,.28);
+  font-size:13px;color:var(--metin2);line-height:1.68;
+}
+.yasal-uyari strong{color:#f0a5a5;}
+.yasal-kunye{
+  margin-top:44px;padding-top:24px;border-top:1px solid var(--cizgi);
+  font-size:12px;color:var(--soluk);line-height:1.8;
+}
+
+/* Yasal sayfa ici gezinme */
+.yasal-gezinme{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px;
+}
+.yasal-gezinme a{
+  padding:7px 14px;border-radius:var(--radius);
+  border:1px solid var(--cizgi);background:var(--arka2);
+  font-size:12px;font-weight:600;color:var(--metin2);
+  transition:all var(--gecis);
+}
+.yasal-gezinme a:hover{border-color:var(--cizgi2);color:var(--metin);}
+.yasal-gezinme a.etkin{
+  border-color:var(--vurgu2);color:#fff;background:rgba(185,28,28,.16);
+}
+
+/* -----------------------------------------------------------------
+   FIYATLANDIRMA  (#fiyat)
+   -----------------------------------------------------------------
+   Bu blok DUYARLI EKLENTILER'den ONCE durmalidir; medya sorgulari
+   dosyanin sonunda toplanmistir ve sonrasina yazilan kural onlari
+   gecersiz kilar (ozgulluk esitken son yazilan kazanir).
+   ----------------------------------------------------------------- */
+.fiy-secici{
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 26px;flex-wrap:wrap;
+}
+.fiy-sec{
+  padding:8px 20px;border-radius:var(--radius);
+  border:1px solid var(--cizgi);background:var(--arka3);
+  font-family:inherit;font-size:12.5px;font-weight:600;
+  color:var(--metin2);cursor:pointer;
+  transition:all var(--gecis);
+}
+.fiy-sec:hover{border-color:var(--cizgi2);color:var(--metin);}
+.fiy-sec.etkin{
+  /* Zemin siyan.  Yazi rengi TEMAYA GORE degisir: koyu temada siyan
+     acik bir renk oldugu icin uzerine beyaz yazi 1.88:1 ile okunmuyor
+     (WCAG en az 4.5:1 ister) -> murekkep yazi kullanilir.  Acik temada
+     siyan koyulastirildigi icin (#0f6c9e) beyaz yazi 5.74:1 verir. */
+  border-color:var(--mavi);
+  background:var(--mavi);
+  color:#04070c;
+}
+:root[data-tema="acik"] .fiy-sec.etkin{color:#fff;}
+.fiy-indirim{
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--iyi);margin-left:4px;
+}
+
+.fiy-izgara{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));
+  gap:20px;align-items:stretch;
+}
+.fiy-kart{
+  position:relative;
+  background:var(--kart);border:1px solid var(--cizgi);
+  border-radius:var(--radius);padding:26px 24px 24px;
+  display:flex;flex-direction:column;
+  transition:border-color var(--gecis), transform var(--gecis);
+}
+.fiy-kart:hover{border-color:var(--cizgi2);transform:translateY(-3px);}
+.fiy-kart.onerilen{border-color:rgba(92,200,255,.5);}
+.fiy-kart.merkez{border-color:rgba(185,28,28,.42);}
+/* Kart ustunde duran "en cok tercih edilen" etiketi.  .onerilen-et
+   temel gorunumu istemci indirme bolumunden gelir; burada yalnizca
+   konum ve kart kenariyla ortusmeyi onleyen zemin verilir. */
+.fiy-kart > .onerilen-et{
+  position:absolute;top:-9px;left:24px;
+  background:#12283d;
+}
+.fiy-ust{
+  padding-bottom:18px;margin-bottom:18px;
+  border-bottom:1px solid var(--cizgi);
+}
+.fiy-ust h3{
+  margin:0 0 14px;font-size:14px;font-weight:700;letter-spacing:.02em;
+}
+.fiy-tutar{
+  display:flex;align-items:baseline;gap:1px;margin-bottom:10px;
+}
+.fiy-para{
+  font-size:19px;font-weight:600;color:var(--metin2);
+  align-self:flex-start;margin-top:5px;
+}
+.fiy-sayi{
+  font-size:38px;font-weight:800;line-height:1;
+  letter-spacing:-.02em;color:var(--metin);
+}
+.fiy-donem{
+  font-size:12.5px;font-weight:600;color:var(--soluk);margin-left:4px;
+}
+.fiy-alt{
+  margin:0;font-size:12.5px;line-height:1.55;color:var(--metin2);
+}
+.fiy-liste{
+  list-style:none;margin:0 0 20px;padding:0;
+  display:flex;flex-direction:column;gap:9px;flex:1;
+}
+.fiy-liste li{
+  position:relative;padding-left:19px;
+  font-size:12.5px;line-height:1.5;color:var(--metin2);
+}
+.fiy-liste li::before{
+  content:"\2713";position:absolute;left:0;top:0;
+  color:var(--iyi);font-size:11px;font-weight:700;
+}
+.fiy-liste strong{color:var(--metin);}
+.fiy-paketler{
+  display:flex;flex-direction:column;gap:7px;
+  margin:0 0 18px;padding:13px 14px;
+  background:var(--arka);border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+}
+.fiy-paket{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  font-size:12px;color:var(--metin2);
+}
+.fiy-paket strong{color:var(--metin);font-weight:700;white-space:nowrap;}
+.fiy-paket strong .fiy-para{font-size:12px;margin-top:0;}
+.fiy-kart > .dg{width:100%;justify-content:center;margin-top:auto;}
+
+.fiy-not{
+  margin-top:22px;padding:18px 22px;
+  background:rgba(185,28,28,.07);
+  border:1px solid rgba(185,28,28,.3);
+  border-left-width:3px;border-radius:var(--radius);
+  font-size:13px;line-height:1.68;color:var(--metin2);
+}
+.fiy-not strong{color:var(--metin);}
+
+.fiy-talep{
+  margin-top:30px;padding:26px;
+  background:var(--arka3);border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+}
+.fiy-talep h3{margin:0 0 12px;font-size:16px;font-weight:700;}
+.fiy-talep > p{
+  margin:0 0 24px;font-size:13.5px;line-height:1.72;color:var(--metin2);
+  max-width:96ch;
+}
+.fiy-talep > p strong{color:var(--metin);}
+.fiy-adimlar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(224px,1fr));
+  gap:18px;
+}
+.fiy-adim{display:flex;gap:13px;align-items:flex-start;}
+.fiy-adim .no{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;
+  background:rgba(92,200,255,.16);
+  border:1px solid rgba(92,200,255,.36);
+  color:#8fdcff;font-size:12px;font-weight:800;
+}
+.fiy-adim h4{margin:2px 0 5px;font-size:13px;font-weight:700;}
+.fiy-adim p{margin:0;font-size:12.5px;line-height:1.56;color:var(--metin2);}
+
+.fiy-kosul{
+  margin-top:26px;padding:22px 24px;
+  background:var(--arka2);border:1px solid var(--cizgi);
+  border-radius:var(--radius);
+}
+.fiy-kosul h4{
+  margin:0 0 14px;font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--soluk);
+}
+.fiy-kosul ul{
+  list-style:none;margin:0;padding:0;
+  display:grid;
+  /* `minmax(320px,1fr)` 360px ekranda sayfayi 9px yatay kaydiriyordu:
+     kabin ic genisligi ~312px kalir, ancak 320px alt sinir izgarayi
+     320px'e zorlar.  `min(320px,100%)` alt siniri kabin genisligiyle
+     sinirlar -- genis ekranda iki kolon davranisi degismez. */
+  grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));
+  gap:11px 26px;
+}
+.fiy-kosul li{
+  position:relative;padding-left:15px;
+  font-size:12.5px;line-height:1.6;color:var(--metin2);
+}
+.fiy-kosul li::before{
+  content:"";position:absolute;left:0;top:7px;
+  width:5px;height:5px;border-radius:50%;background:var(--cizgi2);
+}
+.fiy-kosul strong{color:var(--metin);}
+
+/* -----------------------------------------------------------------
+   DUYARLI EKLENTILER
+   ----------------------------------------------------------------- */
+@media (max-width: 1000px){
+  .proto-kiyas{grid-template-columns:1fr;}
+  .proto-kiyas .eski{border-right:none;border-bottom:1px solid var(--cizgi);}
+  .proto-kiyas .yeni{border-left:none;border-top:1px solid var(--cizgi);}
+  .proto-kiyas .orta{padding:10px 0;}
+  .proto-kiyas .orta span{transform:rotate(90deg);display:block;}
+
+  /* Fiyat: dort kart yan yana sigmaz -> ikili duzen */
+  .fiy-izgara{grid-template-columns:repeat(2,1fr);}
+  .fiy-kart.onerilen{transform:none;}
+  .fiy-adimlar{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width: 760px){
+  .dil-sec{margin-left:auto;}
+  #anaMenu .dil-sec{margin-top:10px;align-self:flex-start;}
+  #cerezBandi .ic{gap:14px;}
+  #cerezBandi .cerez-dgler{width:100%;justify-content:space-between;}
+  .yasal-sayfa{padding:104px 0 62px;}
+
+  /* Fiyat: tek kolon */
+  .fiy-izgara{grid-template-columns:1fr;}
+  .fiy-adimlar{grid-template-columns:1fr;}
+  .fiy-secici{flex-wrap:wrap;}
+  .fiy-indirim{width:100%;text-align:center;margin-left:0;}
+  .fiy-sayi{font-size:34px;}
+  .fiy-talep,.fiy-not,.fiy-kosul{padding:20px;}
+}
+
+/* -----------------------------------------------------------------
+   HAREKET AZALTMA TERCIHI
+   ----------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .gorunume-gir{opacity:1;transform:none;}
+  #cerezBandi{transform:none;}
+  #cerezBandi:not(.acik){display:none;}
+}
+
+/* =================================================================
+   GUNDUZ / GECE TEMASI -- v2.8.0
+   Gokkubbe Teknoloji Anonim Sirketi
+   -----------------------------------------------------------------
+   Ortak bilesen: /js/tema.js  (data-tema-dugme sozlesmesi)
+   Koyu tema varsayilan; asagidaki blok yalniz acik temada uygulanir.
+   Yalniz bu sayfada GERCEKTEN kullanilan seciciler hedeflenir.
+   ================================================================= */
+:root[data-tema="acik"]{
+  /* v3 taktik paletinin AYDINLIK karsiligi.
+     Zemin murekkep laciverdiden kagit grisine cekilir; taktik
+     gostergeler (siyan / kehribar) okunabilirlik icin koyulastirilir,
+     cunku #5cc8ff ve #f2b24a aydinlik zeminde yeterli karsitlik
+     uretmiyor (olculdu: parlaklik > 150). */
+  --arka:       #f4f6f9;
+  --arka2:      #eaeef4;
+  --arka3:      #e0e6ee;
+  --kart:       #ffffff;
+  --cizgi:      rgba(38,70,102,.16);
+  --cizgi2:     rgba(38,70,102,.30);
+  --metin:      #16202c;
+  --metin2:     #45556a;
+  /* Baslik/sayi: aydinlik zeminde beyaz olamaz -> koyu lacivert */
+  --baslik-renk: #0e1826;
+  /* #6a7b90 idi: 3.72:1 -> WCAG alti.  4.68:1'e cekildi. */
+  --soluk:      #5a6b80;
+  --vurgu:      #b91c1c;
+  --vurgu2:     #d42020;
+  --vurgu3:     #f5dada;
+  /* taktik gostergeler: koyulastirilmis siyan / kehribar */
+  --siyan:      #0f6c9e;
+  --siyan2:     #0b5a85;
+  --siyan-d:    rgba(15,108,158,.10);
+  --kehribar:   #9a6a12;
+  --kehribar-d: rgba(154,106,18,.12);
+  --iyi:        #197f49;
+  --kotu:       #b4362f;
+  --mavi:       #0f6c9e;
+}
+
+/* ---- ust cubuk (yari saydam zemin) ---- */
+:root[data-tema="acik"] #ustCubuk{
+  background:rgba(244,246,249,.88);
+}
+:root[data-tema="acik"] #ustCubuk.kaydi{
+  background:rgba(244,246,249,.97);
+}
+
+/* ---- marka yazisi ---- */
+
+/* ---- dil secici / tema dugmesi hover ---- */
+:root[data-tema="acik"] .dil-sec button:hover{background:rgba(22,32,44,.06);}
+
+/* ---- ikincil dugme hover ---- */
+:root[data-tema="acik"] .dg-ikincil:hover{background:rgba(22,32,44,.05);}
+
+/* ---- acik zeminde okunmayan aydinlik metinler ---- */
+/* olculdu: parlaklik > 150 olan 8 sabit renk (bkz. tema notu) */
+/* kirmizi tonlar (#f0a5a5) -> koyu kirmizi */
+:root[data-tema="acik"] .indir-satir .dgi,
+:root[data-tema="acik"] .yasal-uyari strong{color:var(--vurgu);}
+/* siyan tonlar (#8fdcff) -> koyulastirilmis siyan */
+:root[data-tema="acik"] .onerilen-et,
+:root[data-tema="acik"] .adim code,
+:root[data-tema="acik"] .sha-kutu td.sha-son a,
+:root[data-tema="acik"] #cerezBandi a,
+:root[data-tema="acik"] .yasal-icerik a,
+:root[data-tema="acik"] .fiy-adim .no{color:var(--siyan);}
+
+/* ---- v3 taktik zeminleri: acik temada karsitlik icin koyulastirilir ----
+   Koyu temada rgba(92,200,255,...) sabit degerleri kullanilir; aydinlik
+   zeminde bu tonlar kayboldugu icin ayni seciciler koyu siyan ile
+   yeniden boyanir. */
+:root[data-tema="acik"] .indir-satir.onerilen{
+  background:rgba(15,108,158,.07);border-color:rgba(15,108,158,.26);
+}
+:root[data-tema="acik"] .indir-satir.onerilen:hover{
+  background:rgba(15,108,158,.11);border-color:rgba(15,108,158,.42);
+}
+:root[data-tema="acik"] .onerilen-et{
+  background:rgba(15,108,158,.12);border-color:rgba(15,108,158,.30);
+}
+:root[data-tema="acik"] .ist-not,
+:root[data-tema="acik"] .yenilik-kutu{
+  background:rgba(15,108,158,.06);border-color:rgba(15,108,158,.20);
+}
+:root[data-tema="acik"] .fiy-kart.onerilen{border-color:rgba(15,108,158,.45);}
+:root[data-tema="acik"] ::selection{
+  background:rgba(15,108,158,.22);color:#0b1620;
+}
+
+/* ---- "koyu" bolum: koyu temada koyu zemin, acik temada aydinlik ---- */
+:root[data-tema="acik"] .koyu{
+  background:var(--arka2);
+  border-color:var(--cizgi);
+}
+
+/* ---- kart golgeleri: acik temada yumusak ---- */
+:root[data-tema="acik"] .kart,
+:root[data-tema="acik"] .fiy-kart,
+:root[data-tema="acik"] .plat-kart,
+:root[data-tema="acik"] .proto-kart,
+:root[data-tema="acik"] .mim-kutu,
+:root[data-tema="acik"] .guv{
+  box-shadow:0 1px 2px rgba(22,32,44,.05), 0 2px 10px rgba(22,32,44,.04);
+}
+
+/* ---- ekran goruntusu cerceveleri ---- */
+/* `.ss-kucuk` kaldirildi (vitrine gecildi); yerine `.vs` geldi. */
+:root[data-tema="acik"] .vs,
+:root[data-tema="acik"] .plat-gorsel{
+  border-color:var(--cizgi);
+  background:var(--arka3);
+}
+/* Acik temada siyan cok soluk kaliyor: secili sekmenin zemini ve
+   ikon kutusu koyulastirilir, aksi halde secim fark edilmiyor. */
+:root[data-tema="acik"] .vs[aria-selected="true"]{
+  background:linear-gradient(90deg,rgba(15,108,158,.10),transparent 70%);
+  box-shadow:inset 3px 0 0 var(--siyan);
+}
+:root[data-tema="acik"] .vs .vs-ikon{background:rgba(15,108,158,.10);}
+:root[data-tema="acik"] .vs[aria-selected="true"] .vs-ikon{
+  background:rgba(15,108,158,.16);
+}
+:root[data-tema="acik"] .ss-cerceve{
+  box-shadow:0 18px 44px rgba(22,32,44,.14);
+}
+
+/* ---- hero dekoratif degradeler: acik temada zayiflat ---- */
+:root[data-tema="acik"] #hero::before,
+:root[data-tema="acik"] #hero::after{opacity:.30;}
+
+/* ---- alt bilgi ---- */
+:root[data-tema="acik"] footer{
+  background:var(--arka2);
+  border-top:1px solid var(--cizgi);
+}
+/* ---- cerez bandi: SABIT koyu zemin acik temada okunmaz kaliyordu ---- */
+:root[data-tema="acik"] #cerezBandi{
+  background:rgba(234,238,244,.97);
+  border-top-color:var(--cizgi2);
+}
+:root[data-tema="acik"] #cerezBandi a{color:var(--siyan);}
+:root[data-tema="acik"] #cerezBandi a:hover{color:var(--metin);}
+/* ---- tema dugmesi: tema.js gomulu CSS'i --yazi2/--sonuk yedegine
+        dusuyordu (#93a3bb); bu sayfada dogru degiskene baglanir ---- */
+:root[data-tema="acik"] .tema-dugme{
+  color:var(--metin2);
+  border-color:var(--cizgi2);
+}
+:root[data-tema="acik"] .tema-dugme:hover{color:var(--metin);}
+/* ---- menu hover: rgba(255,255,255,.05) acik temada GORUNMEZ ---- */
+:root[data-tema="acik"] #anaMenu a:not(.dg):hover{
+  background:rgba(22,32,44,.06);
+}
+
+
+
+/* ---- tema dugmesi ust cubuk yerlesimi ---- */
+#ustCubuk .tema-dugme{flex-shrink:0;margin-right:2px;}
+@media (max-width:900px){
+  #anaMenu .tema-dugme{align-self:flex-start;}
+}
+
+/* ==================================================================
+   OTURUM KATMANI (v2.10.0) -- giris / kayit / kullanici menusu
+   ------------------------------------------------------------------
+   Renkler DAIMA degiskenden okunur (`--kart`, `--metin`, ...) ki
+   gunduz/gece gecisinde ayrica kural yazmak gerekmesin.  Sabit
+   `#fff` KULLANILMAZ: acik temada gorunmez olur (AGENTS.md kusur
+   kaydi, tanitim v2.9.0).
+   ================================================================== */
+
+/* --- ust serit: kullanici dugmesi --- */
+.gk-kul{position:relative;display:inline-flex;}
+.gk-kul-dg{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:6px 12px 6px 6px;border-radius:999px;
+  background:var(--arka3);border:1px solid var(--cizgi2);
+  color:var(--metin);cursor:pointer;
+  font-family:var(--govde);font-size:13px;
+  transition:border-color var(--gecis),background var(--gecis);
+}
+.gk-kul-dg:hover{border-color:var(--siyan);background:var(--siyan-d);}
+.gk-avatar{
+  width:28px;height:28px;border-radius:50%;flex:0 0 28px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--siyan);color:var(--arka);
+  font-family:var(--baslik);font-size:12px;font-weight:700;
+  letter-spacing:.02em;
+}
+.gk-kul-ad{max-width:150px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-weight:600;}
+.gk-kul-ok{color:var(--soluk);font-size:11px;}
+
+/* v2.12.2: oturum KAPALI durumdaki konuk ikonu.
+   Ad metni tasimadigi icin dugme yalnizca avatar + ok genisligindedir;
+   boylece ust serit oturum durumundan bagimsiz sabit genislikte kalir
+   ve giris/cikis aninda menu kaymaz (olculen kusur, 2026-08-16). */
+.gk-konuk-dg{padding:6px 10px 6px 6px;}
+.gk-avatar-konuk{
+  background:transparent;border:1px solid var(--cizgi2);
+  color:var(--siyan);
+}
+.gk-konuk-dg:hover .gk-avatar-konuk{border-color:var(--siyan);}
+/* Konuk menusunde birincil eylem (Giris Yap) belirginlestirilir; ayni
+   menude iki es agirlikli eylem olursa kullanici hangisinin ana yol
+   oldugunu ayirt edemez. */
+.gk-menu-vurgu{
+  background:var(--vurgu);color:#fff;font-weight:600;
+  border-radius:calc(var(--radius) - 4px);
+}
+.gk-menu-vurgu:hover{background:var(--vurgu);color:#fff;filter:brightness(1.08);}
+
+/* --- kullanici menusu --- */
+.gk-menu{
+  position:absolute;top:calc(100% + 10px);right:0;z-index:70;
+  /* `min-width` SABIT 268px iken menu, ikona gore saga dayali
+     konumlandigi icin 390px'lik telefonda SOL kenardan tasiyordu
+     (olculen sol kenar -82px; "...abinizla giris yapin" ve
+     "...arayuzu" metinleri kirpiliyordu).  Sebep: ikon seridin
+     sagindadir, menu ondan sola dogru acilir ve 268px + yan bosluklar
+     ekrana sigmaz.  Cozum: genislik ekranla SINIRLANIR.  `min-width`
+     yerine `width` + `max-width` kullanilir, boylece kutu buyuk
+     ekranda 268px kalir, dar ekranda ekrana sigacak kadar daralir.
+     Sagdan/soldan 12px pay birakilir. */
+  width:268px;
+  max-width:calc(100vw - 24px);
+  padding:8px;
+  background:var(--kart);border:1px solid var(--cizgi2);
+  border-radius:var(--radius);
+  box-shadow:0 18px 48px rgba(0,0,0,.42);
+  display:none;
+}
+/* Cok dar ekranda (<=420px) menuyu seride SABITLE: ikona gore
+   konumlandirmak yerine seridin sag kenarina 12px payla oturt.  Boylece
+   ikon ne kadar sagda olursa olsun kutu iki yandan da tasmaz. */
+@media (max-width:420px){
+  .gk-menu{
+    position:fixed;
+    top:var(--serit-yuk, 64px);
+    right:12px;left:12px;
+    width:auto;max-width:none;
+  }
+}
+.gk-menu.acik{display:block;}
+.gk-menu-bas{
+  padding:10px 12px 12px;border-bottom:1px solid var(--cizgi);
+  margin-bottom:6px;display:flex;flex-direction:column;gap:3px;
+}
+.gk-menu-bas strong{
+  font-family:var(--baslik);font-size:14px;color:var(--baslik-renk);
+}
+.gk-menu-bas span{font-size:12px;color:var(--metin2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gk-menu-kurum{color:var(--siyan) !important;font-weight:600;}
+.gk-menu-etiketler{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.gk-rol,.gk-sure{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+  padding:3px 8px;border-radius:5px;white-space:nowrap;
+}
+.gk-rol{background:var(--siyan-d);color:var(--siyan) !important;
+  border:1px solid var(--siyan);}
+/* Kalan sure kehribar: uyari/zaman gostergesi v3 semboljisinde
+   kehribardir (siyan = dost/sistem, kehribar = iz/uyari). */
+.gk-sure{background:var(--kehribar-d);color:var(--kehribar) !important;
+  border:1px solid var(--kehribar);}
+.gk-menu-oge{
+  display:block;width:100%;text-align:left;
+  padding:10px 12px;border-radius:7px;
+  background:transparent;border:0;cursor:pointer;
+  color:var(--metin);font-family:var(--govde);font-size:13.5px;
+  text-decoration:none;transition:background var(--gecis);
+}
+.gk-menu-oge:hover{background:var(--siyan-d);color:var(--siyan);}
+.gk-menu-cikis{color:var(--kotu);border-top:1px solid var(--cizgi);
+  margin-top:6px;border-radius:0 0 7px 7px;}
+.gk-menu-cikis:hover{background:rgba(180,54,47,.10);color:var(--kotu);}
+.gk-menu-not{
+  display:block;padding:9px 12px;font-size:11.5px;line-height:1.5;
+  color:var(--soluk);font-style:italic;
+}
+
+/* --- giris / kayit katmani --- */
+#gkKatman{
+  position:fixed;inset:0;z-index:120;
+  display:none;align-items:flex-start;justify-content:center;
+  padding:48px 20px;overflow-y:auto;
+  background:rgba(2,5,9,.78);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+#gkKatman.acik{display:flex;}
+/* Katman acikken arka plan kaydirilmaz: mobilde form doldururken
+   sayfanin altta kaymasi odagi kaybettirir. */
+body.gk-kilit{overflow:hidden;}
+.gk-kart{
+  position:relative;width:100%;max-width:440px;
+  background:var(--kart);border:1px solid var(--cizgi2);
+  border-radius:14px;padding:32px 30px 26px;
+  box-shadow:0 28px 70px rgba(0,0,0,.5);
+}
+.gk-kart.gk-kayit{max-width:560px;}
+.gk-kart h2{
+  font-family:var(--baslik);font-size:22px;margin:0 0 8px;
+  color:var(--baslik-renk);letter-spacing:.01em;
+}
+.gk-alt{font-size:13px;line-height:1.6;color:var(--metin2);
+  margin:0 0 20px;}
+.gk-kapat{
+  position:absolute;top:12px;right:14px;
+  width:32px;height:32px;border-radius:8px;
+  background:transparent;border:1px solid transparent;
+  color:var(--soluk);font-size:22px;line-height:1;cursor:pointer;
+  transition:all var(--gecis);
+}
+.gk-kapat:hover{border-color:var(--cizgi2);color:var(--metin);
+  background:var(--arka3);}
+.gk-kart label{
+  display:block;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.09em;text-transform:uppercase;
+  color:var(--soluk);margin:14px 0 6px;
+}
+.gk-kart input{
+  width:100%;padding:11px 13px;
+  background:var(--arka2);border:1px solid var(--cizgi2);
+  border-radius:8px;color:var(--metin);
+  font-family:var(--govde);font-size:14px;
+  transition:border-color var(--gecis),box-shadow var(--gecis);
+}
+.gk-kart input:focus{
+  outline:none;border-color:var(--siyan);
+  box-shadow:0 0 0 3px var(--siyan-d);
+}
+.gk-kart input:invalid:not(:placeholder-shown){border-color:var(--kotu);}
+.gk-ikili{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.gk-bolum{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--siyan);
+  margin:22px 0 2px;padding-bottom:7px;
+  border-bottom:1px solid var(--cizgi);
+}
+.gk-ipucu{font-size:11.5px;color:var(--soluk);margin:8px 0 0;}
+.gk-gonder{width:100%;justify-content:center;margin-top:22px;
+  padding:12px 20px;}
+.gk-gonder.mesgul{opacity:.6;cursor:progress;}
+.gk-hata{
+  display:none;margin-top:14px;padding:11px 13px;
+  border-radius:8px;font-size:12.5px;line-height:1.5;
+  background:rgba(180,54,47,.10);border:1px solid var(--kotu);
+  color:var(--kotu);
+}
+.gk-not{margin:18px 0 0;font-size:12.5px;color:var(--metin2);
+  text-align:center;}
+.gk-not a{color:var(--siyan);text-decoration:none;font-weight:600;}
+.gk-not a:hover{text-decoration:underline;}
+.gk-tema{margin-top:18px;padding-top:14px;
+  border-top:1px solid var(--cizgi);display:flex;justify-content:center;}
+/* --- bireysel hesap kapsam listesi ---
+   Yalniz tema degiskenleri kullanilir; sabit renk yazilirsa
+   gunduz/gece dongusu bozulur.  `.yok` maddeleri kullanilamayan
+   modulleri gosterir: bireysel hesapta radar ve GCCDual veritabani
+   CHECK kisiti ile kapalidir, bu yuzden gorsel olarak da ustu cizili
+   verilir -- kullanici satin alma beklentisine girmesin. */
+.gk-kapsam{list-style:none;margin:12px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:8px;}
+.gk-kapsam li{position:relative;padding-left:22px;
+  font-size:12.5px;line-height:1.5;color:var(--metin2);}
+.gk-kapsam li::before{
+  content:"";position:absolute;left:2px;top:6px;
+  width:9px;height:9px;border-radius:2px;
+  background:var(--siyan-d);border:1px solid var(--siyan);}
+.gk-kapsam li.yok{color:var(--soluk);text-decoration:line-through;
+  text-decoration-color:var(--cizgi2);}
+.gk-kapsam li.yok::before{
+  background:transparent;border-color:var(--cizgi2);}
+
+@media (max-width:640px){
+  .gk-ikili{grid-template-columns:1fr;}
+  .gk-kart{padding:26px 20px 22px;}
+  #gkKatman{padding:24px 12px;}
+  .gk-kul-ad{max-width:88px;}
+  .gk-menu{min-width:240px;}
+}
+
+/* --- acik tema duzeltmeleri ---
+   Ortu koyu kalir (odak formda olsun) ama daha az yogun; golgeler
+   aydinlik zeminde yumusatilir, aksi halde kart "kirli" gorunur. */
+:root[data-tema="acik"] #gkKatman{background:rgba(20,32,46,.42);}
+:root[data-tema="acik"] .gk-kart{box-shadow:0 24px 54px rgba(20,32,46,.18);}
+:root[data-tema="acik"] .gk-menu{box-shadow:0 16px 40px rgba(20,32,46,.16);}
+:root[data-tema="acik"] .gk-avatar{color:#ffffff;}
+
+/* ================== UST SERIT MENU GRUPLARI ==================
+   Yedi duz madde tek satira sigmadigi icin maddeler iki acilir
+   gruba toplandi (bkz. js/menu_grup.js basindaki aciklama).
+   `.mg-dg` bilincli olarak `#anaMenu a:not(.dg)` ile ayni gorsel
+   dile sahiptir; kullanici grup basligini duz madde gibi algilar. */
+/* `hidden` niteligi HER ZAMAN kazanmali.  `.mg-kutu{display:flex}` gibi
+   sinif kurallari (0,1,0) niteligin tarayici varsayilani olan
+   `display:none` degerini eziyordu: KAPALI acilir kutular ekranda yer
+   kaplamaya devam ediyor ve mutlak konumlu olduklari icin komsu grubun
+   baglantilarini tiklanamaz kiliyordu.  Playwright olcumu yakaladi:
+   "Sistem" grubu acikken "Guvenlik" baglantisi tiklamayi engelliyordu. */
+[hidden]{display:none !important;}
+
+.mg{position:relative;display:inline-flex;}
+.mg-dg{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border:0;border-radius:var(--radius);
+  background:transparent;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:500;
+  color:var(--metin2);letter-spacing:.02em;
+  transition:color var(--gecis), background var(--gecis);
+}
+.mg-dg:hover{color:var(--metin);background:rgba(255,255,255,.05);}
+.mg.acik>.mg-dg{color:var(--metin);background:rgba(255,255,255,.05);}
+.mg-ok{transition:transform var(--gecis);flex:0 0 auto;}
+.mg.acik .mg-ok{transform:rotate(180deg);}
+.mg-kutu{
+  position:absolute;top:calc(100% + 8px);left:0;z-index:60;
+  min-width:210px;padding:8px;
+  display:flex;flex-direction:column;gap:2px;
+  background:var(--arka2);
+  border:1px solid var(--cizgi);border-radius:var(--radius);
+  box-shadow:0 18px 40px rgba(0,0,0,.45);
+}
+.mg-kutu a{white-space:nowrap;}
+:root[data-tema="acik"] .mg-dg:hover,
+:root[data-tema="acik"] .mg.acik>.mg-dg{background:rgba(14,24,38,.06);}
+:root[data-tema="acik"] .mg-kutu{box-shadow:0 18px 40px rgba(14,24,38,.14);}
+
+@media (max-width: 900px){
+  /* Kucuk ekranda ust uste iki katmanli acilir menu kullanilamaz:
+     gruplar basliklu duz liste olarak dizilir, kutular hep gorunur. */
+  .mg{display:block;}
+  .mg-dg{
+    width:100%;justify-content:space-between;
+    padding:12px 8px;font-size:11px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;
+    color:var(--soluk);cursor:default;
+  }
+  .mg-dg:hover{background:transparent;color:var(--soluk);}
+  .mg-ok{display:none;}
+  .mg-kutu{
+    position:static;min-width:0;padding:0;
+    background:transparent;border:0;box-shadow:none;
+  }
+  /* Mobilde kutular BILINCLI olarak hep gorunur; bu yuzden `hidden`
+     niteligi burada -- ve YALNIZ burada -- ezilir.  Nitelik seciciyi
+     acikca yazmak, kuralin sadece dosya sirasina degil ozgullugune
+     dayanmasini saglar: `[hidden]{display:none!important}` genel kurali
+     ile ayni agirlikta olsaydi sonra gelen kazanirdi ve kural siralamasi
+     degistiginde mobil menu sessizce bozulurdu. */
+  .mg-kutu[hidden]{display:flex !important;}
+  .mg-kutu a{padding-left:18px;}
+}
+
+/* =================================================================
+   v2.12.0 — HERO TAKTIK SAHNE
+   -----------------------------------------------------------------
+   Hero iki kolona ayrilir: solda metin, sagda canvas animasyonu
+   (js/hero_taktik.js -- donen dunya, Turkiye merkezli radar taramasi,
+   devriye ucusu yapan IHA'lar).
+
+   NEDEN grid, flex DEGIL: canvas ogesinin oz genisligi varsayilan
+   300px'tir.  Flex kolonunda bu deger `flex-shrink` ile kuculse bile
+   `min-width:auto` yuzunden kolonun 300px altina inmesini engeller ve
+   dar ekranda metin kolonu sikisir.  Grid'de `minmax(0,...)` bunu
+   kesin olarak cozer.
+   ================================================================= */
+/* v2.12.1: iki kolonlu izgara KALDIRILDI.  Sahne `.hero-serit` olarak
+   tam genislige alindi, metin blogu altina gecti.  `.hero-duzen` artik
+   yalniz metin blogunu tasiyan tek kolon. */
+/* v2.12.2: metin blogu ORTALANIR.  Sahne tam genislige yayilip metin
+   altina gectiginde sola yasli metin, ustundeki ortalanmis kure ile
+   hizasiz duruyordu (kullanici bildirimi 2026-08-16).  Ortalama
+   `.hero-yazi` uzerinde `margin-inline:auto` + `text-align:center`
+   ile yapilir; blok genisligi okunabilirlik icin sinirli tutulur,
+   yoksa cok genis ekranda satirlar asiri uzar. */
+.hero-duzen{
+  display:block;
+}
+.hero-yazi{
+  position:relative;z-index:2;min-width:0;
+  max-width:1040px;margin-inline:auto;text-align:center;
+}
+/* Dugmeler ve istatistik seridi de ortaya alinir: `.hero-dg` bir flex
+   kap oldugu icin `text-align` onu etkilemez. */
+.hero-duzen .hero-dg{justify-content:center;}
+/* Surum rozeti `.rozet` sinifini tasir ve `display:inline-flex`
+   oldugu icin ustundeki `text-align:center` ile kendiliginden
+   ortalanir; ayri bir kural GEREKMEZ.  (Once `.hero-kunye`
+   yazilmisti - boyle bir sinif yok, kural olu kalirdi.) */
+/* Genis-ekran metin sinirlari iki kolonlu duzende ZARARLI: h1 icin
+   930px, paragraf icin 680px sinirlari kolon genisliginden buyuk
+   oldugu icin etkisiz kalir, ama kolon 930px'i gecerse (cok genis
+   ekran) satir gereksiz uzar.  Kolonun kendisi olcuyu dayattigi icin
+   sinir kaldiriliyor. */
+.hero-duzen .hero-yazi h1{max-width:none;}
+.hero-duzen .hero-yazi .hero-alt{max-width:none;}
+/* Istatistik seridi sahnenin altina degil metnin altina ait: iki
+   kolonlu duzende alt bosluk gereksiz buyuk kaliyordu. */
+.hero-duzen .istatistik{margin-bottom:0;}
+.hero-duzen .hero-dg{margin-bottom:44px;}
+
+/* =================================================================
+   HERO SERIDI (v2.12.1)
+   Sahne sayfanin TAM genisligine yayilir.  `.ic` sarmalayicisi
+   DISINDA durur, boylece kure kenarlardan kirpilmaz.
+
+   Yukseklik `aspect-ratio` ile DEGIL `clamp()` ile veriliyor: tam
+   genislikte 1:1 oran 1900px gibi absurt bir yukseklik uretir ve
+   metni ekranin tamamen altina atar.  Sahne genis-alcak bir serit
+   olarak kurulur; kurenin olcegi js tarafinda min(genislik,yukseklik)
+   uzerinden hesaplandigi icin kure her zaman tam sigar.
+   ================================================================= */
+.hero-serit{
+  position:relative;
+  width:100%;
+  height:clamp(360px, 52vw, 720px);
+  margin:0 0 clamp(28px, 4vw, 52px);
+  overflow:hidden;
+}
+.hero-serit canvas{
+  display:block;width:100%;height:100%;
+  /* Zemin YOK: hero'nun izgara dokusu (#hero::after) kurenin
+     arkasindan gorunmeye devam etmeli -- kullanicinin istedigi
+     "arka planda izgara" izlenimi boyle olusuyor. */
+  background:transparent;
+  /* ETKILESIM (v2.12.1): kure fare/parmakla dondurulebilir.
+     `pan-y` KRITIK: dikey kaydirma parmakla calismaya devam eder,
+     yalniz yatay hareket tuvale gider.  `none` verilseydi kullanici
+     sahne uzerinde sayfayi kaydiramazdi. */
+  touch-action:pan-y;
+  cursor:grab;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.hero-serit canvas:active{cursor:grabbing;}
+
+/* Mevzi kunyesi: sahnenin alt kenarinda mono etiket */
+.sahne-etiket{
+  position:absolute;left:50%;bottom:10px;
+  transform:translateX(-50%);
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 13px;border-radius:100px;
+  border:1px solid var(--cizgi2);
+  background:var(--arka2);
+  font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--metin2);
+  white-space:nowrap;
+  pointer-events:none;
+}
+.sahne-etiket .se-mono{color:var(--kehribar);font-weight:500;}
+.sahne-etiket .se-ayrac{color:var(--soluk);}
+.sahne-etiket .se-nokta{
+  width:6px;height:6px;border-radius:50%;flex:none;
+  background:var(--kehribar);
+  box-shadow:0 0 8px 1px rgba(242,178,74,.55);
+  animation:nabiz 2.4s ease-in-out infinite;
+}
+
+@media (max-width: 1000px){
+  .hero-duzen .hero-dg{margin-bottom:36px;}
+}
+@media (max-width: 560px){
+  /* Dar ekranda serit fazla yer kaplamasin: metin ilk ekranda
+     gorunur kalmali. */
+  .hero-serit{height:clamp(240px, 62vw, 340px);}
+  .sahne-etiket{font-size:9.5px;letter-spacing:.1em;padding:5px 10px;}
+}
+
+/* Hareket azaltma tercihi: nabiz animasyonu durur.  Tuvalin kendisi
+   js tarafinda tek kare cizip durur (bkz. hero_taktik.js azHareket). */
+@media (prefers-reduced-motion: reduce){
+  .sahne-etiket .se-nokta{animation:none;}
+}
+
+/* --- dogrulama bilgilendirme karti --- */
+.gk-dog-ikon{display:flex;justify-content:center;color:var(--siyan);
+  margin-bottom:6px;}
+.gk-dog-adres{color:var(--siyan);font-family:var(--mono);
+  font-size:13px;word-break:break-all;}
+#gkDogrulamaKart .gk-gonder{margin-top:12px;}
+.gk-hata.acik{display:block;}
+
+/* === FAZ18-IS24-BAKIM-KIPI: SISTEM BAKIM BANDI ===
+   Kayit formlarinin basinda gorunur; yeni kayit gecici olarak
+   alinamadiginda kullaniciyi form DOLDURMADAN once uyarir.
+
+   RENK: `--kehribar` (tema sozlugunde "iz / uyari").  Sabit renk
+   YAZILMAZ -- acik/koyu tema dongusunde okunamaz hale gelirdi.
+   `--kotu` KULLANILMADI: bakim bir HATA degil, planli bir durum;
+   kirmizi band kullaniciya kendi hesabinda sorun varmis izlenimi
+   verirdi. */
+.gk-bakim{
+  margin:0 0 18px;padding:12px 14px;
+  border-radius:8px;font-size:12.5px;line-height:1.55;
+  background:var(--kehribar-d);border:1px solid var(--kehribar);
+  color:var(--kehribar);
+}
+.gk-bakim[hidden]{display:none;}
+.gk-bakim b{font-weight:700;}
+
+/* === GELIR MODELI v2 — SKU ve para birimi === */
+
+/* PARA BIRIMI SECICI
+   `.fiy-secici` ve `.fiy-sec` kurallari DEVRALINIR -- ozellikle
+   `.fiy-sec.etkin` icindeki WCAG karsitlik cozumu (koyu temada murekkep
+   yazi, acik temada beyaz). Buraya renk YAZILMAZ. */
+.fiy-para-secici{
+  margin:-14px 0 26px;
+}
+.fiy-para-not{
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--kehribar);margin-left:4px;
+  opacity:0;transition:opacity var(--gecis);
+}
+.fiy-para-not.acik{opacity:1;}
+
+/* SKU BASAMAKLARI (sirket ici lisans karti) */
+.fiy-sku{
+  display:flex;flex-direction:column;gap:1px;
+  margin:0 0 16px;
+  background:var(--cizgi);border:1px solid var(--cizgi);
+  border-radius:var(--radius);overflow:hidden;
+}
+.fiy-sku-satir{
+  display:grid;grid-template-columns:auto 1fr auto;
+  align-items:baseline;gap:10px;
+  padding:11px 14px;background:var(--arka);
+}
+.fiy-sku-satir:last-child{
+  /* Tam paket vurgulanir -- en yuksek basamak */
+  background:var(--arka3);
+}
+.fiy-sku-ad{
+  font-family:var(--mono);font-size:11.5px;font-weight:700;
+  letter-spacing:.02em;color:var(--siyan);white-space:nowrap;
+}
+.fiy-sku-not{
+  font-size:11.5px;color:var(--soluk);line-height:1.4;
+}
+.fiy-sku-tutar{
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  color:var(--metin);white-space:nowrap;
+}
+
+/* BAKIM NOTU
+   Kehribar zemin: uyari degil BILGI -- "sistem calismaya devam eder"
+   ilkesini gorunur kilar. Kirmizi (.fiy-not) kullanilmaz cunku bu bir
+   kisitlama degil, guvence. */
+.fiy-bakim{
+  margin:0 0 18px;padding:12px 14px;
+  background:rgba(242,178,74,.07);
+  border:1px solid rgba(242,178,74,.28);
+  border-left-width:3px;border-radius:var(--radius);
+  font-size:12px;line-height:1.62;color:var(--metin2);
+}
+.fiy-bakim strong{color:var(--metin);}
+
+@media (max-width:820px){
+  .fiy-para-secici{margin:-8px 0 22px;}
+  .fiy-para-not{width:100%;text-align:center;margin-left:0;}
+  .fiy-sku-satir{
+    grid-template-columns:1fr auto;
+    row-gap:3px;
+  }
+  .fiy-sku-not{grid-column:1 / -1;order:3;}
+}
+
+/* FAZ15-LOGO-OLCEK: dar ekranda 36px logo menu dugmesiyle catisiyor.
+   Ust serit yuksekligi mobilde sabit oldugu icin logo 30px'e kelepcelenir
+   -- masaustundeki 36px korunur, mobilde tasma olmaz. */
+@media (max-width: 860px){
+  .marka img{height:30px;}
+  .ft-marka img{height:34px;}
+}

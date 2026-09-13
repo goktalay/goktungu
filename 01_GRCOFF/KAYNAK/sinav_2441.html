@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!--
+  v2.4.41 TARAYICI SINAVI
+
+  Onceki surumu regex ile kaynak kodda desen ariyordu; bu, kodun VAR
+  oldugunu gosterir ama DOGRU CALISTIGINI gostermez. Bu surum GERCEK
+  modulleri yukler ve GERCEK fonksiyonlari cagirir.
+
+  Yakalanan hata siniflari:
+   1. Madde uretiminin dron tipine gore GERCEKTEN ayristigi
+   2. QuadPlane (Q_ENABLE>0) HEM servo HEM pervane maddesi almasi
+      <-- MAV_TYPE sabit kanat gorunur, multirotor kontrolu de sart
+   3. Parametre katmaninin parametre YOKKEN tamamen atlanmasi
+   4. Parametre kosullarinin dogru okundugu (=1 ekler, =0 eklemez)
+   5. RTL_ALT santimetre->metre cevrimi (ArduPilot birimi)
+   6. Rapor istatistiginin bilinen girdi ile bilinen cikti vermesi
+   7. Batarya alanlarinin indeks 6/7'de oldugu ve ESKI 6 alanli
+      noktalarin cokmedigi (geriye donuk uyum)
+   8. Saat saat cizelgenin dogru dilimledigi
+   9. Kalkis kontrol bolumunun EVET/HAYIR'i dogru bastigi
+  10. XSS: rapora giren kullanici verisinin kacislandigi
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>GÖKTUNGU v2.4.41 — Tarayıcı Sınavı</title>
+<style>
+  body { font-family: ui-monospace, monospace; background: #0d1117;
+         color: #c9d1d9; padding: 18px; font-size: 13px; line-height: 1.6; }
+  h2 { color: #58a6ff; border-bottom: 1px solid #30363d;
+       padding-bottom: 6px; margin-top: 24px; font-size: 14px; }
+  .g { color: #3fb950; } .k { color: #f85149; font-weight: 700; }
+  .b { color: #8b949e; }
+  #ozet { position: sticky; top: 0; background: #161b22; padding: 12px;
+          border: 1px solid #30363d; margin-bottom: 14px; font-size: 16px; }
+</style>
+</head>
+<body>
+<div id="ozet">Sınav başlıyor...</div>
+<div id="cikti"></div>
+
+<script src="js/i18n.js"></script>
+<script>
+// kalkis_kontrol.js'in ihtiyac duydugu asgari kabuk.
+// Gercek modul degistirilmez; yalnizca cagirdigi DOM/popup
+// yardimcilarinin yerine esdeger bos karsiliklar konur.
+var sonVeri = {};
+var ws = null;
+function dkPopupTekil(){ return null; }
+function dkMiniPopupBaslikKur(){}
+function dkMiniPopupKonumla(){}
+function dkPopupOneGetirKur(){}
+function dkAracTipiBilgi(d){
+  const m = {1:"Sabit Kanat", 2:"Quadrotor", 4:"Helikopter",
+             13:"Hexarotor", 20:"VTOL"};
+  return { ad: m[Number(d && d.arac_tipi)] || "Bilinmiyor" };
+}
+var _paramOnbellek = {};
+function dronAyarOnbellek(){ return _paramOnbellek; }
+function uyariToastGoster(){}
+</script>
+<script src="js/kalkis_kontrol.js"></script>
+<script src="js/ucus_rapor.js"></script>
+
+<script>
+let gecti = 0, kalan = 0;
+const cikti = document.getElementById("cikti");
+function bolum(ad){
+  const h = document.createElement("h2");
+  h.textContent = ad;
+  cikti.appendChild(h);
+}
+function den(ad, kosul, ek){
+  const d = document.createElement("div");
+  if (kosul){ gecti++; d.innerHTML = '<span class="g">[GECTI]</span> ' + ad; }
+  else { kalan++;
+    d.innerHTML = '<span class="k">[KALDI]</span> ' + ad +
+      (ek ? ' <span class="b">→ ' + ek + '</span>' : ''); }
+  cikti.appendChild(d);
+}
+const anh = (M) => M.map(m => m.anahtar);
+
+// ==========================================================
+bolum("1. Modül yüklenmesi — gerçek fonksiyonlar erişilebilir");
+den("kkMaddeleriUret yüklendi",
+    typeof kkMaddeleriUret === "function");
+den("kalkisKontrolAc yüklendi",
+    typeof window.kalkisKontrolAc === "function");
+den("kalkisKontrolSonucIsle yüklendi",
+    typeof window.kalkisKontrolSonucIsle === "function");
+den("ucusRaporAc yüklendi",
+    typeof window.ucusRaporAc === "function");
+
+// ==========================================================
+bolum("2. Dron tipine göre madde ayrışması (gerçek çağrı)");
+
+const multi = kkMaddeleriUret(2, null);      // Quadrotor
+const multiA = anh(multi);
+den("multirotor: pervane yönü maddesi VAR",
+    multiA.includes("pervane_yon"));
+den("multirotor: motor dönüş yönü maddesi VAR",
+    multiA.includes("motor_yon"));
+den("multirotor: servo maddesi YOK (sabit kanada özel)",
+    !multiA.includes("servo_kontrol"), multiA.join(","));
+den("multirotor: pitot maddesi YOK",
+    !multiA.includes("pitot"));
+
+const kanat = kkMaddeleriUret(1, null);      // Fixed wing
+const kanatA = anh(kanat);
+den("sabit kanat: servo kontrol maddesi VAR",
+    kanatA.includes("servo_kontrol"));
+den("sabit kanat: kumanda yüzeyi maddesi VAR",
+    kanatA.includes("yuzey_yon"));
+den("sabit kanat: pitot maddesi VAR",
+    kanatA.includes("pitot"));
+den("sabit kanat: kanat pimi maddesi VAR",
+    kanatA.includes("kanat_pim"));
+den("sabit kanat: pervane yönü maddesi YOK (multirotora özel)",
+    !kanatA.includes("pervane_yon"), kanatA.join(","));
+
+const heli = kkMaddeleriUret(4, null);       // Helicopter
+const heliA = anh(heli);
+den("helikopter: rotor kontrol maddesi VAR",
+    heliA.includes("rotor_kontrol"));
+den("helikopter: swashplate maddesi VAR",
+    heliA.includes("swashplate"));
+den("helikopter: pervane yönü maddesi YOK",
+    !heliA.includes("pervane_yon"));
+den("helikopter: servo maddesi YOK",
+    !heliA.includes("servo_kontrol"));
+
+const vtol = kkMaddeleriUret(20, null);      // VTOL
+const vtolA = anh(vtol);
+den("VTOL: pervane maddesi VAR (multirotor katmanı)",
+    vtolA.includes("pervane_yon"));
+den("VTOL: servo maddesi VAR (sabit kanat katmanı)",
+    vtolA.includes("servo_kontrol"));
+den("VTOL: geçiş (transition) teyidi maddesi VAR",
+    vtolA.includes("gecis_teyit"));
+
+// En sinsi durum: MAV_TYPE sabit kanat, gerçekte QuadPlane
+const qp = anh(kkMaddeleriUret(1, {Q_ENABLE: 1}));
+den("QuadPlane (Q_ENABLE=1): servo maddesi VAR",
+    qp.includes("servo_kontrol"));
+den("QuadPlane: pervane maddesi DE VAR  ← MAV_TYPE sabit kanat olsa bile",
+    qp.includes("pervane_yon"));
+den("QuadPlane: geçiş teyidi maddesi VAR",
+    qp.includes("gecis_teyit"));
+den("Q_ENABLE=0 ise pervane maddesi YOK",
+    !anh(kkMaddeleriUret(1, {Q_ENABLE: 0})).includes("pervane_yon"));
+
+for (const [ad, L] of [["multirotor", multiA], ["sabit kanat", kanatA],
+                       ["helikopter", heliA], ["VTOL", vtolA]]) {
+  den(ad + ": ortak maddeler (batarya/alan/rc/izin) tam",
+      L.includes("batarya_bagli") && L.includes("alan_temiz") &&
+      L.includes("rc_menzil") && L.includes("ucus_izni"));
+}
+
+// ==========================================================
+bolum("3. Parametre katmanı — uydurma madde üretilmiyor");
+
+den("parametre YOKKEN parametre maddesi ÜRETİLMİYOR",
+    multi.filter(m => m.kaynak === "param").length === 0,
+    "param maddesi=" + multi.filter(m => m.kaynak === "param").length);
+
+const pset = kkMaddeleriUret(2, {
+  CHUTE_ENABLED: 1, SPRAY_ENABLE: 1, FENCE_ENABLE: 1, RTL_ALT: 3000});
+const psetA = anh(pset);
+den("CHUTE_ENABLED=1 → paraşüt maddesi eklendi",
+    psetA.includes("parasut"));
+den("SPRAY_ENABLE=1 → ilaçlama maddesi eklendi",
+    psetA.includes("ilaclama"));
+den("FENCE_ENABLE=1 → geofence maddesi eklendi",
+    psetA.includes("geofence"));
+den("RTL_ALT>0 → RTL irtifa maddesi eklendi",
+    psetA.includes("rtl_irtifa"));
+
+const kapali = anh(kkMaddeleriUret(2, {
+  CHUTE_ENABLED: 0, SPRAY_ENABLE: 0, FENCE_ENABLE: 0, RTL_ALT: 0}));
+den("CHUTE_ENABLED=0 → paraşüt maddesi YOK", !kapali.includes("parasut"));
+den("SPRAY_ENABLE=0 → ilaçlama maddesi YOK", !kapali.includes("ilaclama"));
+den("FENCE_ENABLE=0 → geofence maddesi YOK", !kapali.includes("geofence"));
+den("RTL_ALT=0 → RTL maddesi YOK", !kapali.includes("rtl_irtifa"));
+
+const rtlM = pset.find(m => m.anahtar === "rtl_irtifa");
+den("RTL_ALT=3000 cm → notta '30 m' yazıyor  ← birim çevrimi",
+    !!(rtlM && /\b30 m\b/.test(rtlM.not || "")),
+    rtlM ? rtlM.not : "madde yok");
+den("parametre {deger:x} biçimi de okunuyor",
+    anh(kkMaddeleriUret(2, {CHUTE_ENABLED: {deger: 1}}))
+      .includes("parasut"));
+
+const hepsi = pset.concat(vtol, heli, kanat);
+den("her maddenin soru metni dolu",
+    hepsi.every(m => m.soru && m.soru.length > 5));
+den("her madde zorunlu (hepsi EVET olmadan takeoff yok)",
+    hepsi.every(m => m.zorunlu === true));
+den("madde anahtarları tekil (tekrar yok)",
+    new Set(psetA).size === psetA.length);
+
+// ==========================================================
+bolum("4. Rapor istatistiği — bilinen girdi, bilinen çıktı");
+// Nokta: [t_rel(sn), lat, lon, irtifa, hiz, yaw, bat_yuzde, bat_volt]
+// DIKKAT: ilk alan ucus baslangicina GORELI saniyedir (ucus_iz_oku
+// boyle donduruyor), mutlak zaman damgasi DEGIL.
+const t0 = 1770000000;
+const ucusTest = {
+  baslangic: t0, bitis: t0 + 600,
+  noktalar: [
+    [  0, 39.90, 32.85,   0,  0,   0, 100, 25.2],
+    [120, 39.91, 32.85,  50, 12,  90,  88, 24.6],
+    [240, 39.92, 32.85, 120, 18,  90,  72, 24.0],
+    [480, 39.92, 32.86,  80, 15, 180,  55, 23.4],
+    [600, 39.92, 32.86,   0,  0, 180,  48, 23.1],
+  ],
+};
+const ist = (typeof window.urIstatistikTest === "function")
+  ? window.urIstatistikTest(ucusTest) : null;
+den("urIstatistik test kancası mevcut", !!ist);
+if (ist) {
+  den("max irtifa = 120 m", Math.abs(ist.maxIrt - 120) < 0.01,
+      "ölçülen=" + ist.maxIrt);
+  den("max hız = 18 m/s", Math.abs(ist.maxHiz - 18) < 0.01,
+      "ölçülen=" + ist.maxHiz);
+  den("süre = 600 sn", Math.abs(ist.sureSn - 600) < 1,
+      "ölçülen=" + ist.sureSn);
+  den("mesafe 3.0–3.2 km arası (haversine doğruluğu)",
+      ist.mesafeM > 3000 && ist.mesafeM < 3200,
+      "ölçülen=" + Math.round(ist.mesafeM) + " m");
+  den("batarya kalkış %100", ist.batBas === 100, "ölçülen=" + ist.batBas);
+  den("batarya iniş %48", ist.batSon === 48, "ölçülen=" + ist.batSon);
+  den("en düşük batarya %48", ist.batMin === 48, "ölçülen=" + ist.batMin);
+  den("voltaj kalkış 25.2 V",
+      Math.abs((ist.voltBas || 0) - 25.2) < 0.05, "ölçülen=" + ist.voltBas);
+
+  // Geriye donuk uyum: ESKI 6 alanli noktalar
+  const eski = {
+    baslangic: t0, bitis: t0 + 60,
+    noktalar: [[0, 39.90, 32.85, 0, 0, 0],
+               [60, 39.91, 32.85, 40, 10, 90]],
+  };
+  let eskiIst = null, eskiOk = true;
+  try { eskiIst = window.urIstatistikTest(eski); }
+  catch (e) { eskiOk = false; }
+  den("ESKİ 6 alanlı nokta biçimi çökmüyor (geriye dönük uyum)", eskiOk);
+  den("eski biçimde batarya null (uydurma değer yok)",
+      !!eskiIst && eskiIst.batBas === null,
+      eskiIst ? String(eskiIst.batBas) : "-");
+  den("eski biçimde irtifa doğru okunuyor",
+      !!eskiIst && Math.abs(eskiIst.maxIrt - 40) < 0.01);
+}
+
+// ==========================================================
+bolum("5. Saat saat çizelge");
+if (typeof window.urZamanCizelgeTest === "function") {
+  const uzun = { baslangic: t0, bitis: t0 + 7800, noktalar: [] };
+  for (let i = 0; i <= 7800; i += 60) {
+    uzun.noktalar.push([i, 39.90 + i / 200000, 32.85,
+                        50, 10, 90, 100 - i / 100, 25 - i / 4000]);
+  }
+  const dilimler = window.urZamanCizelgeTest(uzun);
+  den("2sa10dk uçuş → 3 saat dilimi",
+      dilimler.length === 3, "dilim=" + dilimler.length);
+  den("dilimlerde irtifa özeti var",
+      dilimler.length > 0 && dilimler[0].maxIrt !== undefined);
+  den("dilimlerde batarya özeti var",
+      dilimler.length > 0 && dilimler[0].batSon !== undefined);
+  const kisa = { baslangic: t0, bitis: t0 + 40,
+    noktalar: [[0, 39.9, 32.85, 0, 0, 0, 100, 25],
+               [40, 39.9, 32.85, 10, 3, 0, 99, 24.9]] };
+  den("40 saniyelik uçuş tek dilim (çökmüyor)",
+      window.urZamanCizelgeTest(kisa).length === 1);
+  let bosOk = true;
+  try { window.urZamanCizelgeTest({baslangic:t0, bitis:t0, noktalar:[]}); }
+  catch (e) { bosOk = false; }
+  den("boş nokta listesi çökmüyor", bosOk);
+} else {
+  den("urZamanCizelge test kancası mevcut", false);
+}
+
+// ==========================================================
+bolum("6. Kalkış kontrol listesi bölümü (rapor içinde)");
+if (typeof window.urKalkisBolumTest === "function") {
+  const t = D();
+  const h = window.urKalkisBolumTest([{
+    ts: t0 + 5, pilot_ad: "Test Pilot", sonuc: "onay",
+    maddeler: [
+      {sira: 0, soru: "Pervane yonu?", grup: "arac", cevap: 1},
+      {sira: 1, soru: "Alan temiz?", grup: "genel", cevap: 1},
+      {sira: 2, soru: "Cevaplanmadi?", grup: "genel", cevap: null},
+    ],
+  }], t);
+  den("pilot adı basılıyor", h.includes("Test Pilot"));
+  den("soru metni basılıyor", h.includes("Pervane yonu?"));
+  den("EVET basılıyor", /EVET|YES/.test(h));
+  den("ONAYLANDI durumu basılıyor", /ONAYLANDI|APPROVED/.test(h));
+  den("cevaplanmamış madde '--' olarak basılıyor", h.includes("--"));
+
+  const hy = window.urKalkisBolumTest([{
+    ts: t0, pilot_ad: "P", sonuc: "iptal",
+    maddeler: [{sira: 0, soru: "S", grup: "genel", cevap: 0}],
+  }], t);
+  den("HAYIR cevabı raporda görünüyor", /HAYIR|NO/.test(hy));
+  den("TAMAMLANMADI durumu görünüyor",
+      /TAMAMLANMADI|NOT COMPLETED/.test(hy));
+  den("kalkış kaydı YOKKEN bölüm boş (rapor yine üretilir)",
+      window.urKalkisBolumTest([], t) === "");
+
+  const xss = window.urKalkisBolumTest([{
+    ts: t0, pilot_ad: "<img src=x onerror=alert(1)>", sonuc: "onay",
+    maddeler: [{sira: 0, soru: "<b>kalin</b>", grup: "genel", cevap: 1}],
+  }], t);
+  den("XSS: pilot adındaki HTML kaçışlandı  ← enjeksiyon koruması",
+      !xss.includes("<img src=x") && xss.includes("&lt;img"));
+  den("XSS: soru metnindeki HTML kaçışlandı",
+      !xss.includes("<b>kalin</b>") && xss.includes("&lt;b&gt;"));
+} else {
+  den("urKalkisBolum test kancası mevcut", false);
+}
+
+// ==========================================================
+const o = document.getElementById("ozet");
+const T = gecti + kalan;
+o.innerHTML = "<b>SONUÇ:</b> <span class='g'>" + gecti + " GEÇTİ</span> / " +
+  "<span class='" + (kalan ? "k" : "g") + "'>" + kalan + " KALDI</span>" +
+  " — toplam " + T + (kalan === 0 ? " <span class='g'>✓ TAMAMI GEÇTİ</span>" : "");
+document.title = "SINAV " + gecti + "/" + T;
+window.SINAV_SONUC = {gecti: gecti, kalan: kalan, toplam: T};
+</script>
+</body>
+</html>

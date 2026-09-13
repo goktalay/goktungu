@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<!--
+  v2.4.38 SINAVI: hiz (dron ayarlari) panelinin onbellek davranisi.
+
+  Olculen sey:
+   1) `let` ile tanimli global degiskenin window uzerinde GORUNUP
+      gorunmedigi (klasik script semantigi) - kodun 2. yolu buna bagli
+   2) Panel acilirken AG ISTEGI yapiliyor mu (param_ara YOK, olsa olsa
+      param_tumu+taze:false)
+   3) Onbellek varsa HIC istek gonderilmedigi
+   4) Onbellek yoksa alanlarin BOS geldigi ve UYGULA'da hicbir sey
+      gonderilmedigi
+   5) Parametre yazildiktan sonra panelin YENI degeri gostermesi
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>v2.4.38 - Hiz Paneli Sinavi</title>
+<link rel="stylesheet" href="css/stil.css">
+<style>
+  body { background:#0d1117; color:#c9d1d9; font-family:Consolas,monospace;
+         font-size:13px; padding:16px; }
+  .g { color:#3fb950; } .k { color:#f85149; } .b { color:#8b949e; }
+  h2 { color:#58a6ff; font-size:14px; margin:16px 0 6px; }
+  pre { background:#161b22; padding:8px; border-radius:4px;
+        white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1 style="font-size:15px">v2.4.38 &mdash; Hiz Paneli Onbellek Sinavi</h1>
+<pre id="cikti">calisiyor...</pre>
+
+<!-- Gercek kaynak dosyalar: taklit degil, uretim kodu olculur -->
+<script src="js/i18n.js?sinav=2438"></script>
+<script>
+// --- dronlar.js'in ihtiyac duydugu asgari cevre ---
+window.sonVeri = {};
+window.gonderilenMesajlar = [];
+window.ws = {
+  readyState: 1,
+  send: function (s) { window.gonderilenMesajlar.push(JSON.parse(s)); }
+};
+window.konsolKayitlari = [];
+window.konsolYaz = function (etiket, mesaj, seviye) {
+  window.konsolKayitlari.push({ etiket: etiket, mesaj: mesaj,
+                                seviye: seviye });
+};
+window.onayIste = function (m, cb) { cb(); };
+window.onayMetni = function () { return ""; };
+</script>
+<script src="js/dronlar.js?sinav=2438"></script>
+<script>
+const sonuclar = [];
+function dnt(ad, kosul, detay) {
+  sonuclar.push({ ad: ad, ok: !!kosul, detay: detay || "" });
+}
+function popup() {
+  return document.querySelector(".dk-mini-popup");
+}
+function kapat() {
+  const p = popup();
+  if (p) p.remove();
+}
+function satirlar() {
+  const p = popup();
+  return p ? p.querySelectorAll(".dk-mp-satir") : [];
+}
+function sliderlar() {
+  const p = popup();
+  return p ? p.querySelectorAll("input[type=range]") : [];
+}
+function uygulaBas() {
+  const p = popup();
+  const b = p ? p.querySelector(".dk-mp-gonder") : null;
+  if (b) b.click();
+}
+
+// =============================================================
+// 1) `let` global degiskeni window'da GORUNUYOR MU?
+//    dronAyarPopupAc'in 2. yolu `window._paramTumSet` okuyor.
+// =============================================================
+dnt("dronAyarPopupAc tanimli", typeof dronAyarPopupAc === "function");
+dnt("dronAyarUiDegerler tanimli", typeof dronAyarUiDegerler === "function");
+dnt("dronAyarOnbellekGuncelle tanimli",
+    typeof dronAyarOnbellekGuncelle === "function");
+
+const letWindowdaGorunuyor = (typeof window._paramPopupSysid !== "undefined");
+dnt("KRITIK: `let` global window'da gorunuyor mu (2. yol buna bagli)",
+    true,  // bilgi amacli - sonucu asagida raporlanir
+    letWindowdaGorunuyor ? "GORUNUYOR -> window._paramTumSet yolu CALISIR"
+      : "GORUNMUYOR -> window._paramTumSet yolu ETKISIZ (3. yol devreye girer)");
+
+// =============================================================
+// 2) ONBELLEK YOK: panel bos acilmali, param_ara GONDERILMEMELI
+// =============================================================
+window.dronAyarParamOnbellek = {};
+window.gonderilenMesajlar = [];
+dronAyarPopupAc({ x: 50, y: 50 }, 7);
+
+const m1 = window.gonderilenMesajlar;
+dnt("param_ara GONDERILMEDI (v2.4.37'de 2 adet gonderiliyordu)",
+    !m1.some(m => m.tip === "param_ara"),
+    JSON.stringify(m1.map(m => m.tip)));
+dnt("yalnizca param_tumu + taze:false gonderildi",
+    m1.length === 1 && m1[0].tip === "param_tumu" && m1[0].taze === false,
+    JSON.stringify(m1));
+
+// Sunucudan BOS onbellek yaniti geldigini taklit et
+dronAyarParamGeldi(7, {});
+// Zamanlayici yolunu beklemeden panelin acildigini gormek icin
+// dogrudan bos yanit gonderdik; panel hemen acilmali.
+const sr = satirlar();
+dnt("panel acildi (4 alan)", sliderlar().length === 4,
+    sliderlar().length + " slider");
+
+let bosSayisi = 0;
+sr.forEach(s => { if (s.classList.contains("dk-mp-bos")) bosSayisi++; });
+dnt("onbellek bos -> TUM alanlar bos isaretli", bosSayisi === 4,
+    bosSayisi + "/4");
+
+const degerYazilari = [];
+if (popup())
+  popup().querySelectorAll(".dk-mp-deger")
+    .forEach(d => degerYazilari.push(d.textContent.trim()));
+dnt("bos alanlar uydurma deger DEGIL, '\u2014' gosteriyor",
+    degerYazilari.every(y => y === "\u2014"),
+    JSON.stringify(degerYazilari));
+
+// UYGULA: hicbir sey gonderilmemeli
+window.gonderilenMesajlar = [];
+window.konsolKayitlari = [];
+uygulaBas();
+dnt("dokunulmamis panelde UYGULA hicbir parametre GONDERMEDI",
+    window.gonderilenMesajlar.length === 0,
+    JSON.stringify(window.gonderilenMesajlar));
+dnt("kullaniciya 'deger girilmedi' bildirimi verildi",
+    window.konsolKayitlari.length === 1,
+    JSON.stringify(window.konsolKayitlari));
+kapat();
+
+// =============================================================
+// 3) ONBELLEK VAR: HIC ag istegi olmamali, gercek degerler gelmeli
+// =============================================================
+window.dronAyarParamOnbellek = {
+  7: { WPNAV_SPEED: 850, WPNAV_SPEED_UP: 250, WPNAV_SPEED_DN: 150,
+       RTL_ALT: 3000 }
+};
+window.gonderilenMesajlar = [];
+dronAyarPopupAc({ x: 50, y: 50 }, 7);
+
+dnt("onbellek varken HICBIR ag istegi yok",
+    window.gonderilenMesajlar.length === 0,
+    JSON.stringify(window.gonderilenMesajlar));
+dnt("panel ANINDA acildi (zamanlayici beklemedi)",
+    sliderlar().length === 4, sliderlar().length + " slider");
+
+const sl = sliderlar();
+dnt("hareket hizi 850 cm/s -> 8.5 m/s",
+    Math.abs(parseFloat(sl[2].value) - 8.5) < 1e-6, sl[2].value);
+dnt("yukselme hizi 250 cm/s -> 2.5 m/s",
+    Math.abs(parseFloat(sl[0].value) - 2.5) < 1e-6, sl[0].value);
+dnt("alcalma hizi 150 cm/s -> 1.5 m/s",
+    Math.abs(parseFloat(sl[1].value) - 1.5) < 1e-6, sl[1].value);
+dnt("RTL 3000 cm -> 30 m",
+    Math.abs(parseFloat(sl[3].value) - 30) < 1e-6, sl[3].value);
+
+let bos2 = 0;
+satirlar().forEach(s => { if (s.classList.contains("dk-mp-bos")) bos2++; });
+dnt("onbellekten gelen alanlar bos DEGIL", bos2 === 0, bos2 + " bos");
+
+// km/h karsiligi gosteriliyor mu
+const dz = [];
+popup().querySelectorAll(".dk-mp-deger").forEach(d => dz.push(d.textContent));
+dnt("m/s alanlari km/h karsiligini da gosteriyor",
+    dz[2].indexOf("km/h") > -1, dz[2]);
+
+// UYGULA: dokunulmasa bile onbellekten gelen degerler gonderilir
+window.gonderilenMesajlar = [];
+uygulaBas();
+const g = window.gonderilenMesajlar;
+dnt("onbellekli panelde UYGULA 4 parametre gonderdi", g.length === 4,
+    JSON.stringify(g.map(x => x.ad)));
+dnt("gonderilen komut tipi dron_komut/param",
+    g.every(x => x.tip === "dron_komut" && x.aksiyon === "param"),
+    JSON.stringify(g.map(x => x.tip + "/" + x.aksiyon)));
+kapat();
+
+// =============================================================
+// 4) KISMI onbellek: yalnizca bilinen alan gonderilir
+// =============================================================
+window.dronAyarParamOnbellek = { 7: { WPNAV_SPEED: 600 } };
+dronAyarPopupAc({ x: 50, y: 50 }, 7);
+let bos3 = 0;
+satirlar().forEach(s => { if (s.classList.contains("dk-mp-bos")) bos3++; });
+dnt("kismi onbellekte yalniz 1 alan dolu, 3 alan bos", bos3 === 3,
+    bos3 + " bos");
+window.gonderilenMesajlar = [];
+uygulaBas();
+dnt("kismi onbellekte UYGULA yalniz 1 parametre gonderdi",
+    window.gonderilenMesajlar.length === 1,
+    JSON.stringify(window.gonderilenMesajlar));
+dnt("gonderilen alan hareket_hizi (=6 m/s)",
+    window.gonderilenMesajlar[0] &&
+    window.gonderilenMesajlar[0].ad === "hareket_hizi" &&
+    Math.abs(window.gonderilenMesajlar[0].deger - 6) < 1e-6,
+    JSON.stringify(window.gonderilenMesajlar[0]));
+kapat();
+
+// =============================================================
+// 5) BOS alan kullanici tarafindan oynatilirsa gonderilir
+// =============================================================
+window.dronAyarParamOnbellek = { 7: {} };
+dronAyarPopupAc({ x: 50, y: 50 }, 7);
+const sl5 = sliderlar();
+sl5[0].value = "4";
+sl5[0].dispatchEvent(new Event("input"));
+window.gonderilenMesajlar = [];
+uygulaBas();
+dnt("kullanici oynattigi bos alan artik GONDERILIYOR",
+    window.gonderilenMesajlar.length === 1 &&
+    window.gonderilenMesajlar[0].ad === "yukselme_hizi",
+    JSON.stringify(window.gonderilenMesajlar));
+kapat();
+
+// =============================================================
+// 6) Parametre yazildiktan sonra panel YENI degeri gosterir
+//    (kullanicinin bildirdigi "kaydetmiyor" izleniminin kaynagi)
+// =============================================================
+window.dronAyarParamOnbellek = { 7: { WPNAV_SPEED: 500 } };
+window.konsolKayitlari = [];
+// sunucudan param_yazildi yaniti: 12 m/s = 1200 cm/s
+dkParamYazildi(7, "WPNAV_SPEED", 1200, true);
+dnt("basarili yazma kullaniciya bildirildi",
+    window.konsolKayitlari.length === 1 &&
+    window.konsolKayitlari[0].seviye === "basari",
+    JSON.stringify(window.konsolKayitlari));
+dnt("onbellek yeni degere guncellendi",
+    window.dronAyarParamOnbellek[7].WPNAV_SPEED === 1200,
+    String(window.dronAyarParamOnbellek[7].WPNAV_SPEED));
+
+dronAyarPopupAc({ x: 50, y: 50 }, 7);
+const sl6 = sliderlar();
+dnt("panel yeniden acildiginda YENI deger goruluyor (12 m/s)",
+    Math.abs(parseFloat(sl6[2].value) - 12) < 1e-6, sl6[2].value);
+kapat();
+
+// Basarisiz yazma bildirimi
+window.konsolKayitlari = [];
+window.dronAyarParamOnbellek = { 7: { WPNAV_SPEED: 1200 } };
+dkParamYazildi(7, "WPNAV_SPEED", 1500, false);
+dnt("basarisiz yazma HATA olarak bildirildi",
+    window.konsolKayitlari.length === 1 &&
+    window.konsolKayitlari[0].seviye === "hata",
+    JSON.stringify(window.konsolKayitlari));
+dnt("basarisiz yazmada onbellek DEGISMEDI (yanlis deger gosterilmez)",
+    window.dronAyarParamOnbellek[7].WPNAV_SPEED === 1200,
+    String(window.dronAyarParamOnbellek[7].WPNAV_SPEED));
+
+// =============================================================
+// 7) Sunucudan gelen onbellek yaniti paneli besliyor mu
+// =============================================================
+window.dronAyarParamOnbellek = {};
+window.gonderilenMesajlar = [];
+dronAyarPopupAc({ x: 50, y: 50 }, 9);
+dronAyarParamGeldi(9, { WPNAV_SPEED: 700, RTL_ALT: 2000 });
+const sl7 = sliderlar();
+dnt("sunucu onbellek yaniti paneli acti", sl7.length === 4,
+    sl7.length + " slider");
+dnt("yanittaki hareket hizi uygulandi (7 m/s)",
+    Math.abs(parseFloat(sl7[2].value) - 7) < 1e-6, sl7[2].value);
+dnt("yanitta OLMAYAN alan bos kaldi",
+    satirlar()[0].classList.contains("dk-mp-bos"), "yukselme_hizi");
+kapat();
+
+// =============================================================
+// RAPOR
+// =============================================================
+const gecti = sonuclar.filter(s => s.ok).length;
+const kaldi = sonuclar.length - gecti;
+let ck = "";
+for (const s of sonuclar) {
+  ck += (s.ok ? "[GECTI ] " : "[KALDI ] ") + s.ad
+     + (s.detay ? "  -> " + s.detay : "") + "\n";
+}
+ck += "\n" + "=".repeat(58) + "\n";
+ck += "SONUC: " + gecti + " gecti, " + kaldi + " kaldi\n";
+ck += "let-window gorunurlugu: "
+   + (letWindowdaGorunuyor ? "GORUNUYOR" : "GORUNMUYOR") + "\n";
+ck += "=".repeat(58);
+document.getElementById("cikti").textContent = ck;
+document.title = "SINAV: " + gecti + " gecti / " + kaldi + " kaldi";
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+// GOKTUNGU DJI Koprusu -- kok Gradle yapilandirmasi
+//
+// AGP surumu MSDK v5.18.0 ile uyumlu secildi.  Topluluk kayitlarinda en
+// sik gorulen kusur JDK/Gradle/AGP uyusmazligidir; bu ucluyu birlikte
+// degistirmek gerekir (bkz. BULGU_msdk_v5.md).
+
+buildscript {
+    ext {
+        agp_surum = '8.5.2'
+        // MSDK 5.18.0 Kotlin 2.1.0 ile derlenmis; daha dusuk surum
+        // "incompatible version of Kotlin ... metadata is 2.1.0"
+        // hatasi verir.  OLCULDU: 1.9.24 basarisiz, 2.1.0 gerekli.
+        kotlin_surum = '2.1.0'
+        // DJI MSDK surumu tek yerde tanimli; yukseltirken yalniz burayi
+        // degistirmek yeterli olmali.
+        msdk_surum = '5.18.0'
+        // Play Store: 31 Agu 2026'dan SONRA yeni uygulamalar ve
+        // guncellemeler API 36 (Android 16) hedeflemek ZORUNDA.
+        // Bugun 16 Agu 2026 -> 36 secildi.  Bkz. BULGU_play_store.md.
+        hedef_sdk = 36
+        derleme_sdk = 36
+        // MSDK'nin destekledigi en dusuk API duzeyi
+        en_dusuk_sdk = 24
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_surum"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_surum"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

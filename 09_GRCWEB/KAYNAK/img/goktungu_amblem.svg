@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 115"
+     role="img" aria-label="GÖKTUNGU">
+  <!-- FAZ15-LOGOANIM  Amblem, goktungu_serit.webp piksel haritasindan
+       olculerek turetildi: kalkan bicim (kose yaricapi ~30/125) ve
+       icinde radar konisi.  Marka rengi sabit; iki temada da ayni. -->
+  <defs>
+    <linearGradient id="gtAmblemEgim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d9bf5"/>
+      <stop offset="1" stop-color="#0a6fd8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#gtAmblemEgim)"
+        d="M62.5 0
+           C 90 0 106 4 114 12
+           C 122 20 125 34 125 57.5
+           C 125 81 122 95 114 103
+           C 106 111 90 115 62.5 115
+           C 35 115 19 111 11 103
+           C 3 95 0 81 0 57.5
+           C 0 34 3 20 11 12
+           C 19 4 35 0 62.5 0 Z"/>
+  <!-- radar konisi: dolu tepe -->
+  <path fill="#e8f4f8" d="M62.5 22 L79 39 L46 39 Z"/>
+  <!-- konisin acilan iki kirisi -->
+  <path fill="none" stroke="#e8f4f8" stroke-width="4.2"
+        stroke-linecap="round"
+        d="M47.5 41 L22 82 M77.5 41 L103 82"/>
+</svg>

@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GOKTUNGU DJI Koprusu — ana ekran.
+
+  Tasarim v3 taktik temaya baglidir (merkez arayuzle ayni palet):
+  zemin #04070C, siyan #5CC8FF, kehribar #F2B24A, vurgu #B91C1C.
+  Basliklar baslik_renk kullanir; #ffffff sabiti YAZILMAZ.
+  Tum dokunma hedefleri en az 48dp (WCAG / Play erisilebilirlik).
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/zemin"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Ust serit -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/uygulama_adi"
+                    android:textAppearance="@style/Metin.Baslik"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/uygulama_alt_adi"
+                    android:textAppearance="@style/Metin.Mono"
+                    android:textColor="@color/siyan"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/dgHakkinda"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                android:text="@string/hakkinda_baslik"
+                android:textColor="@color/soluk"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Durum karti -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/kart_zemin"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/durum_baslik"
+                android:textAppearance="@style/Metin.Mono"
+                android:textColor="@color/kehribar"
+                android:textSize="12sp"
+                android:letterSpacing="0.12" />
+
+            <TextView
+                android:id="@+id/etiketSdk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/durum_sdk_kayit_bekliyor"
+                android:textAppearance="@style/Metin.Govde" />
+
+            <TextView
+                android:id="@+id/etiketArac"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/durum_arac_yok"
+                android:textAppearance="@style/Metin.Govde" />
+
+            <TextView
+                android:id="@+id/etiketMerkez"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/durum_merkez_kopuk"
+                android:textAppearance="@style/Metin.Govde" />
+        </LinearLayout>
+
+        <!-- Yapilandirma karti -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/kart_zemin"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/yapilandirma_baslik"
+                android:textAppearance="@style/Metin.Mono"
+                android:textColor="@color/kehribar"
+                android:textSize="12sp"
+                android:letterSpacing="0.12" />
+
+            <EditText
+                android:id="@+id/girisAdres"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"
+                android:hint="@string/yapilandirma_adres_ipucu"
+                android:inputType="textUri"
+                android:textColor="@color/govde_renk"
+                android:textColorHint="@color/soluk"
+                android:importantForAutofill="no" />
+
+            <EditText
+                android:id="@+id/girisPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:hint="@string/yapilandirma_port"
+                android:inputType="number"
+                android:textColor="@color/govde_renk"
+                android:textColorHint="@color/soluk"
+                android:importantForAutofill="no" />
+
+            <EditText
+                android:id="@+id/girisKullanici"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:hint="@string/yapilandirma_kullanici"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/govde_renk"
+                android:textColorHint="@color/soluk"
+                android:autofillHints="emailAddress" />
+
+            <!--
+              BULGU_07 (2026-08-17): GDP protokolu ARTIK kimlik dogrulama
+              TASIYOR.  `dji_kopru.py` `merhaba` islemi belirteci
+              `hmac.compare_digest` ile dogrular ve UZAK baglantida
+              belirtec yoksa REDDEDER.  Eski not ("Sifre alani KASITLI
+              OLARAK YOK; GDP protokolu kimlik dogrulama tasimaz")
+              GECERSIZDIR ve alan eklenmistir.
+              PAROLA DEGIL BELIRTEC istenir: merkezde sureli ve iptal
+              edilebilir, parola cihazda saklanmaz (bkz. Ayarlar.kt).
+              Yerel (127.0.0.1) kurulumda bos birakilabilir.
+            -->
+            <EditText
+                android:id="@+id/girisBelirtec"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:hint="@string/yapilandirma_belirtec"
+                android:inputType="textPassword"
+                android:textColor="@color/govde_renk"
+                android:textColorHint="@color/soluk"
+                android:importantForAutofill="no" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/yapilandirma_belirtec_ipucu"
+                android:textColor="@color/soluk"
+                android:textSize="11sp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/kutuOto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/yapilandirma_oto"
+                android:textColor="@color/govde_renk"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/dgBaglan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="@string/yapilandirma_kaydet"
+                    android:textColor="@color/baslik_renk"
+                    android:backgroundTint="@color/vurgu" />
+
+                <Button
+                    android:id="@+id/dgKes"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:minHeight="48dp"
+                    android:text="@string/yapilandirma_kes"
+                    android:textColor="@color/govde_renk"
+                    android:backgroundTint="@color/cizgi" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Telemetri karti -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/kart_zemin"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tel_baslik"
+                android:textAppearance="@style/Metin.Mono"
+                android:textColor="@color/kehribar"
+                android:textSize="12sp"
+                android:letterSpacing="0.12" />
+
+            <TextView
+                android:id="@+id/etiketTelemetri"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/tel_konum_yok"
+                android:textAppearance="@style/Metin.Mono"
+                android:textSize="13sp"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <!-- Gunluk karti -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/kart_zemin"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/gunluk_baslik"
+                    android:textAppearance="@style/Metin.Mono"
+                    android:textColor="@color/kehribar"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.12" />
+
+                <Button
+                    android:id="@+id/dgGunlukTemizle"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
+                    android:text="@string/gunluk_temizle"
+                    android:textColor="@color/siyan"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/etiketGunluk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/gunluk_bos"
+                android:textAppearance="@style/Metin.Mono"
+                android:textColor="@color/soluk"
+                android:textSize="11sp"
+                android:lineSpacingExtra="3dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

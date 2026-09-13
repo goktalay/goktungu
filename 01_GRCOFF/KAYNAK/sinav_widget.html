@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Widget Tema ve Boyut Sinavi</title>
+<link rel="stylesheet" href="css/stil.css">
+<link rel="stylesheet" href="css/widget.css">
+<style>
+  body{margin:0;background:var(--dunya);min-height:100vh}
+  #rapor{position:fixed;left:0;top:0;z-index:99999;background:#000;color:#0f0;
+         font:12px/1.55 monospace;padding:10px;max-width:760px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="widgetKatman"></div>
+<div id="rapor">olculuyor...</div>
+<script>
+// ---------------------------------------------------------------------------
+// Widget tema ve boyut sinavi.
+//
+// Amac: iki seyi KANITLAMAK.
+//   1) Saat ve Hava Durumu widget'lari AYNI boyutta
+//   2) Widget renkleri gercek panellerle BIREBIR ayni (her iki temada)
+//
+// Yontem: gercek `.widget` ve `.bolum-popup` kabuklari olusturulup
+// `getComputedStyle` ile hesaplanan renkler karsilastirilir. Bu, CSS
+// degisken zincirinin gercekten cozuldugunu gosterir; kaynak kodu
+// okumak bunu kanitlamaz.
+// ---------------------------------------------------------------------------
+const yaz = (s) => { document.getElementById("rapor").textContent = s; };
+
+function kabukKur(){
+  const katman = document.getElementById("widgetKatman");
+  katman.innerHTML = "";
+  // Widget kabugu (widget.js'in urettigi yapiyla ayni sinif agaci)
+  ["SAAT", "HAVA DURUMU"].forEach(function(ad, i){
+    const w = document.createElement("div");
+    w.className = "widget";
+    w.id = "wtest" + i;
+    w.style.left = (20 + i * 250) + "px";
+    w.style.top  = "300px";
+    w.style.width  = "226px";
+    w.style.height = "224px";
+    w.innerHTML =
+      '<div class="widget-baslik"><span class="widget-ad">' + ad + '</span>' +
+      '<span class="widget-bosluk"></span>' +
+      '<button class="widget-mik-boz">M</button>' +
+      '<button class="widget-kapat">X</button></div>' +
+      '<div class="widget-govde"><div style="padding:10px">ornek</div></div>';
+    katman.appendChild(w);
+  });
+  // Gercek panel kabugu (karsilastirma taban cizgisi)
+  const p = document.createElement("div");
+  p.className = "bolum-popup";
+  p.id = "ptest";
+  p.style.cssText = "left:540px;top:300px;width:226px;height:224px;position:absolute";
+  p.innerHTML = '<div class="bolum-baslik">PANEL</div><div class="bolum-govde"></div>';
+  katman.appendChild(p);
+}
+
+function olc(){
+  const w0 = document.getElementById("wtest0");
+  const w1 = document.getElementById("wtest1");
+  const p  = document.getElementById("ptest");
+  const sw0 = getComputedStyle(w0), sw1 = getComputedStyle(w1), sp = getComputedStyle(p);
+  const r0 = w0.getBoundingClientRect(), r1 = w1.getBoundingClientRect();
+  return {
+    boyut0: Math.round(r0.width) + "x" + Math.round(r0.height),
+    boyut1: Math.round(r1.width) + "x" + Math.round(r1.height),
+    boyutEsit: (Math.round(r0.width) === Math.round(r1.width) &&
+                Math.round(r0.height) === Math.round(r1.height)),
+    wArka: sw0.backgroundColor, pArka: sp.backgroundColor,
+    wMetin: sw0.color,          pMetin: sp.color,
+    arkaEsit:  sw0.backgroundColor === sp.backgroundColor,
+    metinEsit: sw0.color === sp.color,
+  };
+}
+
+function temaKur(t){
+  if (t === "acik") document.documentElement.setAttribute("data-tema", "acik");
+  else              document.documentElement.removeAttribute("data-tema");
+}
+
+kabukKur();
+const satir = [];
+satir.push("=== WIDGET TEMA VE BOYUT SINAVI ===");
+let hepGecti = true;
+["koyu", "acik"].forEach(function(t){
+  temaKur(t);
+  const o = olc();
+  satir.push("");
+  satir.push("--- " + t.toUpperCase() + " TEMA ---");
+  satir.push("saat boyut   : " + o.boyut0);
+  satir.push("hava boyut   : " + o.boyut1);
+  satir.push("boyut esit   : " + (o.boyutEsit ? "EVET" : "HAYIR"));
+  satir.push("widget arka  : " + o.wArka);
+  satir.push("panel  arka  : " + o.pArka);
+  satir.push("arka esit    : " + (o.arkaEsit ? "EVET" : "HAYIR"));
+  satir.push("widget metin : " + o.wMetin);
+  satir.push("panel  metin : " + o.pMetin);
+  satir.push("metin esit   : " + (o.metinEsit ? "EVET" : "HAYIR"));
+  if (!o.boyutEsit || !o.arkaEsit || !o.metinEsit) hepGecti = false;
+});
+temaKur("koyu");
+satir.push("");
+satir.push("SONUC : " + (hepGecti
+  ? "GECTI (boyutlar esit, widget renkleri panellerle birebir ayni)"
+  : "BASARISIZ"));
+yaz(satir.join("\n"));
+</script>
+</body>
+</html>

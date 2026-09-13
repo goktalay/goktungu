@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GÖKTUNGU — Alçak İrtifa Hava Sahası Komuta Kontrol Sistemi</title>
+<meta name="description" content="GÖKTUNGU, radar ve insansız hava aracı kaynaklarını tek harekât resminde birleştiren alçak irtifa hava sahası komuta kontrol sistemidir. Komuta kontrol arayüzü merkezde çalışır; sahaya yalnızca hafif bir köprü yazılımı kurulur.">
+<meta name="author" content="Gökkubbe Teknoloji Anonim Şirketi">
+<meta name="theme-color" content="#04070c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GÖKTUNGU — Alçak İrtifa Hava Sahası Komuta Kontrol Sistemi">
+<meta property="og:description" content="Radar ve İHA kaynaklarını tek harekât resminde birleştiren alçak irtifa komuta kontrol sistemi. Arayüz merkezde, köprü sahada.">
+<meta property="og:image" content="/img/ss_ana_ekran.webp">
+<meta property="og:locale" content="tr_TR">
+<link rel="alternate" hreflang="tr" href="https://goktungu.com/?dil=tr">
+<link rel="alternate" hreflang="en" href="https://goktungu.com/?dil=en">
+<link rel="alternate" hreflang="x-default" href="https://goktungu.com/">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon_32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/favicon_180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/stil.css?v=2136">
+<link rel="stylesheet" href="/css/logo_anim.css?v=2136">
+<!-- v2.9.0: taktik harekat temasi (v3) - murekkep laciverdi zemin,
+     celik-siyan birincil (dost/sistem), kehribar ikincil (iz/uyari);
+     Chakra Petch + IBM Plex tipografisi. Kopru indirme baglantisi
+     kaldirildi: indirme yalniz kurumsal panelden yapilir. -->
+</head>
+<body>
+
+<!-- ============================ ÜST ÇUBUK ============================ -->
+<header id="ustCubuk">
+  <div class="ic">
+    <!-- v2.12.3 marka gecisi: firma logosu KALDIRILDI.  Onceki yapi
+         firma logosu + ayrac + "GOKTUNGU" urun yazisi idi; artik tek
+         GOKTUNGU logosu var ve logo urun adini kendi icinde tasidigi
+         icin ayri `.urun` yazisi gereksiz.  Serit surumu alt yazisiz:
+         26 px logo yuksekliginde "KOMUTA KONTROL" okunmuyor.
+         Tema secimi CSS `:root[data-tema="acik"]` ile yapilir --
+         `.marka .acik` / `.marka .koyu` ikilisi, JS gerekmez. -->
+    <a href="/" class="marka" aria-label="GÖKTUNGU Komuta Kontrol">
+      <img class="koyu" src="/img/goktungu_serit.webp" alt="GÖKTUNGU Komuta Kontrol">
+      <img class="acik" src="/img/goktungu_serit_acik.webp" alt="GÖKTUNGU Komuta Kontrol">
+    </a>
+    <nav id="anaMenu">
+      <!-- ================== MENU GRUPLARI ==================
+           Yedi duz madde tek satira sigmiyordu: "Saha Yazilimi" iki
+           satira kiriliyor, tema/dil dugmeleri ve oturum dugmeleri
+           sagdan tasiyordu (kullanici bildirimi 2026-08-16, ekran
+           goruntusu ~1000 px genislikte cekilmis).  Maddeler ucu iki
+           acilir gruba toplandi; Fiyatlandirma duz kaldi cunku satin
+           alma yolunun tek tiklamada erisilebilir olmasi gerekiyor.
+
+           Erisilebilirlik: her tetikleyici <button aria-expanded> ve
+           acilir kutu aria-labelledby tasir.  Klavye ile Escape kapatir,
+           Tab ile gruptan cikinca kapanir (js/menu_grup.js).
+           Mobilde (<=900px) gruplar acilir kutu DEGIL, dogrudan basliklu
+           liste olarak dizilir; kucuk ekranda ust uste iki katmanli
+           acilir menu kullanilamaz. -->
+      <div class="mg" data-mg>
+        <button type="button" class="mg-dg" data-mg-dg aria-expanded="false"
+                aria-controls="mgSistem" id="mgSistemDg">
+          <span data-i18n="menu.gSistem">Sistem</span>
+          <svg class="mg-ok" width="10" height="6" viewBox="0 0 10 6"
+               fill="none" aria-hidden="true">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="mg-kutu" id="mgSistem" role="group"
+             aria-labelledby="mgSistemDg" hidden>
+          <a href="#mimari" data-i18n="menu.mimari">Mimari</a>
+          <a href="#platformlar" data-i18n="menu.platformlar">Platformlar</a>
+          <a href="#istemciler" data-i18n="menu.istemciler">Saha Yazılımı</a>
+        </div>
+      </div>
+      <div class="mg" data-mg>
+        <button type="button" class="mg-dg" data-mg-dg aria-expanded="false"
+                aria-controls="mgYetenek" id="mgYetenekDg">
+          <span data-i18n="menu.gYetenek">Yetenekler</span>
+          <svg class="mg-ok" width="10" height="6" viewBox="0 0 10 6"
+               fill="none" aria-hidden="true">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="mg-kutu" id="mgYetenek" role="group"
+             aria-labelledby="mgYetenekDg" hidden>
+          <a href="#yetenekler" data-i18n="menu.yetenekler">Yetenekler</a>
+          <a href="#arayuz" data-i18n="menu.arayuz">Arayüz</a>
+          <a href="#guvenlik" data-i18n="menu.guvenlik">Güvenlik</a>
+        </div>
+      </div>
+      <a href="#fiyat" data-i18n="menu.fiyat">Fiyatlandırma</a>
+      <a href="/yardim/" data-destek-bag="" data-i18n="menu.yardim">Destek</a>
+      <button type="button" class="tema-dugme" data-tema-dugme></button>
+      <div class="dil-sec" role="group" aria-label="Dil / Language">
+        <button type="button" data-dil="tr" aria-pressed="true">TR</button>
+        <button type="button" data-dil="en" aria-pressed="false">EN</button>
+      </div>
+    </nav>
+
+    <!-- ================= OTURUM KABUGU =================
+         Giris ve kayit artik /company/ adresine gitmeden DOGRUDAN
+         bu sayfada yapilir (kullanici karari 2026-08-16).  Iki
+         gorunum vardir ve `hidden` ile degistirilir:
+           #gkKapali -> oturum yok  : kullanici ikonu + giris/kayit menusu
+           #gkAcik   -> oturum var  : kullanici menusu
+         Baslangicta KAPALI gorunum acik birakilir; js/oturum.js
+         `GET /api/firma/ben` yanitini alinca dogru gorunume gecer.
+         Tersi yapilirsa (ikisi de gizli) oturumu olmayan ziyaretci
+         betik yuklenene kadar hicbir giris yolu gormez. -->
+    <!-- v2.12.2 (a): iki genis dugme (Kayit Ol + Giris Yap) KALDIRILDI.
+         OLCULEN KUSUR: dar ekranlarda bu ikisi ust seride sigmiyor,
+         menunun uzerine tasip dil secici ile ust uste biniyordu
+         (kullanici ekran goruntusu 2026-08-16).  Yerine oturum ACIK
+         gorunumdeki ile AYNI bicimde tek bir kullanici ikonu konur;
+         giris/kayit o ikonun acilir menusunden yapilir.  Boylece ust
+         seridin genisligi oturum durumundan BAGIMSIZ olur ve durum
+         degisince serit kaymaz.
+
+         v2.12.2 (b): kabuk `#anaMenu` DISINA cikarildi.  Once nav
+         icindeydi; <=900px'te `#anaMenu{display:none}` kurali tum navi
+         gizledigi icin kullanici ikonu da hamburgerin ARKASINDA
+         kaliyordu -- yani telefonda ziyaretcinin gorunur hicbir giris
+         yolu yoktu (olc_konuk_menu.py "900px konuk ikonu gorunur"
+         adiminda yakaladi).  Kabuk artik seridin kalici parcasi:
+         hamburger acik olsun olmasin her genislikte gorunur.
+         Sira: marka | nav | OTURUM | hamburger  -- hamburger en sagda
+         kalmali cunku `#menuAc{margin-left:auto}` onu saga itiyor. -->
+    <span id="gkKapali" class="gk-kul">
+        <button type="button" id="gkKonukDg" class="gk-kul-dg gk-konuk-dg"
+                aria-haspopup="true" aria-expanded="false"
+                aria-controls="gkKonukMenu"
+                aria-label="Hesap menüsü"
+                data-i18n-attr="aria-label:menu.hesapMenu">
+          <span class="gk-avatar gk-avatar-konuk" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="3.4" stroke="currentColor"
+                      stroke-width="1.7"/>
+              <path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"
+                    stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="gk-kul-ok" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="gk-menu" id="gkKonukMenu" role="menu">
+          <div class="gk-menu-bas">
+            <strong data-i18n="menu.konukBas">Hesap</strong>
+            <span data-i18n="menu.konukNot">Kurum hesabınızla giriş yapın
+              veya yeni kurum kaydı oluşturun.</span>
+          </div>
+          <button type="button" class="gk-menu-oge gk-menu-vurgu"
+                  role="menuitem" data-gk-ac="giris"
+                  data-i18n="menu.girisYapKisa">Giriş Yap</button>
+          <button type="button" class="gk-menu-oge" role="menuitem"
+                  data-gk-ac="kayit"
+                  data-i18n="menu.kayit">Kayıt Ol</button>
+          <a href="/app/" class="gk-menu-oge" role="menuitem"
+             data-i18n="menu.harekat">Harekât Arayüzü</a>
+        </div>
+      </span>
+      <span id="gkAcik" class="gk-kul" hidden>
+        <button type="button" id="gkMenuDg" class="gk-kul-dg"
+                aria-haspopup="true" aria-expanded="false"
+                aria-controls="gkMenu">
+          <span class="gk-avatar" id="gkAvatar" aria-hidden="true"></span>
+          <span class="gk-kul-ad" id="gkAd"></span>
+          <span class="gk-kul-ok" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="gk-menu" id="gkMenu" role="menu">
+          <div class="gk-menu-bas">
+            <strong id="gkMenuAd"></strong>
+            <span id="gkMenuEposta"></span>
+            <span class="gk-menu-kurum" id="gkMenuKurum"></span>
+            <span class="gk-menu-etiketler">
+              <span class="gk-rol" id="gkMenuRol"></span>
+              <span class="gk-sure" id="gkMenuSure"></span>
+            </span>
+          </div>
+          <!-- MUSTERI PANELI: ayri sekmede acilir (target="_blank").
+               `Path=/` cerezi sayesinde yeni sekme ayni oturumu gorur,
+               kimlik yeniden sorulmaz.  rel="noopener" guvenlik
+               gerekcesiyle zorunludur.
+               Oge YALNIZ rol=firma_yonetici iken gorunur; asil engel
+               sunucudaki /company/ kapisidir. -->
+          <a href="/company/" target="_blank" rel="noopener"
+             class="gk-menu-oge" id="gkMenuPanel" role="menuitem"
+             data-i18n="menu.musteriPaneli">Müşteri Paneli</a>
+          <span class="gk-menu-not" id="gkMenuPanelNot" hidden
+                data-i18n="menu.panelNot">Kurumsal panel yalnız kurum
+            yöneticisi tarafından kullanılır.</span>
+          <a href="/app/" class="gk-menu-oge" role="menuitem"
+             data-i18n="menu.harekat">Harekât Arayüzü</a>
+          <button type="button" class="gk-menu-oge gk-menu-cikis"
+                  id="gkCikis" role="menuitem"
+                  data-i18n="menu.cikis">Çıkış</button>
+        </div>
+    </span>
+
+    <!-- Hamburger EN SONDA: `margin-left:auto` ile saga yapisir ve
+         oturum ikonu onun SOLUNDA kalir.  Masaustunde gizlidir
+         (`#menuAc{display:none}`), <=900px'te gorunur. -->
+    <button id="menuAc" aria-label="Menü"
+            aria-expanded="false">&#9776;</button>
+  </div>
+</header>
+
+<!-- ============================== HERO ============================== -->
+<section id="hero">
+  <!-- v2.12.0: hero iki kolona ayrildi.  Sol kolon metin, sag kolon
+       taktik animasyon tuvali (js/hero_taktik.js).  Tuvalin kendisi
+       `aria-hidden`, sarmalayici `role="img"` + `aria-label` tasir:
+       ekran okuyucuya tek bir aciklama okunur, canvas'in ici
+       gezinilebilir bir icerik gibi sunulmaz. -->
+  <!-- v2.12.1: iki kolonlu duzen KALDIRILDI.  Sahne artik sayfanin tam
+       genisligine yayilir (`.hero-serit`, `.ic` ile sinirlanmaz) ve metin
+       blogu sahnenin ALTINA gecer.  Onceki duzende kure sag kolona
+       sikistigi icin kenarlardan kirpiliyor ve "yarim kure" gibi
+       gorunuyordu. -->
+  <div class="hero-serit" role="img"
+       aria-label="Dönen dünya üzerinde Türkiye merkezli radar taraması ve devriye uçuşu yapan insansız hava araçlarını gösteren canlandırma"
+       data-i18n-attr="aria-label:hero.sahneAlt">
+    <canvas id="heroTuval" aria-hidden="true"></canvas>
+    <div class="sahne-etiket" aria-hidden="true">
+      <span class="se-nokta"></span>
+      <span class="se-mono">39.0&deg;N 35.0&deg;E</span>
+      <span class="se-ayrac">&middot;</span>
+      <span data-i18n="hero.sahneMevzi">RADAR MEVZİİ</span>
+    </div>
+  </div>
+
+  <div class="ic hero-duzen">
+   <div class="hero-yazi">
+    <!-- SURUM DEGERLERI YEDEKTIR. Gercek surum imzali katalogtan
+         (/api/genel/katalog) okunur ve js/indir.js icindeki
+         surumYaz() ile `data-surum-yaz` isaretli her ogeye
+         yazilir. Boylece sitedeki surum ile indirilen paketin
+         surumu yapisal olarak ayrilamaz.
+
+         Rozet KOPRU surumunu yazar (data-surum-urun="kopru"): bu
+         sayfadan indirilen tek paket kopru yazilimidir. Komuta kontrol
+         arayuzunun surumu merkezde /app/ altinda gorunur, ziyaretcinin
+         indirecegi bir sey degildir. -->
+    <div class="rozet" id="heroRozetMetin" data-surum="1.1.1">
+      <i id="heroRozetNokta"></i>
+      <span data-i18n="hero.rozetOn">Sürüm</span>&nbsp;<span class="rozet-surum" data-surum-yaz data-surum-urun="kopru">1.1.1</span>
+      &middot; <span data-i18n="hero.rozetSon">Merkezî Harekât · Sahada Köprü</span>
+      <span class="cevrim">&middot; <span data-i18n="hero.rozetCanli">sistem çevrimiçi</span></span>
+    </div>
+
+    <h1 data-i18n="hero.baslik" data-i18n-html>Alçak irtifa hava sahasında<br><em>tek harekât resmi</em></h1>
+
+    <p class="hero-alt" data-i18n="hero.alt">
+      GÖKTUNGU; radar sistemlerini ve insansız hava araçlarını tek bir
+      coğrafi harekât resminde birleştirir. Komuta kontrol arayüzü merkezde
+      çalışır ve tarayıcıdan açılır; sahadaki bilgisayara yalnızca dron ve
+      radar bağlantılarını taşıyan köprü yazılımı kurulur.
+    </p>
+
+    <div class="hero-dg">
+      <a href="/app/" class="dg dg-birincil dg-buyuk" data-i18n="hero.dg1">Sisteme Giriş</a>
+      <!-- v2.9.0: eski "Köprü Yazılımını İndir" düğmesi kaldırıldı.
+           Karar: kurulum dosyaları siteden doğrudan indirilmez; yalnız
+           kurum hesabıyla girilen kurumsal panelden dağıtılır. -->
+      <a href="/company/" class="dg dg-ikincil dg-buyuk" data-gk-ac="giris"
+         data-i18n="hero.dg2">Kurumsal Panel</a>
+    </div>
+
+    <div class="istatistik">
+      <div>
+        <div class="sayi" data-sayi="14">14</div>
+        <div class="ad" data-i18n="hero.ist1">Widget ve Panel</div>
+      </div>
+      <div>
+        <div class="sayi" data-sayi="4">4</div>
+        <div class="ad" data-i18n="hero.ist2">Radar Protokolü</div>
+      </div>
+      <div>
+        <div class="sayi" data-sayi="47">47</div>
+        <div class="ad" data-i18n="hero.ist3">MAVLink Mesajı</div>
+      </div>
+      <div>
+        <div class="sayi">2<span data-i18n="hero.ist4birim"> platform</span></div>
+        <div class="ad" data-i18n="hero.ist4">Windows · Ubuntu</div>
+      </div>
+    </div>
+   </div>
+
+  </div>
+</section>
+
+<!-- ============================= MİMARİ ============================= -->
+<section id="mimari" class="koyu">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="mimari.etiket">Sistem Mimarisi</div>
+      <h2 data-i18n="mimari.baslik">Harekât merkezde, bağlantı sahada</h2>
+      <p data-i18n="mimari.aciklama">
+        Komuta kontrol arayüzü merkez sunucuda çalışır; pilot haritayı, dron
+        panelini ve görev yönetimini tarayıcıdan kullanır. Sahadaki
+        bilgisayarda yalnızca köprü yazılımı çalışır: dron ve radar
+        bağlantılarını yerelde kurar ve merkeze giden tek bir şifreli kanaldan
+        taşır. Bu yaklaşım kurumsal güvenlik duvarında hiçbir gelen port
+        açılmasını, sabit IP adresi veya alan adı tahsisini gerektirmez.
+      </p>
+    </div>
+
+    <div class="mimari">
+      <div class="mim-kutu">
+        <h3 data-i18n="mimari.saha">Köprü Yazılımı</h3>
+        <div class="not" data-i18n="mimari.sahanot" data-i18n-html>Saha bilgisayarı &middot; Python 3.11 &middot; yerel web paneli</div>
+        <ul class="mim-liste">
+          <li><span class="ik">D</span>
+            <div><strong data-i18n="mimari.dron">Dron Servisi</strong><br>
+            <span data-i18n="mimari.dronalt" data-i18n-html>MAVLink v1/v2 &middot; seri, TCP, UDP, SITL</span></div></li>
+          <li><span class="ik">R</span>
+            <div><strong data-i18n="mimari.radar">Radar Servisi</strong><br>
+            <span data-i18n="mimari.radaralt">AERIS uyumlu JSON, ikili çerçeve</span></div></li>
+          <li><span class="ik">G</span>
+            <div><strong data-i18n="mimari.gcsdual">GroundGCC Servisi</strong><br>
+            <span data-i18n="mimari.gcsdualalt">İki ekranlı yer kontrol çantası</span></div></li>
+        </ul>
+      </div>
+
+      <div class="mim-ok">
+        <div class="cizgi"></div>
+        <div class="etiket" data-i18n="mimari.ok" data-i18n-html>ters WebSocket<br>443 &middot; yalnızca giden</div>
+        <div class="cizgi"></div>
+      </div>
+
+      <div class="mim-kutu">
+        <h3 data-i18n="mimari.bulut">Merkez Sunucu</h3>
+        <div class="not" data-i18n="mimari.bulutnot" data-i18n-html>goktungu.com &middot; çok kiracılı</div>
+        <ul class="mim-liste">
+          <li><span class="ik">K</span>
+            <div><strong data-i18n="mimari.komuta">Komuta Kontrol Arayüzü</strong><br>
+            <span data-i18n="mimari.komutaalt">CesiumJS küre, rota planlama, uçuş raporlama</span></div></li>
+          <li><span class="ik">Y</span>
+            <div><strong data-i18n="mimari.yonetim">Kurumsal Yönetim Paneli</strong><br>
+            <span data-i18n="mimari.yonetimalt">Pilot kadrosu ve uçuş kayıtları</span></div></li>
+          <li><span class="ik">V</span>
+            <div><strong data-i18n="mimari.veri">Sürüm Deposu ve Arşiv</strong><br>
+            <span data-i18n="mimari.verialt">Ed25519 imzalı güncelleme, kiracı bazlı yalıtım</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SUNUCU GÜDÜMLÜ GÖREV DAĞITIMI ===================== -->
+<section id="proto">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="proto.etiket">Ters Bağlantı Mimarisi</div>
+      <h2 data-i18n="proto.baslik">Sabit IP gerekmez, port açılmaz</h2>
+      <p data-i18n="proto.aciklama">
+        Köprü yazılımı çalıştıran saha bilgisayarları ev ve ofis internet
+        bağlantılarında, çoğu zaman değişken IP adresiyle ve NAT arkasında
+        çalışır; merkezin bu bilgisayarlara bağlanması mümkün değildir. Bu
+        nedenle bağlantıyı her zaman köprü başlatır: merkeze giden şifreli
+        bir WebSocket açar ve açık tutar. Merkez sorgularını bu hazır kanal
+        üzerinden geri gönderir.
+      </p>
+    </div>
+
+    <div class="proto-kiyas">
+      <div class="eski">
+        <h4 data-i18n="proto.eskibas">Klasik uzaktan erişim</h4>
+        <ul>
+          <li data-i18n="proto.eski1">Sabit IP adresi veya alan adı tahsisi</li>
+          <li data-i18n="proto.eski2">Güvenlik duvarında gelen port açılır</li>
+          <li data-i18n="proto.eski3">Yönlendiricide port yönlendirme kuralı</li>
+          <li data-i18n="proto.eski4">Saha bilgisayarı internetten erişilebilir hale gelir</li>
+        </ul>
+      </div>
+      <div class="orta"><span>&rarr;</span></div>
+      <div class="yeni">
+        <h4 data-i18n="proto.yenibas" data-surum-urun="kopru">Sürüm {s} · ters WebSocket köprüsü</h4>
+        <ul>
+          <li data-i18n="proto.yeni1">Değişken IP adresi sorun oluşturmaz</li>
+          <li data-i18n="proto.yeni2">Hiçbir gelen port açılmaz</li>
+          <li data-i18n="proto.yeni3">Yönlendirici ayarı gerekmez</li>
+          <li data-i18n="proto.yeni4">Saha bilgisayarı internetten erişilemez kalır</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="proto-izgara">
+      <div class="proto-kart">
+        <span class="no">01</span>
+        <h3 data-i18n="proto.k1">Kurulum Kimliği</h3>
+        <p data-i18n="proto.k1alt">Köprü yazılımı ilk çalıştırmada
+        merkeze kaydolur ve kendine ait bir kurulum kimliği ile gizli anahtar
+        alır. Gizli anahtar yalnızca bir kez gösterilir, saha bilgisayarında
+        saklanır ve sonraki her bağlantıda kimlik doğrulaması için
+        kullanılır.</p>
+      </div>
+      <div class="proto-kart">
+        <span class="no">02</span>
+        <h3 data-i18n="proto.k2">Köprü Grupları</h3>
+        <p data-i18n="proto.k2alt">Bağlantı yöneticisinde kurumun çevrimiçi
+        köprüleri ad ve adresleriyle gruplanır; her köprünün dron ve radar
+        bağlantıları kendi grubunun altında listelenir. Operatör adres
+        veya port bilgisi girmeden listeden seçim yapar.</p>
+      </div>
+      <div class="proto-kart">
+        <span class="no">03</span>
+        <h3 data-i18n="proto.k3">Kesintide Yerel Kayıt</h3>
+        <p data-i18n="proto.k3alt">Merkez bağlantısı koptuğunda köprü uçuş
+        verisini yerel diske kaydeder; bağlantı geri geldiğinde canlı akış
+        kesintisiz sürer ve kesinti boyunca tutulan kayıt korunur. Köprü
+        artan gecikmelerle kendiliğinden yeniden bağlanır.</p>
+      </div>
+      <div class="proto-kart">
+        <span class="no">04</span>
+        <h3 data-i18n="proto.k4">Uzaktan Durum Sorgusu</h3>
+        <p data-i18n="proto.k4alt">Merkez, açık köprü üzerinden köprünün dron
+        sayısını, servis durumlarını ve sürümünü sorgular; saha bilgisayarına
+        hiçbir gelen bağlantı kurulmadan durum görünür olur.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== YETENEKLER =========================== -->
+<section id="yetenekler" class="koyu">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="yet.etiket">Yetenekler</div>
+      <h2 data-i18n="yet.baslik">Harekât için gereken her katman</h2>
+      <p data-i18n="yet.aciklama">
+        Tespit, sınıflandırma, takip ve müdahale zincirinin tamamı tek arayüzde
+        toplanır. Yalnızca tanımlı ve etkin kaynaklar arayüzde görünür; kapalı
+        kaynaklar arayüzü kalabalıklaştırmaz.
+      </p>
+    </div>
+
+    <div class="kartlar">
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="radar"></div>
+        <h3 data-i18n="yet.k1">Radar Tespit ve İz Takibi</h3>
+        <p data-i18n="yet.k1alt">Polar radar ölçümleri küresel koordinata dönüştürülür; onay eşiği,
+        zaman aşımı ve alfa filtreli hız kestirimi ile kararlı izler üretilir.
+        Kaybolan hedef menzil penceresinde geri belirirse eski izine bağlanır.</p>
+      </div>
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="iha"></div>
+        <h3 data-i18n="yet.k2">İnsansız Hava Aracı Komutası</h3>
+        <p data-i18n="yet.k2alt">ArduCopter, ArduPlane ve ArduRover uçuş modları çözümlenir. Kalkış,
+        iniş, göreve dönüş ve yönlü hareket komutları arayüzden verilir; her
+        araca ayrı renk ve harita izi atanır.</p>
+      </div>
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="kurum"></div>
+        <h3 data-i18n="yet.k4">Çok Kiracılı Kurum Yapısı</h3>
+        <p data-i18n="yet.k4alt">Her kurum kendi vergi kimliği, ünvanı ve logosu ile kayıtlıdır.
+        Arayüzün tamamında ve raporlarda giriş yapılan kurumun kimliği görünür;
+        veriler kiracı düzeyinde yalıtılır.</p>
+      </div>
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="pilot"></div>
+        <h3 data-i18n="yet.k5">Pilot ve Uçuş Kaydı Yönetimi</h3>
+        <p data-i18n="yet.k5alt">Kurumsal panelden pilot kadrosu, lisans bilgileri ve uçuş kayıtları
+        yönetilir. Uçuş süresi, görev tipi ve araç eşleşmesi kayıt altına alınır.</p>
+      </div>
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="gecmis"></div>
+        <h3 data-i18n="yet.k6">Geçmiş Kayıt ve Oynatma</h3>
+        <p data-i18n="yet.k6alt">Tespit ve uçuş verileri arşivlenir; geçmiş bir görev harita üzerinde
+        yeniden oynatılabilir. Ekran yenilendiğinde izler sistemden geri getirilir.</p>
+      </div>
+      <div class="kart">
+        <div class="ikon gz-ikon" data-ikon="kamera"></div>
+        <h3 data-i18n="yet.k7">M50 Elektro-Optik Kontrol</h3>
+        <p data-i18n="yet.k7alt">Yetkili saha Köprüsünde, operatörün açık bağlantı girişiyle sınırlı PTZ,
+        lens ve manuel seçim temelli takip sağlanır. Görüntü kaynakları yerelde
+        işlenir; ham cihaz videosu ve oturum bilgileri merkez katmanına aktarılmaz.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================== PLATFORMLAR ========================== -->
+<section id="platformlar">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="plat.etiket">Desteklenen Platformlar</div>
+      <h2 data-i18n="plat.baslik">Dört gövde sınıfı, tek arayüz</h2>
+      <p data-i18n="plat.aciklama">
+        GÖKTUNGU her aracın bildirdiği MAVLink araç tipini dört gövde sınıfına
+        çözümler ve sınıfa özgü harita sembolü çizer. Sembol bildirilen yöne
+        göre döner, rengi bağlantı durumunu taşır ve yunuslama göstergesi
+        aracın duruşunu yansıtır.
+      </p>
+    </div>
+
+    <div class="plat-izgara">
+      <div class="plat-kart">
+        <div class="plat-gorsel">
+          <img src="/img/dron_multikopter.webp" alt="Multikopter platform" loading="lazy">
+          <span class="plat-tip" data-i18n="plat.p1tip">MAV_TYPE 2, 13, 14</span>
+        </div>
+        <div class="plat-govde">
+          <h3 data-i18n="plat.p1">Multikopter</h3>
+          <p data-i18n="plat.p1alt">Dört, altı ve sekiz rotorlu gövdeler. Konum
+          koruma ve yönlendirilmiş uçuş modları, gimbal üzerinde elektro-optik
+          yükler ile birlikte desteklenir.</p>
+        </div>
+      </div>
+
+      <div class="plat-kart">
+        <div class="plat-gorsel">
+          <img src="/img/dron_sabit_kanat.webp" alt="Sabit kanat platform" loading="lazy">
+          <span class="plat-tip" data-i18n="plat.p2tip">MAV_TYPE 1</span>
+        </div>
+        <div class="plat-govde">
+          <h3 data-i18n="plat.p2">Sabit Kanat</h3>
+          <p data-i18n="plat.p2alt">Yüksek havada kalış süreli gözetleme
+          gövdeleri. Geniş alanlar üzerinde bekleme ve yol noktası
+          seyrüseferi ile uzun menzilli devriye görevleri.</p>
+        </div>
+      </div>
+
+      <div class="plat-kart">
+        <div class="plat-gorsel">
+          <img src="/img/dron_helikopter.webp" alt="İnsansız helikopter platform" loading="lazy">
+          <span class="plat-tip" data-i18n="plat.p3tip">MAV_TYPE 4, 6</span>
+        </div>
+        <div class="plat-govde">
+          <h3 data-i18n="plat.p3">İnsansız Helikopter</h3>
+          <p data-i18n="plat.p3alt">Tek ana rotorlu döner kanatlı gövdeler.
+          Yüksek faydalı yük kapasitesi ve askıda kalış dayanımı ile kalıcı
+          gözetleme görevleri.</p>
+        </div>
+      </div>
+
+      <div class="plat-kart">
+        <div class="plat-gorsel">
+          <img src="/img/dron_vtol.webp" alt="VTOL platform" loading="lazy">
+          <span class="plat-tip" data-i18n="plat.p4tip">MAV_TYPE 19–25</span>
+        </div>
+        <div class="plat-govde">
+          <h3 data-i18n="plat.p4">VTOL</h3>
+          <p data-i18n="plat.p4alt">Dikey kalkışı sabit kanat seyir uçuşuyla
+          birleştiren melez gövdeler. Geçiş durumu ayrı olarak izlenir ve
+          arayüzde belirgin biçimde gösterilir.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ist-not" data-i18n="plat.not" data-i18n-html>
+      <strong>Harita sembolojisi.</strong> Gövde sınıfı MAVLink kalp atışından
+      türetilir, elle seçim gerekmez. Tanınmayan tipler multikopter sembolüne
+      düşer; eski protokol çalıştıran bir uçuş kontrol kartı arayüzü hiçbir
+      zaman bozmaz.
+    </div>
+  </div>
+</section>
+
+<!-- ============================= ARAYÜZ ============================= -->
+<section id="arayuz" class="koyu">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="ary.etiket">Komuta Kontrol Arayüzü</div>
+      <h2 data-i18n="ary.baslik">Harekât resmi, tek ekranda</h2>
+      <p data-i18n="ary.aciklama">
+        Yeniden boyutlandırılabilir paneller, iç içe sekmelenebilen taşınabilir
+        pencereler ve alt durum çubuğundaki bağlantı göstergeleri ile operatör
+        sistemin tamamını tek bakışta izler.
+      </p>
+    </div>
+
+    <!-- ================= VITRIN =================
+         Onceki durum: bir buyuk gorsel + bes esit agirlikli kucuk
+         gorsel yan yana diziliydi.  Hiyerarsi yoktu, hangisinin ne
+         oldugu yalniz kucuk bir alt yazidan anlasiliyordu ve bes
+         gorsel ayni anda yuklendigi icin bolum agir ve dagimikti.
+
+         Yeni yapi: SEKMELI vitrin.  Sol tarafta ikon + baslik +
+         aciklama tasiyan secim listesi, sagda tek buyuk gorsel.
+         Bir defada tek gorsel gorunur; digerleri `hidden` ile
+         gizlidir ve `loading="lazy"` ile indirilmez.
+         Betik: js/vitrin.js  (JS kapaliysa tum kareler alt alta
+         gorunur -- ilerleyici zenginlestirme). -->
+    <div class="vitrin" id="vitrin">
+      <div class="vitrin-secim" role="tablist"
+           aria-label="Arayüz bölümleri"
+           data-i18n-attr="aria-label:ary.sekmeler">
+        <button class="vs" role="tab" aria-selected="true"
+                aria-controls="vk-ana" id="vt-ana" data-kare="vk-ana">
+          <span class="vs-ikon gz-ikon" data-ikon="harita"></span>
+          <span class="vs-yazi">
+            <span class="vs-ad" data-i18n="ary.ss0">Harekât Resmi</span>
+            <span class="vs-alt" data-i18n="ary.ss0alt">Üç boyutlu küre üzerinde
+              radar izleri, hava araçları ve rotalar tek ekranda</span>
+          </span>
+        </button>
+        <button class="vs" role="tab" aria-selected="false"
+                aria-controls="vk-baglanti" id="vt-baglanti"
+                data-kare="vk-baglanti">
+          <span class="vs-ikon gz-ikon" data-ikon="baglanti"></span>
+          <span class="vs-yazi">
+            <span class="vs-ad" data-i18n="ary.ss1">Bağlantı Yöneticisi</span>
+            <span class="vs-alt" data-i18n="ary.ss1alt">Seri, TCP, UDP ve sanal
+              bağlantılar köprü makinesi altında gruplanır</span>
+          </span>
+        </button>
+        <button class="vs" role="tab" aria-selected="false"
+                aria-controls="vk-radar" id="vt-radar" data-kare="vk-radar">
+          <span class="vs-ikon gz-ikon" data-ikon="radar"></span>
+          <span class="vs-yazi">
+            <span class="vs-ad" data-i18n="ary.ss2">Radar Ayarları ve Kalibrasyon</span>
+            <span class="vs-alt" data-i18n="ary.ss2alt">Mevzi konumu, kuzey sapması,
+              menzil penceresi ve iz onay eşiği ayarlanır</span>
+          </span>
+        </button>
+        <button class="vs" role="tab" aria-selected="false"
+                aria-controls="vk-hedef" id="vt-hedef" data-kare="vk-hedef">
+          <span class="vs-ikon gz-ikon" data-ikon="hedef"></span>
+          <span class="vs-yazi">
+            <span class="vs-ad" data-i18n="ary.ss3">Hedef Sınıflandırma</span>
+            <span class="vs-alt" data-i18n="ary.ss3alt">Kural tabanlı sınıflandırıcı
+              hız ve yükseklik bandına göre iz türü atar</span>
+          </span>
+        </button>
+        <button class="vs" role="tab" aria-selected="false"
+                aria-controls="vk-gecmis" id="vt-gecmis" data-kare="vk-gecmis">
+          <span class="vs-ikon gz-ikon" data-ikon="gecmis"></span>
+          <span class="vs-yazi">
+            <span class="vs-ad" data-i18n="ary.ss5">Geçmiş Kayıt Yönetimi</span>
+            <span class="vs-alt" data-i18n="ary.ss5alt">Uçuş kayıtları benzersiz kod,
+              grafik ve antetli rapor çıktısı ile arşivlenir</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="vitrin-goruntu">
+        <div class="ss-cerceve">
+          <div class="ss-baslik">
+            <span class="nokta n1"></span><span class="nokta n2"></span><span class="nokta n3"></span>
+            <span class="yol">goktungu.com/app</span>
+          </div>
+          <div class="ss-kareler">
+            <!-- Her karede `<figcaption>`: gorsel tek basina baglami
+                 tasimiyor.  Alt yazi teknik olcut verir (protokol,
+                 mesaj, esik), boylece ekran goruntusu ne gosterdigi
+                 okunur ve gorsel guncellendiginde alt yazi yerinde
+                 kalir. -->
+            <figure class="vk" id="vk-ana" role="tabpanel"
+                    aria-labelledby="vt-ana">
+              <img src="/img/ss_ana_ekran.webp"
+                   alt="GÖKTUNGU ana komuta kontrol ekranı: üç boyutlu harita, yan paneller ve alt konsol">
+              <figcaption class="vk-alt" data-i18n="ary.c0">Yeniden boyutlandırılabilir
+                paneller, taşınabilir pencereler ve alt durum çubuğunda saha
+                istemcisi göstergeleri</figcaption>
+            </figure>
+            <figure class="vk" id="vk-baglanti" role="tabpanel"
+                    aria-labelledby="vt-baglanti" hidden>
+              <img src="/img/ss_baglanti.webp" loading="lazy"
+                   alt="Bağlantı yöneticisi penceresi: köprü altında gruplanmış bağlantı listesi">
+              <figcaption class="vk-alt" data-i18n="ary.c1">MAVLink v1/v2 · seri,
+                TCP, UDP ve sanal taşıma · seri port listesi sahadan bildirilir</figcaption>
+            </figure>
+            <figure class="vk" id="vk-radar" role="tabpanel"
+                    aria-labelledby="vt-radar" hidden>
+              <img src="/img/ss_radar.webp" loading="lazy"
+                   alt="Radar ayarları penceresi: mevzi konumu ve kalibrasyon alanları">
+              <figcaption class="vk-alt" data-i18n="ary.c2">Kutupsal ölçüm jeodezik
+                koordinata çevrilir · onay eşiği, zaman aşımı ve alfa filtreli hız
+                kestirimi</figcaption>
+            </figure>
+            <figure class="vk" id="vk-hedef" role="tabpanel"
+                    aria-labelledby="vt-hedef" hidden>
+              <img src="/img/ss_hedef.webp" loading="lazy"
+                   alt="Hedef sınıflandırma penceresi: sınıf eşikleri ve histerezis ayarları">
+              <figcaption class="vk-alt" data-i18n="ary.c3">Kural tabanlı sınıflandırıcı ·
+                en az örnek sayısı, histerezis ve karar eşiği ayarlanabilir</figcaption>
+            </figure>
+            <figure class="vk" id="vk-gecmis" role="tabpanel"
+                    aria-labelledby="vt-gecmis" hidden>
+              <img src="/img/ss_gecmis.webp" loading="lazy"
+                   alt="Geçmiş kayıt yönetimi penceresi: uçuş kayıtları ve rapor çıktısı">
+              <figcaption class="vk-alt" data-i18n="ary.c5">Benzersiz uçuş kodu ve QR ·
+                hız/irtifa grafikleri · antetli PDF rapor çıktısı</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== İSTEMCİLER =========================== -->
+<section id="istemciler">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="ist.etiket">İndirme Merkezi</div>
+      <h2 data-i18n="ist.baslik">Köprü yazılımı</h2>
+      <p data-i18n="ist.aciklama">
+        Köprü yazılımı saha bilgisayarınızda çalışır ve yerel bir web paneli
+        açar. Panele kurum hesabınızla giriş yapar, kurumunuzun logosunu
+        görürsünüz; üç servisi (Dron, GroundGCC, Radar)
+        buradan başlatır, durdurur ve konsol çıktılarını izlersiniz. Windows
+        ve Ubuntu için ayrı kurulum dosyaları yayımlanır; her ikisi de
+        yazılımı servis olarak kurar, açılışta kendiliğinden başlatır ve
+        Başlat menüsü ile masaüstüne kısayol ekler. Windows kurulumunda
+        Python gömülü gelir, başka bir şey kurmanız gerekmez.
+        Komuta kontrol arayüzü ayrıca indirilmez, tarayıcıdan açılır.
+      </p>
+    </div>
+
+    <!-- surum yenilikleri (baslik surumu katalogtan gelir) -->
+    <div class="yenilik-kutu">
+      <div class="yenilik-bas">
+        <span class="yenilik-rozet" data-i18n="yeni.rozet">Yeni</span>
+        <h3 data-i18n="yeni.baslik" data-surum-urun="kopru">Sürüm {s} ile gelenler</h3>
+      </div>
+      <div class="yenilik-izgara">
+        <div class="yenilik">
+          <h4 data-i18n="yeni.y1">Gerçek kurulum programı ve Windows servisi</h4>
+          <p data-i18n="yeni.y1alt">Windows için çift tıklanan bir kurulum
+          sihirbazı geldi: yönetici izni ister, Python'u gömülü getirir ve
+          köprüyü Windows Servis Denetim Yöneticisi'ne kaydeder — böylece
+          <em>services.msc</em> içinde görünür, kimse oturum açmadan önce
+          başlar ve çökerse kendini toparlar. Ubuntu için <em>.deb</em>
+          paketi yayımlanır; <em>apt</em> ile kurulur ve kendi servis
+          kullanıcısıyla systemd sistem servisi olarak çalışır. Yeni
+          dosyayı kurmak yerinde yükseltme yapar; ayarlarınız ve merkez
+          kaydınız korunur.</p>
+        </div>
+        <div class="yenilik">
+          <h4 data-i18n="yeni.y2">Köprü grupları</h4>
+          <p data-i18n="yeni.y2alt">Merkezdeki bağlantı yöneticisinde kurumun
+          çevrimiçi köprüleri ad ve adresleriyle gruplanır; dron ve radar
+          bağlantıları kendi köprüsünün altında listelenir. Adres veya
+          port yazmanız gerekmez.</p>
+        </div>
+        <div class="yenilik">
+          <h4 data-i18n="yeni.y3">Kesintide yerel kayıt</h4>
+          <p data-i18n="yeni.y3alt">Merkez bağlantısı koptuğunda köprü uçuş
+          verisini yerel diske yazar. Bağlantı döndüğünde canlı akış
+          kesintisiz sürer; kesinti boyunca tutulan kayıt korunur ve panelde
+          boyutuyla görünür.</p>
+        </div>
+        <div class="yenilik">
+          <h4 data-i18n="yeni.y4">Tek örnek güvencesi</h4>
+          <p data-i18n="yeni.y4alt">Aynı bilgisayarda ikinci bir köprü örneği
+          başlatılamaz. Aynı kurulum kimliğini paylaşan iki örneğin merkez
+          oturumunu karşılıklı düşürmesi böylece kaynağında engellenir.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- v2.9.0: indirme kartlari ve SHA tablosu KALDIRILDI.
+         Karar (kullanici): kurulum dosyalari siteden dogrudan
+         indirilmez, yalniz kurum hesabiyla girilen kurumsal panelden
+         dagitilir.  Sunucu tarafi bunu zaten uyguluyordu (oturumsuz
+         istek 403), dolayisiyla buradaki kartlarin indirme dugmeleri
+         404'e gidiyordu: olu baglantilar da boylece ortadan kalkti.
+         SHA-256 dogrulamasi kurumsal panelde indirme aninda gosterilir. -->
+    <div class="ist-kapi">
+      <div class="ist-kapi-ic">
+        <div class="ist-kapi-yazi">
+          <h3 data-i18n="ist.kapiBaslik">Kurulum dosyaları kurumsal panelden dağıtılır</h3>
+          <p data-i18n="ist.kapiAciklama">
+            Köprü yazılımı ve Merkez Uygulama kurulum dosyaları bu sayfadan
+            doğrudan indirilemez. Kurum hesabınızla kurumsal panele giriniz;
+            kurumunuza tanımlı ürünlerin Windows ve Ubuntu kurulum dosyaları,
+            sürüm geçmişi ve SHA-256 bütünlük özetleriyle birlikte orada
+            listelenir. Böylece her indirme kurum kimliğine bağlı kalır ve
+            lisans kapsamı dışındaki dağıtım önlenir.
+          </p>
+          <div class="ist-kapi-dg">
+            <!-- Kapi dugmesi de giris katmanini acar: ziyaretcinin
+                 oturumu yoksa /company/ zaten giris formu gosterir,
+                 pilot rolundeyse 403 alirdi.  Katman her iki durumu
+                 dogru karsilar. `href` korunur ki JavaScript kapali
+                 tarayicida ve yeni sekmede acmada baglanti calissin. -->
+            <a href="/company/" class="dg dg-birincil" data-gk-ac="giris"
+               data-i18n="ist.kapiDg">Kurumsal Panele Giriş</a>
+            <a href="#fiyat" class="dg dg-ikincil" data-i18n="ist.kapiDg2">Üyelik Koşulları</a>
+          </div>
+        </div>
+        <ul class="ist-kapi-liste">
+          <li>
+            <span class="ik" aria-hidden="true">1</span>
+            <span data-i18n="ist.kapiA1">Kurum hesabıyla kurumsal panele giriş yapılır.</span>
+          </li>
+          <li>
+            <span class="ik" aria-hidden="true">2</span>
+            <span data-i18n="ist.kapiA2">Kurumunuza tanımlı ürünler ve sürümleri listelenir.</span>
+          </li>
+          <li>
+            <span class="ik" aria-hidden="true">3</span>
+            <span data-i18n="ist.kapiA3">İşletim sisteminize uygun kurulum dosyası indirilir.</span>
+          </li>
+          <li>
+            <span class="ik" aria-hidden="true">4</span>
+            <span data-i18n="ist.kapiA4">SHA-256 özeti indirme anında gösterilir ve doğrulanır.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ist-not" data-i18n="ist.not" data-i18n-html>
+      <strong>Kurulum ve güncelleme.</strong> Windows'ta
+      <code>GOKTUNGU-Kopru-Setup.exe</code> çift tıklanır; kurulum sihirbazı
+      yönetici izni ister, yazılımı
+      <code>C:\Program Files\Goktungu\Kopru</code> altına kurar ve
+      <em>Windows servisi</em> olarak kaydeder. Python gömülü gelir,
+      ayrıca kurmanız gerekmez. Ubuntu'da <code>.deb</code> paketi
+      <code>apt</code> ile kurulur; yazılım <code>/opt/goktungu/kopru</code>
+      altına yerleşir ve systemd sistem servisi olarak çalışır. Her iki
+      platformda servis bilgisayar açılışında, <strong>kimse oturum
+      açmasa da</strong> kendiliğinden başlar ve beklenmedik biçimde
+      durursa kendini yeniden başlatır. Kurulum, Başlat menüsüne ve
+      masaüstüne kısayol ekler. Güncellemede yeni kurulum dosyası
+      çalıştırılır: servis durdurulur, dosyalar değiştirilir, servis
+      yeniden başlatılır; ayarlarınız, kurulum kimliğiniz ve kesinti
+      kaydınız korunur.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ KURULUM ============================ -->
+<section id="kurulum" class="koyu">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="kur.etiket">Kurulum</div>
+      <h2 data-i18n="kur.baslik">Dört adımda devreye alma</h2>
+    </div>
+
+    <div class="adimlar">
+      <div class="adim">
+        <h3 data-i18n="kur.a1">Kurum Kaydı</h3>
+        <p data-i18n="kur.a1alt">Kurumsal panelden vergi kimlik numarası, ünvan, adres
+        ve logo ile kurum kaydı oluşturulur; yönetici hesabı belirlenir ve
+        pilotlar bu hesap altında tanımlanır.</p>
+      </div>
+      <div class="adim">
+        <h3 data-i18n="kur.a2">Köprüyü Kur</h3>
+        <p data-i18n="kur.a2alt">İşletim sisteminize ait kurulum dosyası
+        indirilip çalıştırılır. Windows'ta setup sihirbazı yönetici izni
+        ister ve yazılımı servis olarak kaydeder; Python gömülü geldiği
+        için ayrıca kurulum gerekmez. Ubuntu'da paket <code>apt</code> ile
+        kurulur ve systemd servisi olarak devreye girer.</p>
+        <code data-surum-yaz="sudo apt install ./goktungu-kopru_{s}_all.deb" data-surum-urun="kopru">sudo apt install ./goktungu-kopru_1.4.2_all.deb</code>
+      </div>
+      <div class="adim">
+        <h3 data-i18n="kur.a3">Merkeze Kaydol</h3>
+        <p data-i18n="kur.a3alt">Köprü paneli tarayıcıda
+        <code>http://127.0.0.1:8790</code> adresinde açılır. Kurum
+        hesabınızla giriş yapılır ve köprüye bir ad verilerek merkeze
+        kaydedilir. Köprü bundan sonra açılışta kendiliğinden başlar.</p>
+      </div>
+      <div class="adim">
+        <h3 data-i18n="kur.a4">Harekâta Başla</h3>
+        <p data-i18n="kur.a4alt">Komuta kontrol arayüzü
+        <code>https://goktungu.com/app/</code> adresinden açılır.
+        Bağlantı yöneticisinde köprünüz adı ve adresiyle görünür; dron ve
+        radar bağlantıları bu grubun altında tanımlanır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ GÜVENLİK ============================ -->
+<section id="guvenlik">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="guv.etiket">Güvenlik</div>
+      <h2 data-i18n="guv.baslik">Kurumsal güvenlik disiplini</h2>
+      <p data-i18n="guv.aciklama">
+        Köprü yazılımı ile merkez arasındaki tüm iletişim şifrelidir.
+        Kurum verileri kiracı düzeyinde yalıtılır ve dağıtılan her paket
+        imzalanır.
+      </p>
+    </div>
+
+    <div class="guv-izgara">
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g1">Yalnızca Giden Bağlantı</h4>
+          <p data-i18n="guv.g1alt">Köprü merkeze giden tek yönlü şifreli bağlantı
+          açar. Kurum güvenlik duvarında gelen port açılması gerekmez; saha
+          bilgisayarı internetten erişilebilir hale gelmez.</p>
+        </div>
+      </div>
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g2">Şifre Arayüze Gönderilmez</h4>
+          <p data-i18n="guv.g2alt">Merkez hesap şifresi yalnızca sunucu tarafında
+          tutulur; arayüze hiçbir koşulda gönderilmez, ekranda yalnızca
+          tanımlı olduğu bilgisi gösterilir.</p>
+        </div>
+      </div>
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g3">Tek Kullanımlı Kurulum Sırrı</h4>
+          <p data-i18n="guv.g3alt">Kayıt sırasında üretilen gizli anahtar merkezde
+          yalnızca özetiyle saklanır ve bir daha gösterilmez; kaybedilirse
+          yenilenmesi gerekir.</p>
+        </div>
+      </div>
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g4">İmzalı Dağıtım</h4>
+          <p data-i18n="guv.g4alt">Tüm dağıtım paketleri Ed25519 ile imzalanır.
+          Yazılım, indirdiği paketin imzasını gömülü açık anahtarla
+          doğrulamadan kurulumu uygulamaz; her dosya için SHA-256 özeti
+          yayımlanır.</p>
+        </div>
+      </div>
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g5">Kiracı Yalıtımı</h4>
+          <p data-i18n="guv.g5alt">Kullanıcılar, dronlar, uçuş kayıtları
+          ve telemetri arşivi merkez veritabanında kurumunuzun kiracı
+          kimliği altında tutulur; kurumlar arası erişim veri katmanında
+          engellenir.</p>
+        </div>
+      </div>
+      <div class="guv">
+        <span class="ik">&#10003;</span>
+        <div>
+          <h4 data-i18n="guv.g6">Kesintide Veri Kaybı Yok</h4>
+          <p data-i18n="guv.g6alt">Merkez bağlantısı koptuğunda köprü uçuş
+          verisini saha bilgisayarının diskine yazar; kesinti boyunca kaydedilen
+          bölüm korunur ve panelde boyutuyla görünür. Disk sınırı aşılırsa en
+          eski kayıt korunur, en yeni veri atılır: arıza incelemesinde kritik
+          olan bölüm kesintinin başındadır.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= FIYATLANDIRMA ========================= -->
+<!-- Bolum sirasi koyu/acik donusumludur: kurulum(koyu) -> guvenlik(acik)
+     -> fiyat(KOYU) -> cta(acik).  class="koyu" kaldirilirsa guvenlik ile
+     yan yana iki acik bolum olusur. -->
+<section id="fiyat" class="koyu">
+  <div class="ic">
+    <div class="bolum-bas">
+      <div class="bolum-etiket" data-i18n="fiy.etiket">Fiyatlandırma</div>
+      <h2 data-i18n="fiy.baslik">Üyelik ücretsiz, kadronuz kadar ödeyin</h2>
+      <p data-i18n="fiy.aciklama">
+        Kurum üyeliği, bir yönetici ve bir pilot koltuğu ücretsizdir; komuta
+        kontrol arayüzü, köprü yazılımı, radar füzyonu ve uçuş kayıtları bu
+        kapsamda sınırsız kullanılır. Ücret yalnızca ek pilot koltuğu ve
+        yapay zekâ özelliği için doğar. Yıllık ödemede on iki ay yerine
+        yaklaşık on ay ödenir.
+      </p>
+    </div>
+
+    <!-- Aylik / yillik secici -->
+    <div class="fiy-secici" role="group" aria-label="Ödeme dönemi">
+      <button type="button" class="fiy-sec etkin" data-donem="aylik"
+              data-i18n="fiy.aylik">Aylık</button>
+      <button type="button" class="fiy-sec" data-donem="yillik"
+              data-i18n="fiy.yillik">Yıllık</button>
+      <span class="fiy-indirim" id="fiyIndirim"
+            data-i18n="fiy.indirim">yıllıkta %20 indirim</span>
+    </div>
+    <!-- === GELIR MODELI v2 (paketler tablosu) === -->
+    <!-- PARA BIRIMI SECICI
+         iyzico kisiti: yabanci para biriminde yalniz yabanci kart
+         kullanilabilir. Bu yuzden TRY ve USD ayri gosterilir; kur
+         donusumu YAPILMAZ, iki bagimsiz fiyat listesi tutulur. -->
+    <div class="fiy-secici fiy-para-secici" role="group"
+         aria-label="Para birimi">
+      <button type="button" class="fiy-sec etkin" data-para="TRY"
+              data-i18n="fiy.paraTry">₺ Türk lirası</button>
+      <button type="button" class="fiy-sec" data-para="USD"
+              data-i18n="fiy.paraUsd">$ ABD doları</button>
+      <span class="fiy-para-not" id="fiyParaNot" data-i18n="fiy.paraNot">
+        yurt dışı kart gerekir</span>
+    </div>
+
+    <div class="fiy-izgara">
+
+      <!-- Baslangic -->
+      <div class="fiy-kart" data-paket="baslangic">
+        <div class="fiy-ust">
+          <h3 data-i18n="fiy.k1ad">Başlangıç</h3>
+          <div class="fiy-tutar">
+            <span class="fiy-sayi" data-i18n="fiy.ucretsiz">Ücretsiz</span>
+          </div>
+          <p class="fiy-alt" data-i18n="fiy.k1alt">Kurum üyeliği, bir yönetici
+          ve bir pilot koltuğu</p>
+        </div>
+        <ul class="fiy-liste">
+          <li data-i18n="fiy.k1m1">Komuta kontrol arayüzü — tarayıcıdan</li>
+          <li data-i18n="fiy.k1m2">Köprü yazılımı — Windows ve Ubuntu</li>
+          <li data-i18n="fiy.k1m3">Sınırsız dron ve bağlantı</li>
+          <li data-i18n="fiy.k1m4">Uçuş kayıtları, raporlar ve grafikler</li>
+          <li data-i18n="fiy.k1m5">Rota planlama, sürü uçuşu ve angajman</li>
+        </ul>
+        <a href="/company/" class="dg dg-ikincil" data-gk-ac="kayit"
+           data-i18n="fiy.k1dg">Kurum Kaydı Oluştur</a>
+      </div>
+
+      <!-- Pilot koltugu -->
+      <div class="fiy-kart onerilen" data-paket="profesyonel">
+        <span class="onerilen-et" data-i18n="fiy.onerilen">en çok tercih edilen</span>
+        <div class="fiy-ust">
+          <h3 data-i18n="fiy.k2ad">Profesyonel</h3>
+          <div class="fiy-tutar">
+            <span class="fiy-para" data-para-simge>₺</span><span class="fiy-sayi"
+              data-fiyat data-aylik="990" data-yillik="9504">990</span><span
+              class="fiy-donem" data-donem-etiket data-i18n="fiy.ayBasi">/ay</span>
+          </div>
+          <p class="fiy-alt" data-i18n="fiy.k2alt">Pilot koltuğu başına aylık;
+          kadronuz kadar ödersiniz</p>
+        </div>
+        <ul class="fiy-liste">
+          <li data-i18n="fiy.k2m1">Pilota ait hesap ve kimlik doğrulaması</li>
+          <li data-i18n="fiy.k2m2">Kalkış kontrol listesi ve imzalı kayıt</li>
+          <li data-i18n="fiy.k2m3">Kendi uçuş geçmişi ve raporları</li>
+          <li data-i18n="fiy.k2m4">Pilotlar arası canlı mesajlaşma</li>
+          <li data-i18n="fiy.k2m5">Sürü uçuşu, rota planlama ve angajman</li>
+        </ul>
+        <div class="fiy-paketler">
+          <div class="fiy-paket">
+            <span data-i18n="fiy.koltukEsik">Ücretsiz taban koltuk</span>
+            <strong data-i18n="fiy.koltukBir">1 koltuk dahil</strong>
+          </div>
+          <div class="fiy-paket">
+            <span data-i18n="fiy.yillikEsit">Yıllık ödemede</span>
+            <strong><span class="fiy-para" data-para-simge>₺</span><span
+              data-yillik-ayl>792</span><span
+              data-i18n="fiy.ayBasi">/ay</span></strong>
+          </div>
+        </div>
+        <a href="/company/" class="dg dg-birincil" data-gk-ac="giris"
+           data-i18n="fiy.k2dg">Koltuk Ekle</a>
+      </div>
+
+      <!-- Yapay zeka -->
+      <div class="fiy-kart" data-paket="kurumsal_bulut">
+        <div class="fiy-ust">
+          <h3 data-i18n="fiy.k3ad">Kurumsal Bulut</h3>
+          <div class="fiy-tutar">
+            <span class="fiy-para" data-para-simge>₺</span><span class="fiy-sayi"
+              data-fiyat data-aylik="16900" data-yillik="162240">16900</span><span
+              class="fiy-donem" data-donem-etiket data-i18n="fiy.ayBasi">/ay</span>
+          </div>
+          <p class="fiy-alt" data-i18n="fiy.k3alt">Sınırsız pilot koltuğu;
+          yapay zekâ ve radar füzyonu dahil</p>
+        </div>
+        <ul class="fiy-liste">
+          <li data-i18n="fiy.k3m1">Sınırsız pilot koltuğu ve araç</li>
+          <li data-i18n="fiy.k3m2">Yapay zekâ: nesne, araç ve plaka tespiti</li>
+          <li data-i18n="fiy.k3m3">Radar füzyonu ve angajman zinciri</li>
+          <li data-i18n="fiy.k3m4">Yer Kontrol İstasyonu Dual arayüzü</li>
+          <li data-i18n="fiy.k3m5">Öncelikli destek ve uçuş kaydı arşivi</li>
+        </ul>
+        <a href="/company/" class="dg dg-ikincil" data-gk-ac="giris"
+           data-i18n="fiy.k3dg">Kurumsal Görüşme</a>
+      </div>
+
+      <!-- Merkez Uygulama -->
+      <div class="fiy-kart merkez" data-paket="GTU-MERKEZ">
+        <div class="fiy-ust">
+          <h3 data-i18n="fiy.k4ad">Şirket İçi Lisans</h3>
+          <div class="fiy-tutar">
+            <span class="fiy-para">$</span><span class="fiy-sayi"
+              data-fiyat-tek="GTU-MERKEZ">45.000</span><span
+              class="fiy-donem" data-i18n="fiy.baslangicFiyat">'den başlar</span>
+          </div>
+          <p class="fiy-alt" data-i18n="fiy.k4alt">Kurumunuzun kendi
+          sunucusunda çalışan tam sürüm — süresiz kullanım hakkı</p>
+        </div>
+        <ul class="fiy-liste">
+          <li data-i18n="fiy.k4m1">Sınırsız pilot koltuğu ve araç</li>
+          <li data-i18n="fiy.k4m2" data-i18n-html><strong>Kapalı devre çalışma</strong> — internet bağlantısı gerekmez</li>
+          <li data-i18n="fiy.k4m3">Windows kurulum dosyası ve Ubuntu paketi</li>
+          <li data-i18n="fiy.k4m4">İlk açılışta PostgreSQL kurulum sihirbazı</li>
+          <li data-i18n="fiy.k4m5">Köprü yazılımıyla aynı bilgisayarda çalışabilir</li>
+          <li data-i18n="fiy.k4m6">Kuruma özel, Ed25519 imzalı lisans dosyası</li>
+        </ul>
+        <!-- SKU basamaklari: canli fiyat ucundan doldurulur -->
+        <div class="fiy-sku" id="fiySku">
+          <div class="fiy-sku-satir" data-paket="GTU-MERKEZ">
+            <span class="fiy-sku-ad">GTU-MERKEZ</span>
+            <span class="fiy-sku-not" data-i18n="fiy.skuMerkez">çekirdek komuta kontrol</span>
+            <strong class="fiy-sku-tutar">$45.000</strong>
+          </div>
+          <div class="fiy-sku-satir" data-paket="GTU-MERKEZ-YZ">
+            <span class="fiy-sku-ad">GTU-MERKEZ-YZ</span>
+            <span class="fiy-sku-not" data-i18n="fiy.skuYz">+ yapay zekâ modülü</span>
+            <strong class="fiy-sku-tutar">$65.000</strong>
+          </div>
+          <div class="fiy-sku-satir" data-paket="GTU-RADAR">
+            <span class="fiy-sku-ad">GTU-RADAR</span>
+            <span class="fiy-sku-not" data-i18n="fiy.skuRadar">+ radar füzyonu ve GCCDUAL</span>
+            <strong class="fiy-sku-tutar">$120.000</strong>
+          </div>
+          <div class="fiy-sku-satir" data-paket="GTU-TAM">
+            <span class="fiy-sku-ad">GTU-TAM</span>
+            <span class="fiy-sku-not" data-i18n="fiy.skuTam">tüm modüller dahil</span>
+            <strong class="fiy-sku-tutar">$180.000</strong>
+          </div>
+        </div>
+        <p class="fiy-bakim" data-i18n="fiy.bakimNot" data-i18n-html>
+          İlk yıl bakım ve güncelleme <strong>dahildir</strong>. Sonraki
+          yıllarda lisans bedelinin <strong>%18</strong>'i oranında bakım
+          bedeli uygulanır. <strong>Bakım süresi bittiğinde sistem
+          çalışmaya devam eder</strong>; yalnızca yeni sürüm ve destek
+          hakkı durur.
+        </p>
+        <a href="/company/" class="dg dg-ikincil" data-gk-ac="giris"
+           data-i18n="fiy.k4dg">Lisans Talep Et</a>
+      </div>
+
+    </div>
+
+    <!-- Radar / GCCDUAL: satista degil -->
+    <div class="fiy-not" data-i18n="fiy.notRadar" data-i18n-html>
+      <strong>Radar füzyonu ve GCCDUAL çift ekranlı yer kontrol istasyonu
+      abonelik katmanında satışa açık değildir.</strong> Bu modüller yalnızca
+      şirket içi lisans basamakları (<strong>GTU-RADAR</strong>,
+      <strong>GTU-TAM</strong>) kapsamında ya da kurum bazında sistem üst
+      yöneticisinin tanımlamasıyla açılır; donanım uyumluluğu, eğitim ve
+      mevzuat şartları ayrıca değerlendirilir. Kurumunuzda tanımlıysa köprü
+      yazılımının menüsünde ve komuta kontrol arayüzünde kendiliğinden
+      görünür, tanımlı değilse hiç görünmez.
+    </div>
+
+    <!-- On talep degerlendirme -->
+    <div class="fiy-talep">
+      <h3 data-i18n="fiy.talepBaslik">Ön talep değerlendirmesi</h3>
+      <p data-i18n="fiy.talepAciklama" data-i18n-html>
+        GÖKTUNGU savunma sanayii kapsamında bir harekât sistemidir; üyelikler
+        serbest kayıtla kendiliğinden açılmaz. Kurum kaydı oluşturduğunuzda
+        başvurunuz <strong>ön talep değerlendirmesine</strong> alınır: kurum
+        kimliği, faaliyet alanı ve kullanım amacı incelenir. Değerlendirme
+        sonucunda sistem yöneticisi kurumunuza uygun üyeliği tanımlar;
+        <strong>ödeme akışı gerektirmeyen doğrudan tanımlama</strong> da buna
+        dahildir. Kamu kurumları, savunma sanayii kuruluşları ve araştırma
+        kurumları için koltuk sayısı, yapay zekâ özelliği ve Merkez Uygulama
+        lisansı proje bazında değerlendirilir.
+      </p>
+      <div class="fiy-adimlar">
+        <div class="fiy-adim">
+          <span class="no">1</span>
+          <div>
+            <h4 data-i18n="fiy.t1">Kurum kaydı</h4>
+            <p data-i18n="fiy.t1alt">Kurum unvanı, vergi bilgisi ve yetkili kişi
+            bilgileriyle kurumsal panelden kayıt oluşturulur.</p>
+          </div>
+        </div>
+        <div class="fiy-adim">
+          <span class="no">2</span>
+          <div>
+            <h4 data-i18n="fiy.t2">Değerlendirme</h4>
+            <p data-i18n="fiy.t2alt">Başvuru incelenir; gerekirse kullanım
+            amacı ve harekât kapsamı için görüşme talep edilir.</p>
+          </div>
+        </div>
+        <div class="fiy-adim">
+          <span class="no">3</span>
+          <div>
+            <h4 data-i18n="fiy.t3">Üyelik tanımı</h4>
+            <p data-i18n="fiy.t3alt">Onaylanan kuruma ücretsiz taban üyelik açılır;
+            talep edilen koltuk, yapay zekâ ve modül yetkileri tanımlanır.</p>
+          </div>
+        </div>
+        <div class="fiy-adim">
+          <span class="no">4</span>
+          <div>
+            <h4 data-i18n="fiy.t4">Kullanıma geçiş</h4>
+            <p data-i18n="fiy.t4alt">Köprü yazılımı indirilir, pilot kadrosu
+            kurumsal panelden tanımlanır ve harekât resmi oluşturulur.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kosullar -->
+    <div class="fiy-kosul">
+      <h4 data-i18n="fiy.kosulBaslik">Ödeme ve kapsam koşulları</h4>
+      <ul>
+        <li data-i18n="fiy.ks1" data-i18n-html><strong>Yurt içi ödemeler
+        Türk lirası, yurt dışı ödemeler ABD doları cinsindendir.</strong>
+        Tahsilat <strong>Gökkubbe Teknoloji Anonim Şirketi</strong> adına
+        iyzico altyapısı üzerinden yapılır (VKN 6290873411). Yabancı para
+        biriminde ödeme için yurt dışı kart gerekir.</li>
+        <li data-i18n="fiy.ks2" data-i18n-html><strong>Üyelik ve rol yönetimi
+        kurumsal panelden yapılır.</strong> Pilot ekleme, rol değiştirme ve
+        koltuk satın alma işlemleri komuta kontrol arayüzünden değil, kurum
+        yöneticisinin panelinden yürütülür.</li>
+        <li data-i18n="fiy.ks3" data-i18n-html><strong>Mevcut pilotlarınız
+        kilitlenmez.</strong> Ücretsiz koltuk dolduğunda yeni pilot eklemek için
+        koltuk satın alınır; hiçbir durumda tanımlı pilotun erişimi kesilmez.</li>
+        <li data-i18n="fiy.ks4" data-i18n-html><strong>Yıllık ödemede indirim
+        %20'dir.</strong> Yıllık tutarlar on iki ay yerine yaklaşık on ay
+        karşılığıdır.</li>
+        <li data-i18n="fiy.ks5" data-i18n-html><strong>Komuta kontrol
+        arayüzü masaüstü tarayıcısı içindir.</strong> Köprü yazılımı Windows
+        ve Ubuntu için yayımlanır; ayrıca <strong>DJI</strong> ve
+        <strong>MAVLink</strong> araçları için Android köprü uygulamaları
+        sunulur. Android uygulamaları yalnızca köprü görevi görür, komuta
+        arayüzünün yerini almaz.</li>
+        <li data-i18n="fiy.ks6" data-i18n-html><strong>Merkez Uygulama lisansı
+        kuruma özeldir.</strong> İmzalı lisans dosyası yalnızca tanımlı kurumda
+        geçerlidir; yazılım kaldırılırken lisans dosyası korunur.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================== CTA ============================== -->
+<section id="cta">
+  <div class="ic">
+    <h2 data-i18n="cta.baslik">Sisteme erişin</h2>
+    <p data-i18n="cta.aciklama">
+      Kurumunuz adına kayıt oluşturun, pilot kadronuzu tanımlayın ve köprü
+      yazılımını kurarak harekât resminizi oluşturun.
+    </p>
+    <div class="dgler">
+      <a href="/company/" class="dg dg-birincil dg-buyuk" data-gk-ac="kayit"
+         data-i18n="cta.dg1">Kurum Kaydı Oluştur</a>
+      <a href="/app/" class="dg dg-ikincil dg-buyuk" data-i18n="cta.dg2">Komuta Kontrol Arayüzü</a>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== ALT BİLGİ =========================== -->
+<footer>
+  <div class="ic">
+    <div class="ft-ust">
+      <div class="ft-marka">
+        <!-- v2.12.3: alt bilgide firma logosu yerine urun logosu.  Burada
+             alt yazili TAM surum kullanilir (30 px'te okunuyor). -->
+        <img class="koyu" src="/img/goktungu.webp" alt="GÖKTUNGU Komuta Kontrol">
+        <img class="acik" src="/img/goktungu_acik.webp" alt="GÖKTUNGU Komuta Kontrol">
+        <p data-i18n="ft.tanim">
+          GÖKTUNGU, alçak irtifa hava sahası farkındalığı için radar ve
+          insansız hava aracı kaynaklarını tek harekât resminde birleştiren
+          komuta kontrol sistemidir.
+        </p>
+      </div>
+
+      <div class="ft-kol">
+        <h5 data-i18n="ft.sistem">Sistem</h5>
+        <a href="#mimari" data-i18n="menu.mimari">Mimari</a>
+        <a href="#yetenekler" data-i18n="menu.yetenekler">Yetenekler</a>
+        <a href="#platformlar" data-i18n="menu.platformlar">Platformlar</a>
+        <a href="#guvenlik" data-i18n="menu.guvenlik">Güvenlik</a>
+      </div>
+
+      <div class="ft-kol">
+        <h5 data-i18n="ft.erisim">Erişim</h5>
+        <a href="/app/" data-i18n="cta.dg2">Komuta Kontrol Arayüzü</a>
+        <!-- Alt bilgideki bu baglanti dogrudan /company/ adresine
+             gidiyordu.  Pilot rolundeki kullanici oraya girdiginde
+             artik 403 alir; bunun yerine giris katmani acilir ve
+             oturum durumuna gore dogru yere yonlendirilir.  Oturumu
+             olan kurum yoneticisi menuden ayri sekmede acabilir. -->
+        <a href="/company/" data-gk-ac="giris"
+           data-i18n="menu.kurumsal">Kurumsal Panel</a>
+        <a href="#istemciler" data-i18n="ft.istemciindir">Saha Yazılımı</a>
+        <a href="#kurulum" data-i18n="ft.kurulum">Kurulum</a>
+        <a href="/yardim/" data-destek-bag="" data-i18n="ft.yardim">Destek Merkezi</a>
+      </div>
+
+      <div class="ft-kol">
+        <h5 data-i18n="ft.yasal">Yasal</h5>
+        <a href="/yasal/gizlilik/" data-i18n="ft.gizlilik">Gizlilik Politikası</a>
+        <a href="/yasal/kvkk/" data-i18n="ft.kvkk">KVKK Aydınlatma Metni</a>
+        <a href="/yasal/kullanim/" data-i18n="ft.kullanim">Kullanım Şartları</a>
+        <a href="/yasal/cerez/" data-i18n="ft.cerez">Çerez Politikası</a>
+      </div>
+
+      <div class="ft-kol">
+        <h5 data-i18n="ft.iletisim">İletişim</h5>
+        <div>Sincan, Ankara</div>
+        <div data-i18n="ft.ulke">Türkiye</div>
+        <a href="https://goktungu.com" rel="noopener">goktungu.com</a>
+      </div>
+    </div>
+
+    <div class="ft-alt">
+      <div class="kunye">
+        <!-- v2.12.3: firma kunyesi YALNIZ burada gorunur (kullanici
+             karari).  Urun adi GOKTUNGU, sahiplik Gokkubbe. -->
+        &copy; <span id="yil">2026</span> <span data-i18n="ft.kunye">Gökkubbe Teknoloji Anonim Şirketi.
+        Tüm hakları saklıdır. GÖKTUNGU, Gökkubbe Teknoloji Anonim Şirketi ürünüdür.</span>
+      </div>
+      <!-- URUN surumu: /surumler.json katalogundan gelir (js/sayfa.js).
+           Sitenin KENDI surumu ayri yurutulur; asagidaki baglanti
+           site surum defterini acar (js/surum_verisi.js). -->
+      <div data-i18n="ft.surum">Sürüm {s}</div>
+      <button type="button" class="ft-defter" data-surum-defter
+              data-i18n-attr="title:ft.defterIpucu"
+              title="Site sürüm defterini aç">
+        <span data-i18n="ft.defter">Site sürümü</span>
+        <span data-surum-rozet>v—</span>
+      </button>
+    </div>
+  </div>
+</footer>
+
+<!-- ======================== ÇEREZ BİLDİRİMİ ======================== -->
+<!-- ================= GIRIS / KAYIT KATMANI =================
+     Kullanici karari (2026-08-16): "kurumsal panele girmeden tanitim
+     sayfasindan login ve register olsun."
+
+     NEDEN IKI AYRI <form>: tek formda alan gizleyip gostermek yerine
+     iki ayri form kullanilir.  Boylece tarayicinin `required`
+     dogrulamasi gizli alanlari KAPSAMAZ ve sifre yoneticisi giris ile
+     kayit alanlarini karistirmaz (autocomplete degerleri farklidir:
+     `current-password` / `new-password`).
+
+     Katman baslangicta kapalidir; `data-gk-ac` tasiyan dugmeler acar.
+     ================================================================= -->
+<div id="gkKatman" role="dialog" aria-modal="true" aria-hidden="true"
+     aria-labelledby="gkGirisBaslik">
+  <!-- ---------------- GIRIS ---------------- -->
+  <form class="gk-kart gk-form" id="gkGirisForm" method="post"
+        action="about:blank" autocomplete="on">
+    <button type="button" class="gk-kapat" id="gkKapat"
+            aria-label="Kapat">&times;</button>
+    <h2 id="gkGirisBaslik" data-i18n="gk.girisBaslik">Kurum Girişi</h2>
+    <p class="gk-alt" data-i18n="gk.girisAlt">
+      Kurum hesabınızla giriş yapın; harekât arayüzü ve müşteri paneli
+      aynı oturumu paylaşır.
+    </p>
+    <label for="gkEposta" data-i18n="gk.eposta">E-posta</label>
+    <input id="gkEposta" name="eposta" type="email" required
+           autocomplete="username" inputmode="email"
+           data-i18n-attr="placeholder:gk.epostaIpucu"
+           placeholder="ad.soyad@kurum.com.tr">
+    <label for="gkSifre" data-i18n="gk.sifre">Şifre</label>
+    <input id="gkSifre" name="sifre" type="password" required
+           autocomplete="current-password">
+    <button type="submit" class="dg dg-birincil gk-gonder" id="gkGirisDg"
+            data-i18n="gk.girisDg">Giriş Yap</button>
+    <div class="gk-hata" id="gkGirisHata" role="alert"></div>
+    <p class="gk-not">
+      <span data-i18n="gk.kayitSor">Kurum hesabınız yok mu?</span>
+      <a href="#" id="gkKayitAc" data-i18n="gk.kayitAc">Kurumunuzu kaydedin</a>
+      <span data-i18n="gk.veya">veya</span>
+      <a href="#" id="gkBireyselAc2" data-i18n="gk.bireyselAc">bireysel
+        hesap açın</a>.
+    </p>
+    <!-- Tema dugmesi katmanda da bulunur: kullanici oturum acmadan
+         once de gunduz/gece secebilsin.  Katman tam ekran oldugu icin
+         ust seritteki dugmeye erisilemez. -->
+    <div class="gk-tema">
+      <button type="button" data-tema-dugme></button>
+    </div>
+  </form>
+
+  <!-- ---------------- KAYIT ---------------- -->
+  <form class="gk-kart gk-form gk-kayit" id="gkKayitForm" method="post"
+        action="about:blank" autocomplete="on" hidden>
+    <button type="button" class="gk-kapat" id="gkKapat2"
+            aria-label="Kapat" data-gk-kapat>&times;</button>
+    <h2 data-i18n="gk.kayitBaslik">Kurum Kaydı</h2>
+    <p class="gk-alt" data-i18n="gk.kayitAlt">
+      Kurumunuzu kaydedin; deneme aboneliği hemen açılır. İlk pilot ve
+      yönetici hesabı ücretsizdir.
+    </p>
+    <!-- FAZ18-IS24-BAKIM-KIPI: bakim bandi. Bos kalir; oturum.js
+         /api/genel/bakim yanitina gore doldurur ve gosterir. -->
+    <div class="gk-bakim" id="gkBakimKayit" role="status" hidden></div>
+    <div class="gk-bolum" data-i18n="gk.bolumKurum">Kurum</div>
+    <label for="gkKUnvan" data-i18n="gk.unvan">Kurum ünvanı</label>
+    <input id="gkKUnvan" name="unvan" type="text" required minlength="3"
+           autocomplete="organization"
+           data-i18n-attr="placeholder:gk.unvanIpucu"
+           placeholder="Örn. Gökkubbe Teknoloji A.Ş.">
+    <div class="gk-ikili">
+      <div>
+        <label for="gkKVergi" data-i18n="gk.vergi">Vergi numarası</label>
+        <input id="gkKVergi" name="vergi_no" type="text"
+               inputmode="numeric" autocomplete="off">
+      </div>
+      <div>
+        <label for="gkKTelefon" data-i18n="gk.telefon">Telefon</label>
+        <input id="gkKTelefon" name="telefon" type="tel"
+               autocomplete="tel" placeholder="+90...">
+      </div>
+    </div>
+    <label for="gkKAdres" data-i18n="gk.adres">Adres</label>
+    <input id="gkKAdres" name="adres" type="text"
+           autocomplete="street-address">
+    <div class="gk-bolum" data-i18n="gk.bolumYetkili">Yetkili hesabı</div>
+    <div class="gk-ikili">
+      <div>
+        <label for="gkKAd" data-i18n="gk.ad">Ad</label>
+        <input id="gkKAd" name="ad" type="text" required
+               autocomplete="given-name">
+      </div>
+      <div>
+        <label for="gkKSoyad" data-i18n="gk.soyad">Soyad</label>
+        <input id="gkKSoyad" name="soyad" type="text"
+               autocomplete="family-name">
+      </div>
+    </div>
+    <label for="gkKEposta" data-i18n="gk.eposta">E-posta</label>
+    <input id="gkKEposta" name="eposta" type="email" required
+           autocomplete="email" inputmode="email">
+    <div class="gk-ikili">
+      <div>
+        <label for="gkKSifre" data-i18n="gk.sifre">Şifre</label>
+        <input id="gkKSifre" name="sifre" type="password" required
+               autocomplete="new-password" minlength="8">
+      </div>
+      <div>
+        <label for="gkKSifre2" data-i18n="gk.sifre2">Şifre (yine)</label>
+        <input id="gkKSifre2" name="sifre2" type="password" required
+               autocomplete="new-password" minlength="8">
+      </div>
+    </div>
+    <p class="gk-ipucu" data-i18n="gk.sifreKural">
+      En az 8 karakter; harf ve rakam içermeli.
+    </p>
+    <button type="submit" class="dg dg-birincil gk-gonder" id="gkKayitDg"
+            data-i18n="gk.kayitDg">Kurumu Kaydet</button>
+    <div class="gk-hata" id="gkKayitHata" role="alert"></div>
+    <p class="gk-not">
+      <span data-i18n="gk.girisSor">Hesabınız var mı?</span>
+      <a href="#" id="gkGirisAc" data-i18n="gk.girisAc">Giriş yapın</a>.
+    </p>
+    <p class="gk-not">
+      <span data-i18n="gk.bireyselSor">Kuruma bağlı değil misiniz?</span>
+      <a href="#" id="gkBireyselAc" data-i18n="gk.bireyselAc">Bireysel
+        hesap açın</a>.
+    </p>
+    <div class="gk-tema">
+      <button type="button" data-tema-dugme></button>
+    </div>
+  </form>
+
+  <!-- ---------------- BIREYSEL KAYIT ----------------
+       Kurumsal kayittan AYRI FORM.  Gerekce yukarida `gkKayitForm`
+       yorumunda: `hidden` gizli formdaki `required` alanlari tarayici
+       dogrulamasindan cikarir; tek formda alan gizlemek dogrulamayi
+       bozar.  Bireysel hesapta kurum unvani/vergi/adres SORULMAZ.
+       Radar ve GCCDual bu hesap turunde ZORUNLU KAPALIDIR (veritabani
+       CHECK kisiti `firmalar_bireysel_modul_check` ayrica zorlar). -->
+  <form class="gk-kart gk-form" id="gkBireyselForm" method="post"
+        action="about:blank" autocomplete="on" hidden>
+    <button type="button" class="gk-kapat" aria-label="Kapat"
+            data-gk-kapat>&times;</button>
+    <h2 data-i18n="gk.bireyselBaslik">Bireysel Hesap</h2>
+    <p class="gk-alt" data-i18n="gk.bireyselAlt">
+      Kuruma bağlı olmadan kendi adınıza hesap açın. Harekât arayüzünü
+      tarayıcı üzerinden kullanırsınız; kurulum gerekmez.
+    </p>
+    <!-- FAZ18-IS24-BAKIM-KIPI -->
+    <div class="gk-bakim" id="gkBakimBireysel" role="status" hidden></div>
+    <div class="gk-ikili">
+      <div>
+        <label for="gkBAd" data-i18n="gk.ad">Ad</label>
+        <input id="gkBAd" name="ad" type="text" required minlength="2"
+               autocomplete="given-name">
+      </div>
+      <div>
+        <label for="gkBSoyad" data-i18n="gk.soyad">Soyad</label>
+        <input id="gkBSoyad" name="soyad" type="text" required
+               autocomplete="family-name">
+      </div>
+    </div>
+    <label for="gkBEposta" data-i18n="gk.eposta">E-posta</label>
+    <input id="gkBEposta" name="eposta" type="email" required
+           autocomplete="email" inputmode="email">
+    <label for="gkBTelefon" data-i18n="gk.telefon">Telefon</label>
+    <input id="gkBTelefon" name="telefon" type="tel"
+           autocomplete="tel" placeholder="+90...">
+    <div class="gk-ikili">
+      <div>
+        <label for="gkBSifre" data-i18n="gk.sifre">Şifre</label>
+        <input id="gkBSifre" name="sifre" type="password" required
+               autocomplete="new-password" minlength="8">
+      </div>
+      <div>
+        <label for="gkBSifre2" data-i18n="gk.sifre2">Şifre (yine)</label>
+        <input id="gkBSifre2" name="sifre2" type="password" required
+               autocomplete="new-password" minlength="8">
+      </div>
+    </div>
+    <p class="gk-ipucu" data-i18n="gk.sifreKural">
+      En az 8 karakter; harf ve rakam içermeli.
+    </p>
+    <div class="gk-bolum" data-i18n="gk.bolumKapsam">Hesap kapsamı</div>
+    <ul class="gk-kapsam">
+      <li data-i18n="gk.kapsamGcs">Harekât arayüzü ve uçuş kayıtları</li>
+      <li class="yok" data-i18n="gk.kapsamRadar">
+        Radar modülü — bireysel hesapta kullanılamaz</li>
+      <li class="yok" data-i18n="gk.kapsamGcc">
+        Yer Kontrol İstasyonu Dual — bireysel hesapta kullanılamaz</li>
+    </ul>
+    <button type="submit" class="dg dg-birincil gk-gonder"
+            id="gkBireyselDg" data-i18n="gk.bireyselDg">
+      Hesabımı Oluştur</button>
+    <div class="gk-hata" id="gkBireyselHata" role="alert"></div>
+    <p class="gk-not">
+      <span data-i18n="gk.kurumSor">Kurum adına mı kaydolacaksınız?</span>
+      <a href="#" id="gkKurumsalAc" data-i18n="gk.kurumAc">Kurum
+        kaydına geçin</a>.
+    </p>
+    <div class="gk-tema">
+      <button type="button" data-tema-dugme></button>
+    </div>
+  </form>
+    <!-- ---------------- DOGRULAMA BILGILENDIRME ----------------
+       Kayit sonrasi ve dogrulanmamis giris denemesinde gosterilir.
+       Ayri sayfaya yonlendirmek yerine katman icinde kalinir:
+       kullanici adresini yanlis yazdiysa geri donup duzeltebilir. -->
+  <div class="gk-kart gk-form" id="gkDogrulamaKart" hidden>
+    <button type="button" class="gk-kapat" aria-label="Kapat"
+            data-gk-kapat>&times;</button>
+    <div class="gk-dog-ikon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="34" height="34" fill="none"
+           stroke="currentColor" stroke-width="1.6">
+        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>
+        <path d="M3 7l9 6 9-6"/>
+      </svg>
+    </div>
+    <h2 data-i18n="gk.dogBaslik">E-postanızı doğrulayın</h2>
+    <p class="gk-alt">
+      <span data-i18n="gk.dogAlt1">Doğrulama bağını şu adrese
+        gönderdik:</span>
+      <strong id="gkDogAdres" class="gk-dog-adres"></strong>
+    </p>
+    <p class="gk-alt" data-i18n="gk.dogAlt2">
+      Bağ 24 saat geçerlidir ve yalnız bir kez kullanılabilir.
+      Bağa tıkladıktan sonra giriş yapabilirsiniz.
+    </p>
+    <p class="gk-ipucu" id="gkDogNot"></p>
+    <button type="button" class="dg dg-ikincil gk-gonder"
+            id="gkDogYinele" data-i18n="gk.dogYinele">
+      Bağı yeniden gönder</button>
+    <button type="button" class="dg dg-birincil gk-gonder"
+            id="gkDogKapat" data-i18n="gk.dogKapat">Tamam</button>
+    <div class="gk-tema">
+      <button type="button" data-tema-dugme></button>
+    </div>
+  </div>
+  <!-- DOGRULAMA_KARTI_SONU -->
+</div>
+<!-- GKKATMAN_SONU -->
+<div id="cerezBandi" role="region" aria-label="Çerez bildirimi">
+  <div class="ic">
+    <p data-i18n="cerez.metin">
+      Bu sitede yalnızca oturum yönetimi ve dil tercihi için gereken zorunlu
+      çerezler kullanılır. Analitik veya reklam çerezi kullanılmaz.
+    </p>
+    <div class="cerez-dgler">
+      <a href="/yasal/cerez/" data-i18n="cerez.detay">Çerez Politikası</a>
+      <button type="button" id="cerezTamam" class="dg dg-ikincil"
+              data-i18n="cerez.tamam">Anladım</button>
+    </div>
+  </div>
+</div>
+
+<!-- kita_verisi.js hero_taktik.js'ten ONCE gelmeli: animasyon
+     window.GOKTUNGU_KITA'yi okur.  Ters sirada kitalar cizilmez
+     (kure ve radar yine calisir, sessiz gorsel eksik olurdu). -->
+<script src="/js/kita_verisi.js?v=2136"></script>
+<script src="/js/hero_taktik.js?v=2136"></script>
+<script src="/js/tema.js?v=2136"></script>
+<script src="/js/surum_verisi.js?v=2138"></script>
+<script src="/js/surum_defter.js?v=2138"></script>
+<script src="/js/logo_anim.js?v=2136"></script>
+<script src="/js/destek_baglanti.js?v=2136"></script>
+<script src="/js/dil.js?v=2139"></script>
+<script src="/js/indir.js?v=2136"></script>
+<script src="/js/menu_grup.js?v=2136"></script>
+<!-- ikon.js: [data-ikon] ogelerini SVG ile doldurur.  vitrin.js'ten
+     ONCE gelmeli degil (vitrin ikonu okumaz), ama dil.js'ten sonra
+     olmasi sorun cikarmaz: ikonlar metin tasimaz. -->
+<script src="/js/ikon.js?v=2136"></script>
+<script src="/js/vitrin.js?v=2136"></script>
+<script src="/js/oturum.js?v=2136"></script>
+<script src="/js/sayfa.js?v=2136"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!--
+  v2.4.36 SINAV: dron kart basligi durum cercevesi
+  Gercek tarayicida olculur: her durum sinifi icin baslikta
+  beklenen renk uretiliyor mu, hover zemini durum zeminini
+  eziyor mu, kart KAPALIYKEN cerceve gorunur kaliyor mu.
+-->
+<html lang="tr" data-tema="koyu">
+<head>
+<meta charset="utf-8">
+<title>v2.4.36 baslik durum sinavi</title>
+<link rel="stylesheet" href="css/stil.css">
+<style>
+  body { background: #0b0e11; padding: 20px; font-family: sans-serif; }
+  #solPanel { width: 320px; }
+  .sonuc { color: #cfd8e3; font-family: monospace; font-size: 12px;
+           white-space: pre; margin-top: 20px; }
+  .gecti { color: #3ddc84; } .kaldi { color: #ff5d5d; }
+</style>
+</head>
+<body>
+<div id="solPanel">
+  <!-- Alti durum: hazir, hazir+uyarili, hazir-degil, ucusta,
+       kopuk, bilinmiyor. Ucu KAPALI kart olarak kuruldu. -->
+  <div class="dron-kart" id="k1">
+    <div class="dron-kart-baslik dkd-hazir"><span class="dk-ad">D1 HAZIR</span></div>
+    <div class="dron-kart-icerik">govde</div>
+  </div>
+  <div class="dron-kart" id="k2">
+    <div class="dron-kart-baslik dkd-hazir dkd-hazir-uyarili"><span class="dk-ad">D2 HAZIR+UYARI</span></div>
+    <div class="dron-kart-icerik">govde</div>
+  </div>
+  <div class="dron-kart" id="k3">
+    <div class="dron-kart-baslik dkd-hazir-degil kapali"><span class="dk-ad">D3 HAZIR DEGIL (kapali)</span></div>
+    <div class="dron-kart-icerik gizli">govde</div>
+  </div>
+  <div class="dron-kart" id="k4">
+    <div class="dron-kart-baslik dkd-ucusta kapali"><span class="dk-ad">D4 UCUSTA (kapali)</span></div>
+    <div class="dron-kart-icerik gizli">govde</div>
+  </div>
+  <div class="dron-kart" id="k5">
+    <div class="dron-kart-baslik dkd-kopuk kapali"><span class="dk-ad">D5 KOPUK (kapali)</span></div>
+    <div class="dron-kart-icerik gizli">govde</div>
+  </div>
+  <div class="dron-kart" id="k6">
+    <div class="dron-kart-baslik dkd-bilinmiyor"><span class="dk-ad">D6 BILINMIYOR</span></div>
+    <div class="dron-kart-icerik">govde</div>
+  </div>
+  <!-- Takip morunun durum cercevesiyle birlikte yasadigini dogrula -->
+  <div class="dron-kart" id="k7">
+    <div class="dron-kart-baslik takip-mor dkd-hazir"><span class="dk-ad">D7 TAKIP+HAZIR</span></div>
+    <div class="dron-kart-icerik">govde</div>
+  </div>
+  <!-- Durum sinifi OLMAYAN kart: cerceve cizilmemeli -->
+  <div class="dron-kart" id="k8">
+    <div class="dron-kart-baslik"><span class="dk-ad">D8 DURUMSUZ</span></div>
+    <div class="dron-kart-icerik">govde</div>
+  </div>
+</div>
+<div class="sonuc" id="sonuc">olculuyor...</div>
+<script>
+function golge(sel) {
+  const el = document.querySelector(sel);
+  return getComputedStyle(el).boxShadow;
+}
+function zemin(sel) {
+  return getComputedStyle(document.querySelector(sel)).backgroundColor;
+}
+const testler = [];
+function ol(ad, kosul, ayrinti) {
+  testler.push({ ad, gecti: !!kosul, ayrinti: ayrinti || "" });
+}
+
+// 1) Her durum kendi rengini uretiyor mu?
+const g1 = golge("#k1 .dron-kart-baslik");
+ol("hazir yesil cerceve", /76, 175, 80/.test(g1), g1);
+
+const g2 = golge("#k2 .dron-kart-baslik");
+ol("hazir+uyarili amber cerceve", /240, 178, 60/.test(g2), g2);
+// Zemin YESIL kalmali (v2.4.35 sozlesmesi)
+const z2 = zemin("#k2 .dron-kart-baslik");
+ol("hazir+uyarili zemin YESIL kalir", /76, 175, 80/.test(z2), z2);
+
+const g3 = golge("#k3 .dron-kart-baslik");
+ol("hazir-degil kirmizi cerceve", /224, 85, 85/.test(g3), g3);
+
+const g4 = golge("#k4 .dron-kart-baslik");
+ol("ucusta mavi cerceve", /90, 170, 255/.test(g4), g4);
+
+const g5 = golge("#k5 .dron-kart-baslik");
+ol("kopuk gri cerceve (renk iddiasi yok)",
+   /140, 150, 160/.test(g5) && !/76, 175, 80/.test(g5) &&
+   !/224, 85, 85/.test(g5), g5);
+
+const g6 = golge("#k6 .dron-kart-baslik");
+ol("bilinmiyor gri cerceve", /140, 150, 160/.test(g6), g6);
+
+// 2) KAPALI kartta cerceve gorunur kaliyor mu? (asil gerekce)
+const b3 = document.querySelector("#k3 .dron-kart-baslik");
+ol("kapali kart cercevesi gorunur",
+   b3.classList.contains("kapali") && /224, 85, 85/.test(g3),
+   "kapali + " + g3);
+
+// 3) Durum sinifi olmayan baslikta cerceve YOK
+const g8 = golge("#k8 .dron-kart-baslik");
+ol("durumsuz baslikta cerceve yok",
+   g8 === "none" || !/76, 175, 80|224, 85, 85|90, 170, 255/.test(g8), g8);
+
+// 4) Takip moru durum cercevesiyle birlikte yasiyor
+const b7 = document.querySelector("#k7 .dron-kart-baslik");
+const bt = getComputedStyle(b7).borderTopWidth;
+const g7 = golge("#k7 .dron-kart-baslik");
+ol("takip moru korunur (border-top 4px)", bt === "4px", bt);
+ol("takip morunda durum cercevesi de var", /76, 175, 80/.test(g7), g7);
+
+// 5) Kart olculeri kaymadi mi? inset golge yer kaplamamali.
+// Durumlu ve durumsuz basligin yuksekligi AYNI olmali.
+const h1 = document.querySelector("#k1 .dron-kart-baslik").offsetHeight;
+const h8 = document.querySelector("#k8 .dron-kart-baslik").offsetHeight;
+ol("durum cercevesi baslik yuksekligini kaydirmiyor", h1 === h8,
+   "durumlu=" + h1 + "px durumsuz=" + h8 + "px");
+const w1 = document.querySelector("#k1 .dron-kart-baslik").offsetWidth;
+const w8 = document.querySelector("#k8 .dron-kart-baslik").offsetWidth;
+ol("durum cercevesi baslik genisligini kaydirmiyor", w1 === w8,
+   "durumlu=" + w1 + "px durumsuz=" + w8 + "px");
+
+// 6) ACIK TEMADA da renkler uretiliyor mu?
+document.documentElement.setAttribute("data-tema", "acik");
+const ga1 = golge("#k1 .dron-kart-baslik");
+ol("acik temada hazir cercevesi korunur", /76, 175, 80/.test(ga1), ga1);
+const ga3 = golge("#k3 .dron-kart-baslik");
+ol("acik temada hazir-degil cercevesi korunur", /224, 85, 85/.test(ga3), ga3);
+document.documentElement.setAttribute("data-tema", "koyu");
+
+let gecen = 0;
+let cikti = "";
+testler.forEach((t) => {
+  if (t.gecti) gecen++;
+  cikti += (t.gecti ? "[GECTI ] " : "[KALDI ] ") + t.ad +
+           (t.ayrinti ? "  -> " + t.ayrinti : "") + "\n";
+});
+cikti += "\nSONUC: " + gecen + "/" + testler.length + " gecti";
+document.getElementById("sonuc").textContent = cikti;
+document.getElementById("sonuc").className =
+  "sonuc " + (gecen === testler.length ? "gecti" : "kaldi");
+window.__SINAV = { gecen: gecen, toplam: testler.length, testler: testler };
+</script>
+</body>
+</html>

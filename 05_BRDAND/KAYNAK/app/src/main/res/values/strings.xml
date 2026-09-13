@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="uygulama_adi">GÖKTUNGU</string>
+    <string name="uygulama_alt_adi">MAVLINK KÖPRÜSÜ</string>
+
+    <!-- Kart başlıkları -->
+    <string name="durum_baslik">DURUM</string>
+    <string name="yapilandirma_baslik">YAPILANDIRMA</string>
+    <string name="telemetri_baslik">TELEMETRİ</string>
+    <string name="gunluk_baslik">GÜNLÜK</string>
+
+    <!-- Durum iletileri -->
+    <string name="durum_usb_yok">USB seri bağlantı kapalı</string>
+    <string name="durum_usb_acik">USB açık: %1$s @ %2$d</string>
+    <string name="durum_usb_hata">USB hatası: %1$s</string>
+    <string name="durum_arac_yok">Araç yok</string>
+    <string name="durum_arac_bagli">Araç bağlı: %1$s</string>
+    <string name="durum_merkez_kopuk">Merkez: kopuk</string>
+    <string name="durum_merkez_bagli">Merkez: %1$s</string>
+
+    <!-- Alan etiketleri -->
+    <string name="alan_cihaz">USB seri cihaz</string>
+    <string name="alan_hiz">Hat hızı (baud)</string>
+    <string name="alan_adres">Merkez adresi</string>
+    <string name="alan_port">MAVLink UDP portu</string>
+    <string name="alan_oto_baglan">Açılışta kendiliğinden bağlan</string>
+    <string name="ipucu_adres">192.168.1.10</string>
+    <string name="ipucu_port">14550</string>
+    <string name="cihaz_yok">Bağlı USB seri cihaz yok</string>
+
+    <!-- Düğmeler -->
+    <string name="dg_tara">TARA</string>
+    <string name="dg_baglan">KÖPRÜYÜ BAŞLAT</string>
+    <string name="dg_kes">DURDUR</string>
+    <string name="dg_gunluk_temizle">Temizle</string>
+
+    <!-- Telemetri alanları -->
+    <string name="tel_konum">Konum</string>
+    <string name="tel_konum_yok">Konum yok (GPS kilidi bekleniyor)</string>
+    <string name="tel_irtifa">İrtifa</string>
+    <string name="tel_yon">Yön</string>
+    <string name="tel_batarya">Batarya</string>
+    <string name="tel_arm">Motor</string>
+    <string name="tel_arm_acik">ARMLI</string>
+    <string name="tel_arm_kapali">kapalı</string>
+    <string name="tel_mod">Kip</string>
+    <string name="tel_deger_yok">—</string>
+
+    <!-- Uyarılar -->
+    <string name="hata_baslik">Bağlantı reddedildi</string>
+    <string name="hata_adres_bos">Merkez adresi boş olamaz.</string>
+    <string name="hata_port_gecersiz">Port 1 ile 65535 arasında olmalı.</string>
+    <string name="hata_cihaz_yok">Bağlı USB seri cihaz bulunamadı. Kabloyu takıp TARA düğmesine basın.</string>
+    <string name="hata_usb_izin">USB izni verilmedi; köprü başlatılamaz.</string>
+    <string name="usb_izin_isteniyor">USB izni isteniyor…</string>
+    <string name="kopru_baslatildi">Köprü başlatıldı</string>
+    <string name="tarama_sonuc">%1$d USB seri cihaz bulundu</string>
+
+    <!-- Günlük -->
+    <string name="gunluk_bos">Kayıt yok</string>
+
+    <!-- Ön plan hizmeti -->
+    <string name="hizmet_kanal_adi">Köprü durumu</string>
+    <string name="hizmet_kanal_aciklama">Uçuş sürerken köprünün ayakta kalmasını sağlar</string>
+    <string name="hizmet_bildirim_baslik">GÖKTUNGU MAVLink Köprüsü</string>
+    <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
+    <string name="hizmet_arac_bagli">sys %1$d %2$s</string>
+    <string name="hizmet_arac_bekleniyor">Araç bekleniyor</string>
+    <string name="hizmet_merkez_bagli">%1$d çerçeve gönderildi</string>
+    <string name="hizmet_merkez_hata">Köprü hatası</string>
+
+    <!-- Hakkında -->
+    <string name="hakkinda_baslik">Hakkında</string>
+    <string name="hakkinda_kapat">Kapat</string>
+    <string name="hakkinda_surum">Sürüm %1$s</string>
+    <string name="hakkinda_telif">Gökkubbe Teknoloji Anonim Şirketi</string>
+    <string name="hakkinda_lisans">Kullanım koşulları</string>
+    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir MAVLink köprüsüdür. Uçuş kontrolcüsünden gelen MAVLink çerçevelerini değiştirmeden merkez yazılıma taşır. Telemetri şifrelenmemiş olarak gönderildiği için yalnız özel ağ adreslerine bağlanmaya izin verilir. Uçuş güvenliği kullanıcının sorumluluğundadır; köprü uçuş denetimi yapmaz, yalnız iletişim taşır.</string>
+</resources>

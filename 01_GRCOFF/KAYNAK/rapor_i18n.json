@@ -1,0 +1,225 @@
+{
+  "sozluk_eksik_en": [],
+  "sozluk_eksik_tr": [],
+  "en_turkce_kalmis": [
+    {
+      "anahtar": "progAyarIst2Acik",
+      "en_deger": "GCCDUAL enabled (shown in the G\\u00d6ZC\\u00dc menu)",
+      "tr_deger": "GCCDUAL etkin (G\\u00f6zc\\u00fc men\\u00fcs\\u00fcnde g\\u00f6r\\u00fcn\\u00fcr)"
+    }
+  ],
+  "js_gomulu": {
+    "harita_menu.js": [
+      {
+        "satir": 166,
+        "metin": " arac\\u0131n\\u0131n HOME noktas\\u0131 "
+      }
+    ],
+    "istasyon2.js": [
+      {
+        "satir": 693,
+        "metin": "data-deger='1'>ALL ON</button>"
+      },
+      {
+        "satir": 695,
+        "metin": "data-deger='0'>ALL OFF</button>"
+      },
+      {
+        "satir": 744,
+        "metin": "[data-deger='"
+      }
+    ],
+    "kalkis_kontrol.js": [
+      {
+        "satir": 88,
+        "metin": "Pervane y\\u00f6nleri ve s\\u0131ralar\\u0131 do\\u011fru mu?"
+      },
+      {
+        "satir": 93,
+        "metin": "Motor d\\u00f6n\\u00fc\\u015f y\\u00f6nleri test edildi mi?"
+      },
+      {
+        "satir": 101,
+        "metin": "Kumanda y\\u00fczeyleri do\\u011fru y\\u00f6nde hareket ediyor mu?"
+      },
+      {
+        "satir": 104,
+        "metin": "Pitot / statik borusu a\\u00e7\\u0131k ve kapa\\u011f\\u0131 al\\u0131nd\\u0131 m\\u0131?"
+      },
+      {
+        "satir": 107,
+        "metin": "Kanat ba\\u011flant\\u0131 pimleri ve emniyetleri tak\\u0131l\\u0131 m\\u0131?"
+      },
+      {
+        "satir": 114,
+        "metin": "Ge\\u00e7i\\u015f (transition) irtifa ve h\\u0131z\\u0131 teyit edildi mi?"
+      },
+      {
+        "satir": 123,
+        "metin": "Kavrama (clutch) ve kay\\u0131\\u015f gerginli\\u011fi uygun mu?"
+      },
+      {
+        "satir": 129,
+        "metin": "Batarya sa\\u011flam, \\u015farjl\\u0131 ve emniyetli \\u015fekilde ba\\u011fl\\u0131 m\\u0131?"
+      },
+      {
+        "satir": 132,
+        "metin": "Kalk\\u0131\\u015f alan\\u0131 ve pervane b\\u00f6lgesi insanlardan ar\\u0131nd\\u0131r\\u0131ld\\u0131 m\\u0131?"
+      },
+      {
+        "satir": 135,
+        "metin": "Kumanda ve telemetri ba\\u011flant\\u0131s\\u0131 test edildi mi?"
+      },
+      {
+        "satir": 138,
+        "metin": "U\\u00e7u\\u015f izni ve hava sahas\\u0131 durumu teyit edildi mi?"
+      },
+      {
+        "satir": 152,
+        "metin": "\\u0130la\\u00e7lama pompas\\u0131 ve tank kontrol edildi mi?"
+      },
+      {
+        "satir": 158,
+        "metin": "\\u00c7it (geofence) s\\u0131n\\u0131rlar\\u0131 g\\u00f6rev alan\\u0131n\\u0131 kaps\\u0131yor mu?"
+      }
+    ],
+    "ucus_grafik.js": [
+      {
+        "satir": 668,
+        "metin": ".ug-kod-deger { font-family: Consolas, 'Courier New', monospace;"
+      }
+    ],
+    "ucus_rapor.js": [
+      {
+        "satir": 570,
+        "metin": ".ur-kod-deger { font-family: Consolas, 'Courier New', monospace;"
+      },
+      {
+        "satir": 594,
+        "metin": ".ur-evet { color: #14663a; }"
+      },
+      {
+        "satir": 595,
+        "metin": ".ur-hayir { color: #a11414; }"
+      },
+      {
+        "satir": 597,
+        "metin": ".ur-onay-bas { margin-top: 16px; }"
+      }
+    ]
+  },
+  "html_i18nsiz": {
+    "index.html": [
+      {
+        "satir": 333,
+        "etiket": "div",
+        "metin": "Mert Köksal"
+      },
+      {
+        "satir": 334,
+        "etiket": "div",
+        "metin": "İlhan Şentapancı"
+      },
+      {
+        "satir": 336,
+        "etiket": "div",
+        "metin": "Mehmet Ali Arıcı"
+      },
+      {
+        "satir": 340,
+        "etiket": "div",
+        "metin": "© 2026 Gökkubbe Teknoloji A.Ş."
+      }
+    ],
+    "sinav_baslik_durum.html": [
+      {
+        "satir": 30,
+        "etiket": "span",
+        "metin": "D2 HAZIR+UYARI"
+      },
+      {
+        "satir": 34,
+        "etiket": "span",
+        "metin": "D3 HAZIR DEGIL (kapali)"
+      },
+      {
+        "satir": 38,
+        "etiket": "span",
+        "metin": "D4 UCUSTA (kapali)"
+      },
+      {
+        "satir": 42,
+        "etiket": "span",
+        "metin": "D5 KOPUK (kapali)"
+      }
+    ],
+    "sinav_hiz_paneli.html": [
+      {
+        "satir": 31,
+        "etiket": "pre",
+        "metin": "calisiyor..."
+      }
+    ],
+    "sinav_koridor.html": [
+      {
+        "satir": 19,
+        "etiket": "div",
+        "metin": "calisiyor..."
+      }
+    ]
+  },
+  "tr_anahtar_sayisi": 1551,
+  "en_anahtar_sayisi": 1551,
+  "suzulen": {
+    "kapsam_disi_dosya": 1304,
+    "iki_dilli": 347,
+    "html_sablon": 84,
+    "ozel_ad": 2,
+    "yerel_t": 8,
+    "anahtar_alani": 3,
+    "uclu_sozluk": 3,
+    "yedek_kalip": 496,
+    "nitelik_isaretli": 8,
+    "js_tazeler": 3
+  },
+  "yedek_anahtar_yok": {
+    "gorev.js": [
+      {
+        "satir": 270,
+        "metin": "GÖREV TAMAMLANDI",
+        "anahtarlar": [
+          "style",
+          "classList",
+          "textContent",
+          "round",
+          "textContent",
+          "gorevUcusTamam"
+        ]
+      },
+      {
+        "satir": 298,
+        "metin": "{nokta} / {toplam} nokta uçuldu",
+        "anahtarlar": [
+          "gorevUcusNokta"
+        ]
+      },
+      {
+        "satir": 301,
+        "metin": "{toplam}",
+        "anahtarlar": [
+          "gorevUcusNokta",
+          "textContent",
+          "replace"
+        ]
+      },
+      {
+        "satir": 304,
+        "metin": "İlk noktaya gidiliyor...",
+        "anahtarlar": [
+          "textContent",
+          "gorevUcusBekleniyor"
+        ]
+      }
+    ]
+  }
+}

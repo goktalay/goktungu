@@ -1,0 +1,32 @@
+# GOKTUNGU GCS - Python bagimliliklari
+# Kurulum: pip3 install -r requirements.txt
+# Ubuntu 23.04+ 'externally-managed-environment' hatasi verirse:
+#   pip3 install --break-system-packages -r requirements.txt
+#   veya: python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+
+# --- Zorunlu ---
+websockets>=11.0        # WebSocket sunucusu (arayuz iletisimi)
+
+# psycopg2-binary: PostgreSQL surucusu.
+#
+# v2.4.65'te EKLENDI. Onceki surumlerde bu satir YOKTU, oysa
+# `goktungu/veritabani.py` KIP = "postgresql" ile calisir ve `goktungu/pg.py`
+# dogrudan `import psycopg2` yapar. Paket yoksa `pg.VAR = False` olur
+# ve veritabani HIC acilmaz.
+#
+# Gelistirme makinelerinde paket elle kurulu oldugu icin fark edilmedi;
+# TEMIZ bir makinede kurulumda yazilim acilmiyordu. Merkez Uygulama
+# tam olarak "temiz makinede kurulum" senaryosudur.
+#
+# `-binary` secildi: kaynak paket derlemek icin libpq-dev ve C
+# derleyicisi ister; musteri makinesinde bulunmayabilir.
+psycopg2-binary>=2.9    # PostgreSQL surucusu (veritabani KIP=postgresql)
+
+opencv-python>=4.8      # video proxy + AI goruntu isleme (YuNet/HOG/MOG2)
+numpy>=1.24             # goruntu/sinyal islemleri
+pymavlink>=2.4          # MAVLink dron telemetri/komut
+pyserial>=3.5           # seri port (radar/dron baglantisi)
+
+# --- Opsiyonel ---
+pygame>=2.5             # fiziksel joystick (manuel kontrol); yoksa
+                        # joystick devre disi kalir, GCS yine calisir
