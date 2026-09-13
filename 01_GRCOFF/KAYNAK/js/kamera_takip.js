@@ -102,21 +102,36 @@
     return kap;
   };
 
+  // v2.4.173: Arac alani YALNIZ dugme tasir (yerlesim bozulmasin);
+  // ipucu, durum metni ve teknik bilgiler DURUM ÇUBUĞUNDA (aşağıda).
   function doldur(kap) {
     var id = Number(kap.dataset.kameraId);
     var t = window.kameraTakipDurumu(id);
     kap.textContent = "";
+    kap.style.cssText = "display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;";
     if (t && t.aktif) {
-      var rozet = document.createElement("span");
-      rozet.className = "kam-takip-rozet";
-      rozet.textContent = "● TAKİPTE: " + (TUR_AD[t.sinif] || "HEDEF");
-      rozet.title = t.hedef_id ? "Hedef konumu çözüldü" : ("Konum: " + (t.konum_gerekce || "bekleniyor"));
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "kam-takip-angaje";
-      b.innerHTML = "<i class='fa-solid fa-crosshairs'></i><span>Görüntüye Angaje Ol</span>";
-      b.addEventListener("click", function (ev) { ev.stopPropagation(); angajeAc(id); });
-      kap.append(rozet, b);
+      // v2.4.173: "Görüntüye Angaje Ol" (çarp) + "Takip Et" (mesafeyi
+      // koru, çarpma) — ikisi de aynı pasif piksel takibini kullanır.
+      var bAngaje = document.createElement("button");
+      bAngaje.type = "button";
+      bAngaje.className = "kam-takip-angaje";
+      bAngaje.innerHTML = "<i class='fa-solid fa-crosshairs'></i><span>Angaje Ol</span>";
+      bAngaje.addEventListener("click", function (ev) { ev.stopPropagation(); angajeAc(id, false); });
+      var bTakip = document.createElement("button");
+      bTakip.type = "button";
+      bTakip.className = "kam-takip-angaje kam-takip-mesafe";
+      bTakip.innerHTML = "<i class='fa-solid fa-satellite-dish'></i><span>Takip Et</span>";
+      bTakip.addEventListener("click", function (ev) { ev.stopPropagation(); angajeAc(id, true); });
+      // v2.4.173: acik "Takibi Birak" dugmesi (cift tik + ESC'ye ek)
+      var birak = document.createElement("button");
+      birak.type = "button";
+      birak.className = "kam-takip-angaje kam-takip-birak";
+      birak.title = "Piksel takibini bırak (ESC)";
+      birak.innerHTML = "<i class='fa-solid fa-xmark'></i><span>Bırak</span>";
+      birak.addEventListener("click", function (ev) {
+        ev.stopPropagation(); takipBirak(id);
+      });
+      kap.append(bAngaje, bTakip, birak);
     } else {
       // v2.4.172: elle hedef secimi — videoya dikdortgen ciz, takip baslasin
       var sec = document.createElement("button");
@@ -128,32 +143,90 @@
       sec.addEventListener("click", function (ev) {
         ev.stopPropagation(); hedefSecBaslat(id);
       });
-      var ip = document.createElement("span");
-      ip.className = "kam-takip-ipucu";
-      ip.textContent = secim[id]
-        ? "Hedefin üzerine dikdörtgen çizin (ESC iptal)"
-        : "Takip: tespit kutusuna çift tıklayın veya Hedef Seç ile çizin";
-      kap.append(sec, ip);
+      kap.appendChild(sec);
     }
-    // v2.4.171: dedektor/GPU/fps durum rozeti (AI izleme calisiyorsa)
-    var dm = durumMetni(id);
-    if (dm) {
-      var teknik = document.createElement("span");
-      teknik.className = "kam-takip-teknik";
-      teknik.style.cssText = "display:block;opacity:.75;font-size:11px;" +
-        "margin-top:2px;font-variant-numeric:tabular-nums;";
-      var gpuMu = /GPU/.test(dm);
-      teknik.innerHTML = "<i class='fa-solid fa-microchip' style='margin-right:4px;" +
-        (gpuMu ? "color:#4caf50" : "color:#ff9800") + "'></i>";
-      teknik.appendChild(document.createTextNode(dm));
-      kap.appendChild(teknik);
+    // v2.4.173: ucus-seviyesinde (dron havada gerçekten yöneliyor) aktif
+    // angajman/takip varsa, piksel-takip durumundan BAĞIMSIZ "Durdur"
+    // düğmesi — kamera panelinden ayrı izleme popup'ı açmadan durdurulur.
+    var ucus = (typeof window.angajmanKameraDurumu === "function")
+      ? window.angajmanKameraDurumu(id) : null;
+    if (ucus) {
+      var bDurdur = document.createElement("button");
+      bDurdur.type = "button";
+      bDurdur.className = "kam-takip-angaje kam-ucus-durdur";
+      bDurdur.title = "D" + ucus.sysid + " " +
+        (ucus.mod === "takip" ? "takibini" : "angajmanını") + " durdur";
+      bDurdur.innerHTML = "<i class='fa-solid fa-stop'></i><span>" +
+        (ucus.mod === "takip" ? "Takibi Durdur" : "Angajmanı Durdur") + "</span>";
+      bDurdur.addEventListener("click", function (ev) {
+        ev.stopPropagation(); ucusDurdur(id);
+      });
+      kap.appendChild(bDurdur);
     }
   }
 
-  function araclariTazele(id) {
-    document.querySelectorAll(".kam-takip-arac" + (id != null ? "[data-kamera-id='" + Number(id) + "']" : ""))
-      .forEach(doldur);
+  // ---- v2.4.173: ALT DURUM ÇUBUĞU (ipucu + teknik bilgi) --------------
+  window.kameraTakipDurumCubugu = function (id) {
+    var el = document.createElement("div");
+    el.className = "kam-takip-durumcubuk";
+    el.dataset.kameraId = String(id);
+    el.style.cssText = "display:flex;align-items:center;" +
+      "justify-content:space-between;gap:12px;flex-wrap:wrap;" +
+      "padding:3px 10px;font-size:11.5px;line-height:1.5;min-height:22px;" +
+      "background:rgba(0,0,0,.40);color:#e8e8e8;border-radius:4px;" +
+      "font-variant-numeric:tabular-nums;width:100%;box-sizing:border-box;";
+    durumCubukDoldur(el);
+    return el;
+  };
+
+  function durumCubukDoldur(el) {
+    var id = Number(el.dataset.kameraId);
+    var t = window.kameraTakipDurumu(id);
+    var sol;
+    if (secim[id]) {
+      sol = "Hedefin üzerine dikdörtgen çizin — ESC iptal";
+    } else if (t && t.aktif) {
+      sol = "● TAKİPTE: " + (TUR_AD[t.sinif] || "HEDEF") +
+        (t.hedef_id ? " · konum çözüldü"
+                    : " · konum: " + (t.konum_gerekce || "bekleniyor"));
+    } else {
+      sol = "Takip: tespit kutusuna çift tıklayın veya Hedef Seç ile çizin";
+    }
+    // v2.4.173: ucus-seviyesi angajman/takip durumu (mesafe/ETA)
+    var ucus = (typeof window.angajmanKameraDurumu === "function")
+      ? window.angajmanKameraDurumu(id) : null;
+    if (ucus) {
+      sol += "  ▸  D" + ucus.sysid + " " +
+        (ucus.mod === "takip" ? "TAKİP EDİYOR" : "ANGAJE") +
+        (ucus.mesafe != null ? " · " + Math.round(ucus.mesafe) + " m" : "") +
+        (ucus.mod === "takip" && ucus.takip_mesafe
+          ? " (hedef " + Math.round(ucus.takip_mesafe) + " m)" : "") +
+        (ucus.eta_sn != null && ucus.mod !== "takip"
+          ? " · ETA " + Math.round(ucus.eta_sn) + " sn" : "");
+    }
+    el.textContent = "";
+    var s1 = document.createElement("span");
+    s1.textContent = sol;
+    var s2 = document.createElement("span");
+    s2.style.cssText = "opacity:.85;white-space:nowrap;";
+    var dm = durumMetni(id);
+    if (dm) {
+      var gpuMu = /GPU/.test(dm);
+      s2.innerHTML = "<i class='fa-solid fa-microchip' style='margin-right:5px;" +
+        (gpuMu ? "color:#4caf50" : "color:#ff9800") + "'></i>";
+      s2.appendChild(document.createTextNode(dm));
+    }
+    el.append(s1, s2);
   }
+
+  function araclariTazele(id) {
+    var sec = (id != null ? "[data-kamera-id='" + Number(id) + "']" : "");
+    document.querySelectorAll(".kam-takip-arac" + sec).forEach(doldur);
+    document.querySelectorAll(".kam-takip-durumcubuk" + sec)
+      .forEach(durumCubukDoldur);
+  }
+  // v2.4.173: angajman_izle.js her telemetri karesinde bunu cagirir
+  window.kameraTakipDurumTazele = function () { araclariTazele(null); };
   // Bayat takipler ve durum rozeti için periyodik tazeleme
   setInterval(function () {
     Object.keys(takip).forEach(function (k) {
@@ -162,19 +235,35 @@
     araclariTazele(null);
   }, 1000);
 
-  function angajeAc(id) {
+  // v2.4.173: `takipModu=true` -> "Takip Et" (mesafeyi koru, çarpma);
+  // false -> "Görüntüye Angaje Ol" (hedefe tam hızda yönel).
+  function angajeAc(id, takipModu) {
     var t = window.kameraTakipDurumu(id);
     if (!t || !t.aktif) { bildir(id, "Takip aktif değil"); return; }
     if (typeof window.angajmanPopupAc !== "function" && typeof angajmanPopupAc !== "function") return;
     var kam = kamBul(id) || {};
     var ac = window.angajmanPopupAc || angajmanPopupAc;
     ac("goruntu", t.hedef_id || ("yerel:" + id), {
-      yerel: true, yuzen: true,
+      yerel: true, yuzen: true, takip_modu: !!takipModu,
       kamera_id: id, kamera_ad: kam.isim || ("#" + id),
       kaynak_dron_uid: String(kam.dron_uid || ""),
-      ad: "Takip: " + (TUR_AD[t.sinif] || "HEDEF") + " (" + (kam.isim || ("kamera #" + id)) + ")",
+      ad: (takipModu ? "Takip: " : "Angaje: ") +
+        (TUR_AD[t.sinif] || "HEDEF") + " (" + (kam.isim || ("kamera #" + id)) + ")",
       iz_id: t.track_id || null
     });
+  }
+
+  // v2.4.173: bu kameranin hedefine su an ucus-seviyesinde angaje/takipte
+  // olan dronu bulup angajmani durdurur (ayri IZLEME popup'ini acmadan).
+  function ucusDurdur(id) {
+    if (typeof window.angajmanKameraDurumu !== "function") return;
+    var d = window.angajmanKameraDurumu(id);
+    if (!d) { bildir(id, "Bu hedefe yönelen aktif angajman/takip yok"); return; }
+    var fn = window.angajmanIptalGonder ||
+      (typeof angajmanIptalGonder === "function" ? angajmanIptalGonder : null);
+    if (!fn) return;
+    fn(d.sysid);
+    bildir(id, "D" + d.sysid + " " + (d.mod === "takip" ? "takibi" : "angajmanı") + " durduruluyor…");
   }
 
   // ---- v2.4.172: elle hedef seçimi (dikdörtgen çiz -> takip) ----------
@@ -267,7 +356,8 @@
         return;
       }
       if (!wsGonder({ tip: "ai_track_baslat", kamera_id: id,
-                      tur: "hava_araci", kutu: [x, y, w, h] })) {
+                      tur: "hava_araci", kutu: [x, y, w, h],
+                      ts: Date.now() / 1000 })) {
         bildir(id, "Sunucu bağlantısı yok");
         return;
       }
@@ -321,6 +411,25 @@
     return n.x >= x - n.tol && n.x <= x + w + n.tol && n.y >= y - n.tol && n.y <= y + h + n.tol;
   }
 
+  function takipBirak(id) {
+    wsGonder({ tip: "ai_track_durdur", kamera_id: Number(id) });
+    bildir(id, "Takip bırakılıyor…");
+  }
+
+  // v2.4.173: ESC — önce seçim modunu, yoksa görünür kameradaki takibi bırakır
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape") return;
+    var ids = Object.keys(secim);
+    if (ids.length) { ids.forEach(secimIptal); return; }
+    document.querySelectorAll(
+      ".kam-pencere img.kam-video[data-kamera-id]," +
+      "#kamTamEkran img.kam-video[data-kamera-id]").forEach(function (img) {
+      var id = Number(img.dataset.kameraId);
+      var t = window.kameraTakipDurumu(id);
+      if (t && t.aktif) takipBirak(id);
+    });
+  });
+
   document.addEventListener("dblclick", function (ev) {
     var img = ev.target && ev.target.closest && ev.target.closest("img.kam-video[data-kamera-id]");
     if (!img) return;
@@ -330,16 +439,13 @@
     ev.stopPropagation();
     var id = Number(img.dataset.kameraId);
 
-    // 1) Takip çerçevesine çift tık -> takibi bırak
+    // 1) Takipteyken videoya çift tık (HER YERDE) -> takibi bırak.
+    //    v2.4.173: eskiden yalnız çerçevenin içi bırakıyordu; hızlı hedefte
+    //    çerçeve tıklanana kadar kayıyor ve bırakma tutmuyordu.
     var t = window.kameraTakipDurumu(id);
-    if (t && t.aktif && Array.isArray(t.kutu) && t.kutu.length === 4) {
-      var kb = t.kare_boyutu || [];
-      var nT = kaynakNoktasi(img, ev, kb[0], kb[1]);
-      if (nT && icinde(nT, t.kutu[0], t.kutu[1], t.kutu[2], t.kutu[3])) {
-        wsGonder({ tip: "ai_track_durdur", kamera_id: id });
-        bildir(id, "Takip bırakılıyor…");
-        return;
-      }
+    if (t && t.aktif) {
+      takipBirak(id);
+      return;
     }
 
     // 2) Tespit kutusuna çift tık -> takibi başlat (en küçük isabet)
@@ -359,7 +465,8 @@
     if (!aday) { bildir(id, "Tıklanan yerde hedef yok — kutunun üzerine çift tıklayın"); return; }
     var b = aday.b;
     wsGonder({ tip: "ai_track_baslat", kamera_id: id, tur: b.tur,
-               kutu: [Math.round(b.x), Math.round(b.y), Math.round(b.w), Math.round(b.h)] });
+               kutu: [Math.round(b.x), Math.round(b.y), Math.round(b.w), Math.round(b.h)],
+               ts: Date.now() / 1000 });
     bildir(id, "Takip başlatılıyor: " + TUR_AD[b.tur]);
   }, true);
 })();

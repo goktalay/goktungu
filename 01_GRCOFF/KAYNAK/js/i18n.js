@@ -432,6 +432,7 @@ const DILLER = {
     onayAngajman: "D{dron} dronu \u201c{hedef}\u201d hedefine TAM HIZDA ({hiz} m/s) angaje olacak. Angajman, hedef irtifas\u0131 3 m alt\u0131na d\u00fc\u015fene veya hedef \u00e7evrimd\u0131\u015f\u0131 olana kadar s\u00fcrecek. Emin misiniz?",
     onayTelemetriAngajman: "TELEMETRİ İLE ANGAJMAN: D{dron} dronu \u201c{hedef}\u201d hedefine TAM HIZDA ({hiz} m/s) yönlendirilecek. Bu işlem görüntü angajmanından bağımsızdır ve insan onayı gerektirir. Emin misiniz?",
     onayGoruntuAngajman: "GÖRÜNTÜ İLE ANGAJMAN: D{dron} dronu yerelde seçilen \u201c{hedef}\u201d izine TAM HIZDA ({hiz} m/s) yönlendirilecek. Görüntü merkeze taşınmaz; yalnız doğrulanmış hedef konumu kullanılır. Emin misiniz?",
+    onayGoruntuTakip: "MESAFELİ TAKİP: D{dron} dronu yerelde seçilen \u201c{hedef}\u201d izini {mesafe} m mesafeden izleyecek; hedefe ÇARPMAZ. Görüntü merkeze taşınmaz. Emin misiniz?",
     // WS dinamik
     wsBaglaniyor: "WS: ba\u011flan\u0131yor...",
     wsBagli: (p) => "WS: ba\u011fl\u0131 (:" + p + ")",
@@ -2544,6 +2545,7 @@ const DILLER = {
     onayAngajman: "Drone D{dron} will engage target \u201c{hedef}\u201d at FULL SPEED ({hiz} m/s). The engagement continues until the target altitude drops below 3 m or the target goes offline. Are you sure?",
     onayTelemetriAngajman: "TELEMETRY ENGAGEMENT: Drone D{dron} will be directed toward target \u201c{hedef}\u201d at FULL SPEED ({hiz} m/s). This flow is independent from vision engagement and requires human approval. Are you sure?",
     onayGoruntuAngajman: "VISION ENGAGEMENT: Drone D{dron} will be directed toward the locally selected track \u201c{hedef}\u201d at FULL SPEED ({hiz} m/s). Video is not sent to the center; only the verified target position is used. Are you sure?",
+    onayGoruntuTakip: "DISTANCE TRACKING: Drone D{dron} will follow the locally selected track \u201c{hedef}\u201d from {mesafe} m; it will NOT collide with the target. Video is not sent to the center. Are you sure?",
     wsBaglaniyor: "WS: connecting...",
     wsBagli: (p) => "WS: connected (:" + p + ")",
     wsKoptu: "WS: disconnected, retrying...",

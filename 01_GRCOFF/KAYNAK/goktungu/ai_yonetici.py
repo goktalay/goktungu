@@ -948,7 +948,7 @@ class AIYonetici:
         except Exception:
             return None
 
-    def track_baslat(self, kamera_id, tur="", kutu=None):
+    def track_baslat(self, kamera_id, tur="", kutu=None, ts=None):
         """Manuel seçilmiş hedef için yalnız pasif görüntü takibini başlatır."""
         kamera_id = int(kamera_id)
         tur = _izinli_sinif(tur)
@@ -965,7 +965,7 @@ class AIYonetici:
         try:
             sonuc = self._http(kayit, "/takip_baslat",
                                {"kamera_id": kamera_id, "tur": tur,
-                                "kutu": kutu})
+                                "kutu": kutu, "ts": ts})
         except Exception as e:
             return {"tamam": False, "hata": str(e)[:150]}
         if sonuc.get("tamam"):

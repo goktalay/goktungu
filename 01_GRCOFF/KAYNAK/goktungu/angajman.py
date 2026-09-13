@@ -723,15 +723,30 @@ class AngajmanYoneticisi:
         goruntu_firma_id = param.get("_goruntu_firma_id")
         # v2.4.18: hucum hizi kullanicidan ALINMAZ; daima maksimum
         HUCUM_HIZI = self._maks_hiz(saldiran_sysid)
+        # v2.4.173: TAKIP KIPI (golge ucusu) — hedefe CARPMAZ, secilen
+        # mesafeyi koruyarak izler. Hiz P-denetleyicisiyle mesafe
+        # hatasindan turetilir; cok yaklasilirsa GERI acilir.
+        TAKIP_MODU = str(param.get("mod") or "").lower() == "takip"
+        try:
+            TAKIP_MESAFE = float(param.get("takip_mesafe", 30.0))
+        except (TypeError, ValueError):
+            TAKIP_MESAFE = 30.0
+        TAKIP_MESAFE = max(5.0, min(500.0, TAKIP_MESAFE))
 
         hedef_kayip_basi = None  # hedef konumu alinamayan ilk an
         veri_kayip_basi = None   # saldiran dron verisi alinamayan ilk an
         son_hiz_komutu = 0.0     # DO_CHANGE_SPEED tekrar zamani
         son_mod_komutu = 0.0     # GUIDED moda gecis tekrar zamani
-        self.konsol("ANGAJMAN",
-                    f"D{saldiran_sysid}: TAM HIZ angajman - hedef hiz "
-                    f"{HUCUM_HIZI:.1f} m/s ({HUCUM_HIZI * 3.6:.0f} km/h), "
-                    f"yaklasma yavaslamasi KAPALI", "basari")
+        if TAKIP_MODU:
+            self.konsol("ANGAJMAN",
+                        f"D{saldiran_sysid}: TAKIP kipi - hedef "
+                        f"{TAKIP_MESAFE:.0f} m mesafeden izlenecek "
+                        f"(azami hiz {HUCUM_HIZI:.1f} m/s)", "basari")
+        else:
+            self.konsol("ANGAJMAN",
+                        f"D{saldiran_sysid}: TAM HIZ angajman - hedef hiz "
+                        f"{HUCUM_HIZI:.1f} m/s ({HUCUM_HIZI * 3.6:.0f} km/h), "
+                        f"yaklasma yavaslamasi KAPALI", "basari")
 
         # Baslangic durumu: popup'in bos kalmamasini sagla
         self._canli[saldiran_sysid] = {
@@ -891,8 +906,14 @@ class AngajmanYoneticisi:
                             f"angajman TAMAMLANDI", "basari")
                 self._loiter_yap(saldiran_sysid)
                 break
+            # v2.4.173: takip kipinde canli duruma kip bilgisi islenir
+            if TAKIP_MODU:
+                self._canli[saldiran_sysid]["mod"] = "takip"
+                self._canli[saldiran_sysid]["takip_mesafe"] = TAKIP_MESAFE
+                if abs(toplam_mesafe - TAKIP_MESAFE) <= 5.0:
+                    self._canli[saldiran_sysid]["durum"] = "mesafede"
             # Bilgi amacli temas bildirimi (angajman DEVAM eder)
-            if toplam_mesafe <= YAKALAMA_MESAFE:
+            elif toplam_mesafe <= YAKALAMA_MESAFE:
                 self._canli[saldiran_sysid]["durum"] = "temas"
 
             # ----------------------------------------------------------
@@ -922,14 +943,28 @@ class AngajmanYoneticisi:
                 if simdi - son_hiz_komutu > 2.0:
                     self._hiz_komutu(master, saldiran_sysid, HUCUM_HIZI)
                     son_hiz_komutu = simdi
-                # Yonelinen noktaya birim vektor (NED) * maksimum hiz
+                # Yonelinen noktaya birim vektor (NED) * istenen hiz
+                # v2.4.173: takip kipinde hiz, mesafe hatasindan (P)
+                # turetilir: uzaksa yaklasir, mesafedeyse durur, cok
+                # yakinsa GERI acilir. Angajmanda daima maksimum hiz.
+                hiz_istek = HUCUM_HIZI
+                if TAKIP_MODU:
+                    hata = toplam_mesafe - TAKIP_MESAFE
+                    hiz_istek = max(-0.5 * HUCUM_HIZI,
+                                    min(HUCUM_HIZI, 0.6 * hata))
                 yatay = max(yatay_gudum, 0.001)
                 dz = g_alt - s_alt          # +yukari
                 norm = math.sqrt(yatay ** 2 + dz ** 2) or 1.0
                 yon_rad = math.radians(yon)
-                vx = HUCUM_HIZI * (yatay / norm) * math.cos(yon_rad)  # kuzey
-                vy = HUCUM_HIZI * (yatay / norm) * math.sin(yon_rad)  # dogu
-                vz = -HUCUM_HIZI * (dz / norm)   # NED: asagi pozitif
+                vx = hiz_istek * (yatay / norm) * math.cos(yon_rad)  # kuzey
+                vy = hiz_istek * (yatay / norm) * math.sin(yon_rad)  # dogu
+                if TAKIP_MODU:
+                    # Dikey eksen irtifa farkini kapatir (geri aciliste
+                    # bile hedef irtifasina hizalanir), yatay hizdan
+                    # bagimsiz sinirli hizla.
+                    vz = -min(abs(hiz_istek), HUCUM_HIZI * 0.5) * (dz / norm)
+                else:
+                    vz = -HUCUM_HIZI * (dz / norm)   # NED: asagi pozitif
                 with self.kilit:
                     master.mav.set_position_target_global_int_send(
                         0,  # time_boot_ms

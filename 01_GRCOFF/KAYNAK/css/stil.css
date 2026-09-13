@@ -1265,6 +1265,8 @@
   .kam-pencere-alt {
     display: flex; justify-content: flex-end; padding: 6px 10px;
     border-top: 1px solid var(--cizgi);
+    /* v2.4.173: durum çubuğu (width:100%) düğmelerin ALTINA sarmalı */
+    flex-wrap: wrap; row-gap: 6px;
   }
   /* GRCOFF: dron simgesi yanında yalnız aktif yerel kamera önizlemesi. */
   .dron-kamera-onizleme {
@@ -3209,6 +3211,9 @@
   color: var(--metin);
 }
 
+/* v2.4.173: TAKIP kipinde ilgisiz alanlari gizler (yakalama/takip mesafesi) */
+.ang-param-satir.ang-gizli { display: none !important; }
+
 /* v2.4.18: Hucum hizi artik sorulmaz - sabit "TAM HIZ" bilgi satiri */
 .ang-param-satir.ang-tamhiz {
   gap: 8px;
@@ -3311,6 +3316,15 @@
 }
 .ang-btn.angaje:not(:disabled):hover {
   background: #8b2222;
+}
+/* v2.4.173: TAKIP kipi (carpismaz, mesafe korur) mavi renkte ayirt edilir */
+.ang-btn.angaje.takip {
+  background: #1e3a6b;
+  border-color: #3268a8;
+  color: #bad4ff;
+}
+.ang-btn.angaje.takip:not(:disabled):hover {
+  background: #22508b;
 }
 .ang-btn.iptal {
   background: rgba(255,255,255,.06);
@@ -10002,9 +10016,11 @@ body.tam-ekran-modu #altOrtaPanel {
 .kam-tam-bar {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; padding: 8px 12px; background: rgba(10,14,20,.85); color: #e6edf3;
+  flex-wrap: wrap;
 }
 .kam-tam-ad { font-weight: 600; }
-.kam-tam-arac { display: flex; align-items: center; gap: 6px; }
+/* v2.4.173: takip/angajman dugmeleri arttigi icin sarmali (wrap) yapildi */
+.kam-tam-arac { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 4px; }
 .kam-tam-video { flex: 1; display: flex; align-items: center; justify-content: center; }
 .kam-tam-video .kam-video { max-width: 100%; max-height: 100%; }
 
@@ -10083,6 +10099,11 @@ body.tam-ekran-modu #altOrtaPanel {
 .kam-takip-angaje { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 4px; cursor: pointer;
   background: #b91c1c; border: 1px solid #ef4444; color: #fff; font: 700 11px Segoe UI, system-ui, sans-serif; white-space: nowrap; }
 .kam-takip-angaje:hover { filter: brightness(1.15); }
+/* v2.4.173: kip bazli renk ayrimi — Angaje (kirmizi, varsayilan) /
+   Takip Et (mavi, carpismaz) / Hedef Sec (notr gri) / Birak-Durdur (turuncu) */
+.kam-takip-mesafe { background: #1d4ed8; border-color: #3b82f6; }
+.kam-hedef-sec { background: #374151; border-color: #6b7280; }
+.kam-takip-birak, .kam-ucus-durdur { background: #b45309; border-color: #f59e0b; }
 .kam-takip-ipucu { font-size: 11px; color: var(--soluk, #8aa0b2); white-space: nowrap; }
 .kam-takip-bildirim { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 5; pointer-events: none;
   padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.75); color: #fff; font: 600 12px Segoe UI, system-ui, sans-serif; }

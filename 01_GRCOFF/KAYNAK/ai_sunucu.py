@@ -272,6 +272,28 @@ def hassasiyet_coz(deger):
     return out
 
 
+def takip_ayar_coz(deger):
+    """v2.4.173: ai_hassasiyet JSON'undan takip ayarlari.
+
+    takip_yontem: "csrt" (hassas, varsayilan) / "kcf" (hizli) / "mil"
+    takip_tolerans: hedef kaybolunca takibin birakildigi sure (sn, 1-30)
+    """
+    if isinstance(deger, str):
+        try:
+            deger = json.loads(deger) if deger.strip() else {}
+        except (ValueError, TypeError):
+            deger = {}
+    d = deger or {}
+    yontem = str(d.get("takip_yontem") or "").lower()
+    if yontem not in ("csrt", "kcf", "mil"):
+        yontem = ""
+    try:
+        tol = float(d.get("takip_tolerans"))
+    except (TypeError, ValueError):
+        tol = 5.0
+    return {"yontem": yontem, "tolerans_sn": min(30.0, max(1.0, tol))}
+
+
 class AkisIsleyici(threading.Thread):
     """Tek kamera akisini okuyan ve tespit yapan is parcacigi."""
 
@@ -286,6 +308,7 @@ class AkisIsleyici(threading.Thread):
         # Boş görev listesi varsayılan olarak bu üç sınıfı kullanır.
         self.gorevler = gorevleri_sinirla(gorevler)
         self.hassasiyet = hassasiyet_coz(hassasiyet)
+        self.takip_ayar = takip_ayar_coz(hassasiyet)
         # sınıf ölçeği: s=50 -> 1.0 (nötr). Daha yüksek s -> daha küçük k.
         self._olcek = {k: (50.0 / max(10, v)) for k, v in self.hassasiyet.items()}
         # hareket tespiti icin arka plan cikarici (hava/kara araci)
@@ -466,9 +489,19 @@ class AkisIsleyici(threading.Thread):
     # Hedef takibi (tracking): angajman destegi
     # ------------------------------------------------------------------
     @staticmethod
-    def _tracker_olustur():
-        """Kullanilabilir bir OpenCV tracker dondurur (surum uyumlu)."""
-        for ad in ("TrackerCSRT", "TrackerKCF", "TrackerMIL"):
+    def _tracker_olustur(yontem=""):
+        """Kullanilabilir bir OpenCV tracker dondurur (surum uyumlu).
+
+        v2.4.173: `yontem` ("csrt"/"kcf"/"mil") verilirse o once denenir;
+        yoksa CSRT (hassas) > KCF (hizli) > MIL sirasi.
+        """
+        sira = ["TrackerCSRT", "TrackerKCF", "TrackerMIL"]
+        istenen = {"csrt": "TrackerCSRT", "kcf": "TrackerKCF",
+                   "mil": "TrackerMIL"}.get(str(yontem or "").lower())
+        if istenen in sira:
+            sira.remove(istenen)
+            sira.insert(0, istenen)
+        for ad in sira:
             olusturucu = getattr(cv2, ad + "_create", None)
             if olusturucu is None and hasattr(cv2, "legacy"):
                 olusturucu = getattr(cv2.legacy, ad + "_create", None)
@@ -478,13 +511,20 @@ class AkisIsleyici(threading.Thread):
                     olusturucu = sinif.create
             if olusturucu:
                 try:
-                    return olusturucu()
+                    return olusturucu(), ad.replace("Tracker", "")
                 except Exception:
                     continue
-        return None
+        return None, ""
 
-    def takip_baslat(self, tur, kutu=None):
-        """Yalnız izinli sınıfta manuel pasif görüntü takibini başlatır."""
+    def takip_baslat(self, tur, kutu=None, sec_ts=None):
+        """Yalnız izinli sınıfta manuel pasif görüntü takibini başlatır.
+
+        v2.4.173 GECIKME DUZELTMESI: `sec_ts` (istemci secim ani; Merkez
+        ile ayni makine saati) verilirse kutu, halka tampondaki O ANIN
+        karesine oturtulur ve tracker oradan BUGUNE kadar tampondaki
+        karelerle "sarilir". Boylece goruntu boru hatti gecikmesi (0.5-2
+        sn) yuzunden kutunun hedefin gerisinde baslamasi onlenir.
+        """
         tur = str(tur or "").strip().lower()
         if tur not in IZINLI_SINIFLAR:
             return {"tamam": False,
@@ -492,7 +532,16 @@ class AkisIsleyici(threading.Thread):
         with self.takip_kilit:
             if not self.tampon:
                 return {"tamam": False, "hata": "akista kare yok"}
-            kare = self.tampon[-1][0]
+            kareler = list(self.tampon)
+            baslangic = len(kareler) - 1
+            try:
+                sec = float(sec_ts) if sec_ts else 0.0
+            except (TypeError, ValueError):
+                sec = 0.0
+            if sec and kareler[0][1] <= sec <= kareler[-1][1] + 1.0:
+                baslangic = min(range(len(kareler)),
+                                key=lambda i: abs(kareler[i][1] - sec))
+            kare = kareler[baslangic][0]
             h, w = kare.shape[:2]
             if kutu and len(kutu) == 4:
                 x, y, gw, gh = [int(v) for v in kutu]
@@ -502,16 +551,25 @@ class AkisIsleyici(threading.Thread):
                 x, y = (w - gw) // 2, (h - gh) // 2
             x = max(0, min(x, w - 8)); y = max(0, min(y, h - 8))
             gw = max(8, min(gw, w - x)); gh = max(8, min(gh, h - y))
-            tracker = self._tracker_olustur()
+            yontem = str((self.takip_ayar or {}).get("yontem") or "")
+            tracker, tracker_ad = self._tracker_olustur(yontem)
             if tracker is not None:
                 try:
                     tracker.init(kare, (x, y, gw, gh))
+                    # Gecmis kareden bugune hizli sarma
+                    for i in range(baslangic + 1, len(kareler)):
+                        ok, k2 = tracker.update(kareler[i][0])
+                        if ok:
+                            x, y, gw, gh = [int(v) for v in k2]
                 except Exception:
                     tracker = None
             self.takip = {"tur": tur, "kutu": [x, y, gw, gh],
                           "tracker": tracker, "son_ts": time.time(),
+                          "son_basarili_ts": time.time(),
                           "kayip_sayac": 0}
             return {"tamam": True, "tracker": tracker is not None,
+                    "yontem": tracker_ad,
+                    "sarilan_kare": len(kareler) - 1 - baslangic,
                     "kutu": [x, y, gw, gh]}
 
     def takip_durdur(self):
@@ -533,13 +591,17 @@ class AkisIsleyici(threading.Thread):
                     if ok:
                         tk["kutu"] = [int(v) for v in kutu]
                         tk["kayip_sayac"] = 0
+                        tk["son_basarili_ts"] = ts
                         basarili = True
                 except Exception:
                     pass
             if not basarili:
                 tk["kayip_sayac"] += 1
-                # ~5 sn kayip -> takibi birak (fps*5 kare degil, cagri bazli)
-                if tk["kayip_sayac"] > 150:
+                # v2.4.173: kayip toleransi ZAMAN bazli ve ayarlanabilir
+                # (takip_tolerans, sn) — eskiden sabit ~150 cagriydi.
+                tol = float((self.takip_ayar or {}).get("tolerans_sn")
+                            or 5.0)
+                if ts - float(tk.get("son_basarili_ts") or ts) > tol:
                     self.takip = None
                     self.isci.takip_bildir(self, None, ts, kayip=True)
                     return
@@ -679,6 +741,7 @@ class AIIsci:
                     mevcut.gorevler = gorevleri_sinirla(gorevler)
                 if hassasiyet is not None:
                     mevcut.hassasiyet = hassasiyet_coz(hassasiyet)
+                    mevcut.takip_ayar = takip_ayar_coz(hassasiyet)
                     mevcut._olcek = {k: (50.0 / max(10, v))
                                      for k, v in mevcut.hassasiyet.items()}
                 return {"tamam": True, "mesaj": "zaten izleniyor"}
@@ -1268,7 +1331,8 @@ def http_sunucu(isci, port, dinle="0.0.0.0"):
                                 "hata": "kamera izlenmiyor"})
                 else:
                     self._json(akis.takip_baslat(veri.get("tur", ""),
-                                                 veri.get("kutu")))
+                                                 veri.get("kutu"),
+                                                 veri.get("ts")))
             elif self.path == "/takip_durdur":
                 kamera_id = int(veri.get("kamera_id", 0))
                 with isci.kilit:

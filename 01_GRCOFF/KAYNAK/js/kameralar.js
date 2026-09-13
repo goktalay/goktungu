@@ -1146,6 +1146,18 @@
     kutu.className = "kam-video-kutu kam-tam-video";
     kutu.appendChild(videoOlustur(kamera));
     kap.append(bar, kutu);
+    // v2.4.173: tam ekranda durum çubuğu altta yüzer
+    if (typeof window.kameraTakipDurumCubugu === "function") {
+      const dc = window.kameraTakipDurumCubugu(id);
+      dc.style.position = "absolute";
+      dc.style.bottom = "10px";
+      dc.style.left = "50%";
+      dc.style.transform = "translateX(-50%)";
+      dc.style.width = "auto";
+      dc.style.maxWidth = "92%";
+      dc.style.zIndex = "6";
+      kap.appendChild(dc);
+    }
     document.body.appendChild(kap);
   }
   window.kameraTamEkranId = function () { return tamEkranId; };
@@ -1175,9 +1187,12 @@
     }
     // Alt bar: play/stop + duzenle + sil
     kayit.altBar.appendChild(araclarOlustur(kamera));
-    // v2.4.164: takip durumu + "Görüntüye Angaje Ol" alanı
+    // v2.4.164: takip dugmeleri ("Hedef Seç" / "Görüntüye Angaje Ol")
     if (typeof window.kameraTakipAracAlani === "function")
       kayit.altBar.prepend(window.kameraTakipAracAlani(id));
+    // v2.4.173: ipucu + teknik bilgi ALT DURUM ÇUBUĞUNDA (ayrı satır)
+    if (typeof window.kameraTakipDurumCubugu === "function")
+      kayit.altBar.appendChild(window.kameraTakipDurumCubugu(id));
   }
 
   function ayrikKapat(id) {

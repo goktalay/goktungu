@@ -57,6 +57,10 @@
     var ham = kam && kam.ai_hassasiyet;
     if (typeof ham === "string" && ham) { try { ham = JSON.parse(ham); } catch (e) { ham = null; } }
     if (ham && typeof ham === "object") {
+      // v2.4.173: takip ayarlarini koru (ayni JSON'da tasinir)
+      if (ham.takip_yontem) h.takip_yontem = String(ham.takip_yontem);
+      var tt = Number(ham.takip_tolerans);
+      if (isFinite(tt) && tt >= 1 && tt <= 30) h.takip_tolerans = tt;
       SINIFLAR.forEach(function (c) {
         var v = Number(ham[c[0]]);
         h[c[0]] = (isFinite(v) && v >= 10 && v <= 90) ? v : VARSAYILAN_HASSASIYET;
@@ -103,6 +107,9 @@
 
     var el = document.createElement("div");
     el.className = "kai-panel";
+    // v2.4.173: tam ekran görünümün (#kamTamEkran) ÜZERİNDE kalmalı —
+    // eskiden arkada kalıyor, tam ekrandayken ayar yapılamıyordu.
+    el.style.zIndex = "100050";
     var bas = document.createElement("div");
     bas.className = "kai-panel-baslik";
     bas.innerHTML = "<span><i class='fa-solid fa-robot'></i> " +
@@ -178,6 +185,65 @@
       }
       rozetTazele();
     });
+
+    // v2.4.173: piksel takip ayarlari (CSRT/KCF/MIL yontemi + kayip
+    // toleransi). Cift tikla/dikdortgen ciz ile baslayan pasif piksel
+    // takibini etkiler; ucus-seviyesi angajman/takip ile ilgisizdir.
+    var takipBolum = document.createElement("details");
+    takipBolum.className = "kai-sinif";
+    var takipOzet = document.createElement("summary");
+    var takipBaslikSpan = document.createElement("span");
+    takipBaslikSpan.className = "kai-sinif-ad";
+    takipBaslikSpan.textContent = t.kaiTakipAyarBaslik || "Piksel Takip Ayarları";
+    takipOzet.appendChild(takipBaslikSpan);
+    takipBolum.appendChild(takipOzet);
+    var takipIc = document.createElement("div");
+    takipIc.className = "kai-sinif-ic";
+
+    var yontemSatir = document.createElement("label");
+    yontemSatir.className = "kai-hassas-satir";
+    yontemSatir.textContent = t.kaiTakipYontem || "İzleme Yöntemi";
+    var yontemSec = document.createElement("select");
+    yontemSec.className = "kai-hassas";
+    [["", t.kaiTakipYontemVarsayilan || "Otomatik (CSRT — hassas)"],
+     ["kcf", t.kaiTakipYontemKcf || "Hızlı (KCF)"],
+     ["mil", t.kaiTakipYontemMil || "Basit (MIL)"]].forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o[0]; opt.textContent = o[1];
+      if ((hassasiyet.takip_yontem || "") === o[0]) opt.selected = true;
+      yontemSec.appendChild(opt);
+    });
+    yontemSec.addEventListener("change", function () {
+      hassasiyet.takip_yontem = yontemSec.value;
+      aiKaydet(kam, gorevler, hassasiyet);
+    });
+    yontemSatir.appendChild(yontemSec);
+
+    var tolSatir = document.createElement("label");
+    tolSatir.className = "kai-hassas-satir";
+    tolSatir.textContent = t.kaiTakipTolerans || "Kayıp Toleransı (sn)";
+    var tolSlider = document.createElement("input");
+    tolSlider.type = "range"; tolSlider.min = "1"; tolSlider.max = "30"; tolSlider.step = "1";
+    tolSlider.value = String(hassasiyet.takip_tolerans || 5);
+    tolSlider.className = "kai-hassas";
+    var tolDeg = document.createElement("span");
+    tolDeg.className = "kai-hassas-deger";
+    tolDeg.textContent = String(hassasiyet.takip_tolerans || 5);
+    tolSlider.addEventListener("input", function () { tolDeg.textContent = tolSlider.value; });
+    tolSlider.addEventListener("change", function () {
+      hassasiyet.takip_tolerans = Number(tolSlider.value);
+      aiKaydet(kam, gorevler, hassasiyet);
+    });
+    tolSatir.appendChild(tolSlider); tolSatir.appendChild(tolDeg);
+
+    var takipYardim = document.createElement("div");
+    takipYardim.className = "kai-hassas-yardim";
+    takipYardim.textContent = t.kaiTakipYardim ||
+      "CSRT en hassas ama en yavaştır (önerilir); KCF hızlı CPU'larda daha " +
+      "akıcıdır. Kayıp toleransı: hedef bu süre görünmezse takip bırakılır.";
+    takipIc.append(yontemSatir, tolSatir, takipYardim);
+    takipBolum.appendChild(takipIc);
+    govde.appendChild(takipBolum);
 
     var not = document.createElement("div");
     not.className = "kai-panel-not";

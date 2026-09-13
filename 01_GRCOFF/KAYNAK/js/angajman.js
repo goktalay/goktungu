@@ -26,6 +26,8 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   const goruntuMu = mod === "goruntu";
   const angajmanKipi = goruntuMu ? "goruntu" : "telemetri";
   const kaynak = (kaynakBaglam && typeof kaynakBaglam === "object") ? kaynakBaglam : {};
+  // v2.4.173: TAKIP kipi — hedefe carpmaz, secilen mesafeden izler
+  const takipModu = !!kaynak.takip_modu;
 
   function kaliciDronUid(d) {
     if (!d) return "";
@@ -57,11 +59,13 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   const baslik = document.createElement("div");
   baslik.className = "ang-baslik";
   const baslikIkon = goruntuMu ? "fa-camera" : (mod === "hedef" ? "fa-crosshairs" : "fa-plane-up");
-  const baslikMetin = goruntuMu
-    ? (t.angGoruntuAngajman || "GÖRÜNTÜ İŞLEME ANGAJMANI")
-    : (mod === "hedef"
-      ? (t.angHedefAngajman || "HEDEFE ANGAJMAN")
-      : (t.angDronAngajman || "DRONA ANGAJMAN"));
+  const baslikMetin = takipModu
+    ? (t.angTakipBaslik || "HEDEFİ MESAFELİ TAKİP ET")
+    : (goruntuMu
+      ? (t.angGoruntuAngajman || "GÖRÜNTÜ İŞLEME ANGAJMANI")
+      : (mod === "hedef"
+        ? (t.angHedefAngajman || "HEDEFE ANGAJMAN")
+        : (t.angDronAngajman || "DRONA ANGAJMAN")));
   baslik.innerHTML = "<i class='fa-solid " + baslikIkon + "'></i> " + baslikMetin;
   kutu.appendChild(baslik);
 
@@ -172,10 +176,14 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     "<div class='ang-param-baslik'>" + (t.angParamBaslik || "ANGAJMAN PARAMETRELERİ") + "</div>" +
     "<div class='ang-param-satir'><span>" + (t.angGudumHz || "Güdüm Frekansı (Hz)") +
       "</span><input type='text' id='angParamGudumHz' value='10' spellcheck='false'></div>" +
-    "<div class='ang-param-satir'><span>" + (t.angYakalama || "Yakalama Mesafesi (m)") +
+    "<div class='ang-param-satir" + (takipModu ? " ang-gizli" : "") + "'><span>" +
+      (t.angYakalama || "Yakalama Mesafesi (m)") +
       "</span><input type='text' id='angParamYakalama' value='2.0' spellcheck='false'></div>" +
+    "<div class='ang-param-satir" + (takipModu ? "" : " ang-gizli") + "'><span>" +
+      (t.angTakipMesafe || "Takip Mesafesi (m)") +
+      "</span><input type='text' id='angParamTakipMesafe' value='30' spellcheck='false'></div>" +
     "<div class='ang-param-satir ang-tamhiz'><span>" +
-      (t.angHucum || "Hücum Hızı") + "</span>" +
+      (takipModu ? (t.angTakipHizUst || "Azami Hız") : (t.angHucum || "Hücum Hızı")) + "</span>" +
       "<b id='angHucumSabit'>" + (t.angTamHiz || "MAKSİMUM (TAM HIZ)") +
       "</b><span class='ang-kmh'>" +
       ((typeof HIZ_MAKS_MS !== "undefined" ? HIZ_MAKS_MS : 83.3) * 3.6)
@@ -216,6 +224,10 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     paramDiv.querySelector("#angParamGudumHz").value = String(kayitli.gudum_hz);
   if (typeof kayitli.yakalama_mesafe === "number")
     paramDiv.querySelector("#angParamYakalama").value = String(kayitli.yakalama_mesafe);
+  if (typeof kayitli.takip_mesafe === "number") {
+    const tmE = paramDiv.querySelector("#angParamTakipMesafe");
+    if (tmE) tmE.value = String(kayitli.takip_mesafe);
+  }
 
   function ongoruDurumTazele() {
     const acik = ongoruKutu.checked;
@@ -296,10 +308,14 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   const btnAngaje = document.createElement("button");
   btnAngaje.className = "ang-btn angaje";
   btnAngaje.disabled = seciliSysid === null;
-  const baslatMetni = goruntuMu
-    ? (t.angGoruntuBaslat || "GÖRÜNTÜ İLE ANGAJMANI BAŞLAT")
-    : (t.angTelemetriBaslat || "TELEMETRİ İLE ANGAJMANI BAŞLAT");
-  btnAngaje.innerHTML = "<i class='fa-solid fa-crosshairs'></i> " +
+  const baslatMetni = takipModu
+    ? (t.angTakipBaslat || "TAKİBİ BAŞLAT")
+    : (goruntuMu
+      ? (t.angGoruntuBaslat || "GÖRÜNTÜ İLE ANGAJMANI BAŞLAT")
+      : (t.angTelemetriBaslat || "TELEMETRİ İLE ANGAJMANI BAŞLAT"));
+  if (takipModu) btnAngaje.classList.add("takip");
+  btnAngaje.innerHTML = "<i class='fa-solid " +
+    (takipModu ? "fa-satellite-dish" : "fa-crosshairs") + "'></i> " +
     "<span>" + baslatMetni + "</span>";
   btnAngaje.addEventListener("click", () => {
     if (seciliSysid === null) return;
@@ -309,7 +325,9 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     }
     const ghz = parseFloat((document.getElementById("angParamGudumHz").value || "10").replace(",", "."));
     const ym = parseFloat((document.getElementById("angParamYakalama").value || "2").replace(",", "."));
-    if (isNaN(ghz) || isNaN(ym)) return;
+    const tmEl = document.getElementById("angParamTakipMesafe");
+    const tm = tmEl ? parseFloat((tmEl.value || "30").replace(",", ".")) : 30;
+    if (isNaN(ghz) || isNaN(ym) || (takipModu && isNaN(tm))) return;
     // v2.4.161: kalibrasyon degistiyse angajmandan ONCE kaydet
     if (kalib && kalib.degisti()) kalib.kaydet();
     // v2.4.43: ongoru secenekleri
@@ -318,7 +336,7 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     // Secim sonraki angajmanlar icin de hatirlanir
     window.angajmanAyar = Object.assign({}, window.angajmanAyar || {}, {
       ongoru: ongoruAcik, gorev_dikkate: gorevAcik,
-      gudum_hz: ghz, yakalama_mesafe: ym
+      gudum_hz: ghz, yakalama_mesafe: ym, takip_mesafe: tm
     });
     // v2.4.18: hucum hizi gonderilmez; sunucu daima maksimum hizi uygular
     const hh = (typeof HIZ_MAKS_MS !== "undefined") ? HIZ_MAKS_MS : 83.3;
@@ -344,20 +362,23 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
       if (!tk || !tk.aktif) { uyar("Takip aktif değil; önce videoda hedefe çift tıklayın."); return; }
       if (!tk.hedef_id) { uyar("Hedef konumu çözülemedi: " + (tk.konum_gerekce || "bekleniyor")); return; }
       angajmanPopupKapat();
+      const onayAnahtariYerel = takipModu ? "onayGoruntuTakip" : "onayGoruntuAngajman";
       onayIste(
-        onayMetni("onayGoruntuAngajman", {dron: seciliSysid, hedef: hedefAd, hiz: hh}),
+        onayMetni(onayAnahtariYerel, {dron: seciliSysid, hedef: hedefAd, hiz: hh, mesafe: tm}),
         () => {
-          ws.send(JSON.stringify({
+          const govdeYerel = {
             tip: "yerel_angajman_baslat",
             hedef_id: tk.hedef_id,
             saldiran_sysid: seciliSysid,
             operator_onayi: true,
             gudum_hz: ghz, yakalama_mesafe: ym,
             ongoru: ongoruAcik, gorev_dikkate: gorevAcik
-          }));
+          };
+          if (takipModu) { govdeYerel.mod = "takip"; govdeYerel.takip_mesafe = tm; }
+          ws.send(JSON.stringify(govdeYerel));
           ws.send(JSON.stringify({
             tip: "angajman_ayar", gudum_hz: ghz, yakalama_mesafe: ym,
-            ongoru: ongoruAcik, gorev_dikkate: gorevAcik
+            ongoru: ongoruAcik, gorev_dikkate: gorevAcik, takip_mesafe: tm
           }));
           if (typeof window.angajmanIzleAc === "function") window.angajmanIzleAc();
         });

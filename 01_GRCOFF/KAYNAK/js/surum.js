@@ -2,11 +2,25 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.172";
+const GCS_SURUM = "2.4.173";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.173",
+    tarih: "2026-09-13",
+    baslik: "Angaje Ol / Takip Et düğmeleri, mesafeli takip kipi, durdurma ve düzenli yerleşim (paket 2.5.43)",
+    maddeler: [
+      "Kamera panelinde artık İKİ ayrı düğme: 'Angaje Ol' (hedefe tam hızda yönel) ve 'Takip Et' (seçilen mesafeyi koruyarak izle, ÇARPMAZ). Takip Et açılan panelde dron seçimi + 'Takip Mesafesi (m)' ayarını sorar.",
+      "Uçuş seviyesinde (drone havada gerçekten hedefe yöneliyor/izliyor) aktif angajman veya takip varsa kamera panelinde 'Angajmanı Durdur' / 'Takibi Durdur' düğmesi belirir; ayrı izleme penceresi açmadan tek tıkla durdurulur.",
+      "Yerleşim düzenlendi: düğmeler tek satırda gruplu; tüm ipuçları, piksel-takip durumu, uçuş mesafesi/ETA ve AI teknoloji rozeti (GPU/CPU/fps) artık videonun ALTINDA tek bir durum çubuğunda toplanır — panel karmaşası giderildi.",
+      "DÜZELTME: Tam ekran modunda 'Yapay Zeka Ayarları' paneli artık videonun ÜZERİNDE açılır (eskiden arkada kalıp erişilemiyordu).",
+      "DÜZELTME: Elle hedef seçiminde (dikdörtgen çizme) takip artık seçim ANINDAKI kareye oturtuluyor ve o andan bugüne hızlıca 'sarılıyor' — eskiden görüntü boru hattı gecikmesi yüzünden takip hedefin gerisinden başlıyordu.",
+      "DÜZELTME: ESC tuşu artık hem seçim modunu hem de aktif piksel takibini bırakır; ayrıca 'Bırak' düğmesi eklendi ve takipteyken videoya çift tıklamak (çerçevenin tam içine denk gelmeden de) takibi güvenilir şekilde bırakır.",
+      "Takip kaybolma toleransı artık AI ayarlarından yapılandırılabilir (varsayılan 5 sn) ve zamana dayalıdır — eskiden sabit kare sayısına dayanıyordu."
+    ]
+  },
   {
     surum: "2.4.172",
     tarih: "2026-09-13",

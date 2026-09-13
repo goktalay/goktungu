@@ -6698,12 +6698,17 @@ class WSSunucusu:
                 # v2.4.164: panelden gelen angajman ayarlari
                 for _yk, _ytur in (("yakalama_mesafe", float),
                                    ("ongoru", bool), ("gorev_dikkate", bool),
-                                   ("goruntu_asgari_irtifa", float)):
+                                   ("goruntu_asgari_irtifa", float),
+                                   ("takip_mesafe", float)):
                     if _yk in k:
                         try:
                             _yparam[_yk] = _ytur(k.get(_yk))
                         except (TypeError, ValueError):
                             pass
+                # v2.4.173: "takip" kipi — hedefe carpmadan, secilen
+                # mesafeyi koruyarak izler (golge ucusu).
+                if str(k.get("mod") or "").lower() == "takip":
+                    _yparam["mod"] = "takip"
                 _ysonuc = self.angajman.baslat(
                     _ysaldiran, "goruntu", _yhedef_id, _yparam)
                 if isinstance(_ysonuc, tuple):
@@ -6756,6 +6761,9 @@ class WSSunucusu:
                 if "yakalama_mesafe" in k:
                     p["yakalama_mesafe"] = max(0.5, min(100.0,
                                                         float(k["yakalama_mesafe"])))
+                if "takip_mesafe" in k:
+                    p["takip_mesafe"] = max(5.0, min(500.0,
+                                                     float(k["takip_mesafe"])))
                 if "ongoru" in k:
                     p["ongoru"] = bool(k["ongoru"])
                 if "gorev_dikkate" in k:
@@ -9267,7 +9275,15 @@ class WSSunucusu:
                 return
             tur = str(k.get("tur", ""))
             kutu = k.get("kutu") or None
-            sonuc = self.ai_yonetici.track_baslat(kamera_id, tur, kutu)
+            # v2.4.173: istemci secim ani (ayni makine saati) — isci
+            # kutuyu O ANIN karesine oturtup bugune "sarar" (hizli
+            # hedefte kutunun geriden gelmesini onler).
+            try:
+                sec_ts = float(k.get("ts") or 0) or None
+            except (TypeError, ValueError):
+                sec_ts = None
+            sonuc = self.ai_yonetici.track_baslat(kamera_id, tur, kutu,
+                                                  ts=sec_ts)
             if sonuc.get("tamam"):
                 self._pilot_log(websocket, "ai", "ai_track_baslat",
                                 f"kamera #{kamera_id} tur={tur}"

@@ -154,6 +154,16 @@ class KameraYoneticisi:
                 continue
             if 10 <= v <= 90:
                 temiz[k] = v
+        # v2.4.173: takip ayarlari ayni JSON'da tasinir
+        y = str(deger.get("takip_yontem") or "").lower()
+        if y in ("csrt", "kcf", "mil"):
+            temiz["takip_yontem"] = y
+        try:
+            t = int(round(float(deger["takip_tolerans"])))
+            if 1 <= t <= 30:
+                temiz["takip_tolerans"] = t
+        except (KeyError, TypeError, ValueError):
+            pass
         return _j.dumps(temiz, separators=(",", ":")) if temiz else ""
 
     def ekle(self, isim, protokol, url, lokasyon_id=None,

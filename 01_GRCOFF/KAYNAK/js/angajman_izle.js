@@ -253,6 +253,9 @@
     }
     // Popup aciksa guncelle
     if (popupEl) icerikCiz();
+    // v2.4.173: kamera panelindeki ucus-durum rozetlerini tazele
+    if (typeof window.kameraTakipDurumTazele === "function")
+      window.kameraTakipDurumTazele();
   };
 
   // --- Global erisim ---
@@ -260,6 +263,22 @@
   // Sadece ac (angajman baslatildiginda cagrilir; acik ise dokunmaz)
   window.angajmanIzleAc = function () {
     if (!popupEl) { popupOlustur(); icerikCiz(); }
+  };
+
+  // v2.4.173: Belirli bir kameranin YEREL hedefine (goruntu tipi,
+  // hedef_id="ornekId:kameraId:izId") su an angaje/takipte olan dronu
+  // bulur. Kamera panelindeki "Durdur" dugmesi ve durum metni icin.
+  window.angajmanKameraDurumu = function (kameraId) {
+    var kid = Number(kameraId);
+    for (var sid in canliVeri) {
+      if (!Object.prototype.hasOwnProperty.call(canliVeri, sid)) continue;
+      var d = canliVeri[sid];
+      if (!d || d.hedef_tip !== "goruntu") continue;
+      var parca = String(d.hedef_id || "").split(":");
+      if (parca.length !== 3 || Number(parca[1]) !== kid) continue;
+      return Object.assign({ sysid: Number(sid) }, d);
+    }
+    return null;
   };
 
 })();
