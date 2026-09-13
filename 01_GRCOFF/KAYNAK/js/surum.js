@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.167";
+const GCS_SURUM = "2.4.168";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.168",
+    tarih: "2026-09-13",
+    baslik: "Hava aracı tespitinde yanlış alarm koruması (paket 2.5.38)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: hareketli kameradan (örn. dron kamerasıyla çekilmiş video) gelen görüntüde MOG2 tüm sahneyi 'hareket' sayıyor, her arazi parçası HAVA ARACI olarak işaretleniyordu.",
+      "KAMERA HAREKETİ KORUMASI: karenin %6'sından fazlası hareketliyse bu kamera hareketidir; o karelerde tespit atlanır (konsola 30 sn'de bir uyarı düşer).",
+      "GÖKYÜZÜ/FON TEKDÜZELİĞİ: aday kutunun geniş çevresi dokulu (arazi/ağaç/bina) ise reddedilir — dron, düz gökyüzü fonu önünde kompakt cisim olarak aranır.",
+      "YOLO ONNX MODEL DESTEĞİ: ai_modeller klasörüne 'hava_araci.onnx' (YOLOv5/YOLOv8 formatı, tek veya çok sınıflı dron modeli) konursa hava aracı tespiti MOG2 yerine bu modelle yapılır — HAREKETLİ kamera görüntüsünde de çalışır. Model yoksa MOG2'ye düşülür. AI işçi durumu hangi dedektörün aktif olduğunu bildirir.",
+      "NOT: MOG2 hareket dedektörü SABİT kamera için tasarlanmıştır. En iyi sonuç: sabit (tripod/direk) kamera, gökyüzünü gören kadraj. Hareketli kameradan tespit için YOLO modeli kullanın."
+    ]
+  },
   {
     surum: "2.4.167",
     tarih: "2026-09-13",

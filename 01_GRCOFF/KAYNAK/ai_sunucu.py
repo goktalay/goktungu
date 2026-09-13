@@ -99,6 +99,12 @@ if _KURULUM_VERI:
     if os.path.isdir(os.path.join(_KURULUM_VERI, "ai_modeller")):
         MODEL_KLASORU = os.path.join(_KURULUM_VERI, "ai_modeller")
 
+# v2.4.168: Istege bagli YOLO ONNX hava araci modeli. Bu dosya varsa
+# hava_araci tespiti MOG2 (hareket) yerine gercek nesne tanima modeliyle
+# yapilir — hareketli kamera goruntusunde de calisir. Tek sinifli
+# (drone) veya cok sinifli YOLOv5/8 ONNX ciktisi desteklenir.
+YOLO_HAVA = os.path.join(MODEL_KLASORU, "hava_araci.onnx")
+
 YUNET = os.path.join(MODEL_KLASORU, "face_detection_yunet_2023mar.onnx")
 SFACE = os.path.join(MODEL_KLASORU, "face_recognition_sface_2021dec.onnx")
 PLAKA_CASCADE = os.path.join(MODEL_KLASORU,
@@ -542,10 +548,24 @@ class AIIsci:
         self.kilit = threading.Lock()
         os.makedirs(KAYIT_KLASORU, exist_ok=True)
 
-        # C-UAS modu: yalnız MOG2 hareket tespiti (hava_araci).
-        # Yüz/insan/plaka modelleri kaldırıldı.
+        # C-UAS modu: hava_araci tespiti. Oncelik YOLO ONNX modeli
+        # (varsa; hareketli kamerada da calisir), yoksa MOG2 hareket
+        # tespiti (yalniz sabit kamera). Yuz/insan/plaka kaldirildi.
+        self.yolo = None
+        if os.path.exists(YOLO_HAVA):
+            try:
+                self.yolo = cv2.dnn.readNetFromONNX(YOLO_HAVA)
+                print(f"[AI] Hava araci YOLO modeli yuklendi: {YOLO_HAVA}")
+            except Exception as e:
+                self.yolo = None
+                print(f"[AI] YOLO modeli okunamadi ({e}); MOG2 hareket"
+                      " tespiti kullanilacak.")
+        else:
+            print(f"[AI] YOLO modeli yok ({YOLO_HAVA}); MOG2 hareket"
+                  " tespiti kullanilacak (sabit kamera onerilir).")
         print(f"[AI] Isci kod ozeti: {KOD_OZETI[:12]} pid={os.getpid()}")
-        print(f"[AI] Isci hazir: {self.ad} ({self.tip}) mod=C-UAS")
+        print(f"[AI] Isci hazir: {self.ad} ({self.tip}) mod=C-UAS "
+              f"dedektor={'YOLO' if self.yolo is not None else 'MOG2'}")
 
     # ------------------------------------------------------------------
     # Gorev yonetimi
@@ -591,6 +611,7 @@ class AIIsci:
                 "ocr": False,
                 "yuz_destegi": False,
                 "siniflar": sorted(IZINLI_SINIFLAR),
+                "dedektor": "yolo" if self.yolo is not None else "mog2",
                 "kod_ozeti": KOD_OZETI, "pid": os.getpid(),
                 "ana_url": self.ana_url}
 
@@ -602,7 +623,10 @@ class AIIsci:
         g = akis.gorevler & IZINLI_SINIFLAR
         akis.canli_kutular = []
         if "hava_araci" in g:
-            self._hareket_analiz(akis, kare, ts)
+            if self.yolo is not None:
+                self._yolo_analiz(akis, kare, ts)
+            else:
+                self._hareket_analiz(akis, kare, ts)
         try:
             h, w = kare.shape[:2]
             self._kutulari_bildir(akis, w, h, ts)
@@ -751,6 +775,85 @@ class AIIsci:
                                 guven=0.6, plaka_metin=metin)
 
     # ------------------------------------------------------------------
+    # v2.4.168: YOLO ONNX hava araci tespiti (model varsa)
+    # ------------------------------------------------------------------
+    def _yolo_analiz(self, akis, kare, ts):
+        """YOLOv5/8 ONNX ciktisiyla hava araci tespiti.
+
+        MOG2'den farki: hareketli kamera goruntusunde de calisir (nesne
+        gorunumden taninir, hareketten degil). CPU yuku yuksek oldugundan
+        en cok ~2.5 Hz calistirilir; takip (CSRT) her karede bagimsiz
+        surer, bu kisitlama takibi etkilemez.
+        """
+        if ts - getattr(akis, "_yolo_son", 0.0) < 0.4:
+            return
+        akis._yolo_son = ts
+        h, w = kare.shape[:2]
+        BOY = 640
+        olcek = min(BOY / float(w), BOY / float(h))
+        nw, nh = max(1, int(w * olcek)), max(1, int(h * olcek))
+        tuval = np.full((BOY, BOY, 3), 114, np.uint8)
+        tuval[:nh, :nw] = cv2.resize(kare, (nw, nh))
+        blob = cv2.dnn.blobFromImage(tuval, 1.0 / 255.0, (BOY, BOY),
+                                     swapRB=True, crop=False)
+        try:
+            self.yolo.setInput(blob)
+            cikti = self.yolo.forward()
+        except Exception as e:
+            if akis.sogutma_gecti("yolo_hata", saniye=60.0):
+                print(f"[AI] YOLO cikarimi basarisiz: {e}")
+            return
+        # Bicim normalizasyonu: (1,C,N) veya (1,N,C) -> (N, C)
+        if cikti.ndim == 3:
+            cikti = cikti[0]
+        if cikti.ndim != 2:
+            return
+        if cikti.shape[0] < cikti.shape[1]:
+            cikti = cikti.T
+        sutun = cikti.shape[1]
+        if sutun < 5:
+            return
+        # Hassasiyet -> guven esigi (s=50 iken 0.35; yuksek s daha dusuk esik)
+        k = getattr(akis, "_olcek", {}).get("hava_araci", 1.0)
+        esik = max(0.10, min(0.90, 0.35 * min(1.5, k)))
+        kutular, puanlar = [], []
+        for satir in cikti:
+            # YOLOv8: [cx,cy,w,h, sinif_puanlari...]
+            # YOLOv5: [cx,cy,w,h, nesnelik, sinif_puanlari...]
+            # Iki bicim icin de en yuksek guven sutunu kullanilir; v5'te
+            # bu hafif iyimserdir, esik + NMS ile dengelenir.
+            puan = float(satir[4:].max())
+            if puan < esik:
+                continue
+            cx, cy, bw, bh = (float(v) for v in satir[:4])
+            x = int((cx - bw / 2.0) / olcek)
+            y = int((cy - bh / 2.0) / olcek)
+            gw, gh = int(bw / olcek), int(bh / olcek)
+            if gw < 6 or gh < 6:
+                continue
+            kutular.append([x, y, gw, gh])
+            puanlar.append(puan)
+        if not kutular:
+            return
+        sec = cv2.dnn.NMSBoxes(kutular, puanlar, esik, 0.45)
+        if sec is None or len(sec) == 0:
+            return
+        for i in np.array(sec).flatten():
+            x, y, gw, gh = kutular[int(i)]
+            x = max(0, min(x, w - 4)); y = max(0, min(y, h - 4))
+            gw = max(4, min(gw, w - x)); gh = max(4, min(gh, h - y))
+            puan = puanlar[int(i)]
+            self._canli_kutu_ekle(akis, x, y, gw, gh, "hava_araci",
+                                  etiket="IHA %%%d" % int(puan * 100))
+            anahtar = f"hava_araci_{x // 120}_{y // 120}"
+            if not akis.sogutma_gecti(anahtar, saniye=6.0):
+                continue
+            x0, y0 = max(0, x - 20), max(0, y - 20)
+            kirp = kare[y0:min(h, y + gh + 20), x0:min(w, x + gw + 20)]
+            self._tespit_bildir(akis, "hava_araci", kare, kirp, ts,
+                                guven=puan)
+
+    # ------------------------------------------------------------------
     # C-UAS: Hareket tabanli hava araci (IHA/drone) tespiti
     # ------------------------------------------------------------------
     # CPU iscide arka plan cikarma (MOG2) + blob analizi kullanilir:
@@ -768,9 +871,23 @@ class AIIsci:
         maske = akis.arka_plan.apply(kare)
         maske = cv2.medianBlur(maske, 5)
         maske = cv2.dilate(maske, np.ones((5, 5), np.uint8))
+        kare_alani = float(h * w)
+        # v2.4.168 KAMERA HAREKETI KORUMASI (olculen kusur): MOG2 SABIT
+        # kamera varsayar. Kamera hareket ederken (dron kamerasindan
+        # kayit, pan/titresim) TUM sahne "hareketli" gorunur ve her arazi
+        # parcasi hava araci sanilirdi. Kare genelinde on-plan orani
+        # yuksekse bu kare kamera hareketidir; tespit ATLANIR.
+        on_plan = cv2.countNonZero(maske) / kare_alani
+        if on_plan > 0.06:
+            if akis.sogutma_gecti("kamera_hareket_uyari", saniye=30.0):
+                print("[AI] kam=%s: karenin %%%d'i hareketli — kamera "
+                      "hareketli/titresimli goruntu; MOG2 tespiti bu "
+                      "karelerde atlanir (sabit kamera onerilir)"
+                      % (akis.kamera_id, int(on_plan * 100)))
+            return
         konturlar, _ = cv2.findContours(maske, cv2.RETR_EXTERNAL,
                                         cv2.CHAIN_APPROX_SIMPLE)
-        kare_alani = float(h * w)
+        gri = cv2.cvtColor(kare, cv2.COLOR_BGR2GRAY)
         # v2.5.24: sınıf başına alan alt-sınır ölçeği (s=50 -> k=1.0 nötr;
         # yüksek hassasiyet -> daha küçük alt sınır -> daha çok tespit).
         _kh = getattr(akis, "_olcek", {}).get("hava_araci", 1.0)
@@ -787,6 +904,15 @@ class AIIsci:
                 continue
             # doluluk filtresi: cok seyrek konturlar gurultudur
             if cv2.contourArea(c) / float(alan) < 0.25:
+                continue
+            # v2.4.168 GOKYUZU/FON TEKDUZELIGI: dron kompakt bir cisim
+            # olarak goreceli DUZ bir fon (gokyuzu, bulut) onunde belirir.
+            # Aday kutunun genis cevresi cok dokuluysa (arazi, agac, bina)
+            # bu bir yer nesnesi/parallaks artigidir; reddedilir.
+            px0, py0 = max(0, x - gw), max(0, y - gh)
+            px1, py1 = min(w, x + 2 * gw), min(h, y + 2 * gh)
+            pencere = gri[py0:py1, px0:px1]
+            if pencere.size and float(pencere.std()) > 26.0:
                 continue
             self._canli_kutu_ekle(akis, x, y, gw, gh, "hava_araci")
             anahtar = f"hava_araci_{x // 120}_{y // 120}"
