@@ -39,7 +39,8 @@ def _izinli_sinif(tur):
 
 # v2.4.162: Izleme GOREVLERI (tespit siniflarindan ayri): "yuz" yakin cekim
 # yuz tespiti gorevidir; tespit yine "insan" bildirilir.
-IZINLI_GOREVLER = frozenset(("hava_araci",))
+IZINLI_GOREVLER = frozenset(("hava_araci", "drone", "ucak", "helikopter",
+                             "kus"))
 
 
 def _gorevleri_sinirla(gorevler):

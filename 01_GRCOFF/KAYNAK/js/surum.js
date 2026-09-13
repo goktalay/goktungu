@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.168";
+const GCS_SURUM = "2.4.169";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.169",
+    tarih: "2026-09-13",
+    baslik: "Hava aracı tip sınıflandırması: Drone/Uçak/Helikopter/Kuş (paket 2.5.39)",
+    maddeler: [
+      "AI ayarlarında 'Hava Aracı' ana anahtarının altında dört alt sınıf: Drone/İHA, Uçak (sabit kanat), Helikopter, Kuş — her biri ayrı AÇ/KAPAT ve HASSASİYET taşır. Hiç alt sınıf seçilmemişse tümü açık sayılır (eski kayıtlar ve tek sınıflı modellerle geriye uyumlu).",
+      "Tip ayrımı YOLO modeli gerektirir: ai_modeller klasörüne 'hava_araci.onnx' + 'hava_araci.siniflar.txt' konur. Videoda kutular tipiyle etiketlenir: 'DRONE KOPTER %85', 'SABIT KANAT IHA %78', 'KUS %64'. Kuş sınıfı ayırt edilir; yanlış angajman riski düşer.",
+      "YOLO çıkarımı ayrı iş parçacığına alındı: yavaş CPU'da saniyeler süren model, video akışını ve takibi (CSRT her karede) artık bloklamaz.",
+      "Kutu geçerlilik süreleri uzatıldı (1.5sn→6sn): yavaş çıkarımda tespit kutuları ekranda yanıp sönmez, çift tıkla hedef seçimi zaman tanır.",
+      "Takip ve angajman zinciri değişmedi: tüm alt sınıflar angajman için 'hava aracı' hedefidir; sınıf yalnız tespit süzgeci ve etikettir."
+    ]
+  },
   {
     surum: "2.4.168",
     tarih: "2026-09-13",

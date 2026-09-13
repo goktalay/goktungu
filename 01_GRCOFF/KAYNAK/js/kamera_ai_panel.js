@@ -17,8 +17,15 @@
   "use strict";
 
   // v2.4.165: C-UAS modu — yalnız hava aracı tespiti etkin.
+  // v2.4.169: Alt sınıflar (3. eleman=1): çok sınıflı YOLO modeliyle
+  // sınıf bazlı aç/kapat + hassasiyet. Hiç alt sınıf seçilmemişse tümü
+  // açık sayılır (tek sınıflı model / MOG2 ile geriye uyumlu).
   var SINIFLAR = [
-    ["hava_araci", "Hava Aracı (İHA / Drone)"]
+    ["hava_araci", "Hava Aracı (ana anahtar)"],
+    ["drone", "Drone / İHA", 1],
+    ["ucak", "Uçak (sabit kanat)", 1],
+    ["helikopter", "Helikopter", 1],
+    ["kus", "Kuş (ayırt etme)", 1]
   ];
   var HEDEFLER = [
     ["harita", "Harita", "fa-map-location-dot"],
@@ -115,6 +122,7 @@
       var deger = c[0], etiket = c[1];
       var det = document.createElement("details");
       det.className = "kai-sinif";
+      if (c[2]) det.style.marginLeft = "18px";   // alt sınıf girintisi
       if (gorevler.has(deger)) det.open = true;
 
       var ozet = document.createElement("summary");
@@ -174,8 +182,9 @@
     var not = document.createElement("div");
     not.className = "kai-panel-not";
     not.textContent = t.kaiNot ||
-      "Yerel AI köprüsüz çalışır; görüntü ve tespit bu bilgisayardan çıkmaz. " +
-      "Angajman için kamera kalibrasyonu Angajman Başlat panelinden yapılır.";
+      "Alt sınıflar (Drone/Uçak/Helikopter/Kuş) yalnız YOLO modeli kuruluysa " +
+      "ayırt edilir; hiç alt sınıf seçilmemişse tümü açık sayılır. " +
+      "Yerel AI köprüsüz çalışır; görüntü ve tespit bu bilgisayardan çıkmaz.";
     govde.appendChild(not);
 
     el.appendChild(govde);

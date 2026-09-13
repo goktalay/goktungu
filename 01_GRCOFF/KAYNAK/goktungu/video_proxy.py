@@ -82,7 +82,10 @@ class AnotasyonDeposu:
     kutular gecersiz sayilir (akista donuk kalmamalari icin).
     """
 
-    GECERLILIK_SN = 1.5
+    # v2.4.169: YOLO cikarimi CPU'da saniyeler surebilir; kutular bir
+    # sonraki cikarima kadar ekranda kalmali (eskiden 1.5 sn'de siliniyor,
+    # yavas makinede surekli yanip sonuyordu).
+    GECERLILIK_SN = 6.0
 
     def __init__(self):
         self._veri = {}          # kamera_id -> {"kutular": [...], "ts": t}

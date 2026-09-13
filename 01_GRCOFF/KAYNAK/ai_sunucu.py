@@ -205,14 +205,42 @@ except ImportError:
 # edilir ve angaje olunur. İnsan/yüz/kara aracı tespiti kaldırıldı.
 IZINLI_SINIFLAR = frozenset(("hava_araci",))
 
+# v2.4.169: Hava araci ALT SINIFLARI (yalniz cok sinifli YOLO modeliyle
+# anlamli). Her biri ayri ac/kapat (gorev) + hassasiyet tasir. Takip ve
+# angajman icin tur DAIMA "hava_araci"dir; alt sinif yalniz tespit
+# suzgeci ve etikettir. KURAL: gorevlerde hic alt sinif yoksa TUM
+# siniflar acik sayilir (tek sinifli model / eski kayit uyumu); en az
+# bir alt sinif varsa yalniz secililer tespit edilir.
+ALT_SINIFLAR = frozenset(("drone", "ucak", "helikopter", "kus"))
+
+# Model sinif adi -> kanonik alt sinif anahtari ("_yok" = daima atla).
+_SINIF_ESLE = (
+    ("background", "_yok"), ("arkaplan", "_yok"),
+    ("drone", "drone"), ("iha", "drone"), ("uav", "drone"),
+    ("copter", "drone"), ("quad", "drone"), ("shahed", "drone"),
+    ("airplane", "ucak"), ("plane", "ucak"), ("ucak", "ucak"),
+    ("jet", "ucak"), ("aircraft", "ucak"), ("fixed", "ucak"),
+    ("helicopter", "helikopter"), ("heli", "helikopter"),
+    ("bird", "kus"), ("kus", "kus"),
+)
+
+
+def sinif_anahtari(ad):
+    a = str(ad or "").strip().lower()
+    for parca, anahtar in _SINIF_ESLE:
+        if parca in a:
+            return anahtar
+    return ""
+
 
 def gorevleri_sinirla(gorevler):
+    gecerli = IZINLI_SINIFLAR | ALT_SINIFLAR
     if gorevler is None:
         return set(IZINLI_SINIFLAR)
     if isinstance(gorevler, str):
         gorevler = gorevler.replace(";", ",").split(",")
     return {str(g).strip().lower() for g in (gorevler or [])
-            if str(g).strip().lower() in IZINLI_SINIFLAR}
+            if str(g).strip().lower() in gecerli}
 
 
 # v2.5.24: Sınıf başına hassasiyet. UI 10..90; 50 = mevcut davranış.
@@ -226,7 +254,7 @@ def hassasiyet_coz(deger):
         except (ValueError, TypeError):
             deger = {}
     out = {}
-    for k in IZINLI_SINIFLAR:
+    for k in IZINLI_SINIFLAR | ALT_SINIFLAR:
         try:
             v = int(round(float((deger or {}).get(k))))
         except (TypeError, ValueError):
@@ -552,6 +580,12 @@ class AIIsci:
         # (varsa; hareketli kamerada da calisir), yoksa MOG2 hareket
         # tespiti (yalniz sabit kamera). Yuz/insan/plaka kaldirildi.
         self.yolo = None
+        # v2.4.169: cok sinifli model destegi — modelin yanindaki
+        # "hava_araci.siniflar.txt" (satir basina bir ad, model sinif
+        # sirasiyla) varsa tespit etiketi tipi gosterir: "SABIT KANAT %87",
+        # "MINI DRON %92" gibi. Boru hatti (takip/angajman) icin tur yine
+        # "hava_araci"dir; siniflandirma yalniz gosterim/kayit icindir.
+        self.yolo_siniflar = []
         if os.path.exists(YOLO_HAVA):
             try:
                 self.yolo = cv2.dnn.readNetFromONNX(YOLO_HAVA)
@@ -560,6 +594,16 @@ class AIIsci:
                 self.yolo = None
                 print(f"[AI] YOLO modeli okunamadi ({e}); MOG2 hareket"
                       " tespiti kullanilacak.")
+            sinif_dosya = os.path.splitext(YOLO_HAVA)[0] + ".siniflar.txt"
+            if self.yolo is not None and os.path.exists(sinif_dosya):
+                try:
+                    with open(sinif_dosya, encoding="utf-8") as f:
+                        self.yolo_siniflar = [s.strip() for s in f
+                                              if s.strip()]
+                    print(f"[AI] Hava araci siniflari: "
+                          f"{', '.join(self.yolo_siniflar[:12])}")
+                except OSError:
+                    self.yolo_siniflar = []
         else:
             print(f"[AI] YOLO modeli yok ({YOLO_HAVA}); MOG2 hareket"
                   " tespiti kullanilacak (sabit kamera onerilir).")
@@ -621,17 +665,53 @@ class AIIsci:
     def kare_analiz(self, akis, kare, ts):
         # GRCOFF 2.5.35 C-UAS: yalnız hava aracı (IHA/drone) tespiti.
         g = akis.gorevler & IZINLI_SINIFLAR
+        if "hava_araci" not in g:
+            akis.canli_kutular = []
+            try:
+                h, w = kare.shape[:2]
+                self._kutulari_bildir(akis, w, h, ts)
+            except Exception:
+                pass
+            return
+        if self.yolo is not None:
+            # v2.4.169: YOLO cikarimi CPU'da saniyeler surebilir; akis
+            # okuma ipligi BLOKLANMAZ. Kare ayri cikarim ipligine
+            # birakilir; kutu bildirimi o iplikten yapilir.
+            self._yolo_kuyrukla(akis, kare, ts)
+            return
         akis.canli_kutular = []
-        if "hava_araci" in g:
-            if self.yolo is not None:
-                self._yolo_analiz(akis, kare, ts)
-            else:
-                self._hareket_analiz(akis, kare, ts)
+        self._hareket_analiz(akis, kare, ts)
         try:
             h, w = kare.shape[:2]
             self._kutulari_bildir(akis, w, h, ts)
         except Exception:
             pass
+
+    def _yolo_kuyrukla(self, akis, kare, ts):
+        """Son kareyi cikarim ipligine birakir (eski bekleyen atilir)."""
+        akis._yolo_kare = (kare, ts)
+        iplik = getattr(akis, "_yolo_iplik", None)
+        if iplik is None or not iplik.is_alive():
+            iplik = threading.Thread(target=self._yolo_dongu,
+                                     args=(akis,), daemon=True)
+            akis._yolo_iplik = iplik
+            iplik.start()
+
+    def _yolo_dongu(self, akis):
+        while akis.calisiyor:
+            veri = getattr(akis, "_yolo_kare", None)
+            if veri is None:
+                time.sleep(0.05)
+                continue
+            akis._yolo_kare = None
+            kare, ts = veri
+            try:
+                self._yolo_analiz(akis, kare, ts)
+                h, w = kare.shape[:2]
+                self._kutulari_bildir(akis, w, h, ts)
+            except Exception as e:
+                if akis.sogutma_gecti("yolo_dongu_hata", saniye=60.0):
+                    print(f"[AI] YOLO islem hatasi: {e}")
 
     def _kutulari_bildir(self, akis, kaynak_w, kaynak_h, ts):
         """Canli tespit kutularini ana sunucuya POST /ai/kutular ile
@@ -785,9 +865,12 @@ class AIIsci:
         en cok ~2.5 Hz calistirilir; takip (CSRT) her karede bagimsiz
         surer, bu kisitlama takibi etkilemez.
         """
-        if ts - getattr(akis, "_yolo_son", 0.0) < 0.4:
+        # Kuyruk zaten serilestirir (tek cikarim ipligi); yine de art arda
+        # ayni saniyede iki cikarima girmemek icin kucuk alt sinir.
+        if ts - getattr(akis, "_yolo_son", 0.0) < 0.2:
             return
         akis._yolo_son = ts
+        akis.canli_kutular = []
         h, w = kare.shape[:2]
         BOY = 640
         olcek = min(BOY / float(w), BOY / float(h))
@@ -813,17 +896,27 @@ class AIIsci:
         sutun = cikti.shape[1]
         if sutun < 5:
             return
-        # Hassasiyet -> guven esigi (s=50 iken 0.35; yuksek s daha dusuk esik)
-        k = getattr(akis, "_olcek", {}).get("hava_araci", 1.0)
-        esik = max(0.10, min(0.90, 0.35 * min(1.5, k)))
-        kutular, puanlar = [], []
+        # v2.4.169: SINIF BAZLI ac/kapat + hassasiyet.
+        # - Alt sinif esigi kendi hassasiyetinden turetilir (s=50 -> 0.35).
+        # - Gorevlerde en az bir alt sinif SECILIYSE yalniz seciler gecer;
+        #   hic secilmemisse tum siniflar acik (eski davranis / tek sinif).
+        _olcek = getattr(akis, "_olcek", {})
+
+        def _esik(anahtar):
+            kk = _olcek.get(anahtar) or _olcek.get("hava_araci", 1.0)
+            return max(0.10, min(0.90, 0.35 * min(1.5, kk)))
+
+        alt_secili = akis.gorevler & ALT_SINIFLAR
+        esik_taban = 0.10   # aday toplama esigi; sinif esigi sonra uygulanir
+        kutular, puanlar, sinif_no = [], [], []
         for satir in cikti:
-            # YOLOv8: [cx,cy,w,h, sinif_puanlari...]
-            # YOLOv5: [cx,cy,w,h, nesnelik, sinif_puanlari...]
+            # YOLOv8/12: [cx,cy,w,h, sinif_puanlari...]
+            # YOLOv5:    [cx,cy,w,h, nesnelik, sinif_puanlari...]
             # Iki bicim icin de en yuksek guven sutunu kullanilir; v5'te
             # bu hafif iyimserdir, esik + NMS ile dengelenir.
-            puan = float(satir[4:].max())
-            if puan < esik:
+            vec = satir[4:]
+            puan = float(vec.max())
+            if puan < esik_taban:
                 continue
             cx, cy, bw, bh = (float(v) for v in satir[:4])
             x = int((cx - bw / 2.0) / olcek)
@@ -833,9 +926,10 @@ class AIIsci:
                 continue
             kutular.append([x, y, gw, gh])
             puanlar.append(puan)
+            sinif_no.append(int(vec.argmax()))
         if not kutular:
             return
-        sec = cv2.dnn.NMSBoxes(kutular, puanlar, esik, 0.45)
+        sec = cv2.dnn.NMSBoxes(kutular, puanlar, esik_taban, 0.45)
         if sec is None or len(sec) == 0:
             return
         for i in np.array(sec).flatten():
@@ -843,8 +937,22 @@ class AIIsci:
             x = max(0, min(x, w - 4)); y = max(0, min(y, h - 4))
             gw = max(4, min(gw, w - x)); gh = max(4, min(gh, h - y))
             puan = puanlar[int(i)]
+            si = sinif_no[int(i)]
+            ad_ham = (self.yolo_siniflar[si]
+                      if si < len(self.yolo_siniflar) else "IHA")
+            anahtar = sinif_anahtari(ad_ham)
+            if anahtar == "_yok":
+                continue        # "background" vb. gercek nesne degil
+            if anahtar and alt_secili and anahtar not in akis.gorevler:
+                continue        # bu sinif kullanici tarafindan KAPALI
+            if puan < _esik(anahtar):
+                continue        # sinifin kendi hassasiyet esigi
+            # cv2.putText Turkce karakter cizemez -> ASCII'ye indirgenir
+            ad = (ad_ham.upper().replace("İ", "I").replace("Ş", "S")
+                  .replace("Ğ", "G").replace("Ü", "U").replace("Ö", "O")
+                  .replace("Ç", "C"))[:24]
             self._canli_kutu_ekle(akis, x, y, gw, gh, "hava_araci",
-                                  etiket="IHA %%%d" % int(puan * 100))
+                                  etiket="%s %%%d" % (ad, int(puan * 100)))
             anahtar = f"hava_araci_{x // 120}_{y // 120}"
             if not akis.sogutma_gecti(anahtar, saniye=6.0):
                 continue

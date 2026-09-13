@@ -232,8 +232,9 @@
     }
   };
 
-  // C-UAS modu: yalniz hava araci gorevi.
-  const AI_GOREV_KUTULARI = ["kamAiHava"];
+  // C-UAS modu: hava araci ana anahtari + alt siniflar (YOLO modeliyle).
+  const AI_GOREV_KUTULARI = ["kamAiHava", "kamAiDrone", "kamAiUcak",
+                             "kamAiHeli", "kamAiKus"];
 
   function aiGorevleriDoldur(csv) {
     const secili = String(csv || "").split(",").map(s => s.trim());

@@ -1250,9 +1250,13 @@
             <!-- v2.4.153: Kisi/Arac Tanima GRCOFF yerel iscisinde KAPALIDIR
                  (ai_sunucu.py IZINLI_SINIFLAR); anahtar hicbir sey yapmadigi
                  icin gosterilmez. -->
-            <label class="kam-ai-satir"><span data-i18n="kamAiHava">Hava Aracı Tespit (İHA / Drone)</span><span class="tgl"><input type="checkbox" id="kamAiHava" value="hava_araci"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir"><span data-i18n="kamAiHava">Hava Aracı Tespit (ana anahtar)</span><span class="tgl"><input type="checkbox" id="kamAiHava" value="hava_araci"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiDrone">Drone / İHA</span><span class="tgl"><input type="checkbox" id="kamAiDrone" value="drone"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiUcak">Uçak (sabit kanat)</span><span class="tgl"><input type="checkbox" id="kamAiUcak" value="ucak"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiHeli">Helikopter</span><span class="tgl"><input type="checkbox" id="kamAiHeli" value="helikopter"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiKus">Kuş (ayırt etme)</span><span class="tgl"><input type="checkbox" id="kamAiKus" value="kus"><span class="tgl-iz"></span></span></label>
           </div>
-          <div class="form-not" data-i18n="kamAiNot">C-UAS modu: sistem yalnız hava araçlarını tespit eder ve angaje olur. Düşman dron tespiti için "Hava Aracı Tespit" açılmalıdır.</div>
+          <div class="form-not" data-i18n="kamAiNot">C-UAS modu: sistem yalnız hava araçlarını tespit eder ve angaje olur. Alt sınıflar (Drone/Uçak/Helikopter/Kuş) yalnız YOLO modeli kuruluysa ayırt edilir; hiç alt sınıf seçilmemişse tümü açık sayılır.</div>
         </div>
       </details>
 

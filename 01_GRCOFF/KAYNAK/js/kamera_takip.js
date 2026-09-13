@@ -18,7 +18,9 @@
 (function () {
   "use strict";
 
-  var KUTU_GECERLI_MS = 1500;
+  // v2.4.169: YOLO cikarimi yavas CPU'da saniyeler surebilir; cift tik
+  // hedef secim penceresi son kutu yayinini o kadar sure gecerli sayar.
+  var KUTU_GECERLI_MS = 6000;
   var TAKIP_BAYAT_MS = 3000;
   var kutular = {};   // kamera_id -> {ts, liste:[{x,y,w,h,tur,etiket,kaynak_w,kaynak_h}]}
   var takip = {};     // kamera_id -> son ai_takip mesajı (+ _ts)
