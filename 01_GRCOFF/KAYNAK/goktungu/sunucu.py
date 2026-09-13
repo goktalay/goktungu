@@ -8630,19 +8630,16 @@ class WSSunucusu:
                                "basari": basladi,
                                "bilgi": "Surum denetimi baslatildi" if basladi else
                                         "Surum denetimi zaten calisiyor veya hazir degil"})
-        elif komut == "guncelleme_indir":
+        elif komut in ("guncelleme_uygula", "guncelleme_indir", "guncelleme_kur"):
+            # v2.5.30: Dosya tabanli model — tek adim. Calisan surec kendi
+            # kodunu degistirmez; gozetmen icin tetik dosyasi yazilir, o da
+            # uygulamayi durdurup dosyalari atomik yerlestirip yeniden baslatir.
+            # (Eski indir/kur komutlari geriye donuk uyum icin ayni yola gider.)
             yonetici = getattr(self, "guncelleme", None)
-            basari, bilgi = (yonetici.indir_arka_planda() if yonetici else
-                             (False, "Guncelleme yoneticisi hazir degil"))
-            await self._duyur({"tip": "guncelleme_sonuc", "islem": "indir",
-                               "basari": bool(basari), "bilgi": str(bilgi)})
-        elif komut == "guncelleme_kur":
-            # Kurulum OS tarafinda ayri surecte baslar; bu sunucu kendi
-            # dosyalarini calisirken degistirmez ve telemetriyi bozmaz.
-            yonetici = getattr(self, "guncelleme", None)
-            basari, bilgi = (yonetici.kurulum_baslat() if yonetici else
-                             (False, "Guncelleme yoneticisi hazir degil"))
-            await self._duyur({"tip": "guncelleme_sonuc", "islem": "kur",
+            basari, bilgi = (yonetici.guncelle_baslat()
+                             if yonetici and hasattr(yonetici, "guncelle_baslat")
+                             else (False, "Guncelleme yoneticisi hazir degil"))
+            await self._duyur({"tip": "guncelleme_sonuc", "islem": "uygula",
                                "basari": bool(basari), "bilgi": str(bilgi)})
         elif komut == "gorev_yukle" and self.gorev and self.rotalar:
             # v2.4.20: {"tip":"gorev_yukle","sysid":1,"rota_id":2}

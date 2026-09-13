@@ -4421,8 +4421,15 @@ function butonMetinAyarla(btn, metin){
     guncellemeKurulumOnay: "Doğrulanmış paket kurulacak ve uygulama yeniden başlatılabilir. Devam edilsin mi?",
     guncellemeBaglanti: "Güncelleme denetimi için bağlantı bekleniyor.",
     guncellemeHata: "Güncelleme işlemi tamamlanamadı",
-    guncellemeGuvenlik: "Paket, imza ve SHA-256 bütünlük denetiminden geçmeden kurulmaz.",
-    guncellemeYuzde: "{oran}% indirildi"
+    guncellemeGuvenlik: "Yalnız imzalı manifest ve SHA-256 doğrulaması geçen değişen dosyalar indirilir; çalıştırılabilir kurulum indirilmez.",
+    guncellemeYuzde: "{oran}% indirildi",
+    mbGuncelleme: "Güncellemeleri Denetle",
+    guncellemeUygula: "GÜNCELLE VE YENİDEN BAŞLAT",
+    guncellemeUygulaOnay: "Değişen dosyalar indirilip kurulacak ve uygulama yeniden başlatılacak. Devam edilsin mi?",
+    guncellemeDenetleniyor: "Yeni sürüm denetleniyor…",
+    guncellemeGuncel: "Yazılımınız güncel.",
+    guncellemeHazirDosya: "Yeni sürüm {hedef} hazır — {sayi} dosya güncellenecek.",
+    guncellemeUygulaniyor: "Güncelleme başlatıldı. Değişen dosyalar indirilip yerleştiriliyor; uygulama birazdan kendiliğinden yeniden başlayacak."
   });
   Object.assign(DILLER.EN, {
     guncellemeSerit: "NEW VERSION READY: {hedef} — UPDATE",
@@ -4441,7 +4448,14 @@ function butonMetinAyarla(btn, metin){
     guncellemeKurulumOnay: "The verified package will be installed and the application may restart. Continue?",
     guncellemeBaglanti: "Waiting for a connection to check for updates.",
     guncellemeHata: "The update could not be completed",
-    guncellemeGuvenlik: "No package is installed before signature and SHA-256 integrity verification succeed.",
-    guncellemeYuzde: "{oran}% downloaded"
+    guncellemeGuvenlik: "Only changed files that pass signed-manifest and SHA-256 verification are downloaded; no executable installer is fetched.",
+    guncellemeYuzde: "{oran}% downloaded",
+    mbGuncelleme: "Check for Updates",
+    guncellemeUygula: "UPDATE AND RESTART",
+    guncellemeUygulaOnay: "The changed files will be downloaded and installed and the application will restart. Continue?",
+    guncellemeDenetleniyor: "Checking for a new version…",
+    guncellemeGuncel: "Your software is up to date.",
+    guncellemeHazirDosya: "New version {hedef} ready — {sayi} files will be updated.",
+    guncellemeUygulaniyor: "Update started. Changed files are being downloaded and applied; the application will restart automatically shortly."
   });
 })();

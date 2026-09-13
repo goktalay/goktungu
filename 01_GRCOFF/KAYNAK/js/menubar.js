@@ -150,6 +150,16 @@
       if (typeof menubarKapat === "function") menubarKapat();
     });
   }
+  // YARDIM > Guncellemeleri Denetle: uygulama ici dosya tabanli guncelleme
+  // penceresini acar ve taze bir surum denetimi baslatir (js/guncelleme.js).
+  const mbGunc = document.getElementById("mbGuncelleme");
+  if (mbGunc) {
+    mbGunc.addEventListener("click", () => {
+      if (typeof menubarKapat === "function") menubarKapat();
+      if (typeof window.guncellemePenceresiAc === "function")
+        window.guncellemePenceresiAc();
+    });
+  }
   const mbHak = document.getElementById("mbHakkinda");
   if (mbHak){
     mbHak.addEventListener("click", () => {

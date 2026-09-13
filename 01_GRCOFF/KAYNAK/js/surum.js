@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.159";
-const GCS_SURUM_TARIH = "2026-09-12";
+const GCS_SURUM = "2.4.160";
+const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.160",
+    tarih: "2026-09-13",
+    baslik: "Yardım menüsünde 'Güncellemeleri Denetle' düğmesi (paket 2.5.30)",
+    maddeler: [
+      "Yardım menüsüne 'Güncellemeleri Denetle' eklendi: yeni sürüm olup olmadığını denetler ve varsa tek düğmeyle günceller. İmzalı manifest çekilip Ed25519 ile doğrulanır, yerel dosyalarla SHA-256 farkı çıkarılıp kaç dosyanın değişeceği gösterilir.",
+      "'Güncelle ve Yeniden Başlat' arka plandaki güncelleme servisine (gözetmen) bir istek bırakır; gözetmen yalnız DEĞİŞEN dosyaları indirip atomik yerleştirir ve uygulamayı yeniden başlatır. Çalıştırılabilir (.exe) kurulum indirilmez — Defender yanlış-pozitifi oluşmaz.",
+      "Yeni sürüm hazır olduğunda üstte yeşil bir bilgi şeridi belirir; tıklanınca aynı pencere açılır."
+    ]
+  },
   {
     surum: "2.4.159",
     tarih: "2026-09-13",

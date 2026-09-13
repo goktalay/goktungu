@@ -579,12 +579,14 @@ def uygulama_kur():
     gorev.sitl = ws_sunucu.sitl
     # v2.5.18: Guncelleme denetimi arka planda yapilir; ana telemetri
     # dongusu veya acilis bu uzak HTTP istegini ASLA beklemez.
-    from goktungu.guncelleme import GuncellemeYoneticisi
-    from goktungu.sabitler import VERI_KOKU
-    # v2.4.152: paket surumu tek kaynaktan (bkz. goktungu/paket_surum.py).
-    from goktungu.paket_surum import PAKET_SURUM
-    ws_sunucu.guncelleme = GuncellemeYoneticisi(
-        "gcs", PAKET_SURUM, VERI_KOKU, gunluk=konsol)
+    # v2.5.30: Dosya tabanli (artimli) guncelleme. Eski .exe modeli
+    # (guncelleme.py) yerine calisan surec ICINDEN yalniz DENETLER; asil
+    # guncellemeyi arka plandaki gozetmen tetik dosyasiyla uygular.
+    from goktungu.guncelleme_dosya import DosyaGuncellemeYoneticisi
+    from goktungu.sabitler import VERI_KOKU, PROJE_KOKU
+    from goktungu.paket_surum import UYGULAMA_SURUM
+    ws_sunucu.guncelleme = DosyaGuncellemeYoneticisi(
+        "gcs", UYGULAMA_SURUM, VERI_KOKU, kok=PROJE_KOKU, gunluk=konsol)
     ws_sunucu.guncelleme.denetle_arka_planda()
     ws_sunucu.betaflight = betaflight
     # Onceki oturumdan kalmis SITL surecleri portlari tutmaya devam eder

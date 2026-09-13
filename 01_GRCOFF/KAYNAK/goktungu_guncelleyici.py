@@ -328,6 +328,10 @@ import threading
 URUN = "gcs"
 KONTROL_ARALIGI = 15 * 60      # 15 dk'da bir güncelleme kontrolü
 ILK_KONTROL_GECIKME = 60       # açılıştan 60 sn sonra ilk kontrol
+# 2.5.30: Uygulama içi "Şimdi Güncelle" düğmesi VERİ köküne bu dosyayı
+# yazar; gözetmen görünce 15 dk'yı beklemeden hemen güncelleme uygular.
+# (goktungu/guncelleme_dosya.TETIK_ADI ile birebir aynı olmalı.)
+TETIK_ADI = ".guncelleme_istek"
 
 
 def _kurulum_koku() -> str:
@@ -457,8 +461,27 @@ class Gozetmen:
             self.gunluk("[GUNC] %s sürümüne güncellendi (%d dosya)"
                         % (sonuc.get("surum"), sonuc.get("sayi", 0)))
 
+    def _tetik_tuket(self):
+        """Uygulama içi 'Şimdi Güncelle' isteği (tetik dosyası) var mı?
+        Varsa siler ve True döner (tek seferlik tüketim)."""
+        try:
+            yol = os.path.join(_veri_koku(), TETIK_ADI)
+            if os.path.isfile(yol):
+                try:
+                    os.remove(yol)
+                except OSError:
+                    pass
+                return True
+        except OSError:
+            pass
+        return False
+
     def _guncelle_dongu(self):
-        time.sleep(ILK_KONTROL_GECIKME)
+        # İlk kontrol gecikmesi de tetiğe duyarlı (kullanıcı hemen isteyebilir).
+        for _ in range(ILK_KONTROL_GECIKME):
+            if not self._calis or self._tetik_tuket():
+                break
+            time.sleep(1)
         while self._calis:
             try:
                 self._guncelle_dene()
@@ -466,6 +489,9 @@ class Gozetmen:
                 self.gunluk("[GUNC] Döngü hatası: %s" % e)
             for _ in range(KONTROL_ARALIGI):
                 if not self._calis:
+                    break
+                if self._tetik_tuket():
+                    self.gunluk("[GUNC] Uygulama içi güncelleme isteği alındı")
                     break
                 time.sleep(1)
 
