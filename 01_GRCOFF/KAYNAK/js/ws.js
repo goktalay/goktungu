@@ -709,7 +709,13 @@ function wsBaglan(){
     } else if (m.tip === "ai_tespit_islem_sonuc"){
       if (typeof window.aiIslemSonucIsle === "function")
         window.aiIslemSonucIsle(m);
+    } else if (m.tip === "ai_kutular"){
+      // v2.4.164: canli AI kutulari (videoda cift tikla takip icin)
+      if (typeof window.kameraAiKutularIsle === "function")
+        window.kameraAiKutularIsle(m);
     } else if (m.tip === "ai_takip_sonuc" || m.tip === "ai_takip"){
+      if (typeof window.kameraTakipIsle === "function")
+        window.kameraTakipIsle(m);
       // v2.4.2: hedef takibi baslatma sonucu + canli takip durumu
       if (typeof window.dronTakipIsle === "function")
         window.dronTakipIsle(m);

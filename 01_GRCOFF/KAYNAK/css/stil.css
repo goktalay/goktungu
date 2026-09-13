@@ -10064,3 +10064,25 @@ body.tam-ekran-modu #altOrtaPanel {
 .ang-kalib-durum { font-size: 11px; font-weight: 600; letter-spacing: 0; }
 .ang-kalib select { background: var(--dugme-arka, #141a21); color: var(--metin, #cfd8e3); border: 1px solid var(--cizgi, #2a3542); border-radius: 4px; padding: 3px 6px; }
 .ang-kalib .ang-kalib-kaydet { width: 100%; margin-top: 8px; }
+
+/* v2.4.164: Yerel AI takibinden açılan YÜZEN angajman paneli */
+.ang-perde.ang-yuzen { background: transparent !important; pointer-events: none; backdrop-filter: none !important; }
+.ang-perde.ang-yuzen .ang-kutu { pointer-events: auto; position: fixed; top: 80px; right: 24px; left: auto;
+  max-height: calc(100vh - 100px); overflow: auto; box-shadow: 0 18px 50px rgba(0,0,0,.6); }
+.ang-perde.ang-yuzen .ang-baslik { cursor: move; user-select: none; display: flex; align-items: center; gap: 8px; }
+.ang-yuzen-kapat { margin-left: auto; background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 15px; }
+.ang-yerel-canli[data-durum="iyi"] { border-left: 3px solid #22c55e; }
+.ang-yerel-canli[data-durum="uyari"] { border-left: 3px solid #f59e0b; }
+.ang-yerel-canli[data-durum="hata"] { border-left: 3px solid #ef4444; }
+.ang-yerel-hata { margin: 6px 12px; padding: 7px 10px; border-left: 3px solid #ef4444; background: rgba(239,68,68,.12); font-size: 12px; }
+/* Takip araç alanı (yüzen pencere alt çubuğu / tam ekran çubuğu) */
+.kam-takip-arac { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; }
+.kam-takip-arac[hidden] { display: none !important; }
+.kam-takip-rozet { font: 700 11px/1 Segoe UI, system-ui, sans-serif; letter-spacing: .04em; padding: 5px 8px; border-radius: 4px;
+  background: rgba(239,68,68,.16); color: #fca5a5; border: 1px solid #ef4444; white-space: nowrap; }
+.kam-takip-angaje { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 4px; cursor: pointer;
+  background: #b91c1c; border: 1px solid #ef4444; color: #fff; font: 700 11px Segoe UI, system-ui, sans-serif; white-space: nowrap; }
+.kam-takip-angaje:hover { filter: brightness(1.15); }
+.kam-takip-ipucu { font-size: 11px; color: var(--soluk, #8aa0b2); white-space: nowrap; }
+.kam-takip-bildirim { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 5; pointer-events: none;
+  padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.75); color: #fff; font: 600 12px Segoe UI, system-ui, sans-serif; }

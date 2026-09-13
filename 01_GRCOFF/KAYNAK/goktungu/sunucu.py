@@ -6641,8 +6641,9 @@ class WSSunucusu:
             if not _ygerekce:
                 try:
                     from . import hedef_deposu as _hd_yerel
+                    # v2.4.164: yerel hedefler firma_id=None ile yazilir.
                     _ycozulen = _hd_yerel.DEPO.hedef_bul(
-                        _yoid, _ykam, _yiz, firma_id=_yfirma)
+                        _yoid, _ykam, _yiz, firma_id=None)
                 except Exception:
                     _ycozulen = None
                 if not _ycozulen:
@@ -6678,9 +6679,14 @@ class WSSunucusu:
                                        or "").strip()
                 except Exception:
                     _ykaynak_uid = ""
-                if not _yicra_uid or _yicra_uid != _ykaynak_uid:
-                    _ygerekce = ("Drona takili kamera hedefi icin icra dronu, "
-                                 "kameranin uzerinde oldugu dronla ayni olmali.")
+                # v2.4.164: Kullanici istegi — dron kamerasinin telemetrisiyle
+                # hedef konumu tahmin edilir, icra icin HERHANGI bir bagli dron
+                # secilebilir. Eskiden icra dronu kameranin dronuyla ayni
+                # olmak zorundaydi. Farkliysa yalniz bilgi amacli kaydedilir.
+                if _yicra_uid and _ykaynak_uid and _yicra_uid != _ykaynak_uid:
+                    self.konsol("ANGAJMAN",
+                                f"Goruntu hedefi {_ykaynak_uid} kamerasindan "
+                                f"cozuluyor; icra dronu D{_ysaldiran}", "bilgi")
 
             if not _ygerekce:
                 _yparam = dict(self.angajman.param)
@@ -6689,8 +6695,15 @@ class WSSunucusu:
                         k.get("gudum_hz", _yparam.get("gudum_hz", 2)))))
                 except (TypeError, ValueError):
                     pass
-                if _yfirma is not None:
-                    _yparam["_goruntu_firma_id"] = _yfirma
+                # v2.4.164: panelden gelen angajman ayarlari
+                for _yk, _ytur in (("yakalama_mesafe", float),
+                                   ("ongoru", bool), ("gorev_dikkate", bool),
+                                   ("goruntu_asgari_irtifa", float)):
+                    if _yk in k:
+                        try:
+                            _yparam[_yk] = _ytur(k.get(_yk))
+                        except (TypeError, ValueError):
+                            pass
                 _ysonuc = self.angajman.baslat(
                     _ysaldiran, "goruntu", _yhedef_id, _yparam)
                 if isinstance(_ysonuc, tuple):

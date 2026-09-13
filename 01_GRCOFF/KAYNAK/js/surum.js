@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.163";
+const GCS_SURUM = "2.4.164";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.164",
+    tarih: "2026-09-13",
+    baslik: "Videoda çift tıkla takip ve görüntüye angajman (paket 2.5.34)",
+    maddeler: [
+      "Haritadaki kamera önizlemesine çift tıklayınca görüntü yüzen panelde açılır.",
+      "Yüzen panel veya tam ekranda tespit edilen hedefe çift tıklayınca takip başlar; takip çerçevesi videoda KIRMIZI 'TAKIP' olarak çizilir. Kırmızı çerçeveye tekrar çift tıklayınca takip bırakılır.",
+      "Takipteyken panelde 'Görüntüye Angaje Ol' düğmesi çıkar. Açılan YÜZEN angajman panelinde saldıran dron, angajman ayarları, kamera kalibrasyonu ve hedefin canlı tahmini konumu görünür; Başlat seçili dronla angajmanı başlatır.",
+      "Hedef konumu: kamera bir drona takılıysa o dronun telemetrisiyle (konum, yön, tutum; yer hedefinde zemin kesişimi), sabit kameraysa kamera kalibrasyonuyla hesaplanır. Dron kamerasında artık icra için herhangi bir bağlı dron seçilebilir.",
+      "DÜZELTMELER: yerel AI hedef hesabında merkez ve kutu biçimi yanlış okunuyordu (yön görüş alanının kenarına kayıyor, mesafe yanlış çıkıyordu); dron kamerası hedef irtifası MSL veriliyordu (artık eve göre göreli); yer hedefinde angajman ilk turda 'tamamlandı' diye bitiyordu; firma oturumunda yerel hedef bulunamıyordu.",
+      "GÜVENLİK: Görüntü angajmanında dron yer hedefine sürülmez; yöneliş irtifası en az 10 m'dir (hedefin üzerine gelir)."
+    ]
+  },
   {
     surum: "2.4.163",
     tarih: "2026-09-13",

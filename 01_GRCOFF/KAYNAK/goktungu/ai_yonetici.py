@@ -80,6 +80,9 @@ class AIYonetici:
         # v2.4.7: anotasyonlu MJPEG icin video proxy referansi
         # (main.py baglar)
         self.video_proxy = None
+        # v2.4.164: son canli kutular ve tarayici yayin zamanlari
+        self._son_kutular = {}
+        self._kutu_yayin_ts = {}
         self._calisiyor = True
         self._yuz_onbellek = None      # [(kisi_id, np.array), ...]
         self._yuz_onbellek_ts = 0.0
@@ -680,10 +683,64 @@ class AIYonetici:
                                             r["model"]) if p)
             except Exception:
                 continue
-            # embedding proxy'ye tasinmasin (bant genisligi/gizlilik)
+                # embedding proxy'ye tasinmasin (bant genisligi/gizlilik)
             k.pop("embedding", None)
         try:
-            self.video_proxy.anotasyon.guncelle(kamera_id, kutular)
+            kamera_id = int(kamera_id)
+        except (TypeError, ValueError):
+            return
+        self._son_kutular[kamera_id] = (time.time(), kutular)
+        self._anotasyon_yaz(kamera_id)
+        # v2.4.164: Canli kutular tarayiciya da gonderilir (videoda cift
+        # tiklanan hedefi bulmak icin). Kamera basina en fazla ~5 Hz.
+        simdi = time.time()
+        if self.duyuru_cb and simdi - self._kutu_yayin_ts.get(kamera_id, 0) >= 0.2:
+            self._kutu_yayin_ts[kamera_id] = simdi
+            try:
+                self.duyuru_cb({"tip": "ai_kutular", "kamera_id": kamera_id,
+                                "ts": simdi,
+                                "kutular": [{"x": b.get("x"), "y": b.get("y"),
+                                             "w": b.get("w"), "h": b.get("h"),
+                                             "tur": b.get("tur"),
+                                             "etiket": b.get("etiket") or "",
+                                             "kaynak_w": b.get("kaynak_w"),
+                                             "kaynak_h": b.get("kaynak_h")}
+                                            for b in kutular]})
+            except Exception:
+                pass
+
+    def _anotasyon_yaz(self, kamera_id):
+        """Tespit kutulari + (varsa) KIRMIZI takip cercevesini videoya yazar.
+        Takip edilen hedefin tespit kutusu (cakisan) tekrar cizilmez."""
+        if self.video_proxy is None:
+            return
+        simdi = time.time()
+        ts, kutular = self._son_kutular.get(kamera_id, (0, []))
+        liste = list(kutular) if simdi - ts < 1.5 else []
+        tk = self.takipler.get(kamera_id) or {}
+        kutu = tk.get("kutu")
+        boyut = tk.get("kare_boyutu")
+        if kutu and not tk.get("kayip") and simdi - float(tk.get("ts") or 0) < 2.0:
+            x, y, w, h = [float(v) for v in kutu]
+
+            def _cakisir(b):
+                try:
+                    bx, by, bw, bh = (float(b["x"]), float(b["y"]),
+                                      float(b["w"]), float(b["h"]))
+                except (KeyError, TypeError, ValueError):
+                    return False
+                ix = max(0.0, min(x + w, bx + bw) - max(x, bx))
+                iy = max(0.0, min(y + h, by + bh) - max(y, by))
+                return ix * iy > 0.5 * min(w * h, bw * bh)
+            liste = [b for b in liste if not _cakisir(b)]
+            etiket = "TAKIP " + {"insan": "INSAN", "kara_araci": "KARA ARACI",
+                                 "hava_araci": "HAVA ARACI"}.get(tk.get("tur"), "")
+            liste.append({"x": x, "y": y, "w": w, "h": h, "tur": "takip",
+                          "etiket": etiket.strip(),
+                          "kaynak_w": (boyut or [0, 0])[0],
+                          "kaynak_h": (boyut or [0, 0])[1]})
+        try:
+            self.video_proxy.anotasyon.guncelle(kamera_id, liste)
         except Exception:
             pass
 
@@ -932,6 +989,10 @@ class AIYonetici:
                     self._http(kayit, "/takip_durdur", {"kamera_id": kamera_id})
                 except Exception:
                     pass
+        try:
+            self._anotasyon_yaz(kamera_id)   # kirmizi cerceveyi hemen kaldir
+        except Exception:
+            pass
         if self.duyuru_cb:
             self.duyuru_cb({"tip": "ai_takip", "kamera_id": kamera_id,
                             "aktif": False, "kayip": False})
@@ -959,7 +1020,8 @@ class AIYonetici:
             merkez = self._merkez_dogrula(veri.get("merkez"))
             kare_boyutu = self._kare_boyutu_dogrula(veri.get("kare_boyutu"))
             kayit.update({"tur": tur, "ts": ts, "kutu": kutu,
-                          "merkez": merkez, "kayip": kayip})
+                          "merkez": merkez, "kayip": kayip,
+                          "kare_boyutu": kare_boyutu})
             track_id = kayit.get("track_id")
             if kayip:
                 self.takipler.pop(kamera_id, None)
@@ -976,11 +1038,11 @@ class AIYonetici:
         self.konsol("TRACK", "[TRACK] " + json.dumps(olay,
                     ensure_ascii=False, separators=(",", ":")),
                     "uyari" if kayip else "bilgi")
-        if self.duyuru_cb:
-            self.duyuru_cb({"tip": "ai_takip", "kamera_id": kamera_id,
-                            "aktif": not kayip, "kayip": kayip,
-                            "sinif": tur, "track_id": track_id,
-                            "kutu": kutu, "merkez": merkez})
+        # Kirmizi takip cercevesi videoya (tespit gelmese de 5 Hz tazelenir)
+        try:
+            self._anotasyon_yaz(kamera_id)
+        except Exception:
+            pass
         # v2.5.21: Yerel hedef besleme kolu. NDJSON yolundan (yukaridaki
         # `_track_dosyaya_yaz`) BAGIMSIZ, IKINCI bir tuketicidir: olayi
         # cografi hedefe cevirip HedefDeposu'ya yazar; sozlesme akisi
@@ -988,11 +1050,28 @@ class AIYonetici:
         # (eski cagri yeri) davranis birebir eskisi gibidir. Besleyici
         # kendi icinde tum istisnalari yutar; AI dongusunu dusurmez.
         besleyici = getattr(self, "hedef_besleyici", None)
+        hedef = None
         if besleyici is not None:
             try:
-                besleyici.ai_olayi(olay)
+                hedef = besleyici.ai_olayi(olay)
             except Exception:
-                pass
+                hedef = None
+        # v2.4.164: Yayin, besleyici sonucuyla (angajman hedef kimligi, konum
+        # guvenilirligi/gerekcesi) ve kare boyutuyla zenginlestirildi.
+        if self.duyuru_cb:
+            h = hedef if isinstance(hedef, dict) else {}
+            self.duyuru_cb({"tip": "ai_takip", "kamera_id": kamera_id,
+                            "aktif": not kayip, "kayip": kayip,
+                            "sinif": tur, "track_id": track_id,
+                            "kutu": kutu, "merkez": merkez,
+                            "kare_boyutu": kare_boyutu,
+                            "hedef_id": h.get("hedef_id") if h.get("tamam") else None,
+                            "konum_guvenilir": bool(h.get("tamam") and h.get("hedef_id")),
+                            "konum_gerekce": "" if h.get("tamam") else str(h.get("hata") or ""),
+                            "kamera_tipi": h.get("kamera_tipi"),
+                            "hedef_lat": h.get("lat"), "hedef_lon": h.get("lon"),
+                            "hedef_alt": h.get("alt"),
+                            "mesafe_m": h.get("mesafe_m")})
         return {"tamam": True, "olay": olay}
     def son_takip_konum(self, kamera_id):
         """(KULLANILMIYOR) Kameranin lat/lon'u -- ANGAJMANDA KULLANMAYIN.

@@ -98,24 +98,36 @@ def _sayi(deger):
     return s if math.isfinite(s) else None
 
 
-def _kutu_merkez(kutu, merkez):
-    """(cx, cy) piksel merkezini dondurur; merkez verilmisse onu kullanir."""
+def _kutu_merkez(kutu, merkez, kare=None):
+    """(cx, cy) PIKSEL merkezini dondurur.
+
+    v2.4.164 DUZELTME: Isci kutuyu [x, y, w, h] (kaynak piksel) ve merkezi
+    kareye gore NORMALIZE (0..1) gonderir. Eski kod merkezi piksel,
+    kutuyu [x1,y1,x2,y2] saniyordu: hedef yonu gorus alaninin sol kenarina
+    kayiyor, mesafe yanlis cikiyordu. Once kutudan hesaplanir; yoksa
+    normalize merkez kare boyutuyla piksele cevrilir."""
+    if isinstance(kutu, (list, tuple)) and len(kutu) == 4:
+        x, y, w, h = (_sayi(v) for v in kutu)
+        if None not in (x, y, w, h) and w > 0 and h > 0:
+            return x + w / 2.0, y + h / 2.0
     if isinstance(merkez, (list, tuple)) and len(merkez) == 2:
         cx, cy = _sayi(merkez[0]), _sayi(merkez[1])
         if cx is not None and cy is not None:
+            if (0.0 <= cx <= 1.0 and 0.0 <= cy <= 1.0 and
+                    isinstance(kare, (list, tuple)) and len(kare) == 2):
+                kw, kh = _sayi(kare[0]), _sayi(kare[1])
+                if kw and kh:
+                    return cx * kw, cy * kh
             return cx, cy
-    if isinstance(kutu, (list, tuple)) and len(kutu) == 4:
-        x1, y1, x2, y2 = (_sayi(v) for v in kutu)
-        if None not in (x1, y1, x2, y2):
-            return (x1 + x2) / 2.0, (y1 + y2) / 2.0
     return None, None
 
 
 def _kutu_yukseklik(kutu):
+    """Kutu [x, y, w, h] -> piksel yukseklik (h)."""
     if isinstance(kutu, (list, tuple)) and len(kutu) == 4:
-        y1, y2 = _sayi(kutu[1]), _sayi(kutu[3])
-        if y1 is not None and y2 is not None:
-            return abs(y2 - y1)
+        h = _sayi(kutu[3])
+        if h is not None and h > 0:
+            return h
     return None
 
 
@@ -231,7 +243,8 @@ class YerelHedefBesleyici:
             return self._ret(kamera_id, "gecersiz kare boyutu")
 
         cx, cy = _kutu_merkez(olay.get("kutu_px") or olay.get("kutu"),
-                              olay.get("merkez_px") or olay.get("merkez"))
+                              olay.get("merkez_px") or olay.get("merkez"),
+                              olay.get("kare_boyutu"))
         if cx is None or cy is None:
             return self._ret(kamera_id, "hedef piksel konumu yok")
 
@@ -311,7 +324,8 @@ class YerelHedefBesleyici:
             return self._ret(kamera_id, "gecersiz kare boyutu")
 
         cx, cy = _kutu_merkez(olay.get("kutu_px") or olay.get("kutu"),
-                              olay.get("merkez_px") or olay.get("merkez"))
+                              olay.get("merkez_px") or olay.get("merkez"),
+                              olay.get("kare_boyutu"))
         if cx is None or cy is None:
             return self._ret(kamera_id, "hedef piksel konumu yok")
 

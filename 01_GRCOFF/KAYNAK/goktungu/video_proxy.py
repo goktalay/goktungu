@@ -69,7 +69,7 @@ _TUR_RENK = {
     "insan": (60, 120, 255),
     "hava_araci": (255, 120, 60),
     "kara_araci": (60, 220, 220),
-    "takip": (0, 60, 255),
+    "takip": (0, 0, 255),        # v2.4.164: takip cercevesi TAM KIRMIZI (BGR)
 }
 
 _TUR_AD = {
@@ -138,7 +138,8 @@ def _kutulari_ciz(kare_jpg, kutular):
                     continue
                 tur = k.get("tur", "")
                 renk = _TUR_RENK.get(tur, (200, 200, 200))
-                cv2.rectangle(kare, (x, y), (x + w, y + h), renk, 2)
+                cv2.rectangle(kare, (x, y), (x + w, y + h), renk,
+                              4 if tur == "takip" else 2)
                 # kose vurgulari (hedef cercevesi gorunumu)
                 u = max(6, min(w, h) // 6)
                 for (cx, cy, dx, dy) in ((x, y, 1, 1), (x + w, y, -1, 1),

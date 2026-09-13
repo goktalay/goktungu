@@ -466,6 +466,8 @@
       const img = document.createElement("img");
       img.className = "kam-video";
       img.draggable = false;
+      // v2.4.164: cift tikla takip modulu hangi kamerada oldugunu bilsin
+      img.dataset.kameraId = String(kamera.id);
       // v2.4.33: tek seferlik `error` yerine artan gecikmeli yeniden
       // deneme. Uzak MJPEG kaynaklarinda ffmpeg'in ilk kare gecikmesi
       // (olculen: 4-14 sn) tarayicinin <img> zaman asimini asabiliyor;
@@ -1067,6 +1069,8 @@
     kapat.innerHTML = "<i class='fa-solid fa-xmark'></i>";
     kapat.addEventListener("click", () => { durdur(id); tamEkranKapat(); listeCiz(); });
     sag.appendChild(kapat);
+    if (typeof window.kameraTakipAracAlani === "function")
+      sag.prepend(window.kameraTakipAracAlani(id));
     bar.append(ad, sag);
     const kutu = document.createElement("div");
     kutu.className = "kam-video-kutu kam-tam-video";
@@ -1101,6 +1105,9 @@
     }
     // Alt bar: play/stop + duzenle + sil
     kayit.altBar.appendChild(araclarOlustur(kamera));
+    // v2.4.164: takip durumu + "Görüntüye Angaje Ol" alanı
+    if (typeof window.kameraTakipAracAlani === "function")
+      kayit.altBar.prepend(window.kameraTakipAracAlani(id));
   }
 
   function ayrikKapat(id) {

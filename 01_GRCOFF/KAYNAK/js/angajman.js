@@ -45,6 +45,10 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   const perde = document.createElement("div");
   perde.id = "angajmanPerde";
   perde.className = "ang-perde";
+  // v2.4.164: yerel AI takibinden gelen angajman YÜZEN panelde açılır
+  // (arka plan kararmaz, video izlenmeye devam eder, panel sürüklenir).
+  const yuzen = !!kaynak.yuzen;
+  if (yuzen) perde.classList.add("ang-yuzen");
 
   const kutu = document.createElement("div");
   kutu.className = "ang-kutu";
@@ -104,7 +108,8 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     const kaynakBilgi = document.createElement("div");
     kaynakBilgi.className = "ang-hedef-bilgi ang-goruntu-kaynak";
     const satirlar = [
-      [(t.angKaynakKopru || "Görüntü Köprüsü"), kaynak.kopru_ad || kaynak.ornek_id || "—"],
+      [(kaynak.yerel ? "Kaynak" : (t.angKaynakKopru || "Görüntü Köprüsü")),
+       kaynak.yerel ? "Yerel AI takibi" : (kaynak.kopru_ad || kaynak.ornek_id || "—")],
       [(t.angKaynakKamera || "Kamera"), kaynak.kamera_ad || kaynak.kamera_id || "—"],
       [(t.angKaynakIz || "Yerel İz"), kaynak.iz_id != null ? ("#" + kaynak.iz_id) : "—"],
       [(t.angKaynakDron || "Kamera Dronu"), kaynakDronUid || (t.angKaynakDronYok || "BAĞLI DEĞİL — icra dronu seçilmelidir")]
@@ -121,6 +126,39 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
       kaynakBilgi.appendChild(satir);
     });
     kutu.appendChild(kaynakBilgi);
+    if (kaynak.yerel) {
+      // Canlı hedef konumu / güvenilirlik (takip modülünden)
+      const canli = document.createElement("div");
+      canli.className = "ang-hedef-bilgi ang-yerel-canli";
+      kutu.appendChild(canli);
+      let baglandi = false;
+      const tazele = function () {
+        // Panel henüz sayfaya eklenmemiş olabilir; eklendikten sonra
+        // kaldırılırsa (panel kapandı) zamanlayıcı durur.
+        if (!canli.isConnected) { if (baglandi) clearInterval(zam); return; }
+        baglandi = true;
+        const tk = (typeof window.kameraTakipDurumu === "function")
+          ? window.kameraTakipDurumu(kaynak.kamera_id) : null;
+        if (!tk || !tk.aktif) {
+          canli.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i> Takip yok veya hedef kayboldu";
+          canli.dataset.durum = "hata";
+        } else if (tk.hedef_id) {
+          const yontem = tk.kamera_tipi === "dron"
+            ? "dron telemetrisiyle tahmin" : "sabit kamera kalibrasyonu";
+          canli.innerHTML = "<i class='fa-solid fa-location-crosshairs'></i> Hedef konumu: <strong>" +
+            Number(tk.hedef_lat).toFixed(6) + ", " + Number(tk.hedef_lon).toFixed(6) +
+            "</strong>" + (tk.mesafe_m ? " · ~" + Math.round(tk.mesafe_m) + " m" : "") +
+            " · " + yontem;
+          canli.dataset.durum = "iyi";
+        } else {
+          canli.innerHTML = "<i class='fa-solid fa-circle-exclamation'></i> Konum çözülemiyor: " +
+            String(tk.konum_gerekce || "bekleniyor").replace(/[<>&]/g, "");
+          canli.dataset.durum = "uyari";
+        }
+      };
+      const zam = setInterval(tazele, 500);
+      tazele();
+    }
   }
 
   // v2.4.161: KAMERA KALIBRASYONU angajman panelinde (kamera formundan
@@ -294,6 +332,37 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
           const dd = (typeof sonVeri !== "undefined") ? sonVeri[kaynakId] : null;
           return dd ? (dd.kullanici_isim || dd.isim || dd.tip || ("D" + kaynakId)) : ("D" + kaynakId);
         })());
+    // v2.4.164: YEREL AI takibi -> yerel_angajman_baslat (secili dron ile)
+    if (goruntuMu && kaynak.yerel) {
+      const tk = (typeof window.kameraTakipDurumu === "function")
+        ? window.kameraTakipDurumu(kaynak.kamera_id) : null;
+      const uyar = function (m) {
+        let e = kutu.querySelector(".ang-yerel-hata");
+        if (!e) { e = document.createElement("div"); e.className = "ang-yerel-hata"; altDiv.before(e); }
+        e.textContent = m;
+      };
+      if (!tk || !tk.aktif) { uyar("Takip aktif değil; önce videoda hedefe çift tıklayın."); return; }
+      if (!tk.hedef_id) { uyar("Hedef konumu çözülemedi: " + (tk.konum_gerekce || "bekleniyor")); return; }
+      angajmanPopupKapat();
+      onayIste(
+        onayMetni("onayGoruntuAngajman", {dron: seciliSysid, hedef: hedefAd, hiz: hh}),
+        () => {
+          ws.send(JSON.stringify({
+            tip: "yerel_angajman_baslat",
+            hedef_id: tk.hedef_id,
+            saldiran_sysid: seciliSysid,
+            operator_onayi: true,
+            gudum_hz: ghz, yakalama_mesafe: ym,
+            ongoru: ongoruAcik, gorev_dikkate: gorevAcik
+          }));
+          ws.send(JSON.stringify({
+            tip: "angajman_ayar", gudum_hz: ghz, yakalama_mesafe: ym,
+            ongoru: ongoruAcik, gorev_dikkate: gorevAcik
+          }));
+          if (typeof window.angajmanIzleAc === "function") window.angajmanIzleAc();
+        });
+      return;
+    }
     // Onay diyalogu gosterilmeden once ang-perde'yi kapat (arkada kalmasin)
     angajmanPopupKapat();
     const onayAnahtari = goruntuMu ? "onayGoruntuAngajman" : "onayTelemetriAngajman";
@@ -343,10 +412,50 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   perde.appendChild(kutu);
   document.body.appendChild(perde);
 
-  // Perde tiklaninca kapat
-  perde.addEventListener("click", (ev) => {
-    if (ev.target === perde) angajmanPopupKapat();
-  });
+  if (yuzen) {
+    // Kapat düğmesi + sürükleme (başlıktan)
+    const x = document.createElement("button");
+    x.type = "button"; x.className = "ang-yuzen-kapat"; x.title = "Kapat";
+    x.innerHTML = "<i class='fa-solid fa-xmark'></i>";
+    x.addEventListener("click", angajmanPopupKapat);
+    baslik.appendChild(x);
+    // Sürükleme (başlıktan); son konum bu oturumda hatırlanır
+    try {
+      const k = JSON.parse(sessionStorage.getItem("ang_yuzen_konum") || "null");
+      if (k && isFinite(k.x) && isFinite(k.y)) {
+        kutu.style.left = Math.max(0, Math.min(window.innerWidth - 120, k.x)) + "px";
+        kutu.style.top = Math.max(0, Math.min(window.innerHeight - 60, k.y)) + "px";
+        kutu.style.right = "auto";
+      }
+    } catch (_) {}
+    let surukle = null;
+    baslik.addEventListener("pointerdown", (ev) => {
+      if (ev.target.closest("button")) return;
+      const r = kutu.getBoundingClientRect();
+      surukle = {dx: ev.clientX - r.left, dy: ev.clientY - r.top};
+      baslik.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    });
+    baslik.addEventListener("pointermove", (ev) => {
+      if (!surukle) return;
+      kutu.style.left = Math.max(0, ev.clientX - surukle.dx) + "px";
+      kutu.style.top = Math.max(0, ev.clientY - surukle.dy) + "px";
+      kutu.style.right = "auto";
+    });
+    baslik.addEventListener("pointerup", () => {
+      if (!surukle) return;
+      surukle = null;
+      try {
+        const r = kutu.getBoundingClientRect();
+        sessionStorage.setItem("ang_yuzen_konum", JSON.stringify({x: r.left, y: r.top}));
+      } catch (_) {}
+    });
+  } else {
+    // Perde tiklaninca kapat
+    perde.addEventListener("click", (ev) => {
+      if (ev.target === perde) angajmanPopupKapat();
+    });
+  }
 }
 
 // ---------------------------------------------------------------

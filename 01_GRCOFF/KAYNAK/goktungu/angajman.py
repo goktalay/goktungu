@@ -14,6 +14,8 @@ from pymavlink import mavutil
 # v2.4.18 - Interceptor angajman profili
 # Hucum hizi kullaniciya SORULMAZ: daima maksimum hizda gidilir.
 MAKS_HIZ_MS = 83.3          # 300 km/h (drondan daha yuksek okunursa o kullanilir)
+# v2.4.164: Goruntu angajmaninda yonelis irtifasi tabani (m, eve gore).
+GORUNTU_ASGARI_IRTIFA = 10.0
 HEDEF_MIN_IRTIFA = 3.0      # m - hedef bu irtifanin altina duserse angajman biter
 HEDEF_ZAMANASIMI = 10.0     # sn - hedef/dron verisi bu sure alinamazsa offline sayilir
 
@@ -426,6 +428,14 @@ class AngajmanYoneticisi:
         depo = getattr(self, "hedef_deposu", None)
         if depo is None:
             return None
+        # v2.4.164: Yerel AI hedefleri (sentetik ornek_id >= 900000000)
+        # depoya firma_id=None ile yazilir; firma oturumunda aramak onlari
+        # bulamiyor ve angajman "hedef bulunamadi" ile kesiliyordu.
+        try:
+            if int(kimlik[0]) >= 900000000:
+                firma_id = None
+        except (TypeError, ValueError):
+            pass
         try:
             return depo.hedef_bul(*kimlik, firma_id=firma_id)
         except Exception:
@@ -815,6 +825,15 @@ class AngajmanYoneticisi:
             cozum = self._kesisme_coz(s_lat, s_lon, s_alt, hedef_durum,
                                       HUCUM_HIZI, param)
             g_lat, g_lon, g_alt = cozum["lat"], cozum["lon"], cozum["alt"]
+            # v2.4.164: Goruntu hedefinde (yer tahmini, insan/kara ~0 m)
+            # dron yere surulmesin: yonelis irtifasina asgari taban.
+            if hedef_tip == "goruntu":
+                try:
+                    _taban = float(param.get("goruntu_asgari_irtifa",
+                                             GORUNTU_ASGARI_IRTIFA))
+                except (TypeError, ValueError):
+                    _taban = GORUNTU_ASGARI_IRTIFA
+                g_alt = max(float(g_alt or 0.0), _taban)
 
             # Canli hiz (dron groundspeed)
             canli_hiz = saldiran.get("groundspeed", 0) or 0
@@ -861,7 +880,11 @@ class AngajmanYoneticisi:
             # Yakalama mesafesine girmek ARTIK angajmani bitirmez ve hiz
             # dusurulmez - temas anina kadar tam hizda devam edilir.
             # ----------------------------------------------------------
-            if h_alt < HEDEF_MIN_IRTIFA:
+            # v2.4.164: Goruntu hedefinde irtifa YER TAHMINIDIR (insan/kara
+            # aracinda ~0 m). Bu kosul goruntu angajmanini ilk turda
+            # "tamamlandi" diye bitiriyordu. Goruntu hedefinde irtifa ile
+            # sonlanmaz; operator durdurur ya da iz kaybolur (HEDEF_ZAMANASIMI).
+            if h_alt < HEDEF_MIN_IRTIFA and hedef_tip != "goruntu":
                 self.konsol("ANGAJMAN",
                             f"D{saldiran_sysid}: Hedef irtifasi {h_alt:.1f} m "
                             f"(< {HEDEF_MIN_IRTIFA:.0f} m) - hedef etkisiz, "

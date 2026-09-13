@@ -144,11 +144,21 @@ function dronKameraOnizlemeTazele(d){
     const etiket = document.createElement("span");
     etiket.textContent = "CANLI";
     el.append(img, etiket);
+    el.title = "Çift tıklayın: yüzen panelde aç";
     el.addEventListener("click", (ev) => {
+      // Tek tık haritayı kaydırmasın/seçmesin; açma çift tıkla yapılır.
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+    // v2.4.164: Kullanıcı isteği — haritadaki videoya ÇİFT TIK -> yüzen panel.
+    el.addEventListener("dblclick", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       const kameraId = Number(el.dataset.kameraId);
-      if (Number.isFinite(kameraId) && typeof window.kameraIzlemeAc === "function")
+      if (!Number.isFinite(kameraId)) return;
+      if (typeof window.kameraGoruntuHedefiAyarla === "function")
+        window.kameraGoruntuHedefiAyarla(kameraId, "yuzen");
+      else if (typeof window.kameraIzlemeAc === "function")
         window.kameraIzlemeAc(kameraId);
     });
     alan.appendChild(el);
