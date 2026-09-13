@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.169";
+const GCS_SURUM = "2.4.170";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.170",
+    tarih: "2026-09-13",
+    baslik: "YOLO tespitinde GPU hızlandırması (DirectML) (paket 2.5.40)",
+    maddeler: [
+      "Windows paketine ONNX Runtime + DirectML gömüldü: YOLO hava aracı tespiti artık NVIDIA/AMD/Intel fark etmeksizin tüm DirectX 12 GPU'larda donanım hızlandırmalı çalışır — CUDA veya sürücü dışında ek kurulum GEREKMEZ.",
+      "Hız: CPU'da saniyeler süren çıkarım GPU'da tipik olarak 20-80 ms'ye iner (~%95+ hızlanma); tespit gerçek zamanlıya yaklaşır.",
+      "Öncelik sırası: CUDA > DirectML > ORT-CPU > OpenCV-CPU. AI işçi logu ve /durum ucu aktif sağlayıcıyı bildirir (örn. 'dedektor=YOLO-GPU, DmlExecutionProvider').",
+      "ÖNEMLİ: GPU desteği gömülü Python'a eklendiği için dosya tabanlı artımlı güncellemeyle GELMEZ — Windows'ta 2.5.40 tam kurulumunu bir kez indirip çalıştırın (sonraki güncellemeler yine artımlı sürer).",
+      "Linux/sunucu işçilerinde onnxruntime pip ile kurulursa aynı öncelikle kullanılır."
+    ]
+  },
   {
     surum: "2.4.169",
     tarih: "2026-09-13",

@@ -44,6 +44,15 @@ except ImportError:
         "(Ubuntu 23.04+: pip3 install --break-system-packages"
         " opencv-python-headless)")
 
+# v2.4.170: ONNX Runtime istege bagli — varsa YOLO cikarimi onunla yapilir.
+# Windows'ta onnxruntime-directml paketi TUM DX12 GPU'larda (NVIDIA/AMD/
+# Intel) donanim hizlandirmasi verir; CUDA kurulumu gerekmez. Yoksa
+# cv2.dnn (CPU) yoluna dusulur.
+try:
+    import onnxruntime as _ort
+except ImportError:
+    _ort = None
+
 # v2.4.52: klasor yapisi degisti. Bu betik artik `assets/python/`
 # altinda durur, ancak modelleri ve kayitlari PROJE KOKUNDEKI `veri/`
 # dizininde arar. Kendi dizinini kok saymak SESSIZ bir kusur uretirdi:
@@ -580,6 +589,9 @@ class AIIsci:
         # (varsa; hareketli kamerada da calisir), yoksa MOG2 hareket
         # tespiti (yalniz sabit kamera). Yuz/insan/plaka kaldirildi.
         self.yolo = None
+        self.ort = None          # ONNX Runtime oturumu (GPU/CPU)
+        self.ort_girdi = None
+        self.ort_saglayici = ""
         # v2.4.169: cok sinifli model destegi — modelin yanindaki
         # "hava_araci.siniflar.txt" (satir basina bir ad, model sinif
         # sirasiyla) varsa tespit etiketi tipi gosterir: "SABIT KANAT %87",
@@ -587,15 +599,40 @@ class AIIsci:
         # "hava_araci"dir; siniflandirma yalniz gosterim/kayit icindir.
         self.yolo_siniflar = []
         if os.path.exists(YOLO_HAVA):
-            try:
-                self.yolo = cv2.dnn.readNetFromONNX(YOLO_HAVA)
-                print(f"[AI] Hava araci YOLO modeli yuklendi: {YOLO_HAVA}")
-            except Exception as e:
-                self.yolo = None
-                print(f"[AI] YOLO modeli okunamadi ({e}); MOG2 hareket"
-                      " tespiti kullanilacak.")
+            # v2.4.170: Once ONNX Runtime (GPU: CUDA > DirectML; yoksa
+            # ORT-CPU da cv2.dnn'den hizlidir), olmazsa cv2.dnn.
+            if _ort is not None:
+                try:
+                    mevcut = _ort.get_available_providers()
+                    sira = [s for s in ("CUDAExecutionProvider",
+                                        "DmlExecutionProvider",
+                                        "CPUExecutionProvider")
+                            if s in mevcut]
+                    self.ort = _ort.InferenceSession(YOLO_HAVA,
+                                                     providers=sira)
+                    self.ort_girdi = self.ort.get_inputs()[0].name
+                    self.ort_saglayici = (self.ort.get_providers()
+                                          or ["?"])[0]
+                    gpu = self.ort_saglayici != "CPUExecutionProvider"
+                    print(f"[AI] Hava araci YOLO modeli yuklendi "
+                          f"(ONNX Runtime, {self.ort_saglayici}, "
+                          f"GPU={'EVET' if gpu else 'HAYIR'}): {YOLO_HAVA}")
+                except Exception as e:
+                    self.ort = None
+                    print(f"[AI] ONNX Runtime yuklenemedi ({e});"
+                          " cv2.dnn denenecek.")
+            if self.ort is None:
+                try:
+                    self.yolo = cv2.dnn.readNetFromONNX(YOLO_HAVA)
+                    print(f"[AI] Hava araci YOLO modeli yuklendi"
+                          f" (cv2.dnn, CPU): {YOLO_HAVA}")
+                except Exception as e:
+                    self.yolo = None
+                    print(f"[AI] YOLO modeli okunamadi ({e}); MOG2 hareket"
+                          " tespiti kullanilacak.")
             sinif_dosya = os.path.splitext(YOLO_HAVA)[0] + ".siniflar.txt"
-            if self.yolo is not None and os.path.exists(sinif_dosya):
+            if ((self.ort is not None or self.yolo is not None)
+                    and os.path.exists(sinif_dosya)):
                 try:
                     with open(sinif_dosya, encoding="utf-8") as f:
                         self.yolo_siniflar = [s.strip() for s in f
@@ -609,7 +646,13 @@ class AIIsci:
                   " tespiti kullanilacak (sabit kamera onerilir).")
         print(f"[AI] Isci kod ozeti: {KOD_OZETI[:12]} pid={os.getpid()}")
         print(f"[AI] Isci hazir: {self.ad} ({self.tip}) mod=C-UAS "
-              f"dedektor={'YOLO' if self.yolo is not None else 'MOG2'}")
+              f"dedektor={self._dedektor_adi()}")
+
+    def _dedektor_adi(self):
+        if self.ort is not None:
+            return ("YOLO-GPU" if self.ort_saglayici
+                    != "CPUExecutionProvider" else "YOLO-ORT")
+        return "YOLO" if self.yolo is not None else "MOG2"
 
     # ------------------------------------------------------------------
     # Gorev yonetimi
@@ -655,7 +698,8 @@ class AIIsci:
                 "ocr": False,
                 "yuz_destegi": False,
                 "siniflar": sorted(IZINLI_SINIFLAR),
-                "dedektor": "yolo" if self.yolo is not None else "mog2",
+                "dedektor": self._dedektor_adi().lower(),
+                "saglayici": self.ort_saglayici,
                 "kod_ozeti": KOD_OZETI, "pid": os.getpid(),
                 "ana_url": self.ana_url}
 
@@ -673,7 +717,7 @@ class AIIsci:
             except Exception:
                 pass
             return
-        if self.yolo is not None:
+        if self.ort is not None or self.yolo is not None:
             # v2.4.169: YOLO cikarimi CPU'da saniyeler surebilir; akis
             # okuma ipligi BLOKLANMAZ. Kare ayri cikarim ipligine
             # birakilir; kutu bildirimi o iplikten yapilir.
@@ -880,8 +924,11 @@ class AIIsci:
         blob = cv2.dnn.blobFromImage(tuval, 1.0 / 255.0, (BOY, BOY),
                                      swapRB=True, crop=False)
         try:
-            self.yolo.setInput(blob)
-            cikti = self.yolo.forward()
+            if self.ort is not None:
+                cikti = self.ort.run(None, {self.ort_girdi: blob})[0]
+            else:
+                self.yolo.setInput(blob)
+                cikti = self.yolo.forward()
         except Exception as e:
             if akis.sogutma_gecti("yolo_hata", saniye=60.0):
                 print(f"[AI] YOLO cikarimi basarisiz: {e}")
