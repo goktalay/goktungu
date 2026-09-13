@@ -342,6 +342,7 @@ class AIYonetici:
                 durum = self._http(kayit, "/durum", zamanasimi=4)
                 self.saglik[sid] = {"cevrimici": True,
                                     "son_durum": durum,
+                                    "basarisiz": 0,
                                     "son_yoklama_ts": time.time()}
                 if onceki is False or onceki is None:
                     degisti = True
@@ -349,14 +350,28 @@ class AIYonetici:
                         self.konsol("AI", f"AI sunucusu tekrar cevrimici:"
                                     f" {kayit['ad']}", "basari")
             except Exception:
-                self.saglik[sid] = {"cevrimici": False,
-                                    "son_durum": None,
-                                    "son_yoklama_ts": time.time()}
-                if onceki:
-                    degisti = True
-                    self.konsol("AI", f"AI sunucusu yanit vermiyor:"
-                                f" {kayit['ad']}", "uyari")
-                    self._gorevleri_yeniden_dagit(sid)
+                # v2.4.159: Yerel işçide /durum bazen tek seferlik sıfırlanıyor
+                # (WinError 10054, loopback yarışı) ama işçi AYAKTA. Tek
+                # başarısızlıkta çevrimdışı saymak işçiyi gereksiz "yok"
+                # gösterip izlemeyi düşürüyordu. 2 ARDIŞIK başarısızlıktan
+                # önce çevrimiçi durum KORUNUR.
+                onceki_kayit = self.saglik.get(sid, {})
+                basarisiz = int(onceki_kayit.get("basarisiz", 0)) + 1
+                if onceki and basarisiz < 2:
+                    # Hâlâ çevrimiçi say; yalnız sayacı artır.
+                    self.saglik[sid] = dict(onceki_kayit)
+                    self.saglik[sid]["basarisiz"] = basarisiz
+                    self.saglik[sid]["son_yoklama_ts"] = time.time()
+                else:
+                    self.saglik[sid] = {"cevrimici": False,
+                                        "son_durum": None,
+                                        "basarisiz": basarisiz,
+                                        "son_yoklama_ts": time.time()}
+                    if onceki:
+                        degisti = True
+                        self.konsol("AI", f"AI sunucusu yanit vermiyor:"
+                                    f" {kayit['ad']}", "uyari")
+                        self._gorevleri_yeniden_dagit(sid)
         if degisti and self.duyuru_cb:
             self.duyuru_cb({"tip": "ai_sunucu_listesi",
                             "sunucular": self.listele()})
@@ -437,7 +452,24 @@ class AIYonetici:
     def _gorev_ata(self, kamera_id, url, protokol, haric=None,
                    gorevler="", hassasiyet=""):
         gorevler = _gorevleri_sinirla(gorevler)
+        # v2.4.159: GRCOFF yerel AI işçisi HER ZAMAN çalışır (gözetmen ayakta
+        # tutar) ama yeni başlatıldığında sağlık yoklaması (5 sn'de bir) onu
+        # "çevrimiçi" işaretleyene kadar kısa bir boşluk olur. Kullanıcı
+        # "Başlat"a bastığında bu boşluğa denk gelirse eskiden tek denemede
+        # "AI sunucusu yok" hatası dönüyordu. Artık işçiyi ANINDA yoklayıp
+        # kısa süre (≈12 sn) yeniden deneriz; böylece manuel başlatma güvenilir.
         kayit = self._en_az_yuklu(haric=haric)
+        if not kayit:
+            son = time.time() + 12.0
+            while time.time() < son and not kayit:
+                try:
+                    self._yokla()          # anında sağlık yoklaması
+                except Exception:
+                    pass
+                kayit = self._en_az_yuklu(haric=haric)
+                if kayit:
+                    break
+                time.sleep(1.0)
         if not kayit:
             return {"tamam": False,
                     "hata": "Uygun (cevrimici/bos) AI sunucusu yok"}

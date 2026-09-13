@@ -1037,11 +1037,18 @@ def http_sunucu(isci, port, dinle="0.0.0.0"):
 
         def _json(self, veri, kod=200):
             govde = json.dumps(veri).encode()
-            self.send_response(kod)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(govde)))
-            self.end_headers()
-            self.wfile.write(govde)
+            try:
+                self.send_response(kod)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(govde)))
+                self.send_header("Connection", "close")
+                self.end_headers()
+                self.wfile.write(govde)
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, OSError):
+                # v2.4.159: Loopback sağlık yoklamasında istemci yanıtı
+                # okuyup bağlantıyı kapatınca yazma sıfırlanabilir (WinError
+                # 10054). Zararsız; sessiz geç (log kirlenmesin).
+                pass
 
         def do_GET(self):
             if self.path.startswith("/durum"):

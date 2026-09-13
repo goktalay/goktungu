@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.158";
+const GCS_SURUM = "2.4.159";
 const GCS_SURUM_TARIH = "2026-09-12";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.159",
+    tarih: "2026-09-13",
+    baslik: "Yerel AI güvenilirliği: 'AI sunucusu yok' hatası giderildi (paket 2.5.29)",
+    maddeler: [
+      "Yerel AI işçisi ayakta olduğu halde sağlık yoklaması tek seferlik bağlantı sıfırlanmasında (WinError 10054, loopback) işçiyi 'çevrimdışı' sayıp 'Uygun AI sunucusu yok' hatası veriyordu. Artık işçi 2 ardışık başarısızlıktan önce çevrimiçi kabul edilir; izleme başlatılırken işçi anında yoklanıp kısa süre yeniden denenir; işçi tarafındaki zararsız sıfırlanma log kirliliği susturuldu.",
+      "Böylece 'Başlat'a basınca AI güvenilir biçimde başlar."
+    ]
+  },
   {
     surum: "2.4.158",
     tarih: "2026-09-13",
