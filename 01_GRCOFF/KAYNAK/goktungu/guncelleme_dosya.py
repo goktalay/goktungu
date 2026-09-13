@@ -53,6 +53,10 @@ _KORUNAN = ("veri/", "ai_kayitlar/", "gunluk/", "telemetri_tampon/")
 
 # Gözetmenin izlediği tetik dosyası (VERİ kökünde — her zaman yazılabilir).
 TETIK_ADI = ".guncelleme_istek"
+# 2.5.33: gözetmenin yazdığı ayrıntılı ilerleme ve kod işareti.
+ILERLEME_ADI = "guncelleme_ilerleme.json"
+GOZETMEN_ISARET_ADI = "gozetmen_kod.json"
+SERVIS_ADI_WIN = "GoktunguMerkez"
 
 
 def _surum_parcalari(deger):
@@ -121,7 +125,54 @@ class DosyaGuncellemeYoneticisi:
     # -- durum -------------------------------------------------------
     def durum(self):
         with self._kilit:
-            return dict(self._durum)
+            d = dict(self._durum)
+        d["ilerleme"] = self._ilerleme_oku()
+        d["gozetmen_guncel"] = self._gozetmen_guncel_mi()
+        d["servis_yenilenebilir"] = (os.name == "nt")
+        return d
+
+    def _ilerleme_oku(self):
+        try:
+            with open(os.path.join(self.veri_koku, ILERLEME_ADI),
+                      encoding="utf-8") as f:
+                v = json.load(f)
+            return v if isinstance(v, dict) else None
+        except (OSError, ValueError):
+            return None
+
+    def _gozetmen_guncel_mi(self):
+        """Çalışan gözetmen diskteki goktungu_guncelleyici.py ile aynı mı?
+        Eski gözetmen işaret dosyası yazmaz -> False."""
+        try:
+            with open(os.path.join(self.veri_koku, GOZETMEN_ISARET_ADI),
+                      encoding="utf-8") as f:
+                isaret = json.load(f)
+            disk = _sha256_dosya(os.path.join(self.kok, "goktungu_guncelleyici.py"))
+            return bool(disk) and isaret.get("ozet") == disk
+        except (OSError, ValueError, AttributeError):
+            return False
+
+    def servisi_yeniden_baslat(self):
+        """Merkez servisini (gözetmen dahil) yeniden başlatır. Yalnız
+        Windows servisi; komut ayrık süreçte çalışır (servis dururken
+        ölmesin). (basari, bilgi) döner."""
+        if os.name != "nt":
+            return False, ("Linux'ta: sudo systemctl restart goktungu-merkez")
+        import subprocess
+        komut = ('ping -n 3 127.0.0.1 >nul & net stop "%s" & '
+                 'ping -n 3 127.0.0.1 >nul & net start "%s"'
+                 % (SERVIS_ADI_WIN, SERVIS_ADI_WIN))
+        taban = (getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                 | getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        for bayrak in (taban | 0x01000000, taban):   # BREAKAWAY_FROM_JOB
+            try:
+                subprocess.Popen([os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", komut],
+                                 creationflags=bayrak, close_fds=True)
+                self._gunluk_yaz("Servis yeniden başlatma komutu verildi", "uyari")
+                return True, "Servis yeniden başlatılıyor (yaklaşık 15-30 sn)"
+            except OSError:
+                continue
+        return False, "Servis yeniden başlatma komutu çalıştırılamadı"
 
     def _yaz(self, asama=None, hata=None, **alan):
         with self._kilit:
@@ -195,7 +246,12 @@ class DosyaGuncellemeYoneticisi:
     def _fark_say(self, manifest):
         """(degisen_sayi, degisen_bayt) — yerel sha256 ile karşılaştırır."""
         sayi, bayt = 0, 0
-        for d in manifest.get("dosyalar", []):
+        _liste = manifest.get("dosyalar", [])
+        _n = len(_liste)
+        for _i, d in enumerate(_liste, 1):
+            if _i % 40 == 0 or _i == _n:
+                self._yaz(denetim={"mesaj": "Yerel dosyalar karşılaştırılıyor (%d/%d)"
+                                   % (_i, _n), "yuzde": 30 + 65.0 * _i / max(1, _n)})
             bagil = str(d.get("yol") or "")
             sha = str(d.get("sha256") or "").lower()
             if len(sha) != 64 or not _yonetilen_mi(bagil):
@@ -217,9 +273,12 @@ class DosyaGuncellemeYoneticisi:
     def denetle(self):
         """Sunucu erişilebilirse imzalı manifesti denetler. Hata durumunda
         mevcut sürümü BOZMAZ; yalnız durumu 'hata' yapar."""
-        self._yaz("denetleniyor", "", kontrol_edildi=False)
+        self._yaz("denetleniyor", "", kontrol_edildi=False,
+                  denetim={"mesaj": "Sunucudan imzalı sürüm listesi alınıyor", "yuzde": 10})
         try:
-            manifest = self._manifest_dogrula(self._manifest_al())
+            ham = self._manifest_al()
+            self._yaz(denetim={"mesaj": "Ed25519 imzası doğrulanıyor", "yuzde": 25})
+            manifest = self._manifest_dogrula(ham)
         except PermissionError as e:
             self._yaz("hata", str(e), kontrol_edildi=True, guncelleme_var=False)
             self._gunluk_yaz("Sürüm denetimi: " + str(e), "uyari")
@@ -231,12 +290,14 @@ class DosyaGuncellemeYoneticisi:
         hedef = str(manifest.get("surum") or "")
         if not surum_yeni_mi(self.surum, hedef):
             self._yaz("guncel", "", kontrol_edildi=True, guncelleme_var=False,
+                      denetim={"mesaj": "Yazılım güncel", "yuzde": 100},
                       hedef_surum=hedef, notlar="", dosya_sayisi=0,
                       indirilen=0, toplam=0)
             self._gunluk_yaz("Yazılım güncel (%s)" % self.surum, "bilgi")
             return self.durum()
         sayi, bayt = self._fark_say(manifest)
         self._yaz("hazir", "", kontrol_edildi=True, guncelleme_var=True,
+                  denetim={"mesaj": "Yeni sürüm bulundu", "yuzde": 100},
                   hedef_surum=hedef, notlar=str(manifest.get("notlar") or ""),
                   dosya_sayisi=sayi, indirilen=0, toplam=bayt)
         self._gunluk_yaz(
@@ -274,6 +335,24 @@ class DosyaGuncellemeYoneticisi:
             self._yaz("hata", "Tetik yazılamadı: " + str(e))
             return False, "Güncelleme başlatılamadı: " + str(e)
         self._yaz("uygula_istendi", "", yeniden_baslat_gerekli=True)
+        try:
+            with open(os.path.join(self.veri_koku, ILERLEME_ADI + ".yeni"), "w",
+                      encoding="utf-8") as f:
+                json.dump({"kimlik": "istek-%d" % int(time.time() * 1000),
+                           "tetik": "kullanici", "etkin": True, "asama": "istek",
+                           "durum": "calisiyor", "yuzde": 0.5,
+                           "mesaj": "Güncelleme servisine istek iletildi; servis yanıtı bekleniyor",
+                           "mevcut_surum": self.surum, "hedef_surum": hedef,
+                           "basla_ts": time.time(), "guncel_ts": time.time(),
+                           "adimlar": [{"ts": time.time(), "asama": "istek",
+                                        "durum": "tamam",
+                                        "mesaj": "Kullanıcı güncellemeyi başlattı (%s → %s)"
+                                                 % (self.surum, hedef)}]},
+                          f, ensure_ascii=False)
+            os.replace(os.path.join(self.veri_koku, ILERLEME_ADI + ".yeni"),
+                       os.path.join(self.veri_koku, ILERLEME_ADI))
+        except OSError:
+            pass
         self._gunluk_yaz(
             "Güncelleme istendi (%s); gözetmen uyguluyor" % hedef, "bilgi")
         return True, ("Güncelleme başlatıldı; uygulama birazdan yeniden "

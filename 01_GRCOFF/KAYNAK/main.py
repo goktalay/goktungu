@@ -929,7 +929,7 @@ def _port_sahibi_pid(port):
     return None
 
 
-def _yerel_ai_eskiyse_yenile(ai_port):
+def _yerel_ai_eskiyse_yenile(ai_port, http_port=None):
     """v2.4.162: Calisan isci diskteki koddan ESKIYSE kapatir.
 
     Isci Merkez'den ayri oturumda (start_new_session) yasar; dosya tabanli
@@ -942,7 +942,16 @@ def _yerel_ai_eskiyse_yenile(ai_port):
     if not durum or durum.get("ad") != AI_ISCI_ADI:
         return False
     disk = _yerel_ai_disk_ozeti()
-    if not disk or durum.get("kod_ozeti") == disk:
+    kod_ayni = bool(disk) and durum.get("kod_ozeti") == disk
+    # v2.4.163: Isci BU Merkez'in HTTP portuna bildirim yapmiyorsa (onceki,
+    # olmus/oksuz bir Merkez icin baslatilmis) tespit kutulari bu Merkez'e
+    # hic ulasmaz; videoda cizim gorunmez. O durumda da yenilenir.
+    ana = str(durum.get("ana_url") or "")
+    port_ayni = (not http_port or not ana
+                 or ana.rstrip("/").endswith(":%d" % int(http_port)))
+    if kod_ayni and port_ayni:
+        return False
+    if not disk and port_ayni:
         return False
     pid = durum.get("pid") or _port_sahibi_pid(ai_port)
     try:
@@ -1114,7 +1123,8 @@ def _yerel_ai_bekci(ai_yonetici, http_sunucu):
     deneme, son_baslatma, son_deneme = 0, 0.0, {}
     while True:
         try:
-            if _yerel_ai_dinliyor(ai_port) and _yerel_ai_eskiyse_yenile(ai_port):
+            if _yerel_ai_dinliyor(ai_port) and _yerel_ai_eskiyse_yenile(
+                    ai_port, getattr(http_sunucu, "aktif_port", None)):
                 # Eski kodlu isci kapatildi; hemen gunceliyle baslat.
                 _yerel_ai_isci_baslat(http_sunucu, ai_port)
                 son_baslatma = time.time()
@@ -1374,8 +1384,46 @@ def main():
                      name="port-yaz").start()
 
     # WebSocket sunucusu + telemetri yayini ana asyncio dongusunde
+    async def _bekcili_calistir():
+        # v2.4.163: DONMA BEKCISI. Olay dongusu 20 sn yanit vermezse tum is
+        # parcaciklarinin yigin izi merkez_cokme.log'a yazilir (nerede
+        # kilitlendigi gorulsun). Surece dokunmaz.
+        loop = asyncio.get_running_loop()
+        son = [time.time()]
+
+        def _nabiz():
+            son[0] = time.time()
+
+        def _bekci():
+            yazildi = False
+            while True:
+                time.sleep(5)
+                try:
+                    loop.call_soon_threadsafe(_nabiz)
+                except RuntimeError:
+                    return
+                gecikme = time.time() - son[0]
+                if gecikme > 20 and not yazildi:
+                    yazildi = True
+                    try:
+                        import faulthandler as _fh2
+                        _COKME_DOSYA.write(
+                            "\n=== DONMA %s: olay dongusu %.0f sn yanit vermiyor ===\n"
+                            % (time.strftime("%Y-%m-%d %H:%M:%S"), gecikme))
+                        _COKME_DOSYA.flush()
+                        _fh2.dump_traceback(file=_COKME_DOSYA, all_threads=True)
+                        _COKME_DOSYA.flush()
+                    except Exception:
+                        pass
+                    print("[GCS] UYARI: olay dongusu %.0f sn yanit vermiyor; "
+                          "yigin izi merkez_cokme.log'a yazildi" % gecikme, flush=True)
+                elif gecikme < 10:
+                    yazildi = False
+        threading.Thread(target=_bekci, daemon=True, name="donma-bekcisi").start()
+        await ws_sunucu.calistir()
+
     try:
-        asyncio.run(ws_sunucu.calistir())
+        asyncio.run(_bekcili_calistir())
     except KeyboardInterrupt:
         print("\n[GCS] Kapatiliyor.")
     finally:

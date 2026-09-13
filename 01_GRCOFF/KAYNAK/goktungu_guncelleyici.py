@@ -91,6 +91,17 @@ class GuncellemeMotoru:
         self.mevcut_surum = mevcut_surum
         self.lisans_belgesi = lisans_belgesi or {}
         self.gunluk = gunluk
+        # 2.5.33: ayrıntılı ilerleme (IlerlemeYazici.bildir imzalı çağrı)
+        self.ilerleme = None
+
+    def _il(self, asama, mesaj, yuzde=None, adim=True, durum="calisiyor", **alt):
+        if self.ilerleme is None:
+            return
+        try:
+            self.ilerleme(asama=asama, mesaj=mesaj, yuzde=yuzde, adim=adim,
+                          durum=durum, **alt)
+        except Exception:
+            pass
 
     # -- ağ (gerçek) --------------------------------------------------
     def _istek(self, yol, govde):
@@ -108,7 +119,7 @@ class GuncellemeMotoru:
                                     context=ssl.create_default_context()) as y:
             return json.loads(y.read() or b"{}")
 
-    def _dosya_getir(self, surum: str, bagil: str) -> bytes:
+    def _dosya_getir(self, surum: str, bagil: str, bayt_cb=None) -> bytes:
         istek = self._istek(DOSYA_YOLU,
                             {"urun": self.urun, "surum": surum, "yol": bagil,
                              "lisans": self.lisans_belgesi})
@@ -120,6 +131,11 @@ class GuncellemeMotoru:
                 if not blok:
                     break
                 veri += blok
+                if bayt_cb:
+                    try:
+                        bayt_cb(len(blok))
+                    except Exception:
+                        pass
                 if len(veri) > _AZAMI_DOSYA:
                     raise ValueError("dosya beklenenden büyük")
             return veri
@@ -152,7 +168,14 @@ class GuncellemeMotoru:
     def fark_bul(self, manifest: dict):
         """(indirilecek [(yol,sha256,boyut)], silinecek [yol]) döndürür."""
         indir, gecersiz = [], []
-        for d in manifest.get("dosyalar", []):
+        _liste = manifest.get("dosyalar", [])
+        _n = len(_liste)
+        for _i, d in enumerate(_liste, 1):
+            if _i == 1 or _i % 25 == 0 or _i == _n:
+                self._il("karsilastirma",
+                         "Yerel dosyalar karşılaştırılıyor (%d/%d)" % (_i, _n),
+                         yuzde=5 + 10.0 * _i / max(1, _n), adim=False,
+                         no=_i, toplam=_n)
             bagil = d.get("yol"); sha = str(d.get("sha256") or "").lower()
             parc = _guvenli_bilesenler(bagil)
             if not parc or len(sha) != 64 or not _yonetilen_mi(bagil):
@@ -178,22 +201,39 @@ class GuncellemeMotoru:
 
         `dur_geri_cagir`/`baslat_geri_cagir`: uygulamayı durdur/başlat.
         Döner: {"guncellendi": bool, "surum": ..., "neden": ...}
+        2.5.33: her adım `self.ilerleme` ile ayrıntılı bildirilir.
         """
+        t0 = time.time()
+        MB = 1024.0 * 1024.0
+        self._il("manifest", "İmzalı sürüm listesi (manifest) alınıyor", yuzde=1)
         try:
             ham = self._getir_manifest()
         except Exception as e:
+            self._il("hata", "Manifest alınamadı: %s" % e, yuzde=100, durum="hata")
             return {"guncellendi": False, "neden": "manifest alınamadı: %s" % e}
+        self._il("imza", "Manifest Ed25519 imzası doğrulanıyor", yuzde=3)
         manifest = self._manifest_dogrula(ham)
         if not manifest:
+            self._il("hata", "Manifest imzası doğrulanamadı", yuzde=100, durum="hata")
             return {"guncellendi": False, "neden": "manifest doğrulanamadı"}
         hedef = str(manifest.get("surum") or "")
+        self._il("imza", "İmza geçerli; yayınlanan sürüm %s (kurulu %s)"
+                 % (hedef, self.mevcut_surum), yuzde=4, durum="tamam",
+                 hedef_surum=hedef)
         if not _surum_yeni_mi(self.mevcut_surum, hedef):
+            self._il("guncel", "Yazılım güncel (%s)" % self.mevcut_surum,
+                     yuzde=100, durum="tamam")
             return {"guncellendi": False, "surum": hedef, "neden": "guncel"}
 
         indir, silinecek = self.fark_bul(manifest)
         if not indir and not silinecek:
+            self._il("guncel", "Dosyalar zaten güncel", yuzde=100, durum="tamam")
             return {"guncellendi": False, "surum": hedef,
                     "neden": "fark yok (sürüm damgası tazelenecek)"}
+        toplam_bayt = sum(max(0, int(b)) for _, _, b in indir)
+        self._il("karsilastirma", "%d dosya indirilecek (%.2f MB), %d dosya silinecek"
+                 % (len(indir), toplam_bayt / MB, len(silinecek)), yuzde=15,
+                 durum="tamam", toplam=len(indir), bayt_toplam=toplam_bayt)
         self.gunluk("[GUNC] %s -> %s: %d dosya indirilecek, %d silinecek"
                     % (self.mevcut_surum, hedef, len(indir), len(silinecek)))
 
@@ -201,9 +241,21 @@ class GuncellemeMotoru:
         sahne = os.path.join(self.kok, ".guncelleme_sahne")
         _rmtree(sahne)
         os.makedirs(sahne, exist_ok=True)
+        inen = [0]
+        n = len(indir)
         try:
-            for bagil, sha, boyut in indir:
-                veri = self._dosya_getir(hedef, bagil)
+            for no, (bagil, sha, boyut) in enumerate(indir, 1):
+                son = [0.0]
+
+                def _cb(k, _no=no, _bagil=bagil, _son=son):
+                    inen[0] += k
+                    if time.time() - _son[0] >= 0.25:
+                        _son[0] = time.time()
+                        self._il("indirme", "İndiriliyor (%d/%d): %s" % (_no, n, _bagil),
+                                 yuzde=15 + 60.0 * inen[0] / max(1, toplam_bayt),
+                                 adim=False, no=_no, toplam=n, dosya=_bagil,
+                                 bayt=inen[0], bayt_toplam=toplam_bayt)
+                veri = self._dosya_getir(hedef, bagil, bayt_cb=_cb)
                 if hashlib.sha256(veri).hexdigest().lower() != sha:
                     raise ValueError("sha256 uyuşmadı: %s" % bagil)
                 parc = _guvenli_bilesenler(bagil)
@@ -211,22 +263,31 @@ class GuncellemeMotoru:
                 os.makedirs(os.path.dirname(hedef_yol), exist_ok=True)
                 with open(hedef_yol, "wb") as f:
                     f.write(veri)
+                self._il("indirme", "İndirildi ve SHA-256 doğrulandı (%d/%d): %s — %.1f KB"
+                         % (no, n, bagil, len(veri) / 1024.0),
+                         yuzde=15 + 60.0 * inen[0] / max(1, toplam_bayt),
+                         durum="tamam", no=no, toplam=n, dosya=bagil,
+                         bayt=inen[0], bayt_toplam=toplam_bayt)
         except Exception as e:
             _rmtree(sahne)
+            self._il("hata", "İndirme/doğrulama hatası: %s — kurulu sürüm değiştirilmedi" % e,
+                     yuzde=100, durum="hata")
             return {"guncellendi": False, "neden": "indirme/doğrulama: %s" % e}
 
         # 2) Uygula: uygulamayı durdur, yedekle, taşı, sil, yeniden başlat
+        self._il("durdurma", "Uygulama durduruluyor (dosyalar değiştirilecek)", yuzde=77)
         if dur_geri_cagir:
             try:
                 dur_geri_cagir()
             except Exception as e:
                 self.gunluk("[GUNC] Uygulama durdurma uyarısı: %s" % e)
+        self._il("durdurma", "Uygulama durduruldu", yuzde=80, durum="tamam")
         yedek = os.path.join(self.kok, ".guncelleme_yedek")
         _rmtree(yedek)
         os.makedirs(yedek, exist_ok=True)
         uygulanan = []
         try:
-            for bagil, sha, boyut in indir:
+            for no, (bagil, sha, boyut) in enumerate(indir, 1):
                 parc = _guvenli_bilesenler(bagil)
                 canli = os.path.join(self.kok, *parc)
                 yeni = os.path.join(sahne, *parc)
@@ -237,6 +298,9 @@ class GuncellemeMotoru:
                 os.makedirs(os.path.dirname(canli), exist_ok=True)
                 _kopyala(yeni, canli)
                 uygulanan.append(bagil)
+                self._il("yerlestirme", "Yedeklendi ve yerleştirildi (%d/%d): %s" % (no, n, bagil),
+                         yuzde=80 + 12.0 * no / max(1, n), durum="tamam",
+                         no=no, toplam=n, dosya=bagil)
             for bagil in silinecek:
                 parc = _guvenli_bilesenler(bagil)
                 canli = os.path.join(self.kok, *parc)
@@ -246,29 +310,42 @@ class GuncellemeMotoru:
                     _kopyala(canli, yb)
                     os.remove(canli)
                     uygulanan.append("-" + bagil)
+                    self._il("silme", "Kaldırıldı: %s" % bagil, yuzde=93, durum="tamam")
         except Exception as e:
             self.gunluk("[GUNC] Uygulama hatası, GERİ ALINIYOR: %s" % e)
+            self._il("geri_alma", "Yerleştirme hatası (%s); değişiklikler geri alınıyor" % e,
+                     yuzde=94, durum="hata")
             self._geri_al(yedek, uygulanan, silinecek)
             _rmtree(sahne)
+            self._il("baslatma", "Önceki sürümle uygulama başlatılıyor", yuzde=97)
             if baslat_geri_cagir:
                 try: baslat_geri_cagir()
                 except Exception: pass
+            self._il("hata", "Güncelleme geri alındı; kurulu sürüm korunuyor (%s)"
+                     % self.mevcut_surum, yuzde=100, durum="hata")
             return {"guncellendi": False, "neden": "uygulama hatası: %s" % e}
 
         _rmtree(sahne)
         _rmtree(yedek)
+        self._il("temizlik", "Geçici dosyalar ve yedek temizlendi", yuzde=94, durum="tamam")
         # 3) Sürüm damgası (isteğe bağlı; asıl sürüm js/surum.js'ten okunur)
         try:
             with open(os.path.join(self.kok, ".surum"), "w") as f:
                 f.write(hedef + "\n")
         except OSError:
             pass
+        self._il("baslatma", "Uygulama yeni sürümle (%s) başlatılıyor" % hedef, yuzde=96)
         if baslat_geri_cagir:
             try:
                 baslat_geri_cagir()
             except Exception as e:
                 self.gunluk("[GUNC] Uygulama başlatma uyarısı: %s" % e)
+        self._il("baslatma", "Uygulama başlatıldı; arayüz bağlantısı bekleniyor",
+                 yuzde=98, durum="tamam")
         self.gunluk("[GUNC] Güncelleme tamam: %s" % hedef)
+        self._il("tamam", "Güncelleme tamamlandı: %s → %s (%d dosya, %.1f MB, %.0f sn)"
+                 % (self.mevcut_surum, hedef, len(uygulanan), inen[0] / MB,
+                    time.time() - t0), yuzde=100, durum="tamam")
         return {"guncellendi": True, "surum": hedef, "sayi": len(uygulanan)}
 
     def _geri_al(self, yedek, uygulanan, silinecek):
@@ -386,6 +463,147 @@ def _lisans_belgesi(veri: str):
     return None
 
 
+ILERLEME_ADI = "guncelleme_ilerleme.json"
+GOZETMEN_ISARET_ADI = "gozetmen_kod.json"
+
+
+class IlerlemeYazici:
+    """2.5.33: Güncelleme ilerlemesini VERİ kökünde JSON olarak yazar.
+
+    Uygulama (main.py) bu dosyayı okuyup arayüze iletir. Dosya atomik
+    yazılır; ara bildirimler 0,2 sn'de bir, adım/aşama değişimleri anında.
+    `adimlar` her ayrıntıyı zaman damgasıyla tutar (son 400)."""
+
+    def __init__(self, veri_koku, tetik="otomatik", mevcut_surum=""):
+        self.yol = os.path.join(veri_koku, ILERLEME_ADI)
+        self._son_yazim = 0.0
+        self.d = {
+            "kimlik": "%d" % int(time.time() * 1000),
+            "tetik": tetik, "etkin": True, "asama": "basladi",
+            "durum": "calisiyor", "mesaj": "Güncelleme denetimi başladı",
+            "yuzde": 0.0, "mevcut_surum": mevcut_surum, "hedef_surum": "",
+            "no": 0, "toplam": 0, "dosya": "", "bayt": 0, "bayt_toplam": 0,
+            "basla_ts": time.time(), "guncel_ts": time.time(), "bitis_ts": None,
+            "adimlar": [],
+        }
+
+    def bildir(self, asama, mesaj, yuzde=None, adim=True, durum="calisiyor", **alt):
+        d = self.d
+        onceki = d.get("asama")
+        d["asama"], d["mesaj"], d["durum"] = asama, mesaj, durum
+        if yuzde is not None:
+            d["yuzde"] = round(max(d.get("yuzde") or 0.0, min(100.0, float(yuzde))), 1)
+        for k in ("no", "toplam", "dosya", "bayt", "bayt_toplam", "hedef_surum"):
+            if k in alt:
+                d[k] = alt[k]
+        d["guncel_ts"] = time.time()
+        son = asama in ("tamam", "guncel", "hata")
+        if son:
+            d["etkin"] = False
+            d["bitis_ts"] = time.time()
+        if adim or son:
+            d["adimlar"].append({"ts": time.time(), "asama": asama,
+                                 "mesaj": mesaj, "durum": durum})
+            d["adimlar"] = d["adimlar"][-400:]
+        if adim or son or asama != onceki or time.time() - self._son_yazim >= 0.2:
+            self.yaz()
+
+    def yaz(self):
+        self._son_yazim = time.time()
+        try:
+            gecici = self.yol + ".yeni"
+            with open(gecici, "w", encoding="utf-8") as f:
+                json.dump(self.d, f, ensure_ascii=False)
+            os.replace(gecici, self.yol)
+        except OSError:
+            pass
+
+
+ANA_PID_ADI = "merkez_ana_pid.json"
+
+
+def _win_is_nesnesi():
+    """2.5.33: Bu süreci 'kapanınca çocukları öldür' Windows iş nesnesine
+    alır. Servis durdurulurken gözetmen zorla kapatıldığında (CTRL_BREAK
+    servis bağlamında gönderilemiyor) main.py ve AI işçisi ÖKSÜZ kalıp
+    portları tutuyor, yeni Merkez 'kod 0' ile çıkıp döngüye giriyordu."""
+    if os.name != "nt":
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        class BASIC(ctypes.Structure):
+            _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64),
+                        ("PerJobUserTimeLimit", ctypes.c_int64),
+                        ("LimitFlags", wintypes.DWORD),
+                        ("MinimumWorkingSetSize", ctypes.c_size_t),
+                        ("MaximumWorkingSetSize", ctypes.c_size_t),
+                        ("ActiveProcessLimit", wintypes.DWORD),
+                        ("Affinity", ctypes.c_size_t),
+                        ("PriorityClass", wintypes.DWORD),
+                        ("SchedulingClass", wintypes.DWORD)]
+
+        class IO(ctypes.Structure):
+            _fields_ = [(n, ctypes.c_uint64) for n in (
+                "a", "b", "c", "d", "e", "f")]
+
+        class EXT(ctypes.Structure):
+            _fields_ = [("Basic", BASIC), ("Io", IO),
+                        ("ProcessMemoryLimit", ctypes.c_size_t),
+                        ("JobMemoryLimit", ctypes.c_size_t),
+                        ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                        ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        is_h = k32.CreateJobObjectW(None, None)
+        if not is_h:
+            return None
+        bilgi = EXT()
+        # KILL_ON_JOB_CLOSE | BREAKAWAY_OK (servis yeniden baslatma komutu kacabilsin)
+        bilgi.Basic.LimitFlags = 0x2000 | 0x800
+        if not k32.SetInformationJobObject(is_h, 9, ctypes.byref(bilgi),
+                                           ctypes.sizeof(bilgi)):
+            return None
+        k32.GetCurrentProcess.restype = wintypes.HANDLE
+        if not k32.AssignProcessToJobObject(is_h, k32.GetCurrentProcess()):
+            return None
+        return is_h
+    except Exception:
+        return None
+
+
+def _surec_yolu(pid):
+    """PID'in çalıştırılabilir yolu (yalnız Windows; bulunamazsa '')."""
+    try:
+        cikti = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "(Get-Process -Id %d -ErrorAction SilentlyContinue).Path" % int(pid)],
+            capture_output=True, text=True, timeout=15,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        return cikti.strip()
+    except Exception:
+        return ""
+
+
+def _port_sahipleri(portlar):
+    pidler = set()
+    try:
+        cikti = subprocess.run(
+            ["netstat", "-ano", "-p", "TCP"], capture_output=True, text=True,
+            timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        for satir in cikti.splitlines():
+            p = satir.split()
+            if (len(p) >= 5 and p[0].upper() == "TCP"
+                    and p[2] in ("0.0.0.0:0", "[::]:0")
+                    and any(p[1].endswith(":%d" % po) for po in portlar)):
+                pidler.add(int(p[4]))
+    except Exception:
+        pass
+    return pidler
+
+
 class Gozetmen:
     """main.py'yi alt süreç olarak çalıştırır, ayakta tutar; ayrı bir
     iş parçacığında periyodik güncelleme uygular."""
@@ -409,10 +627,33 @@ class Gozetmen:
             bayrak = 0
             if hasattr(subprocess, "CREATE_NO_WINDOW"):
                 bayrak |= subprocess.CREATE_NO_WINDOW
+            ortam = dict(os.environ)
+            ortam.setdefault("PYTHONUNBUFFERED", "1")
+            ortam["PYTHONIOENCODING"] = "utf-8"
+            cikti = None
+            try:
+                # 2.5.33: main.py çıktısı ayrı ve okunur (UTF-8) günlükte.
+                veri = _veri_koku()
+                os.makedirs(veri, exist_ok=True)
+                yol = os.path.join(veri, "merkez_uygulama.log")
+                if os.path.isfile(yol) and os.path.getsize(yol) > 20 * 1024 * 1024:
+                    os.replace(yol, yol + ".1")
+                cikti = open(yol, "a", encoding="utf-8")
+                cikti.write("\n=== %s main.py başlatılıyor ===\n"
+                            % time.strftime("%Y-%m-%d %H:%M:%S"))
+                cikti.flush()
+            except OSError:
+                cikti = None
             self.surec = subprocess.Popen(
                 [py, ana, "--tarayici-yok"], cwd=self.kok,
-                env=dict(os.environ), creationflags=bayrak)
+                env=ortam, creationflags=bayrak,
+                stdout=cikti, stderr=subprocess.STDOUT if cikti else None)
             self.gunluk("[GOZETMEN] Uygulama başlatıldı (PID %d)" % self.surec.pid)
+            try:
+                with open(os.path.join(_veri_koku(), ANA_PID_ADI), "w") as f:
+                    json.dump({"pid": self.surec.pid, "ts": time.time()}, f)
+            except OSError:
+                pass
 
     def _ana_durdur(self, sure=25):
         with self._kilit:
@@ -445,14 +686,26 @@ class Gozetmen:
                         "(merkez_lisans.json gerekli)")
             return
         surum = _surum_oku(self.kok)
-        motor = GuncellemeMotoru(self.kok, URUN, surum,
-                                 lisans_belgesi=belge, gunluk=self.gunluk)
+        # 2.5.33: Motor kodu HER turda diskten taze yüklenir; güncelleyicinin
+        # kendisindeki iyileştirmeler servis yeniden başlamadan devreye girer.
+        mod = self._taze_modul()
+        tetik = "kullanici" if getattr(self, "_kullanici_istedi", False) else "otomatik"
+        self._kullanici_istedi = False
+        motor = mod.GuncellemeMotoru(self.kok, URUN, surum,
+                                     lisans_belgesi=belge, gunluk=self.gunluk)
+        il = None
+        if hasattr(mod, "IlerlemeYazici"):
+            il = mod.IlerlemeYazici(veri, tetik=tetik, mevcut_surum=surum)
+            il.yaz()
+            motor.ilerleme = il.bildir
         self._guncelleniyor.set()
         try:
             sonuc = motor.uygula(dur_geri_cagir=lambda: self._ana_durdur(),
                                  baslat_geri_cagir=lambda: self._ana_baslat())
         except Exception as e:
             self.gunluk("[GUNC] Güncelleme hatası: %s" % e)
+            if il is not None:
+                il.bildir("hata", "Güncelleme hatası: %s" % e, yuzde=100, durum="hata")
             self._ana_baslat()
             return
         finally:
@@ -460,6 +713,34 @@ class Gozetmen:
         if sonuc.get("guncellendi"):
             self.gunluk("[GUNC] %s sürümüne güncellendi (%d dosya)"
                         % (sonuc.get("surum"), sonuc.get("sayi", 0)))
+
+    def _taze_modul(self):
+        """goktungu_guncelleyici.py'yi diskten yeni bir modül olarak yükler;
+        olmazsa çalışan kopyayı kullanır."""
+        try:
+            import importlib.util
+            yol = os.path.join(self.kok, "goktungu_guncelleyici.py")
+            spec = importlib.util.spec_from_file_location(
+                "goktungu_guncelleyici_taze_%d" % int(time.time() * 1000), yol)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+        except Exception as e:
+            self.gunluk("[GUNC] Taze motor yüklenemedi (%s); mevcut kullanılıyor" % e)
+            return sys.modules[__name__]
+
+    def _isaret_yaz(self):
+        """Çalışan gözetmenin kod özeti (arayüz eski gözetmeni tanır)."""
+        try:
+            with open(os.path.abspath(__file__), "rb") as f:
+                ozet = hashlib.sha256(f.read()).hexdigest()
+            veri = _veri_koku()
+            os.makedirs(veri, exist_ok=True)
+            with open(os.path.join(veri, GOZETMEN_ISARET_ADI), "w", encoding="utf-8") as f:
+                json.dump({"ozet": ozet, "pid": os.getpid(), "ts": time.time(),
+                           "taze_motor": True}, f)
+        except Exception:
+            pass
 
     def _tetik_tuket(self):
         """Uygulama içi 'Şimdi Güncelle' isteği (tetik dosyası) var mı?
@@ -479,7 +760,10 @@ class Gozetmen:
     def _guncelle_dongu(self):
         # İlk kontrol gecikmesi de tetiğe duyarlı (kullanıcı hemen isteyebilir).
         for _ in range(ILK_KONTROL_GECIKME):
-            if not self._calis or self._tetik_tuket():
+            if not self._calis:
+                break
+            if self._tetik_tuket():
+                self._kullanici_istedi = True
                 break
             time.sleep(1)
         while self._calis:
@@ -492,10 +776,50 @@ class Gozetmen:
                     break
                 if self._tetik_tuket():
                     self.gunluk("[GUNC] Uygulama içi güncelleme isteği alındı")
+                    self._kullanici_istedi = True
                     break
                 time.sleep(1)
 
+    def _oksuzleri_temizle(self):
+        """Önceki (öldürülmüş) gözetmenden kalan main.py/işçi süreçlerini
+        kapatır. YALNIZ bu kurulumun python.exe'si ile çalışanlar."""
+        if os.name != "nt":
+            return
+        adaylar = set()
+        try:
+            with open(os.path.join(_veri_koku(), ANA_PID_ADI)) as f:
+                adaylar.add(int(json.load(f).get("pid")))
+        except Exception:
+            pass
+        try:
+            http = int(os.environ.get("GOKTUNGU_HTTP_PORT") or 8000)
+        except ValueError:
+            http = 8000
+        adaylar |= _port_sahipleri((http, 8765, int(os.environ.get(
+            "GOKTUNGU_AI_PORT") or 8910)))
+        benim = os.path.normcase(os.path.abspath(sys.executable))
+        for pid in sorted(adaylar):
+            if pid in (os.getpid(), 0, 4):
+                continue
+            yol = _surec_yolu(pid)
+            if not yol or os.path.normcase(os.path.abspath(yol)) != benim:
+                continue
+            self.gunluk("[GOZETMEN] Öksüz kalmış süreç kapatılıyor (PID %d)" % pid)
+            try:
+                subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                               capture_output=True, timeout=15,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except Exception:
+                pass
+        time.sleep(1.5)
+
     def calis(self):
+        self._is_nesnesi = _win_is_nesnesi()
+        if os.name == "nt":
+            self.gunluk("[GOZETMEN] İş nesnesi (çocuklar birlikte kapanır): %s"
+                        % ("etkin" if self._is_nesnesi else "kurulamadı"))
+        self._oksuzleri_temizle()
+        self._isaret_yaz()
         self.gunluk("[GOZETMEN] Başladı; kök=%s sürüm=%s"
                     % (self.kok, _surum_oku(self.kok)))
         self._ana_baslat()

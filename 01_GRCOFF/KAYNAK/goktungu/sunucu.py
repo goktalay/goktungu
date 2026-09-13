@@ -30,6 +30,26 @@ from . import goruntu_gecmisi
 # guvenli tarafta kalir.
 IS94_SESSIZLIK_TAVANI = 10.0
 
+# v2.4.163: asyncio.to_thread varsayilan havuz is parcaciklari HIC olmez;
+# PostgreSQL havuzundan odunc aldiklari baglanti is parcacigi olumunde geri
+# alinir -> hic geri verilmiyordu. Birkac AI ayar degisikliginden sonra
+# havuz (10) doluyor, sonraki islemler 20 sn bekleyip arayuzu kilitliyordu.
+# Her cagri sonunda baglanti havuza iade edilir.
+def _db_iade_ederek(fn, *a, **k):
+    try:
+        return fn(*a, **k)
+    finally:
+        try:
+            from . import veritabani as _vt
+            _vt.baglanti_kapat()
+        except Exception:
+            pass
+
+
+async def _db_is_parcasi(fn, *a, **k):
+    return await asyncio.to_thread(_db_iade_ederek, fn, *a, **k)
+
+
 from .sabitler import (WS_PORTLAR, HTTP_PORTLAR, YAYIN_HZ, PROJE_KOKU,
                        WS_ADRES, HTTP_ADRES,
                        WEB_KOKU, AVATAR_KLASORU, _veri_yolu,
@@ -1233,12 +1253,12 @@ class WSSunucusu:
             if kamera_id not in aktif:
                 return
             if gorevler:
-                await asyncio.to_thread(
+                await _db_is_parcasi(
                     self.ai_yonetici.izleme_baslat, kamera_id,
                     "/kamera/%s" % kamera_id, "gcs_proxy", gorevler,
                     kamera.get("ai_hassasiyet") or "")
             else:
-                await asyncio.to_thread(
+                await _db_is_parcasi(
                     self.ai_yonetici.izleme_durdur, kamera_id)
                 self.konsol("AI", f"AI izleme durduruldu (kamera"
                             f" #{kamera_id}: gorev secili degil)", "uyari")
@@ -1940,7 +1960,7 @@ class WSSunucusu:
     async def _kopru_yeniden_kur(self):
         """Kopru ajanini asyncio dongusunu bloke etmeden yeniden kurar."""
         loop = asyncio.get_running_loop()
-        basarili, hata = await loop.run_in_executor(None, self._kopru_kur)
+        basarili, hata = await loop.run_in_executor(None, _db_iade_ederek, self._kopru_kur)
         if hata:
             self.konsol("KOPRU", hata, "uyari")
         return basarili
@@ -2025,8 +2045,7 @@ class WSSunucusu:
                     _aid, coz["tip"], _lat, _lon, _tb, sysid=_sys,
                     sira=_sira)
 
-            port, hata = await asyncio.get_running_loop().run_in_executor(
-                None, _isle)
+            port, hata = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, _isle)
             if not port:
                 ilk_hata = ilk_hata or hata
                 continue
@@ -2133,7 +2152,7 @@ class WSSunucusu:
                 "model": model or "",
                 "hata": hata or "",
             }
-        d = await asyncio.get_running_loop().run_in_executor(None, _isle)
+        d = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, _isle)
         d["tip"] = "sitl_durum"
         d["sanal_tip"] = tip
         # FAZ18-IS1B-GONDER-ZAMANASIMI: `self._gonder` DIYE BIR YONTEM YOK.
@@ -2183,8 +2202,7 @@ class WSSunucusu:
         def _isle():
             return _sitl.indir(tip, self.konsol, ilerleme=_ilerle)
 
-        ok, hata = await asyncio.get_running_loop().run_in_executor(
-            None, _isle)
+        ok, hata = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, _isle)
         await self._duyur({"tip": "sitl_indirme",
                            "durum": "bitti" if ok else "hata",
                            "sanal_tip": tip, "hata": hata})
@@ -3087,7 +3105,7 @@ class WSSunucusu:
             "url": kayit.get("url"),
             "ai_gorevler": kayit.get("ai_gorevler") or "",
         }
-        _s, hata = await asyncio.to_thread(
+        _s, hata = await _db_is_parcasi(
             self._saha_komut_eszamanli, "video_kamera_yaz",
             {"kamera": paket})
         if hata:
@@ -3501,7 +3519,7 @@ class WSSunucusu:
                               "degil.")
             return secilen, ""
         try:
-            liste = await asyncio.to_thread(
+            liste = await _db_is_parcasi(
                 self._kopru_listesi_birlesik, firma_id)
         except Exception as e:
             return None, "Saha makinesi listesi okunamadi: %s" % e
@@ -3522,7 +3540,7 @@ class WSSunucusu:
                 return list(_h.map(_bir, _liste))
 
         try:
-            sonuclar = await asyncio.to_thread(_tara)
+            sonuclar = await _db_is_parcasi(_tara)
         except Exception as e:
             return None, "Saha makineleri sorgulanamadi: %s" % e
         uygun = []
@@ -3606,7 +3624,7 @@ class WSSunucusu:
                                    zaman_asimi=zaman_asimi)
 
         try:
-            return await asyncio.to_thread(_cagir)
+            return await _db_is_parcasi(_cagir)
         except Exception as e:
             return None, "Kopru sorgusu basarisiz: %s" % e
 
@@ -3629,7 +3647,7 @@ class WSSunucusu:
             istenen = int(secilen or 0)
         except (TypeError, ValueError):
             istenen = 0
-        liste = await asyncio.to_thread(self._kopru_listesi_birlesik,
+        liste = await _db_is_parcasi(self._kopru_listesi_birlesik,
                                          firma_id)
         adaylar = []
         for kayit in liste or []:
@@ -3751,7 +3769,7 @@ class WSSunucusu:
                 "sysid": sysid if 1 <= sysid <= 255 else None,
             })
         try:
-            kareler = await asyncio.to_thread(
+            kareler = await _db_is_parcasi(
                 goruntu_gecmisi.son_kareler, firma_id, uidler, 100)
         except Exception as e:
             return eslemeler, [], "Son kareler okunamadi: %s" % e
@@ -4019,7 +4037,7 @@ class WSSunucusu:
                               gcs_port=gcs_port)
 
         try:
-            port, hata = await asyncio.to_thread(_isle)
+            port, hata = await _db_is_parcasi(_isle)
         except Exception as e:
             return None, "%s: %s" % (type(e).__name__, e)
         if hata or not port:
@@ -4053,7 +4071,7 @@ class WSSunucusu:
             def _isle():
                 return _mk.akis_kapat(k["ornek_id"], k["firma_id"], bid)
 
-            hata = await asyncio.to_thread(_isle)
+            hata = await _db_is_parcasi(_isle)
             if hata:
                 self.konsol("AKIS",
                             f"Kanal kapatma uyarisi (id={bid}): {hata}",
@@ -4090,7 +4108,7 @@ class WSSunucusu:
                 if hata:
                     return None, hata
                 from . import merkez_kimlik as _mk
-                veri, hata = await asyncio.to_thread(
+                veri, hata = await _db_is_parcasi(
                     _mk.kopruye_sor, oid, int(firma_id), "protokol_algila",
                     {"kayit": dict(kayit)}, 8.0)
                 if hata:
@@ -4098,7 +4116,7 @@ class WSSunucusu:
                 sonuc = dict(veri or {})
             else:
                 from .protokol_algilama import seri_protokol_algila
-                sonuc = await asyncio.to_thread(seri_protokol_algila,
+                sonuc = await _db_is_parcasi(seri_protokol_algila,
                                                 dict(kayit))
         except Exception as e:
             return None, "%s: %s" % (type(e).__name__, e)
@@ -4160,7 +4178,7 @@ class WSSunucusu:
                      "baud": int(kayit.get("baud") or 115200),
                      "ucus_yazilimi": "betaflight"}
             try:
-                veri, hata = await asyncio.to_thread(
+                veri, hata = await _db_is_parcasi(
                     _mk.kopruye_sor, oid, int(firma_id), "msp_baslat",
                     {"kayit": tanim}, 12.0)
             except Exception as e:
@@ -4201,7 +4219,7 @@ class WSSunucusu:
                 return hata
             from . import merkez_kimlik as _mk
             try:
-                veri, hata = await asyncio.to_thread(
+                veri, hata = await _db_is_parcasi(
                     _mk.kopruye_sor, oid, int(firma_id), "msp_durdur",
                     {"baglanti_id": bid}, 8.0)
             except Exception as e:
@@ -4241,7 +4259,7 @@ class WSSunucusu:
                         return _mk.kopruye_sor(
                             _meta["ornek_id"], _meta["firma_id"],
                             "msp_durum", {"baglanti_id": int(_bid)}, 4.0)
-                    veri, hata = await asyncio.to_thread(_isle)
+                    veri, hata = await _db_is_parcasi(_isle)
                     if hata:
                         return
                     oturumlar = dict((veri or {}).get("oturumlar") or {})
@@ -4954,7 +4972,7 @@ class WSSunucusu:
                         _vt.kip_ayarla("postgresql")
                         return _goc.GocMotoru().durum()
 
-                    d = await loop.run_in_executor(None, _goc_durum)
+                    d = await loop.run_in_executor(None, _db_iade_ederek, _goc_durum)
                     # DIKKAT: `durum()` "guncel" doner; "gerekli" onun
                     # TERSIDIR. Karistirmak sihirbazi hic actirmaz.
                     durum["goc_gerekli"] = not bool(d.get("guncel"))
@@ -5064,8 +5082,7 @@ class WSSunucusu:
         if komut == "pg_dene":
             # Kullanici istegi: "her ilerle dediginde mutlaka girilen
             # bilgileri dogrulamali". Bu komut KAYDETMEZ.
-            s = await loop.run_in_executor(
-                None, lambda: _pg.dene(**cagri))
+            s = await loop.run_in_executor(None, _db_iade_ederek, lambda: _pg.dene(**cagri))
             s["tip"] = "pg_sonuc"
             s["komut"] = "pg_dene"
             s["basarili"] = bool(s.get("tamam"))
@@ -5077,8 +5094,7 @@ class WSSunucusu:
             return
 
         if komut == "pg_olustur":
-            s = await loop.run_in_executor(
-                None, lambda: _pg.veritabani_olustur(**cagri))
+            s = await loop.run_in_executor(None, _db_iade_ederek, lambda: _pg.veritabani_olustur(**cagri))
             s["tip"] = "pg_sonuc"
             s["komut"] = "pg_olustur"
             s["basarili"] = bool(s.get("tamam"))
@@ -5174,7 +5190,7 @@ class WSSunucusu:
                     return _goc.GocMotoru(
                         konsol=lambda m: self.konsol("PG", m)
                     ).calistir(ilerleme=_geri_cagir)
-                sonuc = await loop.run_in_executor(None, _kur)
+                sonuc = await loop.run_in_executor(None, _db_iade_ederek, _kur)
             else:
                 def _goc_uygula():
                     from . import goc as _goc
@@ -5188,7 +5204,7 @@ class WSSunucusu:
                     return _goc.GocMotoru(
                         konsol=lambda m: self.konsol("PG", m)
                     ).calistir(ilerleme=_geri_cagir)
-                sonuc = await loop.run_in_executor(None, _goc_uygula)
+                sonuc = await loop.run_in_executor(None, _db_iade_ederek, _goc_uygula)
         except Exception as e:
             sonuc = {"tamam": False, "hata": _pg._hata_sadelestir(e)}
 
@@ -5204,7 +5220,7 @@ class WSSunucusu:
         _sema = 0
         try:
             from . import goc as _goc2
-            _sema = await loop.run_in_executor(None, _goc2.sema_surumu)
+            _sema = await loop.run_in_executor(None, _db_iade_ederek, _goc2.sema_surumu)
         except Exception:
             pass
         yanit = {"tip": "pg_sonuc", "komut": komut,
@@ -5519,7 +5535,7 @@ class WSSunucusu:
             return _me.esitle(adres, eposta, sifre)
 
         try:
-            ozet, hata = await loop.run_in_executor(None, _calistir)
+            ozet, hata = await loop.run_in_executor(None, _db_iade_ederek, _calistir)
         except Exception as e:
             ozet, hata = None, "Esitleme basarisiz: %s" % e
 
@@ -5686,7 +5702,7 @@ class WSSunucusu:
 
         try:
             if komut == "kopru_kimlik_liste":
-                liste = await loop.run_in_executor(None, _kk.kopru_listesi)
+                liste = await loop.run_in_executor(None, _db_iade_ederek, _kk.kopru_listesi)
                 await websocket.send(_yanit(
                     True, "", liste=liste, port=_port,
                     canli=_kk.ROLE.sayi()))
@@ -5699,14 +5715,14 @@ class WSSunucusu:
                 def _uret():
                     return _kk.kopru_kaydet(ad, aciklama)
 
-                kimlik = await loop.run_in_executor(None, _uret)
+                kimlik = await loop.run_in_executor(None, _db_iade_ederek, _uret)
                 self.konsol("KOPRU",
                             "Yeni kopru kimligi uretildi: %s (ornek %s)"
                             % (ad, kimlik.get("ornek_id")), "basari")
                 self._pilot_log(websocket, "KOPRU", "kimlik_uret",
                                 {"ad": ad,
                                  "ornek_id": kimlik.get("ornek_id")})
-                liste = await loop.run_in_executor(None, _kk.kopru_listesi)
+                liste = await loop.run_in_executor(None, _db_iade_ederek, _kk.kopru_listesi)
                 await websocket.send(_yanit(
                     True, "", kimlik=kimlik, liste=liste, port=_port))
                 return
@@ -5729,12 +5745,12 @@ class WSSunucusu:
                     with contextlib.suppress(Exception):
                         await o.soket.close()
 
-                await loop.run_in_executor(None, _kk.kopru_sil, oid)
+                await loop.run_in_executor(None, _db_iade_ederek, _kk.kopru_sil, oid)
                 self.konsol("KOPRU", "Kopru kimligi iptal edildi "
                             "(ornek %d)" % oid, "uyari")
                 self._pilot_log(websocket, "KOPRU", "kimlik_sil",
                                 {"ornek_id": oid})
-                liste = await loop.run_in_executor(None, _kk.kopru_listesi)
+                liste = await loop.run_in_executor(None, _db_iade_ederek, _kk.kopru_listesi)
                 await websocket.send(_yanit(True, "", liste=liste,
                                             port=_port))
                 return
@@ -7118,8 +7134,7 @@ class WSSunucusu:
             else:
                 import asyncio as _aio
                 loop = _aio.get_event_loop()
-                yazilan, hatalar = await loop.run_in_executor(
-                    None, self.dron.ilk_ayar_uygula, sysid,
+                yazilan, hatalar = await loop.run_in_executor(None, _db_iade_ederek, self.dron.ilk_ayar_uygula, sysid,
                     k.get("parametreler"))
                 # Kalici parametre tablosuna da yazilir (kim, ne zaman,
                 # eski -> yeni). param_yaz dalinin sozlesmesiyle ayni.
@@ -7149,8 +7164,7 @@ class WSSunucusu:
                 import asyncio as _aio
                 loop = _aio.get_event_loop()
                 try:
-                    sonuc = await loop.run_in_executor(
-                        None, self.dron.batarya_voltaj_kalibre_et,
+                    sonuc = await loop.run_in_executor(None, _db_iade_ederek, self.dron.batarya_voltaj_kalibre_et,
                         sysid, k.get("gercek_voltaj"))
                 except Exception as e:
                     self.konsol("PARAM", f"Voltaj kalibrasyonu hatasi: {e}", "hata")
@@ -7234,8 +7248,7 @@ class WSSunucusu:
                     import asyncio as _aio
                     loop = _aio.get_event_loop()
                     try:
-                        taze = await loop.run_in_executor(
-                            None, self.dron.param_coklu_oku, sysid, eksik)
+                        taze = await loop.run_in_executor(None, _db_iade_ederek, self.dron.param_coklu_oku, sysid, eksik)
                         bulunan.update(taze or {})
                     except Exception as e:
                         self.konsol("PARAM", f"rota param okuma: {e}",
@@ -7252,11 +7265,9 @@ class WSSunucusu:
                 import asyncio as _aio
                 loop = _aio.get_event_loop()
                 if self.dji_kopru and self.dji_kopru.dji_mi(sysid):
-                    sonuc = await loop.run_in_executor(
-                        None, self.dji_kopru.param_ara, sysid, filtre)
+                    sonuc = await loop.run_in_executor(None, _db_iade_ederek, self.dji_kopru.param_ara, sysid, filtre)
                 else:
-                    sonuc = await loop.run_in_executor(
-                        None, self.dron.param_ara, sysid, filtre)
+                    sonuc = await loop.run_in_executor(None, _db_iade_ederek, self.dron.param_ara, sysid, filtre)
                 await websocket.send(json.dumps({
                     "tip": "param_listesi", "sysid": sysid,
                     "filtre": filtre, "parametreler": sonuc}))
@@ -7300,14 +7311,12 @@ class WSSunucusu:
                 try:
                     if self.dji_kopru and self.dji_kopru.dji_mi(sysid):
                         # DJI koprusunde index takibi yok — mevcut tam okuma
-                        sonuc = await loop.run_in_executor(
-                            None, self.dji_kopru.param_ara, sysid, "")
+                        sonuc = await loop.run_in_executor(None, _db_iade_ederek, self.dji_kopru.param_ara, sysid, "")
                         toplam = len(sonuc)
                         if not sonuc:
                             p_hata = "DJI koprusunden parametre alinamadi."
                     else:
-                        sonuc, toplam, p_hata = await loop.run_in_executor(
-                            None, self.dron.param_tumu_oku, sysid,
+                        sonuc, toplam, p_hata = await loop.run_in_executor(None, _db_iade_ederek, self.dron.param_tumu_oku, sysid,
                             _ilerleme_gonder)
                 except Exception as e:
                     # v2.4.16: okuma hatasi WS isleyicisini oldurmesin —
@@ -7346,11 +7355,9 @@ class WSSunucusu:
                 import asyncio as _aio
                 loop = _aio.get_event_loop()
                 if self.dji_kopru and self.dji_kopru.dji_mi(sysid):
-                    ok = await loop.run_in_executor(
-                        None, self.dji_kopru.param_yaz, sysid, ad, deger)
+                    ok = await loop.run_in_executor(None, _db_iade_ederek, self.dji_kopru.param_yaz, sysid, ad, deger)
                 else:
-                    ok = await loop.run_in_executor(
-                        None, self.dron.param_tek_yaz, sysid, ad, deger)
+                    ok = await loop.run_in_executor(None, _db_iade_ederek, self.dron.param_tek_yaz, sysid, ad, deger)
                 if ok:
                     # v2.4.17: onbellekteki degeri de guncelle
                     # v2.4.21: kalici parametre tablosu + degisiklik
@@ -7398,8 +7405,7 @@ class WSSunucusu:
             elif sysid:
                 import asyncio as _aio
                 loop = _aio.get_event_loop()
-                loglar = await loop.run_in_executor(
-                    None, self.dron.log_listesi, sysid)
+                loglar = await loop.run_in_executor(None, _db_iade_ederek, self.dron.log_listesi, sysid)
                 await websocket.send(json.dumps({
                     "tip": "log_listesi", "sysid": sysid,
                     "basari": loglar is not None,
@@ -7425,8 +7431,7 @@ class WSSunucusu:
                             "log_id": _l, "alinan": alinan,
                             "toplam": toplam})), loop)
 
-                ok = await loop.run_in_executor(
-                    None, lambda: self.dron.log_indir(
+                ok = await loop.run_in_executor(None, _db_iade_ederek, lambda: self.dron.log_indir(
                         sysid, log_id, boyut, hedef, _ilerle))
                 cevap = {"tip": "log_indirildi", "sysid": sysid,
                          "log_id": log_id, "basari": bool(ok)}
@@ -8185,7 +8190,7 @@ class WSSunucusu:
                                 with _cf.ThreadPoolExecutor(_n) as _h2:
                                     return list(_h2.map(_bir, _liste))
 
-                            for _kk, (_v, _h) in await asyncio.to_thread(
+                            for _kk, (_v, _h) in await _db_is_parcasi(
                                     _servis_cek):
                                 _kk["servisler"] = (
                                     (_v or {}).get("servisler")
@@ -8630,6 +8635,14 @@ class WSSunucusu:
                                "basari": basladi,
                                "bilgi": "Surum denetimi baslatildi" if basladi else
                                         "Surum denetimi zaten calisiyor veya hazir degil"})
+        elif komut == "guncelleme_servis_yenile":
+            # v2.4.163: eski gozetmeni (ilerleme gostermeyen) yenilemek icin
+            yonetici = getattr(self, "guncelleme", None)
+            basari, bilgi = (yonetici.servisi_yeniden_baslat()
+                             if yonetici and hasattr(yonetici, "servisi_yeniden_baslat")
+                             else (False, "Guncelleme yoneticisi hazir degil"))
+            await self._duyur({"tip": "guncelleme_sonuc", "islem": "servis",
+                               "basari": bool(basari), "bilgi": str(bilgi)})
         elif komut in ("guncelleme_uygula", "guncelleme_indir", "guncelleme_kur"):
             # v2.5.30: Dosya tabanli model — tek adim. Calisan surec kendi
             # kodunu degistirmez; gozetmen icin tetik dosyasi yazilir, o da
@@ -8796,7 +8809,7 @@ class WSSunucusu:
         elif komut == "kamera_cihazlari" and self.video_proxy:
             # v2.4.7: DONANIM protokolu icin SUNUCU makinesindeki yerel
             # kamera cihazlari (indeks tabanli; AI boru hattina girer)
-            cihazlar = await asyncio.to_thread(
+            cihazlar = await _db_is_parcasi(
                 self.video_proxy.cihaz_listesi)
             await websocket.send(json.dumps(
                 {"tip": "kamera_cihazlari", "cihazlar": cihazlar}))
@@ -8921,7 +8934,7 @@ class WSSunucusu:
                 # v2.4.8: silinen kameranin AI izlemesini de durdur
                 if self.ai_yonetici:
                     try:
-                        await asyncio.to_thread(
+                        await _db_is_parcasi(
                             self.ai_yonetici.izleme_durdur, kam_id)
                         await self._duyur(
                             {"tip": "ai_izleme_listesi",
@@ -9104,8 +9117,7 @@ class WSSunucusu:
                          "calisiyor": True, "hata": ""}))
                 return
 
-            ok, hata = await asyncio.get_running_loop().run_in_executor(
-                None, self.ai_ssh.baslat, kayit, sifre)
+            ok, hata = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, self.ai_ssh.baslat, kayit, sifre)
             self._pilot_log(websocket, "ai", "ai_ssh_baslat",
                             str(kayit.get("ad"))[:60])
             if not ok:
@@ -9564,8 +9576,7 @@ class WSSunucusu:
                              "kullanilamaz (systemd gerekir)."}))
                 return
             p = self._pilot_bilgi(websocket) or {}
-            ozet = await asyncio.get_running_loop().run_in_executor(
-                None, self.servis.ozet)
+            ozet = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, self.servis.ozet)
             ozet["tip"] = "servis_durum"
             ozet["destekli"] = True
             # Arayuz dugmeleri buna gore etkin/pasif olur: yonetici
@@ -9589,8 +9600,7 @@ class WSSunucusu:
             except (TypeError, ValueError):
                 satir = 80
             # servis.gunluk() -> {"tamam":bool,"satirlar":[...],"hata":str}
-            g = await asyncio.get_running_loop().run_in_executor(
-                None, self.servis.gunluk, satir)
+            g = await asyncio.get_running_loop().run_in_executor(None, _db_iade_ederek, self.servis.gunluk, satir)
             await websocket.send(json.dumps(
                 {"tip": "servis_gunluk",
                  "basarili": bool(g.get("tamam")),
@@ -9646,8 +9656,7 @@ class WSSunucusu:
             # bilinmez). Bu yuzden once yaniti gonderip eylemi kisa bir
             # gecikmeyle arka planda kosturuyoruz.
             if ad in ("durdur", "yeniden_baslat"):
-                hazir, neden = await loop.run_in_executor(
-                    None, self.servis.eylem_hazir, ad)
+                hazir, neden = await loop.run_in_executor(None, _db_iade_ederek, self.servis.eylem_hazir, ad)
                 if not hazir:
                     await websocket.send(json.dumps(
                         {"tip": "servis_sonuc", "basarili": False,
@@ -9667,17 +9676,16 @@ class WSSunucusu:
                 self.konsol("SERVIS",
                             f"{p.get('eposta', '?')} servisi '{ad}' "
                             "istedi; eylem 1 saniye sonra uygulanacak.")
-                await loop.run_in_executor(
-                    None, self.servis.gecikmeli_eylem, ad, 1.0)
+                await loop.run_in_executor(None, _db_iade_ederek, self.servis.gecikmeli_eylem, ad, 1.0)
                 return
             # servis.eylem() SOZLUK doner: {"tamam":bool,"hata":str,...}
-            son = await loop.run_in_executor(None, self.servis.eylem, ad)
+            son = await loop.run_in_executor(None, _db_iade_ederek, self.servis.eylem, ad)
             basarili = bool(son.get("tamam"))
             ileti = son.get("hata") or son.get("cikti") or "Uygulandi."
             self.konsol("SERVIS",
                         f"{p.get('eposta', '?')} -> {ad}: {ileti}",
                         "bilgi" if basarili else "uyari")
-            ozet = await loop.run_in_executor(None, self.servis.ozet)
+            ozet = await loop.run_in_executor(None, _db_iade_ederek, self.servis.ozet)
             ozet.update({"tip": "servis_sonuc", "basarili": basarili,
                          "ad": ad, "ileti": ileti, "destekli": True,
                          "yetkili": True})
@@ -9730,8 +9738,7 @@ class WSSunucusu:
                     yap[ayar_ad] = deger
             loop = asyncio.get_running_loop()
             if komut == "merkez_dogrula":
-                veri, hata = await loop.run_in_executor(
-                    None, _merkez.dogrula, yap)
+                veri, hata = await loop.run_in_executor(None, _db_iade_ederek, _merkez.dogrula, yap)
                 kul = (veri or {}).get("kullanici") or {}
                 if hata:
                     self.konsol("MERKEZ", f"Dogrulama basarisiz: {hata}",
@@ -9745,8 +9752,7 @@ class WSSunucusu:
                      "hata": hata or "", "kullanici": kul,
                      "adres": yap.get("adres", "")}))
                 return
-            liste, hata = await loop.run_in_executor(
-                None, _merkez.acik_sunucular, yap)
+            liste, hata = await loop.run_in_executor(None, _db_iade_ederek, _merkez.acik_sunucular, yap)
             if hata:
                 self.konsol("MERKEZ", f"Acik sunucu listesi alinamadi: "
                             f"{hata}", "uyari")
@@ -9809,8 +9815,7 @@ class WSSunucusu:
             except Exception:
                 surum = ""
             loop = asyncio.get_running_loop()
-            veri, hata = await loop.run_in_executor(
-                None, functools.partial(
+            veri, hata = await loop.run_in_executor(None, _db_iade_ederek, functools.partial(
                     _merkez.sunucu_kayit, yap, ad=ad, surum=surum,
                     aciklama=aciklama, yenile=yenile))
             if hata:
@@ -9876,8 +9881,7 @@ class WSSunucusu:
                      "hata": f"Bilinmeyen guc eylemi: {ad}"}))
                 return
             loop = asyncio.get_running_loop()
-            hazir, neden = await loop.run_in_executor(
-                None, self.servis.guc_hazir, ad)
+            hazir, neden = await loop.run_in_executor(None, _db_iade_ederek, self.servis.guc_hazir, ad)
             if not hazir:
                 # Yetki yoksa ONCEDEN soyle. Aksi halde operator onay
                 # verir, hicbir sey olmaz ve nedenini bilemez.
@@ -9911,7 +9915,7 @@ class WSSunucusu:
                  "ileti": ileti, "ucan": ucan}))
             # Yanit gonderildikten SONRA guc komutu verilir (kendini
             # durdurma sorununun ayni cozumu).
-            await loop.run_in_executor(None, self.servis.guc, ad, 2.0)
+            await loop.run_in_executor(None, _db_iade_ederek, self.servis.guc, ad, 2.0)
         elif komut in ("pg_durum", "pg_dene", "pg_olustur",
                        "pg_kur", "pg_goc"):
             # v2.4.51: PostgreSQL ilk kurulum / goc sihirbazi.
@@ -10163,7 +10167,7 @@ class WSSunucusu:
                 if yaz.get("merkez_etkin") is False:
                     if self.kopru is not None:
                         loop = asyncio.get_running_loop()
-                        await loop.run_in_executor(None, self.kopru.durdur)
+                        await loop.run_in_executor(None, _db_iade_ederek, self.kopru.durdur)
                         self.konsol("KOPRU", "Merkez kapatildi; ajan "
                                     "durduruldu.", "bilgi")
                 else:
@@ -10186,7 +10190,7 @@ class WSSunucusu:
             if (_bakim_simdi - getattr(self, "_IS99_GORUNTU_BAKIM_SON", 0.0)) >= 3600.0:
                 self._IS99_GORUNTU_BAKIM_SON = _bakim_simdi
                 try:
-                    await asyncio.to_thread(goruntu_gecmisi.bakim_yap, True)
+                    await _db_is_parcasi(goruntu_gecmisi.bakim_yap, True)
                 except Exception as _e_is99:
                     self.konsol("GORUNTU", "Görüntü geçmişi bakımı başarısız: " +
                                 str(_e_is99), "uyari")
@@ -10204,7 +10208,7 @@ class WSSunucusu:
                 _cek = getattr(self.radar, "cek_gerekirse", None)
                 if _cek is not None:
                     try:
-                        await asyncio.to_thread(_cek)
+                        await _db_is_parcasi(_cek)
                     except Exception:
                         # Radar beslemesi butun telemetriyi durdurmaz.
                         pass
@@ -10213,7 +10217,7 @@ class WSSunucusu:
                 _m50_cek = getattr(self.m50, "cek_gerekirse", None)
                 if _m50_cek is not None:
                     try:
-                        await asyncio.to_thread(_m50_cek)
+                        await _db_is_parcasi(_m50_cek)
                     except Exception:
                         pass
                 # `M50Vekili.paket()` aynı ortak kilidi alır; bu nedenle
@@ -10496,7 +10500,7 @@ class WSSunucusu:
                     if not self._merkez_kipinde():
                         try:
                             from . import kopru_kabul as _kk
-                            await asyncio.to_thread(_kk.bayat_temizle)
+                            await _db_is_parcasi(_kk.bayat_temizle)
                             _n = len(_kk.kopru_listesi())
                             print(f"[KOPRU] Kabul ucu hazir: "
                                   f"ws://{adres}:{port}/kopru "

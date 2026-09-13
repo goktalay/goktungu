@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.162";
+const GCS_SURUM = "2.4.163";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.163",
+    tarih: "2026-09-13",
+    baslik: "Güncellemede ayrıntılı ilerleme; AI ayarında donma ve öksüz süreç sorunları giderildi (paket 2.5.33)",
+    maddeler: [
+      "Güncelleme penceresi her adımı ilerleme çubuğuyla gösterir: imzalı sürüm listesi, imza doğrulama, dosya karşılaştırma, her dosyanın indirilip SHA-256 ile doğrulanması (dosya no/toplam, MB), uygulamanın durdurulması, her dosyanın yedeklenip yerleştirilmesi, başlatma ve toplam süre. Adımlar saatleriyle listelenir; yeniden başlatma sırasında bağlantı bekleme sayacı gösterilir, bitince arayüz yeni sürümle kendiliğinden yenilenir. Otomatik güncellemeler de aynı pencerede açılır.",
+      "Güncelleme motoru her turda diskten taze yüklenir; güncelleyicinin kendisindeki iyileştirmeler servis yeniden başlatılmadan devreye girer. Eski servis için pencerede 'Güncelleme servisini yeniden başlat' düğmesi çıkar (bir kez).",
+      "DONMA KÖK NEDENİ: AI ayarı her değiştiğinde arka plan iş parçacıkları PostgreSQL bağlantısını geri vermiyordu; birkaç değişiklikten sonra 10'luk havuz doluyor ve arayüz kilitleniyordu. Bağlantılar artık her işlemden sonra iade edilir.",
+      "Servis yeniden başlatılırken eski Merkez süreci öldürülemeyip portu tutuyor, yeni Merkez sürekli 'kod 0' ile çıkıyordu. Süreçler artık bir Windows iş nesnesine bağlıdır (servisle birlikte kapanır) ve açılışta öksüz kalmış süreçler temizlenir.",
+      "Yüzden gelen insan tespiti videoda 'INSAN (YUZ) %güven' etiketiyle çizilir; AI işçisi farklı bir Merkez portuna bağlı kalmışsa yenilenir.",
+      "Tanı: olay döngüsü 20 sn yanıt vermezse tüm iş parçacıklarının yığın izi merkez_cokme.log'a yazılır; Merkez çıktısı merkez_uygulama.log'da."
+    ]
+  },
   {
     surum: "2.4.162",
     tarih: "2026-09-13",

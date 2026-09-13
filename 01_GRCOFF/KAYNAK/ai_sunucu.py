@@ -634,7 +634,8 @@ class AIIsci:
                 "ocr": False,
                 "yuz_destegi": False,
                 "siniflar": sorted(IZINLI_SINIFLAR),
-                "kod_ozeti": KOD_OZETI, "pid": os.getpid()}
+                "kod_ozeti": KOD_OZETI, "pid": os.getpid(),
+                "ana_url": self.ana_url}
 
     # ------------------------------------------------------------------
     # Analiz
@@ -896,7 +897,10 @@ class AIIsci:
             by = max(0, int(y - gh * 0.3))
             bw = min(w - bx, int(gw * 2.2))
             bh = min(h - by, int(gh * 4.5))
-            self._canli_kutu_ekle(akis, bx, by, bw, bh, "insan")
+            # Yuz yolundan gelen insan kutusu videoda ayirt edilsin
+            # (cv2.putText Turkce karakter cizemez -> ASCII).
+            self._canli_kutu_ekle(akis, bx, by, bw, bh, "insan",
+                                  etiket="INSAN (YUZ) %%%d" % int(guven * 100))
             anahtar = f"insan_yuz_{x // 100}_{y // 100}"
             if not akis.sogutma_gecti(anahtar, saniye=12.0):
                 continue
