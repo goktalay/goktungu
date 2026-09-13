@@ -1258,7 +1258,10 @@
            hareket eder). Tip, hedefin cografi konumunun hangi yolla
            cozulecegini belirler. Kalibrasyon eksikse hedef angajmana
            ALINAMAZ. -->
-      <details class="kam-bolum" id="kamBolumKalib">
+      <!-- v2.4.161: Kullanici istegi — angajman ayarlari kamerada DEGIL,
+           "Angajman Baslat" panelinde. Bolum gizli tutulur (DOM'da kalir ki
+           kamera kaydinda mevcut kalibrasyon degerleri korunsun). -->
+      <details class="kam-bolum" id="kamBolumKalib" style="display:none">
         <summary><span data-i18n="kamBolumKalib">AI ANGAJMAN KALİBRASYONU</span><span class="kam-bolum-rozet" id="kamRozetKalib"></span></summary>
       <div id="kamAngajmanBolum" class="kam-bolum-icerik">
         <label for="kamTipi" data-i18n="lblKamTipi">KAMERA TİPİ (AI ANGAJMAN)</label>

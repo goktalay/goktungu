@@ -8883,7 +8883,11 @@ class WSSunucusu:
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     self.kameralar.dron_bagla(kam_id, _dron_uid)
                     # v2.5.21: yerel AI angajman kalibrasyonunu guncelle.
-                    self.kameralar.kalibrasyon_kaydet(kam_id, k, firma_id=_fid)
+                    # v2.4.161: YALNIZ istek kalibrasyon tasiyorsa. AI ayar
+                    # paneli kalibrasyon gondermez; eskiden her AI ayar
+                    # degisikligi kalibrasyonu silip kalibre=0 yapiyordu.
+                    if "kamera_tipi" in k:
+                        self.kameralar.kalibrasyon_kaydet(kam_id, k, firma_id=_fid)
                     liste = self.kameralar.listele(firma_id=_fid)
                     # URL/protokol DEĞİŞTİYSE aktif proxy'yi kapat; aksi halde
                     # (AI-only değişiklik) capture'a DOKUNMA (bkz. yukarıdaki not).

@@ -133,7 +133,7 @@ class KameraYoneticisi:
     def _ai_hassasiyet(deger):
         """Sınıf başına hassasiyeti dogrulanmis JSON dizeye cevirir.
 
-        Yalniz insan/kara_araci/hava_araci anahtarlari, 10-90 araligi.
+        Yalniz insan/yuz/kara_araci/hava_araci anahtarlari, 10-90 araligi.
         Gecersiz/eksik alan tamamen atlanir (isci varsayilani 50 uygular).
         """
         import json as _j
@@ -145,7 +145,8 @@ class KameraYoneticisi:
         if not isinstance(deger, dict):
             return ""
         temiz = {}
-        for k in ("insan", "kara_araci", "hava_araci"):
+        # v2.4.161: "yuz" (yakin cekim yuz tespiti) ayri gorev/hassasiyet.
+        for k in ("insan", "yuz", "kara_araci", "hava_araci"):
             try:
                 v = int(round(float(deger[k])))
             except (KeyError, TypeError, ValueError):

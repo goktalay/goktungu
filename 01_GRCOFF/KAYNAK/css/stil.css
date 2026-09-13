@@ -10043,6 +10043,9 @@ body.tam-ekran-modu #altOrtaPanel {
   background: var(--panel, #131a24); border: 1px solid var(--cizgi, #2a3542);
   border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
 }
+/* v2.4.161: 'gizli' icin genel kural yok; .dk-kam-menu display:flex oldugundan
+   ustune ozel gizleme kurali GEREKLI, yoksa menu tiklanmadan hep acik gorunur. */
+.dk-kam-menu.gizli { display: none; }
 .dk-kam-menu-satir { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dk-kam-menu-etiket { font-size: 11px; color: var(--soluk, #95a9b8); }
 .dk-kam-menu-ai {
@@ -10052,3 +10055,12 @@ body.tam-ekran-modu #altOrtaPanel {
   color: var(--metin, #e6edf3); cursor: pointer; font-size: 12px;
 }
 .dk-kam-menu-ai:hover { background: rgba(255,255,255,.08); }
+
+/* v2.4.161: Angajman panelinde kamera kalibrasyonu bolumu */
+.ang-kalib > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.ang-kalib > summary::-webkit-details-marker { display: none; }
+.ang-kalib > summary::before { content: "▸ "; }
+.ang-kalib[open] > summary::before { content: "▾ "; }
+.ang-kalib-durum { font-size: 11px; font-weight: 600; letter-spacing: 0; }
+.ang-kalib select { background: var(--dugme-arka, #141a21); color: var(--metin, #cfd8e3); border: 1px solid var(--cizgi, #2a3542); border-radius: 4px; padding: 3px 6px; }
+.ang-kalib .ang-kalib-kaydet { width: 100%; margin-top: 8px; }

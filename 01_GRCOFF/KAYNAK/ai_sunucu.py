@@ -181,7 +181,11 @@ try:
 except ImportError:
     OCR_VAR = False
 # GRCOFF pasif yerel görüntü işleme kabul listesi.
-IZINLI_SINIFLAR = frozenset(("insan", "kara_araci", "hava_araci"))
+# v2.4.161: "yuz" = yakin cekim yuz tespiti (ayri ac/kapat gorevi). Tam
+# beden "insan" (HOG/yaya) ile BAGIMSIZ acilip kapanir; tespit YINE "insan"
+# olarak bildirilir (kullanici istegi: "en azindan insan demeli"). Kimlik
+# TANIMA yapilmaz — yalniz varlik.
+IZINLI_SINIFLAR = frozenset(("insan", "yuz", "kara_araci", "hava_araci"))
 
 
 def gorevleri_sinirla(gorevler):
@@ -625,6 +629,11 @@ class AIIsci:
         akis.canli_kutular = []
         if "insan" in g:
             self._insan_analiz(akis, kare, ts)
+        # v2.4.161: Yakin cekim yuz tespiti AYRI gorev ("yuz"); tam beden
+        # "insan" (HOG/yaya) ile bagimsiz. Ikisi de acikken hem uzaktaki
+        # yaya hem yakindaki kisi yakalanir.
+        if "yuz" in g:
+            self._insan_yuzden(akis, kare, ts)
         if "hava_araci" in g or "kara_araci" in g or (
                 "insan" in g and self.insan_hog is None):
             self._hareket_analiz(akis, kare, ts)
@@ -779,11 +788,9 @@ class AIIsci:
     # v2.4.2: Insan tespiti (HOG tam-vucut dedektoru)
     # ------------------------------------------------------------------
     def _insan_analiz(self, akis, kare, ts):
-        # v2.4.158: Yakın webcam çekiminde tam-beden HOG çalışmaz; YuNet yüz
-        # tespiti "insan var" sinyali olarak eklenir (KİMLİK TANIMA DEĞİL —
-        # embedding/isim çıkarılmaz, yalnız varlık). Böylece masa başı/yakın
-        # kadrajda kişi tespit edilir.
-        self._insan_yuzden(akis, kare, ts)
+        # v2.4.161: Tam beden (HOG/yaya) tespiti. Yakın çekim yüz tespiti
+        # artık AYRI "yuz" görevidir (bkz. kare_analiz + _insan_yuzden);
+        # burada çağrılmaz. Böylece yaya ve yakın-yüz bağımsız açılıp kapanır.
         if self.insan_hog is None:
             # OpenCV 5: HOG yok — tam beden hareket blob'u _hareket_analiz'de.
             return
@@ -826,15 +833,40 @@ class AIIsci:
         if self.yuz_tespit is None:
             return
         h, w = kare.shape[:2]
-        # insan hassasiyeti -> yüz güven eşiği ve asgari yüz boyutu
-        k = getattr(akis, "_olcek", {}).get("insan", 1.0)
+        # v2.4.161: "yuz" gorevinin kendi hassasiyeti (insan'dan bagimsiz).
+        k = getattr(akis, "_olcek", {}).get("yuz", 1.0)
         esik = max(0.30, min(0.95, 0.7 * min(1.5, k)))
         asgari = max(18, int(36 * min(1.5, k)))
-        try:
-            self.yuz_tespit.setInputSize((w, h))
-            _, yuzler = self.yuz_tespit.detect(kare)
-        except Exception:
-            return
+        # YuNet cok BUYUK yuzde (yakin cekim, kadrajin yarisindan fazlasi)
+        # zayiflar; tam cozunurlukte bulamazsa kucultulmus karede de dener.
+        yuzler = None
+        for olcek in (1.0, 0.5):
+            try:
+                if olcek != 1.0:
+                    kk = cv2.resize(kare, (max(1, int(w * olcek)),
+                                           max(1, int(h * olcek))))
+                    self.yuz_tespit.setInputSize((kk.shape[1], kk.shape[0]))
+                    _, bulunan = self.yuz_tespit.detect(kk)
+                    if bulunan is not None and len(bulunan):
+                        bulunan = bulunan.copy()
+                        bulunan[:, :4] /= olcek   # koordinatları orijinale ölçekle
+                else:
+                    self.yuz_tespit.setInputSize((w, h))
+                    _, bulunan = self.yuz_tespit.detect(kare)
+            except Exception:
+                bulunan = None
+            if bulunan is not None and len(bulunan):
+                yuzler = bulunan
+                break
+        # Teşhis (kısıtlı): kaç aday, en iyi güven — log'dan görülebilsin.
+        if akis.sogutma_gecti("yuz_teshis", saniye=8.0):
+            try:
+                _n = 0 if yuzler is None else len(yuzler)
+                _iyi = (max(float(y[-1]) for y in yuzler) if _n else 0.0)
+                print("[AI] yuz tespit: %d aday, en_iyi=%.2f (esik=%.2f) kam=%s"
+                      % (_n, _iyi, esik, akis.kamera_id))
+            except Exception:
+                pass
         if yuzler is None:
             return
         for yuz in yuzler:

@@ -123,6 +123,10 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     kutu.appendChild(kaynakBilgi);
   }
 
+  // v2.4.161: KAMERA KALIBRASYONU angajman panelinde (kamera formundan
+  // tasindi). Yalniz goruntu angajmaninda ve kaynak kamera biliniyorsa.
+  const kalib = goruntuMu ? angajmanKalibBolumu(kutu, kaynak, t) : null;
+
   // Parametreler
   const paramDiv = document.createElement("div");
   paramDiv.className = "ang-param";
@@ -268,6 +272,8 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
     const ghz = parseFloat((document.getElementById("angParamGudumHz").value || "10").replace(",", "."));
     const ym = parseFloat((document.getElementById("angParamYakalama").value || "2").replace(",", "."));
     if (isNaN(ghz) || isNaN(ym)) return;
+    // v2.4.161: kalibrasyon degistiyse angajmandan ONCE kaydet
+    if (kalib && kalib.degisti()) kalib.kaydet();
     // v2.4.43: ongoru secenekleri
     const ongoruAcik = !!(ongoruKutu && ongoruKutu.checked);
     const gorevAcik = ongoruAcik && !!(gorevKutu && gorevKutu.checked);
@@ -341,6 +347,111 @@ function angajmanPopupAc(mod, kaynakId, kaynakBaglam) {
   perde.addEventListener("click", (ev) => {
     if (ev.target === perde) angajmanPopupKapat();
   });
+}
+
+// ---------------------------------------------------------------
+// v2.4.161: Angajman panelindeki KAMERA KALIBRASYONU bolumu.
+// Alanlar kamera kaydindan doldurulur; "Kaydet" ya da angajman baslatma
+// kamera_kaydet ile (kameranin diger alanlari korunarak) yazar.
+// ---------------------------------------------------------------
+function angajmanKalibBolumu(kutu, kaynak, t) {
+  const kamId = Number(kaynak.kamera_id);
+  const kam = (window._kameralarSon || []).find(k => Number(k.id) === kamId);
+  if (!kam) return null;
+  const ALANLAR = [
+    ["lat", "Enlem (lat)", "sabit"], ["lon", "Boylam (lon)", "sabit"],
+    ["kam_yukseklik", "Yer üstü yükseklik (m)", "sabit"],
+    ["yon", "Bakış yönü (°, 0=kuzey)", "sabit"],
+    ["tilt", "Aşağı eğim (°, +aşağı)", "sabit"],
+    ["fov_yatay", "Yatay görüş açısı (°)", "ortak"],
+    ["fov_dikey", "Dikey görüş açısı (°)", "ortak"],
+    ["montaj_pan", "Montaj pan (°)", "dron"],
+    ["montaj_tilt", "Montaj tilt (°)", "dron"],
+    ["montaj_roll", "Montaj roll (°)", "dron"],
+  ];
+  const bolum = document.createElement("details");
+  bolum.className = "ang-param ang-kalib";
+  bolum.open = !kam.kalibre;   // kalibre degilse acik gelsin
+  const ozet = document.createElement("summary");
+  ozet.className = "ang-param-baslik";
+  const durum = document.createElement("span");
+  durum.className = "ang-kalib-durum";
+  ozet.append(document.createTextNode(t.angKalibBaslik || "KAMERA KALİBRASYONU"), durum);
+  bolum.appendChild(ozet);
+
+  const tipSatir = document.createElement("div");
+  tipSatir.className = "ang-param-satir";
+  tipSatir.innerHTML = "<span>" + (t.angKalibTip || "Kamera tipi") + "</span>";
+  const tipSec = document.createElement("select");
+  tipSec.innerHTML = "<option value='sabit'>Sabit kamera</option>" +
+                     "<option value='dron'>Drona takılı</option>";
+  tipSec.value = kam.kamera_tipi || "sabit";
+  tipSatir.appendChild(tipSec);
+  bolum.appendChild(tipSatir);
+
+  const girdiler = {};
+  const satirlar = [];
+  ALANLAR.forEach(([ad, etiket, grup]) => {
+    const s = document.createElement("div");
+    s.className = "ang-param-satir";
+    s.dataset.grup = grup;
+    const e = document.createElement("span");
+    e.textContent = etiket;
+    const g = document.createElement("input");
+    g.type = "text"; g.spellcheck = false;
+    const v = kam[ad];
+    g.value = (v === null || v === undefined) ? "" : String(v);
+    s.append(e, g);
+    bolum.appendChild(s);
+    girdiler[ad] = g;
+    satirlar.push(s);
+  });
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ang-btn ang-kalib-kaydet";
+  btn.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> <span>" +
+    (t.angKalibKaydet || "KALİBRASYONU KAYDET") + "</span>";
+  bolum.appendChild(btn);
+
+  function ilk() { return JSON.stringify(topla()); }
+  function topla() {
+    const o = { kamera_tipi: tipSec.value };
+    for (const ad in girdiler) {
+      const ham = String(girdiler[ad].value || "").trim().replace(",", ".");
+      o[ad] = ham === "" ? null : parseFloat(ham);
+    }
+    return o;
+  }
+  function gorunum() {
+    satirlar.forEach(s => {
+      const gr = s.dataset.grup;
+      s.style.display = (gr === "ortak" || gr === tipSec.value) ? "" : "none";
+    });
+    durum.textContent = kam.kalibre ? " ✓ kalibre" : " ⚠ eksik — angajman reddedilebilir";
+    durum.style.color = kam.kalibre ? "#4ade80" : "#fbbf24";
+  }
+  let baslangic = ilk();
+  function kaydet() {
+    const c = topla();
+    const msg = Object.assign({
+      tip: "kamera_kaydet", id: kam.id, isim: kam.isim,
+      protokol: kam.protokol, url: kam.url,
+      lokasyon_id: kam.lokasyon_id || null,
+      kopru_ornek_id: kam.kopru_ornek_id || null,
+      dron_uid: kam.dron_uid || "",
+      ai_gorevler: kam.ai_gorevler || ""
+    }, c);
+    try { ws.send(JSON.stringify(msg)); } catch (_) {}
+    Object.assign(kam, c);
+    baslangic = ilk();
+    btn.querySelector("span").textContent = t.angKalibKaydedildi || "KAYDEDİLDİ ✓";
+    setTimeout(() => { btn.querySelector("span").textContent = t.angKalibKaydet || "KALİBRASYONU KAYDET"; }, 1500);
+  }
+  tipSec.addEventListener("change", gorunum);
+  btn.addEventListener("click", (ev) => { ev.preventDefault(); kaydet(); });
+  gorunum();
+  kutu.appendChild(bolum);
+  return { degisti: () => ilk() !== baslangic, kaydet };
 }
 
 function angajmanPopupKapat() {

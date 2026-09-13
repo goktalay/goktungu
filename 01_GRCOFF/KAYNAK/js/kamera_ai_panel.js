@@ -16,8 +16,11 @@
 (function () {
   "use strict";
 
+  // v2.4.161: "yuz" (yakın çekim yüz tespiti) ayrı aç/kapat + hassasiyet.
+  // Tam beden "insan" (yaya) ile bağımsızdır; tespit yine "insan" bildirilir.
   var SINIFLAR = [
-    ["insan", "İnsan"],
+    ["insan", "İnsan (tam beden / yaya)"],
+    ["yuz", "Yüz (yakın çekim)"],
     ["kara_araci", "Kara Aracı"],
     ["hava_araci", "Hava Aracı"]
   ];
@@ -176,7 +179,7 @@
     not.className = "kai-panel-not";
     not.textContent = t.kaiNot ||
       "Yerel AI köprüsüz çalışır; görüntü ve tespit bu bilgisayardan çıkmaz. " +
-      "Angajman için ayrıca kamera kalibrasyonu gerekir.";
+      "Angajman için kamera kalibrasyonu Angajman Başlat panelinden yapılır.";
     govde.appendChild(not);
 
     el.appendChild(govde);

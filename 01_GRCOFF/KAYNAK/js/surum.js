@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.160";
+const GCS_SURUM = "2.4.161";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.161",
+    tarih: "2026-09-13",
+    baslik: "Ayrı 'Yüz' tespiti, dron kamera menüsü, angajman kalibrasyonu panele taşındı (paket 2.5.31)",
+    maddeler: [
+      "Yapay Zeka Ayarları'na ayrı 'Yüz (yakın çekim)' aç/kapat ve hassasiyet eklendi. Tam beden (yaya) tespitinden bağımsızdır; ikisi birlikte açıkken hem uzaktaki yaya hem kameraya yakın kişi 'insan' olarak işaretlenir. Çok yakın/büyük yüzde küçültülmüş karede de aranır. Kimlik tanıma yapılmaz.",
+      "Dron panelindeki kamera '⋮' menüsü artık tıklanmadan açık görünmüyor; yalnız düğmeye basınca açılır.",
+      "Angajman kalibrasyonu (kamera tipi, konum, yükseklik, yön, görüş açısı, montaj) kamera formundan kaldırıldı; görüntü ile angajman başlatılırken açılan panelde 'KAMERA KALİBRASYONU' olarak düzenlenir ve kaydedilir.",
+      "Düzeltme: AI ayarı değiştirmek kameranın angajman kalibrasyonunu siliyordu; artık korunuyor."
+    ]
+  },
   {
     surum: "2.4.160",
     tarih: "2026-09-13",
