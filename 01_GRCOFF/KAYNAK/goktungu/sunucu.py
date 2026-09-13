@@ -11601,7 +11601,17 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        print(f"[AI] Tespit isleme hatasi: {e}")
+                        # v2.4.178: tam iz (traceback) + zorla flush.
+                        # Onceki surumde yalniz str(e) yazilirdi; RuntimeError
+                        # gibi mesaji ozetleyen hatalarda GERCEK kaynak
+                        # (hangi satir) hic gorulemiyordu; ayrica bu HTTP
+                        # isleyicisi ana asyncio surecinden AYRI bir
+                        # ThreadingHTTPServer is parcacigidir — stdout'un
+                        # PYTHONUNBUFFERED altinda bile Windows'ta gecikmeli
+                        # yazilma ihtimaline karsi flush=True eklendi.
+                        import traceback as _tb
+                        print(f"[AI] Tespit isleme hatasi: {e}\n"
+                              f"{_tb.format_exc()}", flush=True)
                         try:
                             self.send_error(500)
                         except Exception:
@@ -11641,7 +11651,9 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        print(f"[AI] Kutu isleme hatasi: {e}")
+                        import traceback as _tb
+                        print(f"[AI] Kutu isleme hatasi: {e}\n"
+                              f"{_tb.format_exc()}", flush=True)
                         try:
                             self.send_error(500)
                         except Exception:
@@ -11670,7 +11682,9 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        print(f"[AI] Takip isleme hatasi: {e}")
+                        import traceback as _tb
+                        print(f"[AI] Takip isleme hatasi: {e}\n"
+                              f"{_tb.format_exc()}", flush=True)
                         try:
                             self.send_error(500)
                         except Exception:

@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.177";
+const GCS_SURUM = "2.4.178";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.178",
+    tarih: "2026-09-13",
+    baslik: "Tanı: AI uç hatalarında artık tam iz (traceback) yazılıyor (paket 2.5.48)",
+    maddeler: [
+      "/ai/tespit, /ai/kutular, /ai/takip uçlarındaki hata mesajları artık yalnız kısa özet değil TAM PYTHON İZİ (traceback) ile ve anında diske zorla yazdırılarak (flush) merkez_cikti.log dosyasına düşüyor.",
+      "Bu, bir önceki sürümde ('/ai/takip' hâlâ HTTP 500 dönüyor ama log dosyasında hiçbir hata satırı görünmüyor' şeklinde bildirilen) teşhis boşluğunu kapatmak içindir — artık gerçek hata kesin olarak günlüğe düşecek."
+    ]
+  },
   {
     surum: "2.4.177",
     tarih: "2026-09-13",
