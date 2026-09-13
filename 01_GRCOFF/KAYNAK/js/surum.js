@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.179";
+const GCS_SURUM = "2.4.180";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.180",
+    tarih: "2026-09-14",
+    baslik: "KESİN KÖK NEDEN BULUNDU VE DÜZELTİLDİ: Windows'ta takip bildirimi hiç sunucuya ulaşmıyordu (paket 2.5.50)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN (nihayet net bir traceback ile doğrulandı): `os.fchmod()` fonksiyonu Windows'ta HİÇ YOKTUR (yalnız Linux/Mac'te bulunur). Pasif görüntü takibinin her güncellemesinde çağrılan track-günlüğü yazma adımı bu satırda `AttributeError: module 'os' has no attribute 'fchmod'` ile çöküyor, fonksiyon WebSocket'e 'takip aktif' bildirimini göndermeden ÖNCE sonlanıyordu.",
+      "Bu, 'Angaje Ol' ve 'Takip Et' düğmelerinin hedef seçili ve takip görsel olarak aktifken bile HİÇBİR ZAMAN görünmemesinin gerçek ve tek nedeniydi — önceki tüm düzeltmeler (PostgreSQL bağlantı havuzu, geçici izleyici hatası toleransı) gerçek ve gerekli düzeltmelerdi ama bu son engeli kaldırmıyordu.",
+      "DÜZELTME: `os.fchmod` çağrısı artık yalnız mevcutsa (Linux/Mac) yapılıyor; Windows'ta dosya zaten güvenli izinlerle (0600) oluşturulduğu için atlanıyor. Bu, kod tabanının başka bir yerinde (O_NOFOLLOW için) zaten kullanılan aynı çapraz-platform güvenlik desenidir.",
+      "Bu güncellemeden sonra hedef seçip birkaç saniye içinde 'Angaje Ol' ve 'Takip Et' düğmelerinin video panelinde belirmesi gerekir."
+    ]
+  },
   {
     surum: "2.4.179",
     tarih: "2026-09-14",

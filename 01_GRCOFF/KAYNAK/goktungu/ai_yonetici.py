@@ -912,7 +912,16 @@ class AIYonetici:
                 bayraklar |= os.O_NOFOLLOW
             fd = os.open(self._track_yol, bayraklar, 0o600)
             try:
-                os.fchmod(fd, 0o600)
+                # v2.4.180 OLCULEN KOK NEDEN: `os.fchmod` Windows'ta HIC
+                # YOKTUR (yalniz POSIX). Bu satir Windows'ta HER
+                # `takip_isle()` cagrisinda AttributeError firlatiyor,
+                # fonksiyon WS yayinina (ai_takip, aktif:true) hic
+                # ULASAMADAN cikiyordu — "Angaje Ol/Takip Et" dugmelerinin
+                # hedef secili/takip aktifken bile HICBIR ZAMAN
+                # gelmemesinin gercek nedeni buydu. `O_NOFOLLOW` icin
+                # zaten var olan hasattr() korumasiyla AYNI desen.
+                if hasattr(os, "fchmod"):
+                    os.fchmod(fd, 0o600)
                 os.write(fd, satir)
             finally:
                 os.close(fd)
