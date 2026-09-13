@@ -9282,8 +9282,14 @@ class WSSunucusu:
                 sec_ts = float(k.get("ts") or 0) or None
             except (TypeError, ValueError):
                 sec_ts = None
-            sonuc = self.ai_yonetici.track_baslat(kamera_id, tur, kutu,
-                                                  ts=sec_ts)
+            # v2.4.174 OLCULEN KUSUR: `track_baslat` -> `_http()` AI
+            # iscisine SENKRON urllib istegi atar (zamanasimi 6 sn).
+            # Dogrudan cagrilinca bu coroutine asyncio DONGUSUNU BLOKE
+            # ediyordu; isci yavas cevap verirse (CSRT sarma, meşgul CPU)
+            # TUM istemcilerin telemetri/WS trafigi donuyordu. Ayri
+            # is parcacigina alindi; sunucu artik hicbir sekilde kilitlenmez.
+            sonuc = await asyncio.to_thread(
+                self.ai_yonetici.track_baslat, kamera_id, tur, kutu, sec_ts)
             if sonuc.get("tamam"):
                 self._pilot_log(websocket, "ai", "ai_track_baslat",
                                 f"kamera #{kamera_id} tur={tur}"
@@ -9322,7 +9328,9 @@ class WSSunucusu:
                 kamera_id = int(k.get("kamera_id", 0))
             except (TypeError, ValueError):
                 return
-            self.ai_yonetici.track_durdur(kamera_id)
+            # v2.4.174: ai_track_baslat ile ayni gerekce — senkron HTTP
+            # cagrisi asyncio dongusunu bloklamasin.
+            await asyncio.to_thread(self.ai_yonetici.track_durdur, kamera_id)
             sysid = k.get("sysid")
             if sysid and self.angajman:
                 try:

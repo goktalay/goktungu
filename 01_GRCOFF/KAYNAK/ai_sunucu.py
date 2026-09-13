@@ -405,12 +405,13 @@ class AkisIsleyici(threading.Thread):
             self.son_kare_ts = ts
             self.tampon.append((kare, ts))
             sayac += 1
-            # aktif hedef takibi: her karede tracker guncelle
+            # v2.4.174 OLCULEN KUSUR: CSRT tracker.update() zayif CPU'da
+            # 100-500ms surebilir; BURADA (okuma dongusunde) senkron
+            # cagrilinca video okuma hizini kendisi bogar (video_fps
+            # dustukce takip de kendi kendini yavaslatir - kisir dongu).
+            # Takip artik AYRI iplikte, en son kareyi isleyerek surer.
             if self.takip is not None:
-                try:
-                    self._takip_guncelle(kare, ts)
-                except Exception as e:
-                    self.hata = ("takip: " + str(e))[:200]
+                self._takip_kuyrukla(kare, ts)
             if sayac % analiz_adimi == 0:
                 try:
                     self.isci.kare_analiz(self, kare, ts)
@@ -469,11 +470,9 @@ class AkisIsleyici(threading.Thread):
                     self.son_kare_ts = ts
                     self.tampon.append((kare, ts))
                     sayac += 1
+                    # v2.4.174: takip AYRI iplikte (bkz. yukarıdaki not)
                     if self.takip is not None:
-                        try:
-                            self._takip_guncelle(kare, ts)
-                        except Exception as e:
-                            self.hata = ("takip: " + str(e))[:200]
+                        self._takip_kuyrukla(kare, ts)
                     if sayac % analiz_adimi == 0:
                         try:
                             self.isci.kare_analiz(self, kare, ts)
@@ -553,12 +552,27 @@ class AkisIsleyici(threading.Thread):
             gw = max(8, min(gw, w - x)); gh = max(8, min(gh, h - y))
             yontem = str((self.takip_ayar or {}).get("yontem") or "")
             tracker, tracker_ad = self._tracker_olustur(yontem)
+            sarilan = 0
             if tracker is not None:
                 try:
                     tracker.init(kare, (x, y, gw, gh))
-                    # Gecmis kareden bugune hizli sarma
+                    # v2.4.174 OLCULEN KUSUR: bu dongu HTTP istek
+                    # ipliginde SENKRON calisir ve cagiran taraf (sunucu.py
+                    # WS isleyicisi) asyncio dongusunu BLOKE eder. CSRT
+                    # zayif CPU'da kare basina 100-500ms surebilir; onceki
+                    # limitsiz surum 45 kareye kadar sararak SANIYELER
+                    # suren donmaya (ve "secim cok yavas basliyor"
+                    # sikayetine) yol aciyordu. Sarma artik SIKI bir zaman
+                    # butcesiyle sinirli — bulunabildigi kadar sarilir,
+                    # kalan fark canli _takip_dongu ile birkac karede
+                    # kapanir (gorsel gecikme onemsizdir, YANIT HIZI onemli).
+                    SARMA_BUTCE_SN = 0.12
+                    sarma_basi = time.time()
                     for i in range(baslangic + 1, len(kareler)):
+                        if time.time() - sarma_basi > SARMA_BUTCE_SN:
+                            break
                         ok, k2 = tracker.update(kareler[i][0])
+                        sarilan += 1
                         if ok:
                             x, y, gw, gh = [int(v) for v in k2]
                 except Exception:
@@ -569,13 +583,39 @@ class AkisIsleyici(threading.Thread):
                           "kayip_sayac": 0}
             return {"tamam": True, "tracker": tracker is not None,
                     "yontem": tracker_ad,
-                    "sarilan_kare": len(kareler) - 1 - baslangic,
+                    "sarilan_kare": sarilan,
                     "kutu": [x, y, gw, gh]}
 
     def takip_durdur(self):
         with self.takip_kilit:
             self.takip = None
         return {"tamam": True}
+
+    # v2.4.174: CSRT/KCF/MIL guncellemesi zayif CPU'da 100-500ms surebilir.
+    # Okuma dongusunde senkron cagrilirsa video okuma hizini kendisi
+    # dusurur (video_fps dusunce takip de yavaslar - kisir dongu). Takip
+    # artik AYRI iplikte, en SON kareyi isler; eski kuyruklu kareler
+    # birikmez (her zaman en taze kareyle calisir).
+    def _takip_kuyrukla(self, kare, ts):
+        self._takip_son_kare = (kare, ts)
+        iplik = getattr(self, "_takip_iplik", None)
+        if iplik is None or not iplik.is_alive():
+            iplik = threading.Thread(target=self._takip_dongu, daemon=True)
+            self._takip_iplik = iplik
+            iplik.start()
+
+    def _takip_dongu(self):
+        while self.calisiyor and self.takip is not None:
+            veri = getattr(self, "_takip_son_kare", None)
+            if veri is None:
+                time.sleep(0.02)
+                continue
+            self._takip_son_kare = None
+            kare, ts = veri
+            try:
+                self._takip_guncelle(kare, ts)
+            except Exception as e:
+                self.hata = ("takip: " + str(e))[:200]
 
     def _takip_guncelle(self, kare, ts):
         """Tracker'i yeni kare ile gunceller, konumu ana sunucuya bildirir."""

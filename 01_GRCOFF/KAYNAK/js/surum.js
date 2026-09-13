@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.173";
+const GCS_SURUM = "2.4.174";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.174",
+    tarih: "2026-09-13",
+    baslik: "KÖK NEDEN DÜZELTMESİ: piksel takip artık video akışını ve sunucuyu kilitlemiyor (paket 2.5.44)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN: piksel takip motoru (CSRT/KCF/MIL) video okuma döngüsünde SENKRON çalışıyordu. Zayıf CPU'da tracker güncellemesi 100-500 ms sürebildiği için video okuma hızını kendisi düşürüyordu (video 4-5 fps'e düşüyordu) — bu da hem hedef seçiminin çok yavaş başlamasına hem de YOLO tespitinin yavaş görünmesine hem de 'Angaje Ol/Takip Et' düğmelerinin bazen hiç görünmemesine (durum yayını gecikip/atlanıp tarayıcının takibi 'pasif' sanmasına) yol açıyordu.",
+      "Piksel takip artık AYRI bir iş parçacığında, her zaman en TAZE kareyle çalışıyor; video okuma döngüsü artık asla takip tarafından yavaşlatılmıyor.",
+      "İKİNCİ KÖK NEDEN: hedef seçiminde 'geçmişten bugüne sarma' adımı, AI işçisinin HTTP isteğini yanıtlamadan önce onlarca kareyi senkron işliyordu; bu hem seçimi yavaşlatıyor hem de sunucunun WebSocket döngüsünü (tüm istemciler için) saniyelerce dondurabiliyordu. Sarma artık sıkı bir zaman bütçesiyle (120 ms) sınırlandı; kalan fark canlı takiple birkaç karede kapanır.",
+      "GÜVENLİK: Merkez'in 'Görüntüye Angaje Ol/Takip Et' başlatma ve bırakma komutları artık AI işçisine giden ağ isteğini ayrı iş parçacığında yapıyor — işçi yavaş yanıt verse bile Merkez'in WebSocket/telemetri döngüsü asla kilitlenmez."
+    ]
+  },
   {
     surum: "2.4.173",
     tarih: "2026-09-13",
