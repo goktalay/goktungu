@@ -118,10 +118,22 @@
       b.addEventListener("click", function (ev) { ev.stopPropagation(); angajeAc(id); });
       kap.append(rozet, b);
     } else {
+      // v2.4.172: elle hedef secimi — videoya dikdortgen ciz, takip baslasin
+      var sec = document.createElement("button");
+      sec.type = "button";
+      sec.className = "kam-takip-angaje kam-hedef-sec";
+      sec.innerHTML = secim[id]
+        ? "<i class='fa-solid fa-xmark'></i><span>Seçimi İptal</span>"
+        : "<i class='fa-solid fa-vector-square'></i><span>Hedef Seç</span>";
+      sec.addEventListener("click", function (ev) {
+        ev.stopPropagation(); hedefSecBaslat(id);
+      });
       var ip = document.createElement("span");
       ip.className = "kam-takip-ipucu";
-      ip.textContent = "Takip için tespit kutusuna çift tıklayın";
-      kap.appendChild(ip);
+      ip.textContent = secim[id]
+        ? "Hedefin üzerine dikdörtgen çizin (ESC iptal)"
+        : "Takip: tespit kutusuna çift tıklayın veya Hedef Seç ile çizin";
+      kap.append(sec, ip);
     }
     // v2.4.171: dedektor/GPU/fps durum rozeti (AI izleme calisiyorsa)
     var dm = durumMetni(id);
@@ -163,6 +175,116 @@
       ad: "Takip: " + (TUR_AD[t.sinif] || "HEDEF") + " (" + (kam.isim || ("kamera #" + id)) + ")",
       iz_id: t.track_id || null
     });
+  }
+
+  // ---- v2.4.172: elle hedef seçimi (dikdörtgen çiz -> takip) ----------
+  var secim = {};   // kamera_id -> {ort, img, bas:{x,y}|null, _esc}
+
+  // İstemci (ekran) koordinatını kaynak (doğal) piksele çevirir.
+  // Tarayıcı <img> ve AI işçisi AYNI proxy MJPEG akışını okur; doğal
+  // boyut = işçinin kare boyutu, kutu doğrudan takibe verilebilir.
+  function kaynakXY(img, cx, cy) {
+    var r = img.getBoundingClientRect();
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    if (!nw || !nh || !r.width || !r.height) return null;
+    var olcek = Math.min(r.width / nw, r.height / nh);
+    var gw = nw * olcek, gh = nh * olcek;
+    var ox = (r.width - gw) / 2, oy = (r.height - gh) / 2;
+    var px = (cx - r.left - ox) / olcek;
+    var py = (cy - r.top - oy) / olcek;
+    return { x: Math.max(0, Math.min(nw, px)),
+             y: Math.max(0, Math.min(nh, py)) };
+  }
+
+  function hedefSecBaslat(id) {
+    id = Number(id);
+    if (secim[id]) { secimIptal(id); return; }   // ikinci basış = iptal
+    var img = document.querySelector(
+      ".kam-pencere img.kam-video[data-kamera-id='" + id + "'], " +
+      "#kamTamEkran img.kam-video[data-kamera-id='" + id + "']");
+    if (!img) {
+      bildir(id, "Hedef seçimi için videoyu yüzen panelde veya tam ekranda açın");
+      return;
+    }
+    var kap = img.closest(".kam-video-kutu") || img.parentElement;
+    if (getComputedStyle(kap).position === "static")
+      kap.style.position = "relative";
+    var ort = document.createElement("div");
+    ort.className = "kam-hedef-sec-ortu";
+    ort.style.cssText = "position:absolute;inset:0;cursor:crosshair;" +
+      "z-index:40;background:rgba(0,0,0,.10);user-select:none;";
+    var cerceve = document.createElement("div");
+    cerceve.style.cssText = "position:absolute;border:2px dashed #ff5252;" +
+      "background:rgba(255,82,82,.12);display:none;pointer-events:none;";
+    var uyari = document.createElement("div");
+    uyari.style.cssText = "position:absolute;top:6px;left:50%;" +
+      "transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;" +
+      "padding:2px 10px;border-radius:4px;font-size:12px;pointer-events:none;" +
+      "white-space:nowrap;";
+    uyari.textContent = "Hedefin üzerine dikdörtgen çizin — ESC iptal";
+    ort.append(cerceve, uyari);
+    kap.appendChild(ort);
+    var s = { ort: ort, img: img, bas: null };
+    secim[id] = s;
+
+    function yerel(ev) {
+      var r = ort.getBoundingClientRect();
+      return { x: ev.clientX - r.left, y: ev.clientY - r.top,
+               cx: ev.clientX, cy: ev.clientY };
+    }
+    function ciz(a, b) {
+      cerceve.style.display = "block";
+      cerceve.style.left = Math.min(a.x, b.x) + "px";
+      cerceve.style.top = Math.min(a.y, b.y) + "px";
+      cerceve.style.width = Math.abs(a.x - b.x) + "px";
+      cerceve.style.height = Math.abs(a.y - b.y) + "px";
+    }
+    ort.addEventListener("mousedown", function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      s.bas = yerel(ev); ciz(s.bas, s.bas);
+    });
+    ort.addEventListener("mousemove", function (ev) {
+      if (s.bas) ciz(s.bas, yerel(ev));
+    });
+    ort.addEventListener("mouseleave", function () {
+      s.bas = null; cerceve.style.display = "none";
+    });
+    ort.addEventListener("mouseup", function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (!s.bas) return;
+      var bas = s.bas, son = yerel(ev);
+      s.bas = null;
+      secimIptal(id);
+      var p1 = kaynakXY(img, bas.cx, bas.cy);
+      var p2 = kaynakXY(img, son.cx, son.cy);
+      if (!p1 || !p2) { bildir(id, "Video karesi hazır değil"); return; }
+      var x = Math.round(Math.min(p1.x, p2.x));
+      var y = Math.round(Math.min(p1.y, p2.y));
+      var w = Math.round(Math.abs(p1.x - p2.x));
+      var h = Math.round(Math.abs(p1.y - p2.y));
+      if (w < 8 || h < 8) {
+        bildir(id, "Seçim çok küçük — hedefi saracak bir dikdörtgen çizin");
+        return;
+      }
+      if (!wsGonder({ tip: "ai_track_baslat", kamera_id: id,
+                      tur: "hava_araci", kutu: [x, y, w, h] })) {
+        bildir(id, "Sunucu bağlantısı yok");
+        return;
+      }
+      bildir(id, "Takip başlatılıyor: seçilen bölge (" + w + "×" + h + " px)");
+    });
+    s._esc = function (ev) { if (ev.key === "Escape") secimIptal(id); };
+    document.addEventListener("keydown", s._esc);
+    araclariTazele(id);
+  }
+
+  function secimIptal(id) {
+    var s = secim[Number(id)];
+    if (!s) return;
+    try { s.ort.remove(); } catch (e) {}
+    if (s._esc) document.removeEventListener("keydown", s._esc);
+    delete secim[Number(id)];
+    araclariTazele(id);
   }
 
   // ---- kısa bildirim video üzerinde ------------------------------------

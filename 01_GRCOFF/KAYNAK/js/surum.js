@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.171";
+const GCS_SURUM = "2.4.172";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.172",
+    tarih: "2026-09-13",
+    baslik: "Elle hedef seçimi: dikdörtgen çiz, takip başlasın (paket 2.5.42)",
+    maddeler: [
+      "Video panelinde 'Hedef Seç' düğmesi eklendi. Basınca videonun üzerinde fare ile dikdörtgen çizilir; çizim bitince seçilen bölge KIRMIZI çerçeveyle takibe alınır ve 'Görüntüye Angaje Ol' düğmesi açılır.",
+      "AI tespiti gerekmeden çalışır: tespit kutusu çıkmayan (durağan, kamufle, alçak kontrastlı) hedefler elle seçilip takip edilebilir ve angaje olunabilir.",
+      "ESC veya düğmeye tekrar basmak seçimi iptal eder; çok küçük seçim (8 pikselden dar) reddedilir. Takibi bırakmak yine kırmızı çerçeveye çift tıklamayla olur.",
+      "Seçim yüzen panel ve tam ekranda çalışır; koordinatlar video karesine bire bir çevrilir (işçi ile tarayıcı aynı akışı okur)."
+    ]
+  },
   {
     surum: "2.4.171",
     tarih: "2026-09-13",
