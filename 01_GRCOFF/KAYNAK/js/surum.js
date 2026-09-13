@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.176";
+const GCS_SURUM = "2.4.177";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.177",
+    tarih: "2026-09-13",
+    baslik: "KESİN KÖK NEDEN: PostgreSQL bağlantı havuzu doluyordu, takip sunucuya hiç ulaşmıyordu (paket 2.5.47)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN (loglardan doğrulandı): /ai/takip ucu her çağrıda kameranın bağlı drone kimliğini veritabanından okuyordu (`_kamera_dron_uid`) ama bu bağlantıyı havuza HİÇ İADE ETMİYORDU. Takip artık ayrı iş parçacığında en taze kareyle çalıştığı için bu uç saniyede birkaç kez tetikleniyor; havuz (10 bağlantı) saniyeler içinde doluyor, bundan sonraki HER 'Angaje Ol/Takip Et' düğmesinin dayandığı bildirim 'PostgreSQL bağlantı havuzu dolu' hatasıyla HTTP 500 dönüyordu. Bu yüzden hedef seçili ve takip başlamışken bile düğmeler hiç gelmiyordu.",
+      "DÜZELTME: /ai/tespit, /ai/kutular, /ai/takip uçları artık her istekten sonra veritabanı bağlantısını havuza kesin olarak iade ediyor (aynı 2.5.33'teki WebSocket tarafı düzeltmesinin HTTP tarafı karşılığı).",
+      "Ek: kameranın bağlı drone kimliği artık 3 saniyelik önbellekte tutuluyor — saniyede birkaç kez aynı veritabanı sorgusu tekrarlanmıyor.",
+      "ÖNEMLİ: bu güncellemeyi aldıktan sonra Merkez'i BİR KEZ yeniden başlatın (veya bilgisayarı yeniden başlatın) — önceki oturumda sızan bağlantılar yalnızca yeni bağlantıların sızmasını ENGELLER, havuzu geriye dönük TEMİZLEMEZ; havuzun sıfırlanması için yeniden başlatma gerekir."
+    ]
+  },
   {
     surum: "2.4.176",
     tarih: "2026-09-13",

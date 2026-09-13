@@ -11606,6 +11606,23 @@ class HttpSunucusu:
                             self.send_error(500)
                         except Exception:
                             pass
+                    finally:
+                        # v2.4.177 OLCULEN KOK NEDEN: `veritabani.baglanti()`
+                        # BU IS PARCASINA (thread) ozel KALICI baglanti
+                        # dondurur; ThreadingHTTPServer HER ISTEK icin YENI
+                        # bir thread acar ve istek bitince thread OLUR.
+                        # Baglanti burada HAVUZA IADE EDILMEZSE, thread
+                        # olduğunde baglanti YETIM kalir (sizinti). Bu uc
+                        # DB'ye dokunuyorsa (tespit_isle -> INSERT) havuz
+                        # (varsayilan 10) dakikalar icinde dolar; sonraki
+                        # TUM /ai/* istekleri "PostgreSQL baglanti havuzu
+                        # dolu" ile 500 doner — AI takip/tespit sessizce
+                        # sunucuya hic ulasmaz.
+                        try:
+                            from . import veritabani as _vt
+                            _vt.baglanti_kapat()
+                        except Exception:
+                            pass
                     return
                 # v2.4.7: AI iscilerinden canli tespit kutulari
                 # (anotasyonlu MJPEG icin) — yuz eslesme adiyla
@@ -11629,6 +11646,14 @@ class HttpSunucusu:
                             self.send_error(500)
                         except Exception:
                             pass
+                    finally:
+                        # v2.4.177: bkz. /ai/tespit ustundeki not — "yuz"/
+                        # "plaka" eslesmesi DB'ye dokunabilir.
+                        try:
+                            from . import veritabani as _vt
+                            _vt.baglanti_kapat()
+                        except Exception:
+                            pass
                     return
                 # v2.4.2: AI iscilerinden takip (tracking) konum bildirimi
                 if self.path == "/ai/takip" and _ai is not None:
@@ -11648,6 +11673,22 @@ class HttpSunucusu:
                         print(f"[AI] Takip isleme hatasi: {e}")
                         try:
                             self.send_error(500)
+                        except Exception:
+                            pass
+                    finally:
+                        # v2.4.177 OLCULEN KOK NEDEN: `takip_isle` her
+                        # cagrida `_kamera_dron_uid()` ile DB'ye dokunur
+                        # (kameranin bagli dron_uid'i icin SELECT). Takip
+                        # artik AYRI iplikte en TAZE kareyle calistigi
+                        # icin bu uc saniyede birkac kez tetiklenebiliyor;
+                        # baglanti HER SEFERINDE sizarsa havuz (10) SANIYELER
+                        # icinde dolup tasiyor, tum "Angaje Ol/Takip Et"
+                        # dugmelerinin dayandigi ai_takip yayinini kalici
+                        # olarak susturuyordu. Olculen: ai_isci.log'da
+                        # ardisik "Takip bildirilemedi: HTTP Error 500".
+                        try:
+                            from . import veritabani as _vt
+                            _vt.baglanti_kapat()
                         except Exception:
                             pass
                     return

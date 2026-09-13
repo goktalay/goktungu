@@ -945,13 +945,29 @@ class AIYonetici:
             return []
 
     def _kamera_dron_uid(self, kamera_id):
+        """v2.4.177: kisa TTL onbellek — `takip_isle` bunu artik saniyede
+        birkac kez cagirabiliyor (takip ayri iplikte en taze kareyle
+        calisiyor); kamera-dron bagi saniyeler icinde degismez, her
+        cagrida DB'ye gitmek gereksiz PostgreSQL yuku ve baglanti
+        devir hizi demektir."""
+        kamera_id = int(kamera_id)
+        simdi = time.time()
+        onbellek = getattr(self, "_dron_uid_onbellek", None)
+        if onbellek is None:
+            onbellek = {}
+            self._dron_uid_onbellek = onbellek
+        girdi = onbellek.get(kamera_id)
+        if girdi and simdi - girdi[1] < 3.0:
+            return girdi[0]
         try:
             with veritabani.baglanti() as con:
                 r = con.execute("SELECT dron_uid FROM kameralar WHERE id=?",
-                                (int(kamera_id),)).fetchone()
-            return str((r["dron_uid"] if r else "") or "").strip() or None
+                                (kamera_id,)).fetchone()
+            sonuc = str((r["dron_uid"] if r else "") or "").strip() or None
         except Exception:
-            return None
+            sonuc = girdi[0] if girdi else None
+        onbellek[kamera_id] = (sonuc, simdi)
+        return sonuc
 
     def track_baslat(self, kamera_id, tur="", kutu=None, ts=None):
         """Manuel seçilmiş hedef için yalnız pasif görüntü takibini başlatır."""
