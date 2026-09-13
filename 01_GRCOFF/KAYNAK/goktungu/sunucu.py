@@ -11504,6 +11504,27 @@ class HttpSunucusu:
                                 ".webm", ".ts")
             _VIDEO_AZAMI_BAYT = 512 * 1024 * 1024
 
+            def _ai_hata_bildir(self, kaynak, exc):
+                """v2.4.179: AI ucu (/ai/tespit,/ai/kutular,/ai/takip) hata
+                verince hem log dosyasina (traceback + flush) hem de
+                CANLI CALISAN arayuz KONSOL paneline (WS uzerinden aninda)
+                yazar. Log dosyasi export/tamponlama belirsizligine karsi
+                ikinci, BAGIMSIZ bir gorunurluk yolu — kullanici hatayi
+                dosya disa aktarmadan doğrudan ekrandan okuyabilir."""
+                import traceback as _tb
+                iz = _tb.format_exc()
+                print(f"[AI] {kaynak} isleme hatasi: {exc}\n{iz}", flush=True)
+                try:
+                    son_satir = [s for s in iz.strip().splitlines() if s][-1]
+                except IndexError:
+                    son_satir = str(exc)
+                try:
+                    self.server.goktungu_http.konsol(
+                        "AI", f"{kaynak} isleme hatasi: {exc} ({son_satir})",
+                        "hata")
+                except Exception:
+                    pass
+
             def _kamera_video_yukle(self):
                 ham = self._cerez_oku(self.headers.get("Cookie"),
                                       "goktungu_kamera")
@@ -11601,17 +11622,16 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        # v2.4.178: tam iz (traceback) + zorla flush.
-                        # Onceki surumde yalniz str(e) yazilirdi; RuntimeError
-                        # gibi mesaji ozetleyen hatalarda GERCEK kaynak
-                        # (hangi satir) hic gorulemiyordu; ayrica bu HTTP
-                        # isleyicisi ana asyncio surecinden AYRI bir
-                        # ThreadingHTTPServer is parcacigidir — stdout'un
-                        # PYTHONUNBUFFERED altinda bile Windows'ta gecikmeli
-                        # yazilma ihtimaline karsi flush=True eklendi.
-                        import traceback as _tb
-                        print(f"[AI] Tespit isleme hatasi: {e}\n"
-                              f"{_tb.format_exc()}", flush=True)
+                        # v2.4.179 OLCULEN KUSUR: print() cikisi log
+                        # dosyasina bazi kurulumlarda GECIKMELI/HIC
+                        # dusmuyordu (2.4.178'deki flush=True bile
+                        # yetmedi — muhtemelen servis sarmalayicisi
+                        # kendi tamponlamasini yapiyor). `self.konsol`
+                        # ise ZATEN CANLI CALISAN bir yol: arayuzdeki
+                        # "KONSOL" paneline WS uzerinden ANINDA duser,
+                        # dosya disa aktarimi/tamponlama belirsizligine
+                        # HIC bagli degildir.
+                        self._ai_hata_bildir("Tespit", e)
                         try:
                             self.send_error(500)
                         except Exception:
@@ -11651,9 +11671,7 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        import traceback as _tb
-                        print(f"[AI] Kutu isleme hatasi: {e}\n"
-                              f"{_tb.format_exc()}", flush=True)
+                        self._ai_hata_bildir("Kutu", e)
                         try:
                             self.send_error(500)
                         except Exception:
@@ -11682,9 +11700,7 @@ class HttpSunucusu:
                         self.end_headers()
                         self.wfile.write(govde)
                     except Exception as e:
-                        import traceback as _tb
-                        print(f"[AI] Takip isleme hatasi: {e}\n"
-                              f"{_tb.format_exc()}", flush=True)
+                        self._ai_hata_bildir("Takip", e)
                         try:
                             self.send_error(500)
                         except Exception:

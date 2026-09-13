@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.178";
-const GCS_SURUM_TARIH = "2026-09-13";
+const GCS_SURUM = "2.4.179";
+const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.179",
+    tarih: "2026-09-14",
+    baslik: "AI uç hataları artık canlı KONSOL panelinde de görünür (paket 2.5.49)",
+    maddeler: [
+      "Önceki iki sürümde log dosyasına eklenen traceback bir türlü dışa aktarılan dosyada görünmüyordu (muhtemelen dışa aktarma zamanlaması/arabellek). /ai/tespit, /ai/kutular, /ai/takip uçlarındaki hatalar artık dosyayla birlikte uygulamanın kendi CANLI 'KONSOL' paneline de (WS üzerinden anında) düşüyor — dosya dışa aktarmaya gerek kalmadan ekrandan okunabilir."
+    ]
+  },
   {
     surum: "2.4.178",
     tarih: "2026-09-13",
