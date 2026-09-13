@@ -518,8 +518,12 @@ class Gozetmen:
         self._ana_durdur()
 
 
+def _zamanli_gunluk(metin):
+    print("%s %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), metin), flush=True)
+
+
 def main():
-    g = Gozetmen()
+    g = Gozetmen(gunluk=_zamanli_gunluk)
     try:
         g.calis()
     except KeyboardInterrupt:

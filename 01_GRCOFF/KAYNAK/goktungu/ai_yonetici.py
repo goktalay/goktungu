@@ -37,15 +37,24 @@ def _izinli_sinif(tur):
     return tur if tur in PASIF_TAKIP_SINIFLARI else ""
 
 
+# v2.4.162: Izleme GOREVLERI (tespit siniflarindan ayri): "yuz" yakin cekim
+# yuz tespiti gorevidir; tespit yine "insan" bildirilir.
+IZINLI_GOREVLER = frozenset(("insan", "yuz", "kara_araci", "hava_araci"))
+
+
 def _gorevleri_sinirla(gorevler):
-    """GRCOFF AI görevlerini üç izinli sınıfa dönüştürür."""
+    """GRCOFF AI görevlerini izinli görevlere süzer.
+
+    v2.4.162: BOŞ görev = HİÇ görev (eskiden "hepsi açık" sayılıyordu; tüm
+    sınıflar kapalıyken bile hava/kara aracı tespiti çalışıyordu)."""
     if gorevler is None or gorevler == "":
-        return list(sorted(PASIF_TAKIP_SINIFLARI))
+        return []
     if isinstance(gorevler, str):
         adaylar = gorevler.replace(";", ",").split(",")
     else:
         adaylar = gorevler if isinstance(gorevler, (list, tuple, set)) else []
-    return [s for s in sorted({_izinli_sinif(a) for a in adaylar}) if s]
+    return sorted({str(a or "").strip().lower() for a in adaylar}
+                  & IZINLI_GOREVLER)
 
 
 class AIYonetici:
@@ -492,6 +501,11 @@ class AIYonetici:
                       hassasiyet=""):
         kamera_id = int(kamera_id)
         gorevler = _gorevleri_sinirla(gorevler)
+        if not gorevler:
+            # v2.4.162: gorevsiz izleme baslatilmaz (bos = hepsi DEGIL).
+            return {"tamam": False,
+                    "hata": "Kamerada seçili AI görevi yok (Yapay Zeka "
+                            "Ayarları'ndan en az birini açın)"}
         sonuc = self._gorev_ata(kamera_id, url, protokol,
                                 gorevler=gorevler, hassasiyet=hassasiyet)
         if sonuc.get("tamam"):

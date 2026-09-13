@@ -23,6 +23,8 @@ Bagimliliklar: bkz. requirements.txt (websockets, opencv-python,
 numpy, pymavlink, pyserial; opsiyonel: pygame)
 """
 import asyncio
+import json
+import re
 import os
 import sys
 import threading
@@ -53,6 +55,21 @@ import shutil
 # Boylece v2.4.51 kurulumu uzerine yama uygulanirken, klasor gocu
 # yapilmadan once bile program acilabilir.
 PROJE_KOKU = os.path.dirname(os.path.abspath(__file__))
+
+# v2.4.162: Yerel (C/C++) çökmelerde Python yığın izini kalıcı dosyaya yaz.
+# Windows'ta 0xC0000374 gibi çökmeler aksi halde hiçbir iz bırakmıyordu.
+try:
+    import faulthandler as _fh
+    _cokme_dizin = (os.environ.get("GOKTUNGU_VERI_KOKU") or "").strip() or \
+        os.path.join(PROJE_KOKU, "veri")
+    os.makedirs(_cokme_dizin, exist_ok=True)
+    _COKME_DOSYA = open(os.path.join(_cokme_dizin, "merkez_cokme.log"), "a")
+    _COKME_DOSYA.write("\n=== Merkez basladi %s pid=%d ===\n"
+                       % (time.strftime("%Y-%m-%d %H:%M:%S"), os.getpid()))
+    _COKME_DOSYA.flush()
+    _fh.enable(file=_COKME_DOSYA, all_threads=True)
+except Exception:
+    pass
 _PY_KOKU = os.path.join(PROJE_KOKU, "assets", "python")
 if os.path.isdir(os.path.join(_PY_KOKU, "goktungu")):
     # YENI yapi (v2.4.52+)
@@ -853,6 +870,108 @@ def _yerel_ai_dinliyor(port=8900):
     except OSError:
         return False
 
+def _yerel_ai_durum(port):
+    """Yerel iscinin /durum JSON'u; okunamazsa None (gecici hata olabilir)."""
+    try:
+        with socket.create_connection(("127.0.0.1", int(port)), timeout=1.5) as soket:
+            soket.sendall(b"GET /durum HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n")
+            ham = b""
+            while len(ham) < 65536:
+                parca = soket.recv(8192)
+                if not parca:
+                    break
+                ham += parca
+        bas, _, govde = ham.partition(b"\r\n\r\n")
+        if b" 200 " not in bas.split(b"\r\n", 1)[0]:
+            return None
+        veri = json.loads(govde.decode("utf-8", "replace") or "{}")
+        return veri if isinstance(veri, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _yerel_ai_disk_ozeti():
+    betik = _yerel_ai_betigi()
+    if not betik:
+        return ""
+    try:
+        import hashlib
+        with open(betik, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _port_sahibi_pid(port):
+    """127.0.0.1:<port>'u DINLEYEN surecin PID'i (Windows netstat / Linux ss)."""
+    try:
+        if os.name == "nt":
+            cikti = subprocess.run(
+                ["netstat", "-ano", "-p", "TCP"], capture_output=True,
+                text=True, timeout=10,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+            for satir in cikti.splitlines():
+                p = satir.split()
+                # Durum sutunu Turkce Windows'ta yerellestirilir; dinleyen
+                # soketi uzak adresin 0.0.0.0:0 olmasindan taniriz.
+                if (len(p) >= 5 and p[0].upper() == "TCP"
+                        and p[1].endswith(":%d" % int(port))
+                        and p[2] in ("0.0.0.0:0", "[::]:0")):
+                    return int(p[4])
+        else:
+            cikti = subprocess.run(["ss", "-ltnpH", "sport = :%d" % int(port)],
+                                   capture_output=True, text=True, timeout=10).stdout
+            m = re.search(r"pid=(\d+)", cikti)
+            if m:
+                return int(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
+def _yerel_ai_eskiyse_yenile(ai_port):
+    """v2.4.162: Calisan isci diskteki koddan ESKIYSE kapatir.
+
+    Isci Merkez'den ayri oturumda (start_new_session) yasar; dosya tabanli
+    guncelleme Merkez'i yeniden baslatir ama isciyi DEGIL. Yeni Merkez portu
+    dolu gorup eski isciyi kullanmaya devam ediyordu — AI duzeltmeleri hic
+    devreye girmiyordu. Yalniz /durum okunabilir, kendi iscimiz (ad eslesir)
+    ve ozet farkliysa kapatilir; gecici okuma hatasinda dokunulmaz.
+    True donerse isci kapatildi (bekci yeniden baslatir)."""
+    durum = _yerel_ai_durum(ai_port)
+    if not durum or durum.get("ad") != AI_ISCI_ADI:
+        return False
+    disk = _yerel_ai_disk_ozeti()
+    if not disk or durum.get("kod_ozeti") == disk:
+        return False
+    pid = durum.get("pid") or _port_sahibi_pid(ai_port)
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        print("[AI] Yerel AI işçisi eski sürümde ama PID bulunamadı; "
+              "servisi yeniden başlatın.", flush=True)
+        return False
+    if pid == os.getpid():
+        return False
+    print(f"[AI] Yerel AI işçisi eski kodla çalışıyor (pid={pid}); "
+          "güncel kodla yeniden başlatılıyor.", flush=True)
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                           capture_output=True, timeout=15,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        else:
+            os.kill(pid, 15)
+    except Exception as e:
+        print(f"[AI] Eski işçi kapatılamadı: {e}", flush=True)
+        return False
+    for _ in range(20):
+        if not _yerel_ai_dinliyor(ai_port):
+            return True
+        time.sleep(0.5)
+    return True
+
+
 def _yerel_ai_isci_baslat(http_sunucu, ai_port=8900):
     global _yerel_ai_isci, _yerel_ai_gunluk
     try:
@@ -995,7 +1114,11 @@ def _yerel_ai_bekci(ai_yonetici, http_sunucu):
     deneme, son_baslatma, son_deneme = 0, 0.0, {}
     while True:
         try:
-            if _yerel_ai_dinliyor(ai_port):
+            if _yerel_ai_dinliyor(ai_port) and _yerel_ai_eskiyse_yenile(ai_port):
+                # Eski kodlu isci kapatildi; hemen gunceliyle baslat.
+                _yerel_ai_isci_baslat(http_sunucu, ai_port)
+                son_baslatma = time.time()
+            elif _yerel_ai_dinliyor(ai_port):
                 deneme = 0
                 # v2.4.158: AI izleme ARTIK otomatik başlatılmaz. Kullanıcı
                 # kamerayı "Başlat" ile açtığında izleme başlar, "Durdur" ile

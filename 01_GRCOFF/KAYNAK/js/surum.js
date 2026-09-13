@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.161";
+const GCS_SURUM = "2.4.162";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.162",
+    tarih: "2026-09-13",
+    baslik: "Yapay zeka işçisi güncellemede artık yenileniyor; kapalı sınıflar gerçekten kapalı (paket 2.5.32)",
+    maddeler: [
+      "KÖK NEDEN: Yerel yapay zeka işçisi Merkez'den ayrı bir süreç olarak yaşıyor. Güncelleme Merkez'i yeniden başlatıyor ama işçiyi başlatmıyordu; yeni Merkez eski işçiyi bulup kullanmaya devam ediyordu. Bu yüzden arayüz güncellenirken yapay zeka tarafındaki düzeltmeler (yakın çekim yüz tespiti dahil) devreye girmiyordu. Artık işçi kod özetini bildiriyor; Merkez diskteki koddan farklıysa eski işçiyi kapatıp güncel kodla yeniden başlatıyor.",
+      "Tüm sınıflar kapalıyken bile hava/kara aracı tespiti çalışıyordu: boş görev listesi 'hepsi açık' sayılıyordu. Artık boş = hiç görev; görev seçilmeden izleme başlatılmaz ve uyarı verilir.",
+      "'Yüz (yakın çekim)' görevi Merkez'in görev süzgecinde tanınmıyor ve işçiye iletilmiyordu; düzeltildi.",
+      "Tanı: Merkez çökerse yığın izi veri dizinindeki merkez_cokme.log dosyasına yazılır; güncelleme servisi logları zaman damgalı."
+    ]
+  },
   {
     surum: "2.4.161",
     tarih: "2026-09-13",

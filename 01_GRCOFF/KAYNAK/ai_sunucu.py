@@ -72,6 +72,20 @@ def _ai_yolu(ad):
     return yeni
 
 
+# v2.4.162: Kod ozeti — Merkez, calisan iscinin diskteki ai_sunucu.py ile
+# ayni kodu calistirip calistirmadigini bununla anlar. Guncellemeden sonra
+# eski kodla kalan (ayri oturumda yasayan) isci boylece yenilenir.
+def _kod_ozeti():
+    import hashlib as _h
+    try:
+        with open(os.path.abspath(__file__), "rb") as _f:
+            return _h.sha256(_f.read()).hexdigest()
+    except OSError:
+        return ""
+
+
+KOD_OZETI = _kod_ozeti()
+
 MODEL_KLASORU = _ai_yolu("ai_modeller")
 KAYIT_KLASORU = _ai_yolu("ai_kayitlar")
 
@@ -569,6 +583,7 @@ class AIIsci:
         elif not hasattr(cv2, "CascadeClassifier"):
             print("[AI] Uyari: OpenCV 5 CascadeClassifier icermiyor;"
                   " plaka tespiti kontur yontemine dusuruldu.")
+        print(f"[AI] Isci kod ozeti: {KOD_OZETI[:12]} pid={os.getpid()}")
         print(f"[AI] Isci hazir: {self.ad} ({self.tip}) "
               f"yuz={'VAR' if self.yuz_tespit else 'YOK'} "
               f"tanima={'VAR' if self.yuz_tanima else 'YOK'} "
@@ -618,7 +633,8 @@ class AIIsci:
                 "yuk": len(akislar), "akislar": akislar,
                 "ocr": False,
                 "yuz_destegi": False,
-                "siniflar": sorted(IZINLI_SINIFLAR)}
+                "siniflar": sorted(IZINLI_SINIFLAR),
+                "kod_ozeti": KOD_OZETI, "pid": os.getpid()}
 
     # ------------------------------------------------------------------
     # Analiz
@@ -1112,10 +1128,14 @@ def http_sunucu(isci, port, dinle="0.0.0.0"):
                 self._json(akis.takip_durdur() if akis
                            else {"tamam": True})
             elif self.path == "/izle":
-                gorevler = veri.get("gorevler") or None
+                # v2.4.162: bos gorev listesi = HIC gorev (None'a
+                # cevrilmez; None "tum siniflar" anlamina geliyordu).
+                gorevler = veri.get("gorevler")
+                if gorevler is None:
+                    gorevler = []
                 if isinstance(gorevler, str):
                     gorevler = [g.strip() for g in gorevler.split(",")
-                                if g.strip()] or None
+                                if g.strip()]
                 self._json(isci.izle(veri.get("kamera_id"),
                                      veri.get("url", ""),
                                      veri.get("protokol", ""),
