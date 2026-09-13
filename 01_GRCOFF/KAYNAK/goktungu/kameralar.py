@@ -129,29 +129,57 @@ class KameraYoneticisi:
         except (TypeError, ValueError):
             return None
 
+    @staticmethod
+    def _ai_hassasiyet(deger):
+        """Sınıf başına hassasiyeti dogrulanmis JSON dizeye cevirir.
+
+        Yalniz insan/kara_araci/hava_araci anahtarlari, 10-90 araligi.
+        Gecersiz/eksik alan tamamen atlanir (isci varsayilani 50 uygular).
+        """
+        import json as _j
+        if isinstance(deger, str):
+            try:
+                deger = _j.loads(deger) if deger.strip() else {}
+            except (ValueError, TypeError):
+                return ""
+        if not isinstance(deger, dict):
+            return ""
+        temiz = {}
+        for k in ("insan", "kara_araci", "hava_araci"):
+            try:
+                v = int(round(float(deger[k])))
+            except (KeyError, TypeError, ValueError):
+                continue
+            if 10 <= v <= 90:
+                temiz[k] = v
+        return _j.dumps(temiz, separators=(",", ":")) if temiz else ""
+
     def ekle(self, isim, protokol, url, lokasyon_id=None,
-             ai_gorevler="", firma_id=None, kopru_ornek_id=None):
+             ai_gorevler="", firma_id=None, kopru_ornek_id=None,
+             ai_hassasiyet=""):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None, None
         isim, protokol, url = d
         lok = self._lokasyon_id(lokasyon_id)
         gorevler = self._ai_gorevler(ai_gorevler)
+        hassas = self._ai_hassasiyet(ai_hassasiyet)
         fid = int(firma_id) if firma_id else None
         kopru = self._lokasyon_id(kopru_ornek_id)   # ayni dogrulama
         with self._kilit:
             with baglanti() as con:
                 cur = con.execute(
                     "INSERT INTO kameralar (isim, protokol, url, "
-                    "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id) "
-                    "VALUES (?,?,?,?,?,?,?)",
-                    (isim, protokol, url, lok, gorevler, fid, kopru),
+                    "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id, "
+                    "ai_hassasiyet) VALUES (?,?,?,?,?,?,?,?)",
+                    (isim, protokol, url, lok, gorevler, fid, kopru, hassas),
                 )
                 yeni_id = cur.lastrowid
         return yeni_id, self.listele(firma_id)
 
     def guncelle(self, kamera_id, isim, protokol, url, lokasyon_id=None,
-                 ai_gorevler="", firma_id=None, kopru_ornek_id=None):
+                 ai_gorevler="", firma_id=None, kopru_ornek_id=None,
+                 ai_hassasiyet=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None
@@ -163,13 +191,24 @@ class KameraYoneticisi:
         kopru = self._lokasyon_id(kopru_ornek_id)
         with self._kilit:
             with baglanti() as con:
-                cur = con.execute(
-                    "UPDATE kameralar "
-                    "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
-                    "ai_gorevler=?, kopru_ornek_id=? WHERE id=?",
-                    (isim, protokol, url, lok, gorevler, kopru,
-                     int(kamera_id)),
-                )
+                if ai_hassasiyet is None:
+                    # Eski istemci alanı göndermez: mevcut değeri KORU.
+                    cur = con.execute(
+                        "UPDATE kameralar "
+                        "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
+                        "ai_gorevler=?, kopru_ornek_id=? WHERE id=?",
+                        (isim, protokol, url, lok, gorevler, kopru,
+                         int(kamera_id)),
+                    )
+                else:
+                    cur = con.execute(
+                        "UPDATE kameralar "
+                        "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
+                        "ai_gorevler=?, kopru_ornek_id=?, ai_hassasiyet=? "
+                        "WHERE id=?",
+                        (isim, protokol, url, lok, gorevler, kopru,
+                         self._ai_hassasiyet(ai_hassasiyet), int(kamera_id)),
+                    )
                 if cur.rowcount == 0:
                     return None
         return self.listele(firma_id)

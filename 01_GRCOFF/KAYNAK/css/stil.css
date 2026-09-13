@@ -9940,3 +9940,88 @@ body.tam-ekran-modu #altOrtaPanel {
   color: var(--metin);
 }
 .kam-bolum-icerik > label:first-child { margin-top: 4px; }
+
+/* ============================================================
+ * v2.5.24: Kamera AI ayar paneli + görüntü hedefi + dron kamera satırı
+ * ============================================================ */
+/* Yapay Zeka Ayarları paneli (açılır-kapanır, sınıf başına) */
+.kai-panel {
+  position: fixed; z-index: 4000; width: 320px; max-width: calc(100vw - 20px);
+  background: var(--panel, #131a24); color: var(--metin, #e6edf3);
+  border: 1px solid var(--cizgi, #2a3542); border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5); font-size: 13px;
+}
+.kai-panel-baslik {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 8px 10px; cursor: move;
+  border-bottom: 1px solid var(--cizgi, #2a3542);
+  font-weight: 600; font-size: 12px; letter-spacing: .02em;
+}
+.kai-panel-govde { padding: 8px 10px 10px; max-height: 70vh; overflow-y: auto; }
+.kai-sinif { border: 1px solid var(--cizgi, #2a3542); border-radius: 6px; margin-top: 8px; }
+.kai-sinif > summary {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.kai-sinif > summary::-webkit-details-marker { display: none; }
+.kai-sinif > summary::after {
+  content: "\25B8"; margin-left: auto; color: var(--soluk, #95a9b8);
+  transition: transform .15s ease;
+}
+.kai-sinif[open] > summary::after { transform: rotate(90deg); }
+.kai-sinif-ad { font-weight: 600; }
+.kai-sinif-durum { font-size: 11px; color: var(--soluk, #95a9b8); }
+.kai-sinif-durum.iyi { color: #7fd6a0; }
+.kai-acik { width: 16px; height: 16px; accent-color: var(--interceptor, #3b82f6); }
+.kai-sinif-ic { padding: 4px 10px 10px; border-top: 1px solid var(--cizgi, #2a3542); }
+.kai-hassas-satir { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.kai-hassas { flex: 1; accent-color: var(--interceptor, #3b82f6); }
+.kai-hassas-deger { min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+.kai-hassas-yardim { margin-top: 4px; font-size: 11px; color: var(--soluk, #95a9b8); }
+.kai-panel-not { margin-top: 10px; font-size: 11px; color: var(--soluk, #95a9b8); line-height: 1.4; }
+
+/* Görüntü hedefi seçici (harita/yüzen/panel/tam) */
+.kam-hedef-secici { display: inline-flex; gap: 2px; margin-left: 4px;
+  border: 1px solid var(--cizgi, #2a3542); border-radius: 6px; overflow: hidden; }
+.kam-hedef-btn {
+  border: 0; background: transparent; color: var(--soluk, #95a9b8);
+  padding: 3px 6px; cursor: pointer; font-size: 12px; line-height: 1;
+}
+.kam-hedef-btn:hover { color: var(--metin, #e6edf3); background: rgba(255,255,255,.06); }
+.kam-hedef-btn.secili { background: var(--interceptor, #3b82f6); color: #fff; }
+
+/* Panelde "başka hedefte gösteriliyor" bilgisi */
+.kam-baska-hedef { flex-direction: column; gap: 4px; font-size: 11px; opacity: .8; }
+.kam-baska-hedef span { font-size: 11px; }
+
+/* Tam ekran hedefi */
+.kam-tam-ekran {
+  position: fixed; inset: 0; z-index: 4200; background: #000;
+  display: flex; flex-direction: column;
+}
+.kam-tam-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 8px 12px; background: rgba(10,14,20,.85); color: #e6edf3;
+}
+.kam-tam-ad { font-weight: 600; }
+.kam-tam-arac { display: flex; align-items: center; gap: 6px; }
+.kam-tam-video { flex: 1; display: flex; align-items: center; justify-content: center; }
+.kam-tam-video .kam-video { max-width: 100%; max-height: 100%; }
+
+/* Dron kartı kamera kontrol satırı */
+.dk-kamera-satir {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 6px 10px 2px; padding: 6px 8px;
+  border: 1px solid var(--cizgi, #2a3542); border-radius: 6px;
+  background: rgba(255,255,255,.03);
+}
+.dk-kam-ad { font-size: 12px; color: var(--metin, #e6edf3); display: inline-flex; gap: 5px; align-items: center; }
+.dk-kam-play {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  border: 1px solid var(--cizgi, #2a3542); border-radius: 6px;
+  background: var(--interceptor, #3b82f6); color: #fff;
+  padding: 4px 10px; cursor: pointer; font-size: 12px;
+}
+.dk-kam-play.aktif { background: #b4453a; }
+.dk-kam-play:hover { filter: brightness(1.08); }
+.kai-ac-btn i, .dk-kam-ai i { color: #b98bff; }

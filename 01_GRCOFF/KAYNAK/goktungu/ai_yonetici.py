@@ -406,7 +406,9 @@ class AIYonetici:
             self.konsol("AI", f"Kamera #{kamera_id} gorevi yeniden"
                         f" dagitiliyor...", "uyari")
             self._gorev_ata(kamera_id, bilgi["url"], bilgi["protokol"],
-                            haric=dusen_sid)
+                            haric=dusen_sid,
+                            gorevler=bilgi.get("gorevler", ""),
+                            hassasiyet=bilgi.get("hassasiyet", ""))
 
     # ------------------------------------------------------------------
     # Izleme gorevleri (kalici)
@@ -434,12 +436,15 @@ class AIYonetici:
                         # gorev listesi guncel olsun (kamera duzenlendiyse)
                         gorevler[kid]["gorevler"] = (
                             kam.get("ai_gorevler") or "")
+                        gorevler[kid]["hassasiyet"] = (
+                            kam.get("ai_hassasiyet") or "")
                         continue
                     if (kam.get("ai_gorevler") or "").strip():
                         gorevler[kid] = {
                             "url": "/kamera/%s" % kam["id"],
                             "protokol": "gcs_proxy",
-                            "gorevler": kam["ai_gorevler"]}
+                            "gorevler": kam["ai_gorevler"],
+                            "hassasiyet": kam.get("ai_hassasiyet") or ""}
                         self.konsol("AI", f"Kamera #{kam['id']} AI"
                                     " gorevleri secili; izleme otomatik"
                                     " baslatiliyor", "bilgi")
@@ -451,13 +456,14 @@ class AIYonetici:
             try:
                 self._gorev_ata(int(kamera_id), bilgi["url"],
                                 bilgi["protokol"],
-                                gorevler=bilgi.get("gorevler", ""))
+                                gorevler=bilgi.get("gorevler", ""),
+                                hassasiyet=bilgi.get("hassasiyet", ""))
             except Exception as e:
                 self.konsol("AI", f"Gorev geri yuklenemedi"
                             f" (kamera #{kamera_id}): {e}", "uyari")
 
     def _gorev_ata(self, kamera_id, url, protokol, haric=None,
-                   gorevler=""):
+                   gorevler="", hassasiyet=""):
         gorevler = _gorevleri_sinirla(gorevler)
         kayit = self._en_az_yuklu(haric=haric)
         if not kayit:
@@ -467,7 +473,8 @@ class AIYonetici:
             sonuc = self._http(kayit, "/izle",
                                {"kamera_id": kamera_id, "url": url,
                                 "protokol": protokol,
-                                "gorevler": gorevler})
+                                "gorevler": gorevler,
+                                "hassasiyet": hassasiyet or ""})
         except Exception as e:
             return {"tamam": False, "hata": f"{kayit['ad']}: {e}"}
         if sonuc.get("tamam"):
@@ -477,15 +484,17 @@ class AIYonetici:
                         f" {kayit['ad']} sunucusuna atandi", "basari")
         return sonuc
 
-    def izleme_baslat(self, kamera_id, url, protokol, gorevler=""):
+    def izleme_baslat(self, kamera_id, url, protokol, gorevler="",
+                      hassasiyet=""):
         kamera_id = int(kamera_id)
         gorevler = _gorevleri_sinirla(gorevler)
         sonuc = self._gorev_ata(kamera_id, url, protokol,
-                                gorevler=gorevler)
+                                gorevler=gorevler, hassasiyet=hassasiyet)
         if sonuc.get("tamam"):
             kalici = self._kalici_gorevler()
             kalici[str(kamera_id)] = {"url": url, "protokol": protokol,
-                                      "gorevler": gorevler}
+                                      "gorevler": gorevler,
+                                      "hassasiyet": hassasiyet or ""}
             self._kalici_kaydet(kalici)
         return sonuc
 

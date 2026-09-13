@@ -2150,6 +2150,10 @@ def _sema_guncelle():
             ("montaj_roll", "REAL"),
             # 0/1: kalibrasyon eksiksiz mi? Eksikse angajman reddedilir.
             ("kalibre", "INTEGER NOT NULL DEFAULT 0"),
+            # v2.5.24: sınıf başına yerel AI hassasiyeti (JSON).
+            # {"insan":50,"kara_araci":50,"hava_araci":50}; 10-90.
+            # Boş/eksik => 50 (işçide mevcut davranışa eşit; regresyon yok).
+            ("ai_hassasiyet", "TEXT NOT NULL DEFAULT ''"),
         ],
         "ai_tespitler": [
             # v2.4.2: tespit -> ucus kaydi bagi (ucuslar.id TEXT)

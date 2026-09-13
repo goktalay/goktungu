@@ -122,7 +122,11 @@ function dronKameraOnizlemeTazele(d){
     String((k && k.dron_uid) || "").trim() === uid) : null;
   const aktif = kam && typeof window.kameraIzlemeAktifMi === "function" &&
     window.kameraIzlemeAktifMi(kam.id);
-  if (!sid || !d || !d.baglanti || !kam || !aktif || !varliklar[sid]){
+  // v2.5.24: Harita küçük önizlemesi yalnız görüntü hedefi 'harita' iken
+  // (tek konumda gösterim; yüzen/panel/tam ekran seçiliyse haritada çizilmez).
+  const haritaHedef = kam && typeof window.kameraGoruntuHedefi === "function" &&
+    window.kameraGoruntuHedefi(kam.id) === "harita";
+  if (!sid || !d || !d.baglanti || !kam || !aktif || !haritaHedef || !varliklar[sid]){
     dronKameraOnizlemeSil(sid);
     return;
   }
@@ -162,6 +166,75 @@ function dronKameraOnizlemeTazele(d){
 window.dronKameraHaritaOnizlemeTazele = function(){
   Object.values(sonVeri).forEach((veri) => dronKameraOnizlemeTazele(veri));
   dronKameraOnizlemeKonumla();
+};
+
+// v2.5.24: Dron kartındaki kamera kontrol satırı. Drona bağlı (dron_uid)
+// yerel kamera varsa: Kamera Başlat/Durdur + görüntü hedefi + Yapay Zeka
+// Ayarları düğmeleri. Komut üretmez; yalnız yerel görüntü/AI arayüzüdür.
+function dronBagliKamera(d){
+  const uid = String((d && (d.uid || d.dron_uid)) || "").trim();
+  if (!uid) return null;
+  return (window._kameralarSon || []).find((k) =>
+    String((k && k.dron_uid) || "").trim() === uid) || null;
+}
+function dronKartKameraSatirTazele(kart, d){
+  const satir = kart && kart.kok && kart.kok._kameraSatir;
+  if (!satir) return;
+  const kam = dronBagliKamera(d);
+  if (!kam){
+    satir.classList.add("gizli");
+    satir.innerHTML = "";
+    kart._kamId = null;
+    return;
+  }
+  satir.classList.remove("gizli");
+  // Bağlı kamera değiştiyse satırı yeniden kur (odak sıçramasın diye
+  // yalnız değişimde).
+  if (kart._kamId !== kam.id){
+    kart._kamId = kam.id;
+    satir.innerHTML = "";
+    const ad = document.createElement("span");
+    ad.className = "dk-kam-ad";
+    ad.innerHTML = "<i class='fa-solid fa-video'></i> " +
+      String(kam.isim || ("#" + kam.id)).replace(/[<>&]/g, "");
+    const play = document.createElement("button");
+    play.type = "button";
+    play.className = "dk-kam-play";
+    play.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const oyn = typeof window.kameraIzlemeAktifMi === "function" &&
+        window.kameraIzlemeAktifMi(kam.id);
+      if (oyn && typeof window.kameraIzlemeDurdur === "function")
+        window.kameraIzlemeDurdur(kam.id);
+      else if (typeof window.kameraIzlemeAc === "function")
+        window.kameraIzlemeAc(kam.id);
+      setTimeout(() => dronKartKameraSatirDurum(kart, kam.id), 150);
+    });
+    satir.append(ad, play);
+    if (typeof window.kameraGoruntuHedefSecici === "function")
+      satir.appendChild(window.kameraGoruntuHedefSecici(kam.id));
+    if (typeof window.kameraAiAyarButonu === "function")
+      satir.appendChild(window.kameraAiAyarButonu(kam.id, "dk-kam-ai"));
+    kart._kamPlay = play;
+  }
+  dronKartKameraSatirDurum(kart, kam.id);
+}
+function dronKartKameraSatirDurum(kart, kamId){
+  const play = kart && kart._kamPlay;
+  if (!play) return;
+  const oyn = typeof window.kameraIzlemeAktifMi === "function" &&
+    window.kameraIzlemeAktifMi(kamId);
+  play.classList.toggle("aktif", !!oyn);
+  play.innerHTML = oyn
+    ? "<i class='fa-solid fa-stop'></i><span>Durdur</span>"
+    : "<i class='fa-solid fa-play'></i><span>Kamera Başlat</span>";
+}
+// Kamera listesi/oynatma değişince tüm kartların satırını tazele.
+window.dronKartKameraTazeleTum = function(){
+  Object.entries(dronKartlar || {}).forEach(([sid, kart]) => {
+    const d = sonVeri[sid];
+    if (d) dronKartKameraSatirTazele(kart, d);
+  });
 };
 let ilkOdak = false;
 const sonVeri = {};
@@ -1256,6 +1329,12 @@ function dronKartGuncelle(d) {
     // konsola yazma, onun yerine dronun panelinin altinda acilir kapanir
     // bir konsol olsun ve tum iletisimi ciplak olarak orada gostersin."
     const konsolBolum = dkKonsolBolumuKur(d.sysid);
+    // v2.5.24: Drona bağlı kamera kontrol satırı (kamera başlat/durdur +
+    // görüntü hedefi + Yapay Zeka Ayarları). Bağlı kamera yoksa gizli.
+    const kameraSatir = document.createElement("div");
+    kameraSatir.className = "dk-kamera-satir gizli";
+    govde.appendChild(kameraSatir);
+    kok._kameraSatir = kameraSatir;
     govde.appendChild(konsolBolum.kok);
     kok.appendChild(baslik);
     kok.appendChild(govde);
@@ -1282,6 +1361,7 @@ function dronKartGuncelle(d) {
                                     hazirRozet, islemBtn,
                                     paramSerit, paramSeritIc,
                                     konsol: konsolBolum,
+                                    kameraSatir: kameraSatir,
                                     gosDilTazele: gostergeler.dilTazele };
     // Gostergeler DOM'a eklendikten sonra baslatilir (jquery secici)
     gostergeler.baslat();
@@ -1295,6 +1375,7 @@ function dronKartGuncelle(d) {
   // v2.1.1: Ad tiklanabilirligi kaldirildi - ayrik moddayken basliktan
   // panel tasima ad linkine takiliyordu. Isim duzenleme dron menusune tasindi.
   kart.nokta.style.background = d.baglanti ? "var(--iyi)" : "var(--kotu)";
+  dronKartKameraSatirTazele(kart, d);
   // v2.4.41: dron bagli gorulur gorulmez tam parametre setini otomatik
   // yukle (istek tek kez gider; bkz. dkParamOtoYuklemeDene).
   if (d.baglanti) dkParamOtoYuklemeDene(d.sysid, d);

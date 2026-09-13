@@ -1,6 +1,22 @@
 # GÖKTUNGU Sürüm Notları — GRCOFF
 
-Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_surum.py` (`PAKET_SURUM`) içindedir. Bu belge en yeni sürümleri özetler; kaynaktaki `GCS_SURUM_GECMISI` tam listedir.
+Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_surum.py` (`PAKET_SURUM`). Kaynaktaki `GCS_SURUM_GECMISI` tam listedir.
+
+## Paket 2.5.24 / Uygulama 2.4.154 — 2026-09-13
+
+**Dron panelinde kamera başlat + Yapay Zeka Ayarları paneli, tek konumda görüntü (paket 2.5.24)**
+
+- Dron paneline, drona bağlı kamera için 'Kamera Başlat/Durdur' düğmesi eklendi; kamera oynatılmıyorken tek tıkla başlatılır.
+- Canlı görüntü artık aynı anda tek yerde gösterilir: harita üzerinde küçük önizleme, yüzen pencere, kameralar paneli içi veya tam ekran. Görüntü hedefi seçici (dört kip) dron panelinde, kameralar panelinde ve yüzen pencerede bulunur; başka hedef seçiliyse önizleme o konumda çizilir, ikinci bir yerde görünmez.
+- Yapay Zeka Ayarları düğmesi ve açılır-kapanır (collapsible) panel eklendi: İnsan, Kara Aracı ve Hava Aracı için tanımayı ayrı ayrı açıp kapatma ve sınıf başına hassasiyet ayarı. Panel dron panelinden, kameralar panelinden ve yüzen/tam ekran görüntüden açılır.
+- Sınıf başına hassasiyet uçtan uca bağlandı: ayar kameraya kaydedilir (ai_hassasiyet), yerel AI işçisine iletilir ve tespit eşiklerine uygulanır. Varsayılan 50, önceki davranışla birebir aynıdır (regresyon yok).
+- Yüzen penceredeki eski satır içi AI kümesi kaldırıldı; hassasiyet çubuğu yanlışlıkla radar sınıflandırıcısına bağlıydı, artık kamera AI'sına doğru bağlanan sınıf bazlı panel kullanılır.
+- GRCON (çevrimiçi Merkez) değişmedi; bu arayüz yalnız GRCOFF yerel kamera/AI yüzeyindedir.
+
+| Platform | Dosya | SHA-256 |
+|---|---|---|
+| Linux | `goktungu-merkez_2.5.24_all.deb` | `24e42e728bfc27e87366787eb89a4d61672e13b706fd3491edc8fca224ffae96` |
+| Windows | `GOKTUNGU-Merkez-Setup-2.5.24.exe` | `a9574295a98c291dba096054c2d112d9b157dcc11bcdedffd9551770a29113d8` |
 
 ## Paket 2.5.23 / Uygulama 2.4.153 — 2026-09-12
 
@@ -8,7 +24,7 @@ Uygulama sürümü `js/surum.js` (`GCS_SURUM`), paket sürümü `goktungu/paket_
 
 - GRCOFF (offline Merkez) yerel AI işçisini kendisi başlatır ve AI yöneticisine 'GRCOFF Yerel AI' olarak kaydeder; ayrı bir AI sunucusu veya köprü gerekmez. Görevi seçili kameraların canlı görüntüsüne AI doğrudan uygulanır. 'Uygun (çevrimiçi/boş) AI sunucusu yok' hatası giderildi.
 - Yerel işçi Merkez ile birlikte açılır, düşerse artan beklemeyle yeniden başlatılır. Kamera işçi hazır olmadan kaydedildiyse veya işçi yeniden başladıysa, AI görevli kameralar kendiliğinden yeniden izlemeye alınır.
-- Kurulumun kaydırılmış AI portu (8910) kullanılır. İşçi canlı görüntüyü Merkez'in kendi yayın yolundan, yalnız bu makineden geçerli yerel işçi anahtarıyla okur; yayın dışarıya açılmaz. İşçi yalnız 127.0.0.1 üzerinde dinler; yerel ağdan erişilemez. İşçi kayıtlarını program dizini yerine veri dizinine yazar (Windows: C:\\ProgramData\\Goktungu\\Merkez, Linux: /var/lib/goktungu-merkez).
+- Kurulumun kaydırılmış AI portu (8910) kullanılır. İşçi canlı görüntüyü Merkez'in kendi yayın yolundan, yalnız bu makineden geçerli yerel işçi anahtarıyla okur; yayın dışarıya açılmaz İşçi yalnız 127.0.0.1 üzerinde dinler; yerel ağdan erişilemez. İşçi kayıtlarını program dizini yerine veri dizinine yazar (Windows: C:\ProgramData\Goktungu\Merkez, Linux: /var/lib/goktungu-merkez).
 - Kamera formundan GRCOFF yerel işçisinde kapalı olan Kişi Tanıma ve Araç Tanıma anahtarları kaldırıldı; İnsan, Kara Aracı ve Hava Aracı tespiti etkin.
 - Kurulumda örnek olarak eklenen ve hiç çalışmayan 'ASUS Ascent GX10' ile 'CPU AI Sunucusu (Yerel)' kayıtları artık eklenmez; değiştirilmemiş eski kayıtlar açılışta kaldırılır.
 - GRCON (çevrimiçi Merkez) değişmedi: orada AI Görüntü Köprüsünde çalışır, yerel işçi başlatılmaz.

@@ -193,10 +193,31 @@ def gorevleri_sinirla(gorevler):
             if str(g).strip().lower() in IZINLI_SINIFLAR}
 
 
+# v2.5.24: Sınıf başına hassasiyet. UI 10..90; 50 = mevcut davranış.
+# k = 50/s -> alan/eşik ölçeği; s=50 iken k=1.0 (regresyon yok).
+_HASSAS_VARSAYILAN = 50
+def hassasiyet_coz(deger):
+    """Dict/JSON -> {sinif: 10..90}. Eksik alan varsayılan 50."""
+    if isinstance(deger, str):
+        try:
+            deger = json.loads(deger) if deger.strip() else {}
+        except (ValueError, TypeError):
+            deger = {}
+    out = {}
+    for k in IZINLI_SINIFLAR:
+        try:
+            v = int(round(float((deger or {}).get(k))))
+        except (TypeError, ValueError):
+            v = _HASSAS_VARSAYILAN
+        out[k] = min(90, max(10, v))
+    return out
+
+
 class AkisIsleyici(threading.Thread):
     """Tek kamera akisini okuyan ve tespit yapan is parcacigi."""
 
-    def __init__(self, isci, kamera_id, url, protokol, gorevler=None):
+    def __init__(self, isci, kamera_id, url, protokol, gorevler=None,
+                 hassasiyet=None):
         super().__init__(daemon=True)
         self.isci = isci
         self.kamera_id = int(kamera_id)
@@ -205,6 +226,9 @@ class AkisIsleyici(threading.Thread):
         # GRCOFF 2.5.20: yalnız insan, kara_araci, hava_araci.
         # Boş görev listesi varsayılan olarak bu üç sınıfı kullanır.
         self.gorevler = gorevleri_sinirla(gorevler)
+        self.hassasiyet = hassasiyet_coz(hassasiyet)
+        # sınıf ölçeği: s=50 -> 1.0 (nötr). Daha yüksek s -> daha küçük k.
+        self._olcek = {k: (50.0 / max(10, v)) for k, v in self.hassasiyet.items()}
         # hareket tespiti icin arka plan cikarici (hava/kara araci)
         self.arka_plan = None
         self.calisiyor = True
@@ -550,18 +574,23 @@ class AIIsci:
     # ------------------------------------------------------------------
     # Gorev yonetimi
     # ------------------------------------------------------------------
-    def izle(self, kamera_id, url, protokol, gorevler=None):
+    def izle(self, kamera_id, url, protokol, gorevler=None,
+             hassasiyet=None):
         with self.kilit:
             kamera_id = int(kamera_id)
             if kamera_id in self.akislar:
                 mevcut = self.akislar[kamera_id]
                 if gorevler is not None:
                     mevcut.gorevler = gorevleri_sinirla(gorevler)
+                if hassasiyet is not None:
+                    mevcut.hassasiyet = hassasiyet_coz(hassasiyet)
+                    mevcut._olcek = {k: (50.0 / max(10, v))
+                                     for k, v in mevcut.hassasiyet.items()}
                 return {"tamam": True, "mesaj": "zaten izleniyor"}
             if len(self.akislar) >= self.kapasite:
                 return {"tamam": False, "hata": "kapasite dolu"}
             isleyici = AkisIsleyici(self, kamera_id, url, protokol,
-                                    gorevler)
+                                    gorevler, hassasiyet)
             self.akislar[kamera_id] = isleyici
             isleyici.start()
             return {"tamam": True}
@@ -764,9 +793,12 @@ class AIIsci:
                 kucuk, winStride=(8, 8), padding=(8, 8), scale=1.05)
         except Exception:
             return
+        # v2.5.24: insan hassasiyeti -> güven eşiği (s=50 iken 0.6, nötr)
+        _k_insan = getattr(akis, "_olcek", {}).get("insan", 1.0)
+        _esik_insan = max(0.2, min(0.9, 0.6 * min(1.5, _k_insan)))
         for i, (x, y, gw, gh) in enumerate(kutular):
             guven = float(agirliklar[i]) if len(agirliklar) > i else 0.0
-            if guven < 0.6:
+            if guven < _esik_insan:
                 continue
             # orijinal olcege don
             x, y, gw, gh = (int(x / olcek), int(y / olcek),
@@ -801,6 +833,12 @@ class AIIsci:
         konturlar, _ = cv2.findContours(maske, cv2.RETR_EXTERNAL,
                                         cv2.CHAIN_APPROX_SIMPLE)
         kare_alani = float(h * w)
+        # v2.5.24: sınıf başına alan alt-sınır ölçeği (s=50 -> k=1.0 nötr;
+        # yüksek hassasiyet -> daha küçük alt sınır -> daha çok tespit).
+        _olc = getattr(akis, "_olcek", {})
+        _kh = _olc.get("hava_araci", 1.0)
+        _kk = _olc.get("kara_araci", 1.0)
+        _ki = _olc.get("insan", 1.0)
         for c in konturlar:
             x, y, gw, gh = cv2.boundingRect(c)
             alan = gw * gh
@@ -809,17 +847,17 @@ class AIIsci:
             tur = None
             if ("hava_araci" in akis.gorevler
                     and merkez_y < h * 0.55
-                    and 0.0004 * kare_alani < alan < 0.06 * kare_alani
+                    and 0.0004 * _kh * kare_alani < alan < 0.06 * kare_alani
                     and 0.5 <= oran <= 3.5):
                 tur = "hava_araci"
             elif ("kara_araci" in akis.gorevler
                     and merkez_y >= h * 0.45
-                    and 0.008 * kare_alani < alan < 0.5 * kare_alani
+                    and 0.008 * _kk * kare_alani < alan < 0.5 * kare_alani
                     and 1.1 <= oran <= 4.5):
                 tur = "kara_araci"
             elif ("insan" in akis.gorevler and self.insan_hog is None
                     and merkez_y >= h * 0.35
-                    and 0.002 * kare_alani < alan < 0.15 * kare_alani
+                    and 0.002 * _ki * kare_alani < alan < 0.15 * kare_alani
                     and 0.2 <= oran <= 0.75):
                 # OpenCV 5 HOG geri cekilmesi: dikey (boy > en) hareketli
                 # bloblar insan adayi sayilir
@@ -998,7 +1036,8 @@ def http_sunucu(isci, port, dinle="0.0.0.0"):
                 self._json(isci.izle(veri.get("kamera_id"),
                                      veri.get("url", ""),
                                      veri.get("protokol", ""),
-                                     gorevler))
+                                     gorevler,
+                                     veri.get("hassasiyet")))
             elif self.path == "/durdur":
                 self._json(isci.durdur(veri.get("kamera_id")))
             elif self.path == "/embed":

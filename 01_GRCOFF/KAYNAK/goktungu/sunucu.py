@@ -1228,7 +1228,8 @@ class WSSunucusu:
             if gorevler:
                 sonuc = await asyncio.to_thread(
                     self.ai_yonetici.izleme_baslat, kamera_id,
-                    "/kamera/%s" % kamera_id, "gcs_proxy", gorevler)
+                    "/kamera/%s" % kamera_id, "gcs_proxy", gorevler,
+                    kamera.get("ai_hassasiyet") or "")
                 if not sonuc.get("tamam"):
                     self.konsol("AI", "Otomatik izleme baslatilamadi"
                                 f" (kamera #{kamera_id}):"
@@ -8826,7 +8827,8 @@ class WSSunucusu:
                 yeni_id, liste = self.kameralar.ekle(
                     k.get("isim"), k.get("protokol"), k.get("url"),
                     k.get("lokasyon_id"), k.get("ai_gorevler", ""),
-                    firma_id=_fid, kopru_ornek_id=_kopru)
+                    firma_id=_fid, kopru_ornek_id=_kopru,
+                    ai_hassasiyet=k.get("ai_hassasiyet", ""))
                 if yeni_id is not None:
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     if _dron_uid:
@@ -8868,7 +8870,8 @@ class WSSunucusu:
                     kam_id, k.get("isim"), k.get("protokol"),
                     k.get("url"), k.get("lokasyon_id"),
                     k.get("ai_gorevler", ""),
-                    firma_id=_fid, kopru_ornek_id=_kopru)
+                    firma_id=_fid, kopru_ornek_id=_kopru,
+                    ai_hassasiyet=k.get("ai_hassasiyet", None))
                 if liste is not None:
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     self.kameralar.dron_bagla(kam_id, _dron_uid)

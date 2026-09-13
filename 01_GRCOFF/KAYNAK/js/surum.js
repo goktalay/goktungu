@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.153";
+const GCS_SURUM = "2.4.154";
 const GCS_SURUM_TARIH = "2026-09-12";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.154",
+    tarih: "2026-09-13",
+    baslik: "Dron panelinde kamera başlat + Yapay Zeka Ayarları paneli, tek konumda görüntü (paket 2.5.24)",
+    maddeler: [
+      "Dron paneline, drona bağlı kamera için 'Kamera Başlat/Durdur' düğmesi eklendi; kamera oynatılmıyorken tek tıkla başlatılır.",
+      "Canlı görüntü artık aynı anda tek yerde gösterilir: harita üzerinde küçük önizleme, yüzen pencere, kameralar paneli içi veya tam ekran. Görüntü hedefi seçici (dört kip) dron panelinde, kameralar panelinde ve yüzen pencerede bulunur; başka hedef seçiliyse önizleme o konumda çizilir, ikinci bir yerde görünmez.",
+      "Yapay Zeka Ayarları düğmesi ve açılır-kapanır (collapsible) panel eklendi: İnsan, Kara Aracı ve Hava Aracı için tanımayı ayrı ayrı açıp kapatma ve sınıf başına hassasiyet ayarı. Panel dron panelinden, kameralar panelinden ve yüzen/tam ekran görüntüden açılır.",
+      "Sınıf başına hassasiyet uçtan uca bağlandı: ayar kameraya kaydedilir (ai_hassasiyet), yerel AI işçisine iletilir ve tespit eşiklerine uygulanır. Varsayılan 50, önceki davranışla birebir aynıdır (regresyon yok).",
+      "Yüzen penceredeki eski satır içi AI kümesi kaldırıldı; hassasiyet çubuğu yanlışlıkla radar sınıflandırıcısına bağlıydı, artık kamera AI'sına doğru bağlanan sınıf bazlı panel kullanılır.",
+      "GRCON (çevrimiçi Merkez) değişmedi; bu arayüz yalnız GRCOFF yerel kamera/AI yüzeyindedir."
+    ]
+  },
   {
     surum: "2.4.153",
     tarih: "2026-09-12",

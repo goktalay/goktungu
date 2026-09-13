@@ -27,6 +27,12 @@
   // Dron harita önizlemesi yalnız bu same-origin vekil yolunu kullanır.
   // Uzak kaynak URL'si veya erişim bilgisi istemci modülleri arasında taşınmaz.
   window.kameraOnizlemeUrl = function (id) { return proxyUrl(Number(id)); };
+  // Paylasimli AI paneli kamera kaydini bu kanaldan yollar.
+  window.kameraWsGonder = function (obj) { wsGonder(obj); };
+  function hedef(id) {
+    return (typeof window.kameraGoruntuHedefi === "function")
+      ? window.kameraGoruntuHedefi(id) : "yuzen";
+  }
 
   function wsGonder(obj) {
     if (typeof ws !== "undefined" && ws && ws.readyState === 1)
@@ -543,15 +549,18 @@
       window.dronKameraHaritaOnizlemeTazele();
     // Ayrik penceredeyse onu da tazele
     if (ayrikler[id]) ayrikVideoTazele(id);
+    if (typeof window.dronKartKameraTazeleTum === "function") window.dronKartKameraTazeleTum();
   }
   function durdur(id) {
     oynayanlar.delete(id);
     videoTemizle(id);
+    if (typeof tamEkranId !== "undefined" && tamEkranId === id) tamEkranKapat();
     listeCiz();
     // Stop sonrası bağlı dronun küçük önizlemesini kaldır.
     if (typeof window.dronKameraHaritaOnizlemeTazele === "function")
       window.dronKameraHaritaOnizlemeTazele();
     if (ayrikler[id]) ayrikVideoTazele(id);
+    if (typeof window.dronKartKameraTazeleTum === "function") window.dronKartKameraTazeleTum();
   }
 
   // Menubar: TUM KAMERALARA BAGLAN (hepsi oynuyorsa tumunu durdur - toggle)
@@ -632,7 +641,15 @@
       });
     });
 
+    // v2.5.24: Yapay Zeka Ayarlari dugmesi (paylasimli panel)
+    if (typeof window.kameraAiAyarButonu === "function") {
+      kutu.appendChild(window.kameraAiAyarButonu(kamera.id));
+    }
     kutu.append(bPlay, bAyir, bDuzenle, bSil);
+    // v2.5.24: Goruntu hedefi secici (harita/yuzen/panel/tam) — tek konum
+    if (typeof window.kameraGoruntuHedefSecici === "function") {
+      kutu.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
+    }
     return kutu;
   }
 
@@ -658,7 +675,8 @@
     satir.append(sol, araclarOlustur(kamera));
 
     // Liste gorunumunde oynayan kameranin videosu satirin altinda gosterilir
-    if (oynayanlar.has(kamera.id) && !ayrikler[kamera.id]) {
+    // (v2.5.24: yalniz goruntu hedefi 'panel' iken; tek konumda gosterim)
+    if (oynayanlar.has(kamera.id) && !ayrikler[kamera.id] && hedef(kamera.id) === "panel") {
       const kutu = document.createElement("div");
       kutu.className = "kam-video-kutu";
       kutu.appendChild(videoOlustur(kamera));
@@ -698,8 +716,16 @@
 
     const kutu = document.createElement("div");
     kutu.className = "kam-video-kutu kam-onizleme";
-    if (oynayanlar.has(kamera.id)) {
+    if (oynayanlar.has(kamera.id) && hedef(kamera.id) === "panel") {
       kutu.appendChild(videoOlustur(kamera));
+    } else if (oynayanlar.has(kamera.id)) {
+      // Baska bir hedefte gosteriliyor: panelde nerede oldugunu bildir
+      const bilgi = document.createElement("div");
+      bilgi.className = "kam-bos-onizleme kam-baska-hedef";
+      const nerede = { harita: "haritada", yuzen: "yüzen pencerede", tam: "tam ekranda" };
+      bilgi.innerHTML = "<i class='fa-solid fa-up-right-from-square'></i>" +
+        "<span>" + (nerede[hedef(kamera.id)] || "başka yerde") + "</span>";
+      kutu.appendChild(bilgi);
     } else {
       const bos = document.createElement("div");
       bos.className = "kam-bos-onizleme";
@@ -911,77 +937,22 @@
     kutu.className = "kam-video-kutu kam-pencere-video";
     const altBar = document.createElement("div");
     altBar.className = "kam-pencere-alt";
-    // GRCOFF yerel AI denetimleri: yalnız üç izlenebilir sınıf ve mevcut
-    // ai_izleme_* / siniflandirma_ayar sözleşmesi kullanılır. Bu bölüm hiçbir
-    // araç, uçuş, joystick, angajman veya aktüatör komutu üretmez.
-    const aiKontrol = document.createElement("div");
-    aiKontrol.className = "kam-ai-kontrol";
-    const aiBaslik = document.createElement("span");
-    aiBaslik.className = "kam-ai-baslik";
-    aiBaslik.textContent = "YEREL AI";
-    const siniflar = [
-      ["insan", "İnsan"],
-      ["kara_araci", "Kara Aracı"],
-      ["hava_araci", "Hava Aracı"]
-    ];
-    const gorevler = new Set(String(kamera.ai_gorevler || "").split(",")
-      .map((x) => x.trim()).filter((x) => siniflar.some((s) => s[0] === x)));
-    const sinifKapsayici = document.createElement("span");
-    sinifKapsayici.className = "kam-ai-siniflar";
-    function gorevleriKaydet() {
-      const yeniGorevler = siniflar.filter((s) => gorevler.has(s[0]))
-        .map((s) => s[0]).join(",");
-      wsGonder({ tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
-        protokol: kamera.protokol, url: kamera.url,
-        lokasyon_id: kamera.lokasyon_id || null,
-        kopru_ornek_id: kamera.kopru_ornek_id || null,
-        dron_uid: kamera.dron_uid || "", ai_gorevler: yeniGorevler });
-      kamera.ai_gorevler = yeniGorevler;
-    }
-    siniflar.forEach(([deger, etiket]) => {
-      const lbl = document.createElement("label");
-      const cb = document.createElement("input");
-      cb.type = "checkbox"; cb.checked = gorevler.has(deger);
-      cb.addEventListener("change", () => {
-        if (cb.checked) gorevler.add(deger); else gorevler.delete(deger);
-        gorevleriKaydet();
-      });
-      lbl.append(cb, document.createTextNode(etiket));
-      sinifKapsayici.appendChild(lbl);
-    });
-    const duyarlilik = document.createElement("input");
-    duyarlilik.type = "range"; duyarlilik.min = "10"; duyarlilik.max = "90";
-    duyarlilik.step = "5"; duyarlilik.value = "40";
-    duyarlilik.className = "kam-ai-duyarlilik";
-    duyarlilik.title = "Yerel AI duyarlılığı";
-    const duyEtiket = document.createElement("span");
-    duyEtiket.className = "kam-ai-duy-etiket";
-    duyEtiket.textContent = "Duyarlılık 40";
-    duyarlilik.addEventListener("change", () => {
-      duyEtiket.textContent = "Duyarlılık " + duyarlilik.value;
-      wsGonder({ tip: "siniflandirma_ayar", alan: "hassasiyet",
-        deger: Number(duyarlilik.value) });
-    });
-    const izleme = document.createElement("button");
-    izleme.type = "button"; izleme.className = "kam-btn kam-ai-izleme";
-    function izlemeDurumu() {
-      const aktif = typeof window.aiIzlemeAktifMi === "function" &&
-        window.aiIzlemeAktifMi(id);
-      izleme.textContent = aktif ? "AI DURDUR" : "AI BAŞLAT";
-      izleme.classList.toggle("kam-ai-aktif", aktif);
-    }
-    izleme.addEventListener("click", () => {
-      const aktif = typeof window.aiIzlemeAktifMi === "function" &&
-        window.aiIzlemeAktifMi(id);
-      if (aktif) {
-        if (typeof window.aiIzlemeDurdur === "function") window.aiIzlemeDurdur(id);
-      } else if (typeof window.aiIzlemeBaslat === "function") {
-        window.aiIzlemeBaslat(id);
-      }
-      setTimeout(izlemeDurumu, 180);
-    });
-    aiKontrol.append(aiBaslik, sinifKapsayici, duyEtiket, duyarlilik, izleme);
-    altBar.appendChild(aiKontrol);
+// v2.5.24: Yüzen pencere alt çubuğu — AI Ayarları (paylaşımlı açılır
+    // panel) + görüntü hedefi seçici + düzenle. Eski satır içi AI kümesi
+    // (tek global hassasiyet, radar sınıflandırıcıya gidiyordu) kaldırıldı;
+    // yerini sınıf başına hassasiyet/aç-kapa taşıyan ortak panel aldı.
+    const araclar = document.createElement("div");
+    araclar.className = "kam-araclar kam-pencere-araclar";
+    if (typeof window.kameraAiAyarButonu === "function")
+      araclar.appendChild(window.kameraAiAyarButonu(kamera.id));
+    const bDuzenleP = document.createElement("button");
+    bDuzenleP.className = "kam-btn"; bDuzenleP.title = (t.kamDuzenle || "Düzenle");
+    bDuzenleP.innerHTML = "<i class='fa-solid fa-pen'></i>";
+    bDuzenleP.addEventListener("click", (e) => { e.stopPropagation(); modalAc(kamera); });
+    araclar.appendChild(bDuzenleP);
+    if (typeof window.kameraGoruntuHedefSecici === "function")
+      araclar.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
+    altBar.appendChild(araclar);
     pencere.append(baslik, kutu, altBar);
     document.body.appendChild(pencere);
     const kayitVar = typeof window.pencereKonumUygula === "function" &&
@@ -1024,10 +995,80 @@
       return false;
     }
     oynat(id);
-    return ayrikAc(id);
+    hedefeGore(id);
+    return true;
   };
+
+  // v2.5.24: Canlı görüntüyü SEÇİLİ hedefte (yalnız orada) gösterir.
+  function hedefeGore(id) {
+    const h = hedef(id);
+    // yüzen değilse açık pencereyi kapat
+    if (h !== "yuzen" && ayrikler[id]) ayrikKapat(id);
+    // tam ekran değilse tam ekranı kapat
+    if (h !== "tam" && tamEkranId === id) tamEkranKapat();
+    if (!oynayanlar.has(id)) { listeCiz(); return; }
+    if (h === "yuzen") ayrikAc(id);
+    else if (h === "tam") tamEkranAc(id);
+    // 'panel' ve 'harita' listeCiz()/harita tazeleme ile çizilir
+    listeCiz();
+    if (typeof window.dronKameraHaritaOnizlemeTazele === "function")
+      window.dronKameraHaritaOnizlemeTazele();
+  }
+  // Hedef değişince (seçiciden) uygula: oynatılmıyorsa başlat.
+  window.kameraGoruntuHedefiUygula = function (id) {
+    id = Number(id);
+    if (!oynayanlar.has(id)) oynat(id);
+    hedefeGore(id);
+  };
+
+  // --- Tam ekran hedefi ---
+  let tamEkranId = null;
+  function tamEkranKapat() {
+    const el = document.getElementById("kamTamEkran");
+    if (el) el.remove();
+    tamEkranId = null;
+  }
+  function tamEkranAc(id) {
+    const kamera = kameralar.find((k) => k.id === id);
+    if (!kamera) return;
+    if (tamEkranId === id && document.getElementById("kamTamEkran")) return;
+    tamEkranKapat();
+    tamEkranId = id;
+    const t = T();
+    const kap = document.createElement("div");
+    kap.id = "kamTamEkran"; kap.className = "kam-tam-ekran";
+    const bar = document.createElement("div");
+    bar.className = "kam-tam-bar";
+    const ad = document.createElement("span");
+    ad.className = "kam-tam-ad";
+    ad.innerHTML = "<i class='fa-solid fa-video'></i> " +
+      String(kamera.isim || ("#" + id)).replace(/[<>&]/g, "");
+    const sag = document.createElement("div");
+    sag.className = "kam-tam-arac";
+    if (typeof window.kameraAiAyarButonu === "function")
+      sag.appendChild(window.kameraAiAyarButonu(id));
+    if (typeof window.kameraGoruntuHedefSecici === "function")
+      sag.appendChild(window.kameraGoruntuHedefSecici(id));
+    const kapat = document.createElement("button");
+    kapat.className = "kam-btn"; kapat.title = (t.kamStop || "Durdur");
+    kapat.innerHTML = "<i class='fa-solid fa-xmark'></i>";
+    kapat.addEventListener("click", () => { durdur(id); tamEkranKapat(); listeCiz(); });
+    sag.appendChild(kapat);
+    bar.append(ad, sag);
+    const kutu = document.createElement("div");
+    kutu.className = "kam-video-kutu kam-tam-video";
+    kutu.appendChild(videoOlustur(kamera));
+    kap.append(bar, kutu);
+    document.body.appendChild(kap);
+  }
+  window.kameraTamEkranId = function () { return tamEkranId; };
   window.kameraIzlemeAktifMi = function (kameraId) {
     return oynayanlar.has(Number(kameraId));
+  };
+  window.kameraIzlemeDurdur = function (kameraId) {
+    const id = Number(kameraId);
+    if (ayrikler[id]) ayrikKapat(id);
+    durdur(id);
   };
   function ayrikVideoTazele(id) {
     const kayit = ayrikler[id];
@@ -1109,6 +1150,8 @@
     Object.keys(ayrikler).forEach((id) => {
       if (!idler.has(Number(id))) ayrikKapat(Number(id));
     });
+    if (typeof tamEkranId !== "undefined" && tamEkranId !== null &&
+        !idler.has(Number(tamEkranId))) tamEkranKapat();
     [...oynayanlar].forEach((id) => { if (!idler.has(id)) oynayanlar.delete(id); });
     listeCiz();
     // Acik ayrik pencerelerin basliklarini/videolarini tazele

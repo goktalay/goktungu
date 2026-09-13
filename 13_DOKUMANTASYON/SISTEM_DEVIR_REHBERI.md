@@ -117,6 +117,8 @@ Bu teslimden sonra GRCOFF üç sürüm ilerledi ve GRCON tarafında iki canlı d
 - **2.4.152 / paket 2.5.22** — kamera formunda kaybolan **AI Görevleri** bölümü geri geldi; form açılır-kapanır bölümlere ayrıldı; sabit "2.5.19" sürüm kusuru giderildi (sürüm artık `goktungu/paket_surum.py` tek kaynağından okunur).
 - **2.4.153 / paket 2.5.23** — GRCOFF Merkez **aynı zamanda AI sunucusudur**: yerel AI işçisi köprüsüz başlar, kendini `ai_sunucular`a kaydeder ve canlı görüntüye AI'ı doğrudan uygular. Hayalet örnek AI kayıtları kaldırıldı. Canlı yayın yalnız Merkez'in `/kamera/<id>` yolundan, loopback'e bağlı işçi anahtarıyla okunur.
 
+- **2.4.154 / paket 2.5.24** — dron panelinde 'Kamera Başlat' düğmesi; canlı görüntü tek konumda (harita/yüzen/panel/tam ekran, `js/kamera_ai_panel.js`); sınıf başına (İnsan/Kara Aracı/Hava Aracı) tanıma aç-kapa + hassasiyet için açılır-kapanır Yapay Zeka Ayarları paneli. Yeni kamera alanı `ai_hassasiyet` (JSON) uçtan uca işçiye iletilir; varsayılan 50 = önceki davranış. GRCON değişmedi.
+
 **GRCON (canlı düzeltmeler, 02_GRCON/MERKEZ_PYTHON):**
 - `mk_sunucu.py` + `mk_kaba_kuvvet.py` — otomatik güncelleme paket indirme ucu eklendi: `POST /api/istemci/guncelleme_paket` (lisans/kurulum-kimliği doğrular, kaba kuvvet korumalı). Önceden uç yoktu; istemcinin "İndir ve doğrula" adımı 404 alıyordu.
 - `07_GRCCMP/KAYNAK` (`uygulama.js`, `index.html`) — müşteri panelinde **"Lisans belgesini indir"** düğmesi (Abonelik ve Merkez Uygulama sayfaları). Belge `/api/firma/merkez_lisans` yanıtıdır; kurulum ve otomatik güncelleme bununla yetkilendirilir.
