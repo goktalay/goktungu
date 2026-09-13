@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.174";
+const GCS_SURUM = "2.4.175";
 const GCS_SURUM_TARIH = "2026-09-13";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.175",
+    tarih: "2026-09-13",
+    baslik: "YOLO tespiti artık her karede: hızlı uçan hedef sürekli takip ediliyor (paket 2.5.45)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: YOLO tespiti, video okuma döngüsünün 5 Hz'lik örnekleme sınırına (ayrıca kendi içinde ikinci bir 5 Hz sınırına) tabiydi. GPU çıkarımı 100 ms altında bitse bile hedef en fazla ~2-5 Hz güncelleniyordu; hızlı uçan bir uçak/İHA bu aralıkta çerçevenin dışına çıkabiliyor, takip 'sürekli' değil 'aralıklı' görünüyordu.",
+      "YOLO artık HER karede beslenir; örnekleme sınırı tamamen kaldırıldı. Gerçek hız artık yalnız modelin kendi çıkarım süresine bağlıdır (GPU'da tipik 50-150 ms → doğal olarak 6-15 Hz), kendi ayrı iş parçacığı sayesinde video akışını hâlâ yavaşlatmaz.",
+      "MOG2 (model yüklenmemişse devreye giren hareket dedektörü) hâlâ CPU dostu 5 Hz örneklemede kalıyor — bu değişiklik yalnız YOLO/GPU yolunu hızlandırıyor."
+    ]
+  },
   {
     surum: "2.4.174",
     tarih: "2026-09-13",

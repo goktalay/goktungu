@@ -412,6 +412,13 @@ class AkisIsleyici(threading.Thread):
             # Takip artik AYRI iplikte, en son kareyi isleyerek surer.
             if self.takip is not None:
                 self._takip_kuyrukla(kare, ts)
+            # v2.4.175 OLCULEN KUSUR: YOLO tespiti de bu 5Hz orneklemeye
+            # (analiz_adimi) tabiydi; GPU cikarimi 100ms altinda bitse
+            # bile hedef en fazla ~5 Hz guncelleniyor, hizli ucan hedef
+            # "sureksiz takip ediliyor" gibi gorunuyordu. YOLO artik HER
+            # karede beslenir; kendi ozel iplik+kuyruk deseni (en TAZE
+            # kareyi isler) zaten dogal hiz sinirini kendisi koyar.
+            self.isci.kare_yolo_besle(self, kare, ts)
             if sayac % analiz_adimi == 0:
                 try:
                     self.isci.kare_analiz(self, kare, ts)
@@ -473,6 +480,8 @@ class AkisIsleyici(threading.Thread):
                     # v2.4.174: takip AYRI iplikte (bkz. yukarıdaki not)
                     if self.takip is not None:
                         self._takip_kuyrukla(kare, ts)
+                    # v2.4.175: YOLO her karede beslenir (bkz. yukarıdaki not)
+                    self.isci.kare_yolo_besle(self, kare, ts)
                     if sayac % analiz_adimi == 0:
                         try:
                             self.isci.kare_analiz(self, kare, ts)
@@ -821,8 +830,24 @@ class AIIsci:
     # ------------------------------------------------------------------
     # Analiz
     # ------------------------------------------------------------------
+    def kare_yolo_besle(self, akis, kare, ts):
+        """v2.4.175: YOLO icin HER karede cagrilir (5Hz orneklemeye tabi
+        DEGILDIR) — hizli ucan hedefte sureksiz gorunen takibin sebebiydi.
+        `_yolo_kuyrukla` ucuzdur (yalniz en son kareyi saklar); gercek
+        cikarim ayri iplikte kendi hizinda calisir, okuma dongusunu
+        etkilemez."""
+        if self.ort is None and self.yolo is None:
+            return
+        if "hava_araci" not in (akis.gorevler & IZINLI_SINIFLAR):
+            return
+        self._yolo_kuyrukla(akis, kare, ts)
+
     def kare_analiz(self, akis, kare, ts):
         # GRCOFF 2.5.35 C-UAS: yalnız hava aracı (IHA/drone) tespiti.
+        # v2.4.175: YOLO artik `kare_yolo_besle` ile HER karede ayrica
+        # beslenir; burada YALNIZ MOG2 (model yoksa) ve "gorev kapali"
+        # temizligi kalir — 5Hz ornekleme MOG2 icin hala uygundur (CPU
+        # dostu; hareket algoritmasi ayri iplige alinmadi).
         g = akis.gorevler & IZINLI_SINIFLAR
         if "hava_araci" not in g:
             akis.canli_kutular = []
@@ -833,11 +858,7 @@ class AIIsci:
                 pass
             return
         if self.ort is not None or self.yolo is not None:
-            # v2.4.169: YOLO cikarimi CPU'da saniyeler surebilir; akis
-            # okuma ipligi BLOKLANMAZ. Kare ayri cikarim ipligine
-            # birakilir; kutu bildirimi o iplikten yapilir.
-            self._yolo_kuyrukla(akis, kare, ts)
-            return
+            return   # YOLO yolu tamamen kare_yolo_besle uzerinden isler
         akis.canli_kutular = []
         _t0 = time.time()
         self._hareket_analiz(akis, kare, ts)
@@ -1045,13 +1066,16 @@ class AIIsci:
         """YOLOv5/8 ONNX ciktisiyla hava araci tespiti.
 
         MOG2'den farki: hareketli kamera goruntusunde de calisir (nesne
-        gorunumden taninir, hareketten degil). CPU yuku yuksek oldugundan
-        en cok ~2.5 Hz calistirilir; takip (CSRT) her karede bagimsiz
-        surer, bu kisitlama takibi etkilemez.
+        gorunumden taninir, hareketten degil). v2.4.175: artik HER karede
+        beslenir (`kare_yolo_besle`); gercek hiz siniri kendi cikarim
+        suresidir (GPU'da ~50-150ms -> dogal olarak ~6-15 Hz; zayif CPU'da
+        daha dusuk). Kuyruk deseni (en TAZE kareyi isler) video okuma
+        dongusunu asla yavaslatmaz.
         """
-        # Kuyruk zaten serilestirir (tek cikarim ipligi); yine de art arda
-        # ayni saniyede iki cikarima girmemek icin kucuk alt sinir.
-        if ts - getattr(akis, "_yolo_son", 0.0) < 0.2:
+        # Kuyruk zaten serilestirir (tek cikarim ipligi calisir); yalnizca
+        # patolojik "ayni ts ile art arda cagri" durumuna karsi cok kucuk
+        # bir alt sinir (pratikte cikarim suresi bunun cok uzerindedir).
+        if ts - getattr(akis, "_yolo_son", 0.0) < 0.03:
             return
         akis._yolo_son = ts
         akis.canli_kutular = []
