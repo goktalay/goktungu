@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.196";
+const GCS_SURUM = "2.4.197";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.197",
+    tarih: "2026-09-14",
+    baslik: "Kurulum sihirbazı 'Bağlantı doğrulanıyor' adımında kilitlenmiyor (paket 2.5.67)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, ekran görüntüsü): Sihirbazın ilk adımı (PostgreSQL bağlantı doğrulama) yanıt alamıyor, düğme sonsuza kadar dönüyordu. Neden: sunucu WS komutlarını bağlantı başına SIRAYLA işliyordu; sayfa açılışında sıraya giren yavaş bir komut (özellikle internet yokken merkeze giden bir istek) sihirbazın komutunu dakikalarca bekletiyordu. Sihirbaz komutları artık sıradan bağımsız, ayrı görev olarak işlenir.",
+      "TEŞHİS: 3 saniyeden uzun süren her WS komutu adıyla günlüğe yazılır ('YAVAŞ KOMUT'), böylece sırayı tıkayan komut görünür.",
+      "İSTEMCİ: Doğrulama/oluşturma adımlarında 30 sn yanıt gelmezse düğme serbest bırakılır ve neden yazılır; sonsuz dönme yoktur."
+    ]
+  },
   {
     surum: "2.4.196",
     tarih: "2026-09-14",

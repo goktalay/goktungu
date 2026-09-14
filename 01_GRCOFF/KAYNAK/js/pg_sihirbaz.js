@@ -1162,6 +1162,22 @@ function pgIleriBas() {
   pgCiz();
   if (!pgGonder(Object.assign({ tip: "pg_dene" }, _pgD.bilgi)))
     pgBaglantiYok();
+  else pgKisaBekci("pg_dene");
+}
+// v2.4.197: dogrulama/olusturma 30 sn icinde yanitlanmazsa dugme sonsuza
+// kadar donmez: bekleme kaldirilir, neden yazilir, kullanici yeniden
+// deneyebilir. (Olculen kusur: "Baglanti dogrulaniyor..." asamasinda
+// kilitlenme.)
+function pgKisaBekci(komut) {
+  if (_pgD._kisaBekci) clearTimeout(_pgD._kisaBekci);
+  _pgD._kisaBekci = setTimeout(function () {
+    _pgD._kisaBekci = null;
+    if (!_pgD.bekliyor || _pgD.gonderilen !== komut) return;
+    _pgD.bekliyor = false;
+    _pgD.hata = (pgT().pgYanitYok ||
+      "Sunucu 30 saniye i\u00e7inde yan\u0131t vermedi. Sunucu g\u00fcnl\u00fc\u011f\u00fcn\u00fc (servis.log) kontrol edin ve yeniden deneyin.");
+    pgCiz();
+  }, 30000);
 }
 
 function pgVeritabaniOlustur() {
@@ -1172,6 +1188,7 @@ function pgVeritabaniOlustur() {
   pgCiz();
   if (!pgGonder(Object.assign({ tip: "pg_olustur" }, _pgD.bilgi)))
     pgBaglantiYok();
+  else pgKisaBekci("pg_olustur");
 }
 
 // v2.4.196: BEKCI — kur/goc gonderildikten sonra ne ilerleme ne sonuc

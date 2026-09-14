@@ -1502,8 +1502,27 @@ class WSSunucusu:
                     k = json.loads(ham)
                 except json.JSONDecodeError:
                     continue
+                # v2.4.197 OLCULEN KUSUR: komutlar bu dongude SIRAYLA
+                # islenir. Sayfa acilisinda siraya giren yavas bir komut
+                # (internet yokken merkeze giden bir HTTP istegi gibi)
+                # arkasindaki kurulum sihirbazi komutunu (pg_dene) DAKIKA-
+                # LARCA bekletiyordu; kullanici "Baglanti dogrulaniyor"
+                # dugmesinin kilitlendigini goruyordu. Sihirbaz komutlari
+                # artik siradan bagimsiz, ayri gorev olarak islenir.
+                _komut_adi = str((k or {}).get("tip") or "")
+                if _komut_adi.startswith("pg_"):
+                    asyncio.create_task(self._komut_isle_korumali(websocket, k))
+                    continue
+                _t0 = time.time()
                 try:
                     await self._komut_isle(websocket, k)
+                    # Teshis: 3 sn'den uzun suren komut gunluge yazilir;
+                    # boylece sirayi tikayan komut ADIYLA gorunur.
+                    _dt = time.time() - _t0
+                    if _dt > 3.0:
+                        self.konsol("WS", "YAVAS KOMUT: '%s' %.1f sn surdu "
+                                    "(arkasindaki komutlar bekledi)"
+                                    % (_komut_adi, _dt), "uyari")
                 except websockets.exceptions.ConnectionClosed:
                     # Komut isleme sirasinda istemci koptu
                     break
@@ -6075,6 +6094,20 @@ class WSSunucusu:
                 _KK.basarili(es, uc, hesap)
             else:
                 _KK.basarisiz(es, uc, hesap)
+
+    async def _komut_isle_korumali(self, websocket, k):
+        """`asyncio.create_task` ile siradan bagimsiz kosan komutlar icin
+        istisna kalkani (v2.4.197): gorev icindeki hata baglantiyi
+        dusurmez, gunluge yazilir; sihirbaz istemcisi bekcisiyle toparlar."""
+        try:
+            await self._komut_isle(websocket, k)
+        except websockets.exceptions.ConnectionClosed:
+            pass
+        except Exception as e:
+            import traceback
+            self.konsol("WS", "Komut hatasi (%s): %s: %s"
+                        % ((k or {}).get("tip"), type(e).__name__, e), "hata")
+            self.konsol("WS", traceback.format_exc()[-800:], "hata")
 
     async def _komut_isle(self, websocket, k):
         """Tek bir istemci komutunu isler."""
