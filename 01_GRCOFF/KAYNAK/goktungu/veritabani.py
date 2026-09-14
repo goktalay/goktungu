@@ -361,6 +361,20 @@ def tablolari_olustur():
                 url         TEXT NOT NULL
             );
 
+            -- v2.4.191: coklu elektro-optik (eo_cihazlar.py).
+            CREATE TABLE IF NOT EXISTS eo_cihazlar (
+                id              INTEGER PRIMARY KEY,
+                isim            TEXT NOT NULL DEFAULT 'M50',
+                tur             TEXT NOT NULL DEFAULT 'm50',
+                ip              TEXT NOT NULL DEFAULT '',
+                port            INTEGER NOT NULL DEFAULT 39020,
+                lat             REAL,
+                lon             REAL,
+                kopru_ornek_id  INTEGER,
+                otomatik_baglan INTEGER NOT NULL DEFAULT 1,
+                firma_id        INTEGER
+            );
+
             -- v2.4.190: coklu radar (radarlar.py). Eski tek radar ayari
             -- ilk acilista 'Radar 1' olarak tasinir.
             CREATE TABLE IF NOT EXISTS radarlar (

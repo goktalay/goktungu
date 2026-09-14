@@ -493,17 +493,29 @@ def uygulama_kur():
     #      (Linux Merkez, SDK eksik) sessizce Köprü akışına düşer.
     from goktungu.m50_vekil import M50Vekili
     from goktungu.m50_yerel import M50YerelServisi
-    m50 = M50Vekili(konsol, kilit)
-    m50_yerel = M50YerelServisi(konsol, ayarlar)
-    video_proxy.m50_vekil = m50  # v2.4.181: 'm50:<kanal>' kamera URL cozumu
-    if m50_yerel.kullanilabilir():
+    # v2.4.191 (Faz B): COKLU ELEKTRO-OPTIK. `eo` cihaz basina bir
+    # (M50Vekili, M50YerelServisi) cifti yonetir; `m50`/`m50_yerel`
+    # birincil cihazin nesneleridir (geriye uyum).
+    from goktungu.eo_cihazlar import EOKayitlari, EOYoneticisi
+    _eo_kayitlar = EOKayitlari()
+    _eo_kayitlar.ilk_kaydi_garanti_et()
+    eo = EOYoneticisi(
+        konsol, ayarlar, kilit, _eo_kayitlar,
+        vekil_fabrikasi=lambda k: M50Vekili(konsol, kilit),
+        yerel_fabrikasi=lambda k: M50YerelServisi(konsol, ayarlar, eo_id=int(k["id"])))
+    m50 = eo.m50
+    m50_yerel = eo.m50_yerel
+    video_proxy.m50_vekil = eo  # 'm50:<eo_id>:<kanal>' kamera URL cozumu
+    if m50_yerel is not None and m50_yerel.kullanilabilir():
         konsol("M50", "M50 elektro-optik: gömülü SDK bulundu, köprüsüz "
-                      "doğrudan bağlantı kullanılabilir.", "bilgi")
+                      "doğrudan bağlantı kullanılabilir (%d cihaz kaydı)."
+               % len(eo.yereller), "bilgi")
         # v2.4.187: kayıtlı kimlik varsa açılışta kendiliğinden bağlan.
         # Ayrı iş parçacığı: SDK bağlantı zaman aşımı açılışı bekletmesin.
         import threading as _thr
-        _thr.Thread(target=m50_yerel.otomatik_baglan,
-                    name="m50-otomatik-baglan", daemon=True).start()
+        for _eid, _y in eo.yereller.items():
+            _thr.Thread(target=_y.otomatik_baglan,
+                        name="m50-otomatik-baglan-%d" % _eid, daemon=True).start()
     else:
         konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur "
                       "(bu makinede gömülü SDK yok/Windows değil).", "bilgi")
@@ -629,6 +641,8 @@ def uygulama_kur():
                            ai_yonetici=ai_yonetici,
                            kisiler=kisiler, araclar=araclar,
                            istasyon2=istasyon2)
+    # v2.4.191: coklu elektro-optik yoneticisi sunucuya baglanir.
+    ws_sunucu.eo = eo
     # v2.4.39: sanal dron = gercek ArduPilot SITL sureci
     from goktungu.sitl import SitlYoneticisi
     ws_sunucu.sitl = SitlYoneticisi(konsol, ayarlar)

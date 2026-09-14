@@ -98,6 +98,31 @@ def PGetLastErrCode(handle) -> c_int:
     return eval(func)(handle)
 
 
+# GOKTUNGU eklentisi: cevre birimi (pusula/GPS/hava) verisi.
+# HVS_GetExternDeviceInfo(DevHandle h, ExternDevice_e type, ExternData_CB cb, PVoid user)
+# ExternData_CB: void STDCALL (PVoid user, ExternDevice_e type, PVoid data, int size)
+ExternData_CB = WINFUNCTYPE(None, c_void_p, c_int, c_void_p, c_int)
+
+
+class GPSData_t(Structure):
+    _fields_ = [("lon", c_double), ("lat", c_double), ("alt", c_double)]
+
+
+class CompassData_t(Structure):
+    _fields_ = [("angleX", c_double), ("angleY", c_double), ("angleZ", c_double)]
+
+
+def GetExternDeviceInfo(handle, ext_type, cb, user) -> c_bool:
+    """
+    :param handle:    设备句柄
+    :param ext_type:  0 pusula, 1 GPS, 2 hava
+    :param cb:        ExternData_CB ornegi (cagiran taraf referansi tutmali)
+    :param user:      c_void_p
+    """
+    func = prefix + "GetExternDeviceInfo"
+    return eval(func)(handle, ext_type, cb, user)
+
+
 # 设置超时时间
 def SetRequestTimeout(handle, timeout) -> c_bool:
     """

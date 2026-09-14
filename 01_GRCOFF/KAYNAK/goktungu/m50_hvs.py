@@ -87,6 +87,8 @@ class M50Istemcisi:
             "ip": "", "port": 0, "hata": "", "azimut": None,
             "egim": None, "takip": {"etkin": False, "kanal": ""},
             "tarama": {"tur": "yok", "kontrol": "durdur", "yol": 0},
+            # v2.4.191: cihazın kendi RTK/GPS konumu ve pusulası (konum_oku)
+            "konum": None, "pusula": None,
             "video": {"gorunur": False, "termal": False,
                       "kaynak": "sdk_ham_veri_webde_desteklenmez"},
             "son_islem": "", "guncelleme": time.time(),
@@ -547,6 +549,43 @@ class M50Istemcisi:
         ters = {0: "hava_yari_otomatik", 1: "hava_otomatik", 2: "kara_manuel",
                 3: "kara_yari_otomatik", 4: "kara_otomatik"}
         return ters.get(int(mod.value))
+
+    # ------------------------------------------------------------------
+    # v2.4.191 — Cihazın kendi konumu (RTK/GPS) ve pusulası.
+    # `HVS_GetDevicePos` üretici başlığında "(Disabled)"; çevre birimi
+    # yolu (HVS_GetExternDeviceInfo, ED_GPS/ED_COMPASS) geri çağrıyla
+    # veri verir. Geri çağrı nesnesi `self._dis_cb` içinde tutulur;
+    # çöp toplayıcı alırsa SDK serbest bırakılmış adrese döner.
+    # ------------------------------------------------------------------
+    def konum_oku(self) -> Dict[str, Any]:
+        cihaz = self._bagli_cihaz()
+        ct = importlib.import_module("ctypes")
+        dev = importlib.import_module("Hvs.device")
+        if getattr(self, "_dis_cb", None) is None:
+            def _cb(user, tur, veri, boyut):
+                try:
+                    if tur == 1 and boyut >= ct.sizeof(dev.GPSData_t):
+                        g = ct.cast(veri, ct.POINTER(dev.GPSData_t)).contents
+                        lat, lon, alt = float(g.lat), float(g.lon), float(g.alt)
+                        if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0 and (lat or lon):
+                            self._durum_yaz(konum={"lat": round(lat, 7), "lon": round(lon, 7),
+                                                   "alt": round(alt, 1), "ts": time.time(),
+                                                   "kaynak": "rtk"})
+                    elif tur == 0 and boyut >= ct.sizeof(dev.CompassData_t):
+                        c = ct.cast(veri, ct.POINTER(dev.CompassData_t)).contents
+                        self._durum_yaz(pusula={"yon": round(float(c.angleX), 2) % 360.0,
+                                                "egim": round(float(c.angleY), 2),
+                                                "yatis": round(float(c.angleZ), 2),
+                                                "ts": time.time()})
+                except Exception:
+                    pass
+            self._dis_cb = dev.ExternData_CB(_cb)
+        try:
+            cihaz.GetExternDeviceInfo(1, self._dis_cb, None)   # GPS
+            cihaz.GetExternDeviceInfo(0, self._dis_cb, None)   # pusula
+        except Exception as exc:
+            raise M50Hata("M50 konum/pusula istenemedi: %s" % exc) from exc
+        return self.durum()
 
     def rtsp_url(self, kanal: Any) -> Optional[str]:
         """Cihazın kendi yayınladığı RTSP adresini SDK'dan okur.

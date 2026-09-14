@@ -102,6 +102,11 @@ class IPC_device(object):
     def RegRealDataEvent(self, event, this):
         return video.RegRealDataEvent(self.__handle__, event, this)
 
+    def GetExternDeviceInfo(self, ext_type, cb, user=None):
+        """GOKTUNGU eklentisi: pusula(0)/GPS(1)/hava(2) verisini geri
+        cagriyla ister. `cb` bir device.ExternData_CB ornegi olmali."""
+        return device.GetExternDeviceInfo(self.__handle__, int(ext_type), cb, user)
+
     def GetRtspUrl(self, video_type, stream=0):
         """GOKTUNGU eklentisi: cihazin kendi yayinladigi RTSP adresini
         SDK'dan okur (operator elle girmek zorunda kalmaz). Basarisizsa

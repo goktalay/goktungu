@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.190";
+const GCS_SURUM = "2.4.191";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.191",
+    tarih: "2026-09-14",
+    baslik: "Çoklu Elektro-Optik (Faz B): birden fazla M50, cihazın RTK konumu haritada (paket 2.5.61)",
+    maddeler: [
+      "YENİ: Elektro-Optik panelinde cihaz sekmeleri — istenildiği kadar M50 eklenir (ad, IP, port); her cihazın kimliği, RTSP'si, PTZ/ön ayar/tarama/takip kontrolü ve kamera kaydı ayrıdır. Mevcut tek cihaz 'M50 1' olarak devam eder; kamera kayıtları 'm50:<cihaz>:<kanal>' biçimini alır (eski 'm50:<kanal>' = cihaz 1).",
+      "YENİ: Cihazın kendi RTK/GPS konumu ve pusulası SDK'dan (çevre birimi geri çağrısı: GPS + elektronik pusula) 5 sn'de bir okunur; haritada her M50 için özel kamera ikonu, ad etiketi ('· RTK' kaynağı) ve azimut yönünde görüş çizgisi. RTK yoksa kayıtlı enlem/boylam kullanılır.",
+      "Arka uç: goktungu/eo_cihazlar.py (EOKayitlari + EOYoneticisi), 'eo_cihazlar' tablosu, telemetride 'eo_cihazlar' listesi, WS: eo_listesi / eo_kaydet / eo_sil; tüm m50_* komutları eo_id alır (verilmezse birincil cihaz). Kimlik/ayarlar cihaz başına ayrı anahtarda saklanır; açılışta her cihaz için otomatik bağlanma.",
+      "NOT: Saha Köprüsü üzerinden (merkez kipi) Faz C'ye kadar yalnız 1 numaralı cihaz köprüden beslenir."
+    ]
+  },
   {
     surum: "2.4.190",
     tarih: "2026-09-14",

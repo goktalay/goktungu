@@ -566,13 +566,21 @@
   // v2.4.188: M50 Elektro-Optik paneli (m50_panel.js) kamera kaydini,
   // kanal degisimini ve MJPEG <img> uretimini buradan kullanir — tek
   // sistem: panel ayri bir akis acmaz, mevcut M50 kamera kaydini surer.
-  window.m50KameraBul = function () {
-    return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50") || null;
+  // v2.4.191: coklu EO — url 'm50:<eo_id>:<kanal>'; eski 'm50:<kanal>' = cihaz 1.
+  function m50EoIdOku(kamera) {
+    const p = String(kamera.url || "").split(":");
+    return p.length >= 3 ? (parseInt(p[1], 10) || 1) : 1;
+  }
+  window.m50KameraBul = function (eoId) {
+    const hedef = Number(eoId) > 0 ? Number(eoId) : 0;
+    return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50" &&
+                               (!hedef || m50EoIdOku(k) === hedef)) || null;
   };
   window.m50KanalDegistir = function (kamera, yeniKanal) {
+    const eoId = m50EoIdOku(kamera);
     wsGonder({
       tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
-      protokol: "m50", url: "m50:" + yeniKanal, m50_kanal: yeniKanal,
+      protokol: "m50", url: "m50:" + eoId + ":" + yeniKanal, m50_kanal: yeniKanal, eo_id: eoId,
       kopru_ornek_id: kamera.kopru_ornek_id || null,
       ai_gorevler: kamera.ai_gorevler || "",
       ai_hassasiyet: kamera.ai_hassasiyet || "",
@@ -582,9 +590,10 @@
       // yoksa mevcut angajman kalibrasyonunu SILMEZ (bkz. sunucu.py).
     });
   };
-  window.m50KameraOlustur = function () {
-    wsGonder({ tip: "kamera_kaydet", isim: "M50", protokol: "m50",
-               url: "m50:gorunur", m50_kanal: "gorunur" });
+  window.m50KameraOlustur = function (eoId, isim) {
+    const eid = Number(eoId) > 0 ? Number(eoId) : 1;
+    wsGonder({ tip: "kamera_kaydet", isim: isim || ("M50 " + eid), protokol: "m50",
+               url: "m50:" + eid + ":gorunur", m50_kanal: "gorunur", eo_id: eid });
   };
   window.kamVideoOlustur = function (kamera) { return videoOlustur(kamera); };
 

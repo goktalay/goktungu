@@ -940,6 +940,9 @@ const DILLER = {
     m50Baglanti: "AÇIK CİHAZ BAĞLANTISI", m50Kullanici: "Kullanıcı adı", m50Parola: "Parola",
     btnM50Baglan: "M50'YE BAĞLAN", btnM50Kes: "M50 BAĞLANTISINI KES",
     m50DurumBaslik: "M50 DURUMU", m50Kapali: "Bağlı değil", m50Baglaniyor: "Bağlanıyor...", m50Bagli: "Bağlı", m50Hata: "Hata",
+    // v2.4.191 coklu EO
+    lblEoIsim: "Cihaz adı", btnEoKaydet: "KAYDET", btnEoSil: "SİL", btnEoEkle: "Yeni elektro-optik cihaz",
+    onayEoSil: "{ad} elektro-optik kaydı silinsin mi?",
     // v2.4.188 Elektro-Optik paneli
     m50BolumVideo: "CANLI GÖRÜNTÜ", m50BolumPtz: "PTZ VE LENS", m50BolumAci: "AÇI KONUMLAMA", m50BolumOnayar: "ÖN AYARLAR (PRESET)",
     m50BolumTarama: "TARAMA / DEVRİYE", m50BolumTakip: "HEDEF TAKİBİ", m50BolumBaglanti: "BAĞLANTI VE KİMLİK", m50BolumAyar: "GELİŞMİŞ AYARLAR",
@@ -3058,6 +3061,9 @@ const DILLER = {
     m50Baglanti: "EXPLICIT DEVICE CONNECTION", m50Kullanici: "Username", m50Parola: "Password",
     btnM50Baglan: "CONNECT M50", btnM50Kes: "DISCONNECT M50",
     m50DurumBaslik: "M50 STATUS", m50Kapali: "Not connected", m50Baglaniyor: "Connecting...", m50Bagli: "Connected", m50Hata: "Error",
+    // v2.4.191 multi EO
+    lblEoIsim: "Device name", btnEoKaydet: "SAVE", btnEoSil: "DELETE", btnEoEkle: "Add electro-optic device",
+    onayEoSil: "Delete electro-optic record {ad}?",
     // v2.4.188 Electro-Optic panel
     m50BolumVideo: "LIVE VIDEO", m50BolumPtz: "PTZ AND LENS", m50BolumAci: "ANGLE POSITIONING", m50BolumOnayar: "PRESETS",
     m50BolumTarama: "SCAN / PATROL", m50BolumTakip: "TARGET TRACKING", m50BolumBaglanti: "CONNECTION AND CREDENTIALS", m50BolumAyar: "ADVANCED SETTINGS",

@@ -86,7 +86,10 @@ function telemetriIsle(m){
   // Köprüsünün arındırılmış durum/yerel akış özetidir. Bir hata diğer
   // telemetri bileşenlerini etkilemez.
   _guvenli("m50_paneli", () => {
-    if (m.m50 && !m.replay && typeof m50PaneliGuncelle === "function")
+    // v2.4.191: coklu EO — liste geldiyse secili cihazin paketi panele gider.
+    if (!m.replay && m.eo_cihazlar && typeof window.eoListesiGuncelle === "function")
+      window.eoListesiGuncelle(m.eo_cihazlar, m.m50);
+    else if (m.m50 && !m.replay && typeof m50PaneliGuncelle === "function")
       m50PaneliGuncelle(m.m50);
   });
 

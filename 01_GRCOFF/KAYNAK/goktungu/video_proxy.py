@@ -601,8 +601,22 @@ class VideoProxy:
             gercek = self.dji_kopru.video_url(sysid)
             return gercek or None
         if kam.get("protokol") == "m50" and self.m50_vekil:
-            kanal = str(url).split(":", 1)[1] if ":" in str(url) else ""
-            return self.m50_vekil.rtsp_url(kanal)
+            # v2.4.191: 'm50:<eo_id>:<kanal>' (coklu EO) veya eski 'm50:<kanal>'.
+            parcalar = str(url).split(":")
+            eo_id = None
+            kanal = ""
+            if len(parcalar) >= 3:
+                try:
+                    eo_id = int(parcalar[1])
+                except (TypeError, ValueError):
+                    eo_id = None
+                kanal = parcalar[2]
+            elif len(parcalar) == 2:
+                kanal = parcalar[1]
+            try:
+                return self.m50_vekil.rtsp_url(kanal, eo_id)
+            except TypeError:
+                return self.m50_vekil.rtsp_url(kanal)
         return url
 
     # ------------------------------------------------------------------

@@ -40,9 +40,84 @@ function m50Gonder(paket){
   if (typeof ws === "undefined" || !ws || ws.readyState !== 1) return false;
   if (_m50KopruSecili > 0 && paket && paket.kopru_ornek_id === undefined)
     paket.kopru_ornek_id = _m50KopruSecili;
+  // v2.4.191: her komut SECILI elektro-optik cihaza gider.
+  if (_eoSecili > 0 && paket && paket.eo_id === undefined)
+    paket.eo_id = _eoSecili;
   ws.send(JSON.stringify(paket));
   return true;
 }
+
+// =================================================================
+// v2.4.191 — COKLU ELEKTRO-OPTIK: cihaz sekmeleri + kayit
+// Telemetri `eo_cihazlar: [{eo_id, isim, m50_durum, konum, ...}]` tasir.
+// =================================================================
+let eoListesi = [];
+let _eoSecili = 0;
+let _eoFormuDoldu = 0;
+const eoListeEl = document.getElementById("eoListe");
+const eoIsimEl = document.getElementById("eoIsim");
+window.eoSeciliId = function(){ return _eoSecili; };
+
+function eoSecili(){
+  return eoListesi.find(c => Number(c.eo_id) === _eoSecili) || eoListesi[0] || null;
+}
+function eoListeCiz(){
+  if (!eoListeEl) return;
+  const t = m50T();
+  eoListeEl.innerHTML = "";
+  for (const c of eoListesi){
+    const d = (c.m50_durum && c.m50_durum.durum) || "kapali";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "ra-sekme" + (Number(c.eo_id) === _eoSecili ? " secili" : "");
+    b.innerHTML = "<span class='ra-nokta d-" + d + "'></span><span>" + (c.isim || ("M50 " + c.eo_id)) + "</span>";
+    b.addEventListener("click", () => { _eoSecili = Number(c.eo_id); _eoFormuDoldu = 0; _m50VideoKamId = null; _m50AyarYuklendi = false; eoListeCiz(); eoPaneliTazele(); });
+    eoListeEl.appendChild(b);
+  }
+  const ekle = document.createElement("button");
+  ekle.type = "button"; ekle.className = "ra-sekme ra-ekle";
+  ekle.innerHTML = "<i class='fa-solid fa-plus'></i>";
+  ekle.title = t.btnEoEkle || "Yeni elektro-optik cihaz";
+  ekle.addEventListener("click", () => {
+    m50Gonder({tip: "eo_kaydet", eo_id: 0, isim: "M50 " + (eoListesi.length + 1), port: 39020});
+  });
+  eoListeEl.appendChild(ekle);
+}
+function eoPaneliTazele(){
+  const c = eoSecili();
+  if (!c) return;
+  if (eoIsimEl && _eoFormuDoldu !== Number(c.eo_id) && document.activeElement !== eoIsimEl){
+    eoIsimEl.value = c.isim || ""; _eoFormuDoldu = Number(c.eo_id);
+  }
+  window.m50PaneliGuncelle(c);
+}
+window.eoListesiGuncelle = function(liste, eski){
+  eoListesi = Array.isArray(liste) ? liste : [];
+  if (!eoListesi.length){ if (eski) window.m50PaneliGuncelle(eski); return; }
+  if (!eoListesi.some(c => Number(c.eo_id) === _eoSecili))
+    _eoSecili = Number(eoListesi[0].eo_id);
+  eoListeCiz();
+  eoPaneliTazele();
+  if (typeof window.eoIkonlariGuncelle === "function") window.eoIkonlariGuncelle(eoListesi);
+};
+(function eoKayitDugmeleri(){
+  const kaydet = document.getElementById("btnEoKaydet");
+  const sil = document.getElementById("btnEoSil");
+  if (kaydet) kaydet.addEventListener("click", () => {
+    const c = eoSecili();
+    _eoFormuDoldu = 0;
+    m50Gonder({tip: "eo_kaydet", eo_id: c ? Number(c.eo_id) : 0,
+               isim: eoIsimEl ? eoIsimEl.value.trim() : "",
+               ip: m50Ip ? m50Ip.value.trim() : "", port: parseInt(m50Port && m50Port.value, 10) || 39020});
+  });
+  if (sil) sil.addEventListener("click", () => {
+    const c = eoSecili();
+    if (!c) return;
+    const metin = (m50T().onayEoSil || "{ad} elektro-optik kaydı silinsin mi?").replace("{ad}", c.isim || ("M50 " + c.eo_id));
+    if (typeof onayIste === "function") onayIste(metin, () => m50Gonder({tip: "eo_sil", eo_id: Number(c.eo_id)}));
+    else if (confirm(metin)) m50Gonder({tip: "eo_sil", eo_id: Number(c.eo_id)});
+  });
+})();
 
 function m50KopruSeciciCiz(){
   if (!m50KopruSar || !m50KopruSec) return;
@@ -363,8 +438,8 @@ function m50T(){ return (typeof D === "function" ? D() : {}) || {}; }
 // --- Canlı görüntü: mevcut M50 kamera kaydını panele gömer -----------
 function m50VideoKur(){
   if (!m50VideoSar) return;
-  const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul() : null;
-  const kanal = kam ? (String(kam.url || "").split(":")[1] === "termal" ? "termal" : "gorunur") : "";
+  const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
+  const kanal = kam ? (String(kam.url || "").split(":").pop() === "termal" ? "termal" : "gorunur") : "";
   if (!kam){
     if (_m50VideoKamId !== null){
       m50VideoSar.querySelectorAll("img.kam-video").forEach(e => e.remove());
@@ -392,14 +467,15 @@ if (m50VideoSar){
   for (const b of m50VideoSar.querySelectorAll(".m50-kanal")){
     b.addEventListener("click", ev => {
       ev.stopPropagation();
-      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul() : null;
+      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
       if (kam && typeof window.m50KanalDegistir === "function" && b.dataset.kanal !== _m50VideoKanal)
         window.m50KanalDegistir(kam, b.dataset.kanal);
     });
   }
 }
 if (btnM50KameraOlustur) btnM50KameraOlustur.addEventListener("click", () => {
-  if (typeof window.m50KameraOlustur === "function") window.m50KameraOlustur();
+  const c = eoSecili();
+  if (typeof window.m50KameraOlustur === "function") window.m50KameraOlustur(_eoSecili, c ? c.isim : "");
 });
 
 // --- Açı ---------------------------------------------------------------

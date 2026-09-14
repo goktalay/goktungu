@@ -3017,19 +3017,32 @@ class WSSunucusu:
         sonuc["kopru_ornek_id"] = oid
         return sonuc, ""
 
-    async def _m50_yerelden(self, websocket, eylem, veri=None):
+    # v2.4.191: COKLU EO — komuttaki eo_id'ye gore vekil/yerel cifti.
+    def _eo_vekil(self, k=None):
+        eo = getattr(self, "eo", None)
+        if eo is not None:
+            return eo.vekil(k.get("eo_id") if isinstance(k, dict) else None)
+        return getattr(self, "m50", None)
+
+    def _eo_yerel(self, k=None):
+        eo = getattr(self, "eo", None)
+        if eo is not None:
+            return eo.yerel(k.get("eo_id") if isinstance(k, dict) else None)
+        return getattr(self, "m50_yerel", None)
+
+    async def _m50_yerelden(self, websocket, eylem, veri=None, k=None):
         """M50 komutunu Merkez'in kendi gömülü SDK'sıyla (köprüsüz) uygular.
 
         SDK çağrıları senkron/bloklayıcı olduğu için asyncio döngüsünü
         kilitlememek adına `asyncio.to_thread` ile ayrı iş parçacığında
         çalıştırılır — `ai_track_baslat/durdur` ile aynı desen.
         """
-        yerel = self.m50_yerel
+        yerel = self._eo_yerel(k)
+        hedef = self._eo_vekil(k)
         try:
             sonuc = await asyncio.to_thread(yerel.uygula, eylem, veri or {})
         except Exception as exc:
             hata = str(exc)[:256] or "M50 komutu uygulanamadı"
-            hedef = getattr(self, "m50", None)
             if hedef is not None:
                 with self.kilit:
                     hedef.durum.update({"durum": "hata", "bagli": False,
@@ -3037,7 +3050,6 @@ class WSSunucusu:
             self.konsol("M50", hata, "hata")
             await self._uyari_gonder(websocket, "M50", hata, "hata")
             return None
-        hedef = getattr(self, "m50", None)
         if hedef is not None and isinstance(sonuc, dict):
             hedef._uygula(sonuc)
         return sonuc
@@ -3046,9 +3058,9 @@ class WSSunucusu:
         """M50 komutunu uygular: köprüsüz mod kullanılabilirse ONU, aksi
         halde saha Köprüsünü seçer. Sır içeren veriyi hiçbir durumda
         günlüğe/duruma yazmaz."""
-        yerel = getattr(self, "m50_yerel", None)
+        yerel = self._eo_yerel(k)
         if yerel is not None and yerel.kullanilabilir():
-            return await self._m50_yerelden(websocket, eylem, veri)
+            return await self._m50_yerelden(websocket, eylem, veri, k)
         if eylem in self._M50_YEREL_EK_EYLEMLER:
             await self._uyari_gonder(
                 websocket, "M50",
@@ -3058,7 +3070,7 @@ class WSSunucusu:
         istenen = k.get("kopru_ornek_id") if isinstance(k, dict) else None
         sonuc, hata = await self._m50_kopru_cagir(
             websocket, eylem, veri or {}, istenen_kopru=istenen)
-        hedef = getattr(self, "m50", None)
+        hedef = self._eo_vekil(k)
         if hata:
             if hedef is not None:
                 with self.kilit:
@@ -4924,6 +4936,9 @@ class WSSunucusu:
         "m50_onayar_hepsini_sil": ("radar", "parametre", "m50"),
         "m50_tarama":       ("radar", "parametre", "m50"),
         "m50_takip_yetenek": ("radar", "hedef_yonetimi", "m50"),
+        "eo_listesi":       ("radar", "parametre", "m50"),
+        "eo_kaydet":        ("radar", "parametre", "m50"),
+        "eo_sil":           ("radar", "parametre", "m50"),
         "kamera_kaydet":    ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_sil":       ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_konsol_temizle": ("kamera", "kayit_yonetimi", "kamera"),
@@ -5874,6 +5889,7 @@ class WSSunucusu:
         "m50_onayar_kaydet": "m50", "m50_onayar_cagir": "m50",
         "m50_onayar_sil": "m50", "m50_onayar_hepsini_sil": "m50",
         "m50_tarama": "m50", "m50_takip_yetenek": "m50",
+        "eo_listesi": "m50", "eo_kaydet": "m50", "eo_sil": "m50",
         "istasyon2_portlar": "gccdual",
         "istasyon2_baglan": "gccdual",
         "istasyon2_kes": "gccdual",
@@ -6366,6 +6382,54 @@ class WSSunucusu:
                 if _ist is not None:
                     with self.kilit:
                         _ist.ayar_kuyruk.append(("oku",))
+
+        # ---- v2.4.191: coklu elektro-optik kayit yonetimi ----
+        elif komut == "eo_listesi":
+            _eo = getattr(self, "eo", None)
+            if _eo is not None:
+                await websocket.send(json.dumps({
+                    "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+
+        elif komut == "eo_kaydet":
+            _eo = getattr(self, "eo", None)
+            if _eo is not None:
+                try:
+                    _eid = k.get("eo_id") or k.get("id")
+                    if _eid:
+                        _eo.kayitlar.guncelle(int(_eid), k)
+                    else:
+                        _eid = _eo.kayitlar.ekle(k)
+                    _eo.tazele()
+                    self.konsol("M50", "Elektro-optik kaydi guncellendi: #%s %s"
+                                % (_eid, k.get("isim") or ""), "basari")
+                    await websocket.send(json.dumps({
+                        "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+                except Exception as _e:
+                    await self._uyari_gonder(websocket, "M50",
+                                             "EO kaydi yazilamadi: %s" % _e, "hata")
+
+        elif komut == "eo_sil":
+            _eo = getattr(self, "eo", None)
+            if _eo is not None:
+                try:
+                    _eid = int(k.get("eo_id") or k.get("id") or 0)
+                except (TypeError, ValueError):
+                    _eid = 0
+                if _eid and len(_eo.kayitlar.listele()) > 1:
+                    _y = _eo.yereller.get(_eid)
+                    if _y is not None:
+                        try:
+                            await asyncio.to_thread(_y.uygula, "kes", {})
+                        except Exception:
+                            pass
+                    _eo.kayitlar.sil(_eid)
+                    _eo.tazele()
+                    self.konsol("M50", "Elektro-optik kaydi silindi: #%d" % _eid)
+                    await websocket.send(json.dumps({
+                        "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+                else:
+                    await self._uyari_gonder(websocket, "M50",
+                                             "Son elektro-optik kaydi silinemez.", "hata")
 
         # ---- v2.4.190: coklu radar kayit yonetimi ----
         elif komut == "radar_listesi":
@@ -9054,7 +9118,16 @@ class WSSunucusu:
                         "M50 kamerasi icin kanal (gorunur/termal) secilmelidir")
                     return
                 k = dict(k)
-                k["url"] = "m50:" + _m50_kanal
+                # v2.4.191: coklu EO — url 'm50:<eo_id>:<kanal>'.
+                try:
+                    _eo_id = int(k.get("eo_id") or 0)
+                except (TypeError, ValueError):
+                    _eo_id = 0
+                if _eo_id <= 0:
+                    _eo = getattr(self, "eo", None)
+                    _eo_id = _eo.birincil_id() if _eo is not None else 1
+                k["eo_id"] = _eo_id
+                k["url"] = "m50:%d:%s" % (_eo_id, _m50_kanal)
                 _m50_ip = str(k.get("m50_ip") or "").strip()
                 _m50_kul = str(k.get("m50_kullanici") or "").strip()
                 _m50_par = str(k.get("m50_parola") or "")
@@ -10509,25 +10582,31 @@ class WSSunucusu:
                 # doğrudan mod kullanılabilirken köprü sorgusu hiç
                 # yapılmaz; durum yalnız `_m50_yerelden()` çağrılarıyla
                 # güncellenir.
-                _m50_yerel = getattr(self, "m50_yerel", None)
-                if _m50_yerel is not None and _m50_yerel.kullanilabilir():
-                    # v2.4.187: yerel mod durumu (otomatik bağlanma dahil)
-                    # her turda vekile aktarılır; SDK'ya gitmez (RTSP
-                    # adresi bağlantı başına önbelleklidir).
-                    if self.m50 is not None:
-                        try:
-                            await _db_is_parcasi(
-                                lambda: self.m50._uygula(
-                                    _m50_yerel._durum_paketi()))
-                        except Exception:
-                            pass
-                else:
-                    _m50_cek = getattr(self.m50, "cek_gerekirse", None)
-                    if _m50_cek is not None:
-                        try:
-                            await _db_is_parcasi(_m50_cek)
-                        except Exception:
-                            pass
+                # v2.4.191: coklu EO — her cihaz icin yerel->vekil aktarimi
+                # (veya kopru cekimi). `eo` yoksa eski tek cift kullanilir.
+                _eo = getattr(self, "eo", None)
+                _eo_ciftler = ([(_eo.vekiller.get(i), _eo.yereller.get(i))
+                                for i in sorted(_eo.vekiller)] if _eo is not None
+                               else [(self.m50, getattr(self, "m50_yerel", None))])
+                for _v, _y in _eo_ciftler:
+                    if _y is not None and _y.kullanilabilir():
+                        if _v is not None:
+                            try:
+                                await _db_is_parcasi(
+                                    (lambda v=_v, y=_y: v._uygula(y._durum_paketi())))
+                            except Exception:
+                                pass
+                    else:
+                        _m50_cek = getattr(_v, "cek_gerekirse", None)
+                        if _m50_cek is not None:
+                            try:
+                                await _db_is_parcasi(_m50_cek)
+                            except Exception:
+                                pass
+                try:
+                    eo_cihazlar = _eo.paketler() if _eo is not None else []
+                except Exception:
+                    eo_cihazlar = []
                 # `M50Vekili.paket()` aynı ortak kilidi alır; bu nedenle
                 # kopyayı telemetri ana kilidine girmeden önce oluştururuz.
                 # Aksi halde `threading.Lock` yeniden girişsiz olduğu için
@@ -10658,6 +10737,7 @@ class WSSunucusu:
                         "suru": suru_durum,
                         "angajmanlar": angajman_durum,
                         "m50": m50,
+                        "eo_cihazlar": eo_cihazlar,
                     })
                 else:
                     veri = json.dumps({
@@ -10679,6 +10759,7 @@ class WSSunucusu:
                         "suru": suru_durum,
                         "angajmanlar": angajman_durum,
                         "m50": m50,
+                        "eo_cihazlar": eo_cihazlar,
                     })
                 # ---- IS94_TELEMETRI_KISMA ----------------------
                 # OLCULEN KUSUR: paket bosta TAMAMEN SABIT (0/141

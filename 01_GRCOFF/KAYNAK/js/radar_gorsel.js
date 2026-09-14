@@ -644,6 +644,101 @@ window.radarIkonlariGuncelle = function(liste){
   }
 };
 
+// =================================================================
+// v2.4.191 — ELEKTRO-OPTIK (M50) IKONLARI
+// Konum: cihazin RTK/GPS'i (SDK) > kayitli enlem/boylam. Ikon kamera
+// simgesi; azimut (SDK) yonu gosterir; kisa gorus cizgisi eklenir.
+// =================================================================
+const EO_IKON_RENKLERI = { bagli: "#f0a830", hata: "#e05555", kapali: "#8a97a5" };
+const EO_GORUS_M = 800;
+let eoIkonVarliklar = {};
+
+function eoIkon(renk){
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+       <circle cx="20" cy="20" r="9" fill="${renk}" fill-opacity="0.25" stroke="${renk}" stroke-width="1.5"/>
+       <rect x="11" y="15" width="14" height="10" rx="2" fill="${renk}" stroke="#000" stroke-width="1.5"/>
+       <polygon points="25,17 33,13 33,27 25,23" fill="${renk}" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+       <path d="M 20 3 L 24 10 L 16 10 Z" fill="${renk}" stroke="#000" stroke-width="1"/>
+     </svg>`;
+  return "data:image/svg+xml;base64," + btoa(svg);
+}
+
+window.eoIkonlariGuncelle = function(liste){
+  if (typeof viewer === "undefined" || !viewer) return;
+  const gorulen = {};
+  for (const c of (liste || [])){
+    const eid = Number(c.eo_id);
+    const konum = c.konum && typeof c.konum === "object" ? c.konum : null;
+    const lat = konum && typeof konum.lat === "number" ? konum.lat : null;
+    const lon = konum && typeof konum.lon === "number" ? konum.lon : null;
+    if (lat === null || lon === null) continue;
+    if (typeof window.gecerliKonumMu === "function" && !window.gecerliKonumMu(lat, lon)) continue;
+    gorulen[eid] = true;
+    const d = c.m50_durum || {};
+    const renk = d.durum === "bagli" ? EO_IKON_RENKLERI.bagli :
+                 d.durum === "hata" ? EO_IKON_RENKLERI.hata : EO_IKON_RENKLERI.kapali;
+    const az = (typeof d.azimut === "number") ? d.azimut :
+               (d.pusula && typeof d.pusula.yon === "number") ? d.pusula.yon : 0;
+    const key = [lat.toFixed(6), lon.toFixed(6), renk, az.toFixed(1), c.isim, konum.kaynak].join("|");
+    let v = eoIkonVarliklar[eid];
+    if (v && v.sonKey === key) continue;
+    const pos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
+    const uc = noktada(lat, lon, EO_GORUS_M, az * Math.PI / 180);
+    const cizgi = Cesium.Cartesian3.fromDegreesArray([lon, lat, uc[0], uc[1]]);
+    const etiket = (c.isim || ("M50 " + eid)) + (konum.kaynak === "rtk" ? " · RTK" : "");
+    if (!v){
+      v = { sonKey: "", ikon: null, gorus: null, az: 0 };
+      v.ikon = viewer.entities.add({
+        id: "eo_" + eid, position: pos,
+        billboard: {
+          image: eoIkon(renk), width: 36, height: 36,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER, horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          rotation: new Cesium.CallbackProperty(() => {
+            const kam = viewer ? viewer.camera.heading : 0;
+            const vv = eoIkonVarliklar[eid];
+            return -Cesium.Math.toRadians(vv ? vv.az || 0 : 0) + kam;
+          }, false),
+        },
+        label: {
+          text: etiket, font: "bold 10px Consolas, monospace",
+          fillColor: Cesium.Color.fromCssColorString(renk), style: Cesium.LabelStyle.FILL,
+          showBackground: true, backgroundColor: Cesium.Color.BLACK.withAlpha(0.7),
+          backgroundPadding: new Cesium.Cartesian2(5, 3),
+          verticalOrigin: Cesium.VerticalOrigin.TOP, pixelOffset: new Cesium.Cartesian2(0, 20),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
+        }
+      });
+      v.gorus = viewer.entities.add({
+        id: "eo_gorus_" + eid, show: d.durum === "bagli",
+        polyline: { positions: cizgi, width: 2, clampToGround: true,
+                    material: Cesium.Color.fromCssColorString(renk).withAlpha(0.7) }
+      });
+      eoIkonVarliklar[eid] = v;
+    } else {
+      v.ikon.position = pos;
+      v.ikon.billboard.image = eoIkon(renk);
+      v.ikon.label.text = etiket;
+      v.ikon.label.fillColor = Cesium.Color.fromCssColorString(renk);
+      v.gorus.polyline.positions = cizgi;
+      v.gorus.polyline.material = Cesium.Color.fromCssColorString(renk).withAlpha(0.7);
+      v.gorus.show = d.durum === "bagli";
+    }
+    v.az = az; v.sonKey = key;
+  }
+  for (const eid of Object.keys(eoIkonVarliklar)){
+    if (!gorulen[eid]){
+      const v = eoIkonVarliklar[eid];
+      try { viewer.entities.remove(v.ikon); viewer.entities.remove(v.gorus); } catch (e) {}
+      delete eoIkonVarliklar[eid];
+    }
+  }
+};
+
 let gcsVarlik = null;
 let gcsKonum = null;                 // {lat, lon}
 let sonSeri = {durum:"kapali", port:"", baud:0};

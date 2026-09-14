@@ -37,9 +37,15 @@ _AYAR_ANAHTARI = "m50_yerel"
 class M50YerelServisi:
     """Merkez içinde çalışan, köprüsüz M50 komut yüzü."""
 
-    def __init__(self, konsol, ayarlar):
+    def __init__(self, konsol, ayarlar, eo_id=1):
         self._konsol = konsol
         self._ayarlar = ayarlar
+        # v2.4.191: cihaz basina ayri ayar anahtari; 1 numarali cihaz eski
+        # tek-cihaz anahtarini ("m50_yerel") devralir.
+        self.eo_id = int(eo_id or 1)
+        self._ayar_anahtari = (_AYAR_ANAHTARI if self.eo_id == 1
+                               else "%s_%d" % (_AYAR_ANAHTARI, self.eo_id))
+        self._konum_ts = 0.0
         self._ayar_kilidi = threading.RLock()
         self._kullanilabilir_onbellek = None
         self._kullanilabilir_ts = 0.0
@@ -140,7 +146,7 @@ class M50YerelServisi:
                 tumu = self._ayarlar.yukle()
             except Exception:
                 return {}
-            deger = tumu.get(_AYAR_ANAHTARI)
+            deger = tumu.get(self._ayar_anahtari)
             return dict(deger) if isinstance(deger, dict) else {}
 
     def _ayar_oku_disa(self) -> Dict[str, Any]:
@@ -163,7 +169,7 @@ class M50YerelServisi:
                 else:
                     mevcut.pop(anahtar, None)
             try:
-                self._ayarlar.kaydet({_AYAR_ANAHTARI: mevcut})
+                self._ayarlar.kaydet({self._ayar_anahtari: mevcut})
             except Exception as exc:
                 self._yaz("M50 ayarları yazılamadı: %s" % exc, "uyari")
 
@@ -290,9 +296,23 @@ class M50YerelServisi:
         except Exception:
             pass
 
+    def _konum_tazele(self, bagli: bool) -> None:
+        """RTK/GPS + pusula 5 sn'de bir istenir (geri çağrı ile gelir)."""
+        if not bagli:
+            return
+        simdi = time.time()
+        if simdi - self._konum_ts < 5.0:
+            return
+        self._konum_ts = simdi
+        try:
+            self.istemci.konum_oku()
+        except Exception:
+            pass
+
     def _durum_paketi(self) -> Dict[str, Any]:
         bagli = bool(self.istemci.durum().get("bagli"))
         self._aci_tazele(bagli)
+        self._konum_tazele(bagli)
         durum = self.istemci.durum()
         durum["onayarlar"] = self._onayarlari_getir(bagli)
         # Parola bu paketten DIŞLANIR: paket `M50Vekili._uygula()` ve
