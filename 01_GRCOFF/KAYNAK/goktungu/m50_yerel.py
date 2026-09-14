@@ -47,6 +47,8 @@ class M50YerelServisi:
         # turda `_durum_paketi()` çağırdığı için SDK'ya saniyede iki
         # GetRtspUrl gitmesin. baglan/kes temizler.
         self._rtsp_onbellek: Dict[str, str] = {}
+        self._onayar_onbellek = None
+        self._aci_ts = 0.0
         self.istemci = M50Istemcisi(
             yaz=self._yaz, ayar_oku=self._ayar_oku, ayar_yaz=self._ayar_yaz_ic)
 
@@ -237,12 +239,62 @@ class M50YerelServisi:
             self.istemci.takip_baslat(veri.get("kanal"), veri.get("mod"))
         elif eylem == "takip_durdur":
             self.istemci.takip_durdur(veri.get("kanal"))
+        # --- v2.4.188: SDK'nın geri kalanı ---
+        elif eylem == "aci_oku":
+            self.istemci.aci_oku()
+        elif eylem == "onayar_liste":
+            self._onayar_onbellek = None
+        elif eylem == "onayar_kaydet":
+            self.istemci.onayar_kaydet(veri.get("no"), veri.get("ad"),
+                                       veri.get("hiz", 5))
+            self._onayar_onbellek = None
+        elif eylem == "onayar_cagir":
+            self.istemci.onayar_cagir(veri.get("no"))
+        elif eylem == "onayar_sil":
+            self.istemci.onayar_sil(veri.get("no"))
+            self._onayar_onbellek = None
+        elif eylem == "onayar_hepsini_sil":
+            self.istemci.onayar_hepsini_sil()
+            self._onayar_onbellek = None
+        elif eylem == "tarama":
+            self.istemci.tarama(veri.get("tur"), veri.get("kontrol"),
+                                veri.get("yol", 0))
+        elif eylem == "takip_yetenek":
+            self.istemci.takip_yetenek(veri.get("kanal"), veri.get("etkin", True))
         else:
             raise M50Hata("bilinmeyen M50 eylemi: %s" % eylem)
         return self._durum_paketi()
 
+    def _onayarlari_getir(self, bagli: bool) -> list:
+        """Ön ayar listesi cihazdan yalnız değişince/ilk kez okunur."""
+        if not bagli:
+            self._onayar_onbellek = None
+            return []
+        if self._onayar_onbellek is None:
+            try:
+                self._onayar_onbellek = self.istemci.onayarlar()
+            except Exception:
+                self._onayar_onbellek = []
+        return list(self._onayar_onbellek)
+
+    def _aci_tazele(self, bagli: bool) -> None:
+        """Telemetri her turda çağırır; SDK'ya en çok saniyede bir gidilir."""
+        if not bagli:
+            return
+        simdi = time.time()
+        if simdi - self._aci_ts < 1.0:
+            return
+        self._aci_ts = simdi
+        try:
+            self.istemci.aci_oku()
+        except Exception:
+            pass
+
     def _durum_paketi(self) -> Dict[str, Any]:
+        bagli = bool(self.istemci.durum().get("bagli"))
+        self._aci_tazele(bagli)
         durum = self.istemci.durum()
+        durum["onayarlar"] = self._onayarlari_getir(bagli)
         # Parola bu paketten DIŞLANIR: paket `M50Vekili._uygula()` ve
         # telemetriye gider; savunma derinliği için hiç girmemeli.
         kayitli = self._ayar_oku_disa()

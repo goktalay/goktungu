@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.187";
+const GCS_SURUM = "2.4.188";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.188",
+    tarih: "2026-09-14",
+    baslik: "Elektro-Optik (M50) paneli: SDK'nın tamamı tek panelde, açılır-kapanır bölümler (paket 2.5.58)",
+    maddeler: [
+      "YENİ: Elektro-Optik menüsündeki M50 paneli baştan düzenlendi. Bölümler: Canlı Görüntü (gündüz/termal geçişi görüntü üzerinde, sürükle-bırak PTZ), PTZ ve Lens (8 yön + dur, zoom/netlik/iris), Açı Konumlama (canlı azimut/eğim, açıya git), Ön Ayarlar (listele/git/kaydet/sil/hepsini sil), Tarama/Devriye (ön ayar devriyesi, yatay, dikey, panorama, yelpaze, kare, desen; başlat/duraklat/devam/durdur), Hedef Takibi (takip yeteneği aç/kapat, mod, manuel seçim), Bağlantı ve Kimlik, Gelişmiş Ayarlar. Her bölüm açılıp kapanabilir.",
+      "YENİ: Panel, kamera listesindeki M50 kaydını kendisi bulur ve görüntüyü panele gömer; kayıt yoksa tek tıkla oluşturur. Kamera Yönetimi'nde ayrı bir M50 satırı gerekmez.",
+      "Arka uç: SDK'nın açı okuma (GetAngleX/Y), ön ayar (GetPresets/SetPreset/CallPreset/ClearPreset/ClearAllPreset), tarama (ControlScan) ve takip yeteneği (EnableTrackAbility) çağrıları hem köprüsüz modda hem saha Köprüsünde (1.7.18) desteklenir. Canlı açı saniyede bir tazelenir; ön ayar listesi yalnız değişince cihazdan okunur."
+    ]
+  },
   {
     surum: "2.4.187",
     tarih: "2026-09-14",

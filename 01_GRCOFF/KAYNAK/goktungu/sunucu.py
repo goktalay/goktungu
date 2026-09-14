@@ -2964,6 +2964,9 @@ class WSSunucusu:
     _M50_IZINLI_EYLEMLER = frozenset((
         "durum", "ayar_oku", "ayar_yaz", "baglan", "kes", "ptz", "lens",
         "aci_konumla", "takip_sec", "takip_baslat", "takip_durdur",
+        # v2.4.188: SDK'nın geri kalanı
+        "aci_oku", "onayar_liste", "onayar_kaydet", "onayar_cagir",
+        "onayar_sil", "onayar_hepsini_sil", "tarama", "takip_yetenek",
     ))
     # Yalnız yerel (köprüsüz) modda anlamlı: köprüye asla iletilmez.
     _M50_YEREL_EK_EYLEMLER = frozenset(("baglan_kayitli",))
@@ -4890,6 +4893,14 @@ class WSSunucusu:
         "m50_takip_sec":    ("radar", "hedef_yonetimi", "m50"),
         "m50_takip_baslat": ("radar", "hedef_yonetimi", "m50"),
         "m50_takip_durdur": ("radar", "hedef_yonetimi", "m50"),
+        "m50_aci_oku":      ("radar", "parametre", "m50"),
+        "m50_onayar_liste": ("radar", "parametre", "m50"),
+        "m50_onayar_kaydet": ("radar", "parametre", "m50"),
+        "m50_onayar_cagir": ("radar", "parametre", "m50"),
+        "m50_onayar_sil":   ("radar", "parametre", "m50"),
+        "m50_onayar_hepsini_sil": ("radar", "parametre", "m50"),
+        "m50_tarama":       ("radar", "parametre", "m50"),
+        "m50_takip_yetenek": ("radar", "hedef_yonetimi", "m50"),
         "kamera_kaydet":    ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_sil":       ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_dron_bagla": ("kamera", "kayit_yonetimi", "kamera"),
@@ -5834,6 +5845,10 @@ class WSSunucusu:
         "m50_takip_sec": "m50",
         "m50_takip_baslat": "m50",
         "m50_takip_durdur": "m50",
+        "m50_aci_oku": "m50", "m50_onayar_liste": "m50",
+        "m50_onayar_kaydet": "m50", "m50_onayar_cagir": "m50",
+        "m50_onayar_sil": "m50", "m50_onayar_hepsini_sil": "m50",
+        "m50_tarama": "m50", "m50_takip_yetenek": "m50",
         "istasyon2_portlar": "gccdual",
         "istasyon2_baglan": "gccdual",
         "istasyon2_kes": "gccdual",
@@ -6459,6 +6474,27 @@ class WSSunucusu:
             await self._m50_kopruye(websocket, "takip_durdur", {
                 "kanal": k.get("kanal"),
             }, k)
+        # --- v2.4.188: SDK'nın geri kalanı (açı, ön ayar, tarama, takip yeteneği) ---
+        elif komut == "m50_aci_oku":
+            await self._m50_kopruye(websocket, "aci_oku", {}, k)
+        elif komut == "m50_onayar_liste":
+            await self._m50_kopruye(websocket, "onayar_liste", {}, k)
+        elif komut == "m50_onayar_kaydet":
+            await self._m50_kopruye(websocket, "onayar_kaydet", {
+                "no": k.get("no"), "ad": k.get("ad"), "hiz": k.get("hiz", 5)}, k)
+        elif komut == "m50_onayar_cagir":
+            await self._m50_kopruye(websocket, "onayar_cagir", {"no": k.get("no")}, k)
+        elif komut == "m50_onayar_sil":
+            await self._m50_kopruye(websocket, "onayar_sil", {"no": k.get("no")}, k)
+        elif komut == "m50_onayar_hepsini_sil":
+            await self._m50_kopruye(websocket, "onayar_hepsini_sil", {}, k)
+        elif komut == "m50_tarama":
+            await self._m50_kopruye(websocket, "tarama", {
+                "tur": k.get("tur"), "kontrol": k.get("kontrol"),
+                "yol": k.get("yol", 0)}, k)
+        elif komut == "m50_takip_yetenek":
+            await self._m50_kopruye(websocket, "takip_yetenek", {
+                "kanal": k.get("kanal"), "etkin": bool(k.get("etkin", True))}, k)
         elif komut == "portlar":
             await websocket.send(json.dumps(
                 {"tip": "portlar",

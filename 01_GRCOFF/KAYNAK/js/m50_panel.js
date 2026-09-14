@@ -329,6 +329,205 @@ btnM50TakipDurdur.addEventListener("click", () => {
   } catch (hata) { m50HataYaz(hata.message); }
 });
 
+// =================================================================
+// v2.4.188 — ELEKTRO-OPTİK PANELİ: SDK'nın geri kalanı
+// (gömülü canlı görüntü + kanal geçişi, 8 yönlü PTZ, açı okuma/gitme,
+// ön ayarlar, tarama/devriye, takip yeteneği). Her bölüm <details>.
+// =================================================================
+const m50VideoSar = document.getElementById("m50VideoSar");
+const btnM50KameraOlustur = document.getElementById("btnM50KameraOlustur");
+const m50Azimut = document.getElementById("m50Azimut");
+const m50Egim = document.getElementById("m50Egim");
+const m50AciHiz = document.getElementById("m50AciHiz");
+const m50AciRozet = document.getElementById("m50AciRozet");
+const btnM50AciGit = document.getElementById("btnM50AciGit");
+const btnM50AciOku = document.getElementById("btnM50AciOku");
+const m50OnayarSec = document.getElementById("m50OnayarSec");
+const m50OnayarNo = document.getElementById("m50OnayarNo");
+const m50OnayarAd = document.getElementById("m50OnayarAd");
+const m50OnayarHiz = document.getElementById("m50OnayarHiz");
+const m50OnayarRozet = document.getElementById("m50OnayarRozet");
+const m50TaramaTur = document.getElementById("m50TaramaTur");
+const m50TaramaYol = document.getElementById("m50TaramaYol");
+const m50TaramaRozet = document.getElementById("m50TaramaRozet");
+const m50TakipRozet = document.getElementById("m50TakipRozet");
+const m50KimlikRozet = document.getElementById("m50KimlikRozet");
+const m50VideoRozet = document.getElementById("m50VideoRozet");
+
+let _m50VideoKamId = null;   // panelde su an cizili kamera kaydi
+let _m50VideoKanal = "";     // ... ve kanali
+let _m50OnayarImza = "";     // liste degismediyse <select> yeniden cizilmez
+
+function m50T(){ return (typeof D === "function" ? D() : {}) || {}; }
+
+// --- Canlı görüntü: mevcut M50 kamera kaydını panele gömer -----------
+function m50VideoKur(){
+  if (!m50VideoSar) return;
+  const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul() : null;
+  const kanal = kam ? (String(kam.url || "").split(":")[1] === "termal" ? "termal" : "gorunur") : "";
+  if (!kam){
+    if (_m50VideoKamId !== null){
+      m50VideoSar.querySelectorAll("img.kam-video").forEach(e => e.remove());
+      _m50VideoKamId = null; _m50VideoKanal = "";
+    }
+    m50VideoSar.classList.remove("var");
+    if (m50VideoRozet) m50VideoRozet.textContent = "";
+    return;
+  }
+  m50VideoSar.classList.add("var");
+  if (_m50VideoKamId !== kam.id || _m50VideoKanal !== kanal){
+    m50VideoSar.querySelectorAll("img.kam-video").forEach(e => e.remove());
+    if (typeof window.kamVideoOlustur === "function"){
+      const img = window.kamVideoOlustur(kam);
+      if (img) m50VideoSar.insertBefore(img, m50VideoSar.firstChild);
+    }
+    _m50VideoKamId = kam.id; _m50VideoKanal = kanal;
+  }
+  for (const b of m50VideoSar.querySelectorAll(".m50-kanal"))
+    b.classList.toggle("aktif", b.dataset.kanal === kanal);
+  if (m50VideoRozet) m50VideoRozet.textContent =
+    kanal === "termal" ? (m50T().m50Termal || "Termal") : (m50T().m50Gorunur || "Görünür");
+}
+if (m50VideoSar){
+  for (const b of m50VideoSar.querySelectorAll(".m50-kanal")){
+    b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul() : null;
+      if (kam && typeof window.m50KanalDegistir === "function" && b.dataset.kanal !== _m50VideoKanal)
+        window.m50KanalDegistir(kam, b.dataset.kanal);
+    });
+  }
+}
+if (btnM50KameraOlustur) btnM50KameraOlustur.addEventListener("click", () => {
+  if (typeof window.m50KameraOlustur === "function") window.m50KameraOlustur();
+});
+
+// --- Açı ---------------------------------------------------------------
+if (btnM50AciGit) btnM50AciGit.addEventListener("click", () => {
+  try {
+    m50HataYaz("");
+    const azimut = Number(m50Azimut && m50Azimut.value);
+    const egim = Number(m50Egim && m50Egim.value);
+    const hiz = Number(m50AciHiz && m50AciHiz.value) || 5;
+    if (!Number.isFinite(azimut) || !Number.isFinite(egim))
+      throw new Error("Azimut ve eğim sayısal olmalıdır.");
+    m50Gonder({tip: "m50_aci_konumla", azimut, egim, hiz});
+  } catch (hata) { m50HataYaz(hata.message); }
+});
+if (btnM50AciOku) btnM50AciOku.addEventListener("click", () => m50Gonder({tip: "m50_aci_oku"}));
+
+// --- Ön ayarlar ----------------------------------------------------------
+function m50OnayarListeCiz(liste){
+  if (!m50OnayarSec) return;
+  const l = Array.isArray(liste) ? liste : [];
+  const imza = JSON.stringify(l);
+  if (imza === _m50OnayarImza) return;
+  _m50OnayarImza = imza;
+  const secili = m50OnayarSec.value;
+  m50OnayarSec.innerHTML = "";
+  if (!l.length){
+    const o = document.createElement("option"); o.value = "";
+    o.textContent = m50T().m50OnayarBos || "(kayıtlı ön ayar yok)";
+    m50OnayarSec.appendChild(o);
+  }
+  for (const p of l){
+    const o = document.createElement("option");
+    o.value = String(p.no);
+    o.textContent = p.no + (p.ad ? " — " + p.ad : "");
+    m50OnayarSec.appendChild(o);
+  }
+  if (secili && l.some(p => String(p.no) === secili)) m50OnayarSec.value = secili;
+  if (m50OnayarRozet) m50OnayarRozet.textContent = l.length ? String(l.length) : "";
+}
+if (m50OnayarSec) m50OnayarSec.addEventListener("change", () => {
+  if (m50OnayarSec.value !== "" && m50OnayarNo) m50OnayarNo.value = m50OnayarSec.value;
+  const secili = m50OnayarSec.selectedOptions[0];
+  if (secili && m50OnayarAd) m50OnayarAd.value = (secili.textContent.split(" — ")[1] || "");
+});
+function m50OnayarNoOku(){
+  const no = Number(m50OnayarNo && m50OnayarNo.value);
+  if (!Number.isInteger(no) || no < 0 || no > 255) throw new Error("Ön ayar numarası 0–255 arasında olmalıdır.");
+  return no;
+}
+const _btn = id => document.getElementById(id);
+if (_btn("btnM50OnayarCagir")) _btn("btnM50OnayarCagir").addEventListener("click", () => {
+  try { m50HataYaz(""); m50Gonder({tip: "m50_onayar_cagir", no: m50OnayarNoOku()}); }
+  catch (hata) { m50HataYaz(hata.message); }
+});
+if (_btn("btnM50OnayarKaydet")) _btn("btnM50OnayarKaydet").addEventListener("click", () => {
+  try {
+    m50HataYaz("");
+    m50Gonder({tip: "m50_onayar_kaydet", no: m50OnayarNoOku(),
+               ad: String(m50OnayarAd && m50OnayarAd.value || "").trim(),
+               hiz: Number(m50OnayarHiz && m50OnayarHiz.value) || 30});
+  } catch (hata) { m50HataYaz(hata.message); }
+});
+if (_btn("btnM50OnayarSil")) _btn("btnM50OnayarSil").addEventListener("click", () => {
+  try { m50HataYaz(""); m50Gonder({tip: "m50_onayar_sil", no: m50OnayarNoOku()}); }
+  catch (hata) { m50HataYaz(hata.message); }
+});
+if (_btn("btnM50OnayarHepsiniSil")) _btn("btnM50OnayarHepsiniSil").addEventListener("click", () => {
+  if (confirm(m50T().m50HepsiniSilOnay || "M50 üzerindeki TÜM ön ayarlar silinecek. Emin misiniz?"))
+    m50Gonder({tip: "m50_onayar_hepsini_sil"});
+});
+
+// --- Tarama / devriye --------------------------------------------------
+for (const b of document.querySelectorAll(".m50-tarama")){
+  b.addEventListener("click", () => {
+    try {
+      m50HataYaz("");
+      m50Gonder({tip: "m50_tarama", tur: String(m50TaramaTur && m50TaramaTur.value || "yatay"),
+                 kontrol: b.dataset.kontrol, yol: Number(m50TaramaYol && m50TaramaYol.value) || 0});
+    } catch (hata) { m50HataYaz(hata.message); }
+  });
+}
+
+// --- Takip yeteneği ------------------------------------------------------
+if (_btn("btnM50TakipYetenekAc")) _btn("btnM50TakipYetenekAc").addEventListener("click", () => {
+  try { m50Gonder({tip: "m50_takip_yetenek", kanal: m50KanalOku(m50TakipKanal), etkin: true}); }
+  catch (hata) { m50HataYaz(hata.message); }
+});
+if (_btn("btnM50TakipYetenekKapat")) _btn("btnM50TakipYetenekKapat").addEventListener("click", () => {
+  try { m50Gonder({tip: "m50_takip_yetenek", kanal: m50KanalOku(m50TakipKanal), etkin: false}); }
+  catch (hata) { m50HataYaz(hata.message); }
+});
+
+// --- Telemetri: mevcut m50PaneliGuncelle'yi sar, yeni bölümleri tazele ---
+(function(){
+  const asil = window.m50PaneliGuncelle;
+  window.m50PaneliGuncelle = function(paket){
+    if (typeof asil === "function") asil(paket);
+    const p = paket && paket.m50_durum ? paket : {m50_durum: paket || {}};
+    const r = (p.m50_durum && typeof p.m50_durum === "object") ? p.m50_durum : {};
+    const bagli = m50BagliMi();
+    const agVar = typeof ws !== "undefined" && ws && ws.readyState === 1;
+    m50VideoKur();
+    if (m50AciRozet){
+      const az = Number(r.azimut), eg = Number(r.egim);
+      m50AciRozet.textContent = (Number.isFinite(az) && Number.isFinite(eg))
+        ? ("Az " + az.toFixed(1) + "° / Eğ " + eg.toFixed(1) + "°") : "—";
+    }
+    m50OnayarListeCiz(r.onayarlar);
+    if (m50TaramaRozet){
+      const tr = r.tarama && typeof r.tarama === "object" ? r.tarama : {};
+      m50TaramaRozet.textContent = (tr.kontrol === "baslat" || tr.kontrol === "devam")
+        ? (tr.tur || "") : "";
+    }
+    if (m50TakipRozet){
+      const tk = r.takip && typeof r.takip === "object" ? r.takip : {};
+      m50TakipRozet.textContent = tk.etkin ? ((m50T().m50TakipEtkin || "etkin") + (tk.kanal ? " · " + tk.kanal : "")) : "";
+    }
+    if (m50KimlikRozet){
+      m50KimlikRozet.textContent = (sonM50Ayar && sonM50Ayar.kimlik_kayitli)
+        ? (m50T().m50KimlikKayitli || "kimlik kayıtlı") : (m50T().m50KimlikYok || "kimlik girilmedi");
+    }
+    for (const el of document.querySelectorAll(
+        "#btnM50AciGit,#btnM50AciOku,#btnM50OnayarCagir,#btnM50OnayarKaydet,#btnM50OnayarSil," +
+        "#btnM50OnayarHepsiniSil,.m50-tarama,#btnM50TakipYetenekAc,#btnM50TakipYetenekKapat"))
+      el.disabled = !agVar || !bagli;
+  };
+})();
+
 // Parola panel kapandığında da kesin olarak temizlenir.
 const _m50Panel = document.getElementById("yzM50");
 if (_m50Panel){

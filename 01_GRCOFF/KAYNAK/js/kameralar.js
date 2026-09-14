@@ -563,6 +563,31 @@
   // Donanim kamera stream'leri: deviceId -> MediaStream
   const donanimStreamler = {};
 
+  // v2.4.188: M50 Elektro-Optik paneli (m50_panel.js) kamera kaydini,
+  // kanal degisimini ve MJPEG <img> uretimini buradan kullanir — tek
+  // sistem: panel ayri bir akis acmaz, mevcut M50 kamera kaydini surer.
+  window.m50KameraBul = function () {
+    return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50") || null;
+  };
+  window.m50KanalDegistir = function (kamera, yeniKanal) {
+    wsGonder({
+      tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
+      protokol: "m50", url: "m50:" + yeniKanal, m50_kanal: yeniKanal,
+      kopru_ornek_id: kamera.kopru_ornek_id || null,
+      ai_gorevler: kamera.ai_gorevler || "",
+      ai_hassasiyet: kamera.ai_hassasiyet || "",
+      lokasyon_id: kamera.lokasyon_id || null,
+      dron_uid: kamera.dron_uid || ""
+      // kamera_tipi/kalibrasyon KASITLI atlanir: sunucu "kamera_tipi"
+      // yoksa mevcut angajman kalibrasyonunu SILMEZ (bkz. sunucu.py).
+    });
+  };
+  window.m50KameraOlustur = function () {
+    wsGonder({ tip: "kamera_kaydet", isim: "M50", protokol: "m50",
+               url: "m50:gorunur", m50_kanal: "gorunur" });
+  };
+  window.kamVideoOlustur = function (kamera) { return videoOlustur(kamera); };
+
   function videoOlustur(kamera) {
     const prot = kamera.protokol;
 
@@ -794,18 +819,7 @@
         ? "<i class='fa-solid fa-sun'></i>" : "<i class='fa-solid fa-fire'></i>";
       bKanal.addEventListener("click", (e) => {
         e.stopPropagation();
-        const yeniKanal = kanalSu === "termal" ? "gorunur" : "termal";
-        wsGonder({
-          tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
-          protokol: "m50", url: "m50:" + yeniKanal, m50_kanal: yeniKanal,
-          kopru_ornek_id: kamera.kopru_ornek_id || null,
-          ai_gorevler: kamera.ai_gorevler || "",
-          ai_hassasiyet: kamera.ai_hassasiyet || "",
-          lokasyon_id: kamera.lokasyon_id || null,
-          dron_uid: kamera.dron_uid || ""
-          // kamera_tipi/kalibrasyon KASITLI atlanir: sunucu "kamera_tipi"
-          // yoksa mevcut angajman kalibrasyonunu SILMEZ (bkz. sunucu.py).
-        });
+        window.m50KanalDegistir(kamera, kanalSu === "termal" ? "gorunur" : "termal");
       });
       kutu.appendChild(bKanal);
     }

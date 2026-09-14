@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24164">
+<link rel="stylesheet" href="css/stil.css?v=v24188">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -226,50 +226,173 @@
     <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelM50">M50 ELEKTRO-OPTİK KONTROLÜ</span></span>
     <button class="yuzen-kapat" data-yuzen="yzM50" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
-  <div class="yuzen-icerik">
-    <div class="alan" id="m50KopruSar" style="display:none">
-      <label for="m50KopruSec" data-i18n="m50SahaMakinesi">Saha makinesi</label>
-      <select id="m50KopruSec" style="width:100%"></select>
+  <div class="yuzen-icerik m50-icerik">
+    <!-- v2.4.188: Elektro-Optik paneli SDK'nin tum yuzeyini acilir-kapanir
+         bolumlerde toplar (kullanici istegi). Eleman id'leri korunur;
+         m50_panel.js her bolumu surer. -->
+    <div class="m50-ust">
+      <span id="m50DurumMetin" class="d-kapali" data-i18n="m50Kapali">Bağlı değil</span>
+      <span id="m50Ozet"></span>
+      <button id="btnM50Baglan" class="kucuk"><i class="fa-solid fa-plug"></i><span data-i18n="btnM50Baglan">M50'YE BAĞLAN</span></button>
     </div>
-    <div class="alan">
-      <label data-i18n="m50Baglanti">AÇIK CİHAZ BAĞLANTISI</label>
-      <div class="satir">
-        <div style="flex:2"><label for="m50Ip">M50 IP</label><input id="m50Ip" type="text" value="" placeholder="192.168.1.50" autocomplete="off" spellcheck="false"></div>
-        <div style="flex:1"><label for="m50Port">Port</label><input id="m50Port" type="text" value="" placeholder="Port" autocomplete="off" spellcheck="false"></div>
+    <div id="m50Hata"></div>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumVideo" open>
+      <summary><i class="fa-solid fa-video"></i> <span data-i18n="m50BolumVideo">CANLI GÖRÜNTÜ</span><span class="kam-bolum-rozet" id="m50VideoRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div id="m50VideoSar" class="m50-video-sar">
+          <div id="m50VideoYok" class="m50-video-yok">
+            <span data-i18n="m50VideoYok">M50 kamera kaydı yok.</span>
+            <button id="btnM50KameraOlustur" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnM50KameraOlustur">KAMERAYI OLUŞTUR</span></button>
+          </div>
+          <div class="m50-video-ust">
+            <button class="m50-kanal kucuk" data-kanal="gorunur"><i class="fa-solid fa-sun"></i><span data-i18n="m50Gorunur">Görünür</span></button>
+            <button class="m50-kanal kucuk" data-kanal="termal"><i class="fa-solid fa-fire"></i><span data-i18n="m50Termal">Termal</span></button>
+            <span class="m50-video-ipucu" data-i18n="m50VideoIpucu">Görüntü üzerinde sürükle: PTZ</span>
+          </div>
+        </div>
       </div>
-      <div class="satir">
-        <div style="flex:1"><label for="m50Kullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input id="m50Kullanici" type="text" value="" autocomplete="username" spellcheck="false"></div>
-        <div style="flex:1"><label for="m50Parola" data-i18n="m50Parola">Parola</label><input id="m50Parola" type="password" value="" autocomplete="new-password"></div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumPtz" open>
+      <summary><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="m50BolumPtz">PTZ VE LENS</span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:1"><label for="m50PtzHiz" data-i18n="m50PtzHiz">PTZ hızı (1–10)</label><input id="m50PtzHiz" type="number" min="1" max="10" step="1" value="5"></div>
+          <div style="flex:1"><label for="m50LensKanal" data-i18n="m50LensKanal">Lens kanalı</label><select id="m50LensKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div>
+        </div>
+        <div class="m50-ptz-izgara">
+          <button class="m50-ptz" data-yon="sol_yukari"><i class="fa-solid fa-arrow-up" style="transform:rotate(-45deg)"></i></button>
+          <button class="m50-ptz" data-yon="yukari"><i class="fa-solid fa-arrow-up"></i></button>
+          <button class="m50-ptz" data-yon="sag_yukari"><i class="fa-solid fa-arrow-up" style="transform:rotate(45deg)"></i></button>
+          <button class="m50-ptz" data-yon="sol"><i class="fa-solid fa-arrow-left"></i></button>
+          <button class="m50-ptz m50-ptz-dur" data-yon="dur"><i class="fa-solid fa-stop"></i></button>
+          <button class="m50-ptz" data-yon="sag"><i class="fa-solid fa-arrow-right"></i></button>
+          <button class="m50-ptz" data-yon="sol_asagi"><i class="fa-solid fa-arrow-down" style="transform:rotate(45deg)"></i></button>
+          <button class="m50-ptz" data-yon="asagi"><i class="fa-solid fa-arrow-down"></i></button>
+          <button class="m50-ptz" data-yon="sag_asagi"><i class="fa-solid fa-arrow-down" style="transform:rotate(-45deg)"></i></button>
+        </div>
+        <div class="m50-lens-izgara">
+          <button class="m50-lens" data-eylem="zoom_artir"><i class="fa-solid fa-magnifying-glass-plus"></i><span data-i18n="m50ZoomIn">Yakınlaştır</span></button>
+          <button class="m50-lens" data-eylem="zoom_azalt"><i class="fa-solid fa-magnifying-glass-minus"></i><span data-i18n="m50ZoomOut">Uzaklaştır</span></button>
+          <button class="m50-lens" data-eylem="odak_yakin"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusNear">Yakın netlik</span></button>
+          <button class="m50-lens" data-eylem="odak_uzak"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusFar">Uzak netlik</span></button>
+          <button class="m50-lens" data-eylem="iris_ac"><i class="fa-solid fa-circle-half-stroke"></i><span data-i18n="m50IrisAc">İris aç</span></button>
+          <button class="m50-lens" data-eylem="iris_kapat"><i class="fa-solid fa-circle"></i><span data-i18n="m50IrisKapat">İris kapat</span></button>
+        </div>
       </div>
-      <button id="btnM50Baglan" style="width:100%;padding:9px;margin-top:7px"><i class="fa-solid fa-plug"></i><span data-i18n="btnM50Baglan">M50'YE BAĞLAN</span></button>
-    </div>
-    <div class="alan">
-      <label data-i18n="m50DurumBaslik">M50 DURUMU</label>
-      <div id="m50DurumKutu"><span id="m50DurumMetin" class="d-kapali" data-i18n="m50Kapali">Bağlı değil</span><div id="m50Hata"></div></div>
-      <div id="m50Ozet" style="color:var(--soluk);font-size:11px;margin-top:6px"></div>
-    </div>
-    <div class="alan">
-      <label data-i18n="m50YerelVideo">YEREL VİDEO KAYNAKLARI</label>
-      <p class="aciklama" data-i18n="m50YerelVideoAciklama">Ham M50 görüntüsü Merkez'e taşınmaz. Görünür ve termal akışlar yalnız yerel Görüntü Köprüsünde işlenir.</p>
-      <div class="satir"><div style="flex:1"><label for="m50RtspGorunur">RTSP görünür</label><input id="m50RtspGorunur" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50RtspTermal">RTSP termal</label><input id="m50RtspTermal" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50SdkDizin" data-i18n="m50SdkDizin">SDK dizini (yalnız saha Köprüsü)</label><input id="m50SdkDizin" type="text" value="" placeholder="C:\\M50\\SDK" autocomplete="off"></div></div>
-      <button id="btnM50AyarKaydet" style="width:100%;padding:8px;margin-top:7px"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50AyarKaydet">YEREL AYARLARI KAYDET</span></button>
-    </div>
-    <div class="alan" id="m50KontrolAlan">
-      <label data-i18n="m50Kontrol">PTZ, LENS VE MANUEL TAKİP</label>
-      <p class="aciklama" data-i18n="m50TakipAciklama">Takip yalnız operatörün yerel video üzerindeki açık dikdörtgen seçimiyle başlar; otomatik hedef seçimi yoktur.</p>
-      <div class="satir"><div style="flex:1"><label for="m50PtzHiz" data-i18n="m50PtzHiz">PTZ hızı (1–10)</label><input id="m50PtzHiz" type="number" min="1" max="10" step="1" value="5"></div><div style="flex:1"><label for="m50LensKanal" data-i18n="m50LensKanal">Lens kanalı</label><select id="m50LensKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="yukari"><i class="fa-solid fa-arrow-up"></i></button></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="sol"><i class="fa-solid fa-arrow-left"></i></button><button class="m50-ptz" data-yon="dur"><i class="fa-solid fa-stop"></i></button><button class="m50-ptz" data-yon="sag"><i class="fa-solid fa-arrow-right"></i></button></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="asagi"><i class="fa-solid fa-arrow-down"></i></button></div>
-      <div class="satir"><button class="m50-lens" data-eylem="zoom_artir"><i class="fa-solid fa-magnifying-glass-plus"></i><span data-i18n="m50ZoomIn">Yakınlaştır</span></button><button class="m50-lens" data-eylem="zoom_azalt"><i class="fa-solid fa-magnifying-glass-minus"></i><span data-i18n="m50ZoomOut">Uzaklaştır</span></button><button class="m50-lens" data-eylem="odak_yakin"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusNear">Yakın netlik</span></button><button class="m50-lens" data-eylem="odak_uzak"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusFar">Uzak netlik</span></button></div>
-      <div class="satir"><div style="flex:1"><label for="m50VideoDikdortgen" data-i18n="m50VideoDikdortgen">Video alanı (sol, üst, sağ, alt)</label><input id="m50VideoDikdortgen" type="text" value="" placeholder="0, 0, 1920, 1080" autocomplete="off" spellcheck="false"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50SecimDikdortgen" data-i18n="m50SecimDikdortgen">Operatör seçimi (sol, üst, sağ, alt)</label><input id="m50SecimDikdortgen" type="text" value="" placeholder="800, 300, 1100, 650" autocomplete="off" spellcheck="false"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50TakipKanal" data-i18n="m50TakipKanal">Takip kanalı</label><select id="m50TakipKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div><div style="flex:1"><label for="m50TakipMod" data-i18n="m50TakipMod">Takip modu</label><select id="m50TakipMod"><option value="hava_yari_otomatik" data-i18n="m50TakipModHava">Hava yarı otomatik</option><option value="kara_manuel" data-i18n="m50TakipModKaraManuel">Kara manuel</option><option value="kara_yari_otomatik" data-i18n="m50TakipModKaraYari">Kara yarı otomatik</option></select></div></div>
-      <div class="satir"><button id="btnM50TakipSec"><i class="fa-solid fa-vector-square"></i><span data-i18n="m50TakipSec">MANUEL SEÇİMİ GÖNDER</span></button><button id="btnM50TakipBaslat"><i class="fa-solid fa-crosshairs"></i><span data-i18n="m50TakipBaslat">TAKİBİ BAŞLAT</span></button><button id="btnM50TakipDurdur"><i class="fa-solid fa-ban"></i><span data-i18n="m50TakipDurdur">TAKİBİ DURDUR</span></button></div>
-      <div id="m50TakipDurum" class="aciklama" aria-live="polite"></div>
-    </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumAci">
+      <summary><i class="fa-solid fa-compass"></i> <span data-i18n="m50BolumAci">AÇI KONUMLAMA</span><span class="kam-bolum-rozet" id="m50AciRozet">—</span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:1"><label for="m50Azimut" data-i18n="m50Azimut">Azimut (°)</label><input id="m50Azimut" type="number" step="0.1" min="-360" max="360" placeholder="0.0"></div>
+          <div style="flex:1"><label for="m50Egim" data-i18n="m50Egim">Eğim (°)</label><input id="m50Egim" type="number" step="0.1" min="-90" max="90" placeholder="0.0"></div>
+          <div style="flex:1"><label for="m50AciHiz" data-i18n="m50AciHiz">Hız (1–10)</label><input id="m50AciHiz" type="number" min="1" max="10" step="1" value="5"></div>
+        </div>
+        <div class="satir">
+          <button id="btnM50AciGit"><i class="fa-solid fa-location-crosshairs"></i><span data-i18n="btnM50AciGit">AÇIYA GİT</span></button>
+          <button id="btnM50AciOku" class="ikincil"><i class="fa-solid fa-rotate"></i><span data-i18n="btnM50AciOku">CANLI AÇIYI OKU</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumOnayar">
+      <summary><i class="fa-solid fa-bookmark"></i> <span data-i18n="m50BolumOnayar">ÖN AYARLAR (PRESET)</span><span class="kam-bolum-rozet" id="m50OnayarRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:2"><label for="m50OnayarSec" data-i18n="m50OnayarSec">Kayıtlı ön ayar</label><select id="m50OnayarSec"></select></div>
+          <div style="flex:1"><label for="m50OnayarNo" data-i18n="m50OnayarNo">No (0–255)</label><input id="m50OnayarNo" type="number" min="0" max="255" step="1" value="1"></div>
+        </div>
+        <div class="satir">
+          <div style="flex:2"><label for="m50OnayarAd" data-i18n="m50OnayarAd">Ad</label><input id="m50OnayarAd" type="text" maxlength="64" autocomplete="off" spellcheck="false"></div>
+          <div style="flex:1"><label for="m50OnayarHiz" data-i18n="m50OnayarHiz">Hız (1–63)</label><input id="m50OnayarHiz" type="number" min="1" max="63" step="1" value="30"></div>
+        </div>
+        <div class="satir m50-dugme-satir">
+          <button id="btnM50OnayarCagir"><i class="fa-solid fa-play"></i><span data-i18n="btnM50OnayarCagir">GİT</span></button>
+          <button id="btnM50OnayarKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50OnayarKaydet">MEVCUT KONUMU KAYDET</span></button>
+          <button id="btnM50OnayarSil" class="tehlike"><i class="fa-solid fa-trash"></i><span data-i18n="btnM50OnayarSil">SİL</span></button>
+          <button id="btnM50OnayarHepsiniSil" class="tehlike ikincil"><i class="fa-solid fa-trash-can"></i><span data-i18n="btnM50OnayarHepsiniSil">HEPSİNİ SİL</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumTarama">
+      <summary><i class="fa-solid fa-radar"></i> <span data-i18n="m50BolumTarama">TARAMA / DEVRİYE</span><span class="kam-bolum-rozet" id="m50TaramaRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:2"><label for="m50TaramaTur" data-i18n="m50TaramaTur">Tarama türü</label>
+            <select id="m50TaramaTur">
+              <option value="onayar" data-i18n="m50TaramaOnayar">Ön ayar devriyesi</option>
+              <option value="yatay" data-i18n="m50TaramaYatay">Yatay tarama</option>
+              <option value="dikey" data-i18n="m50TaramaDikey">Dikey tarama</option>
+              <option value="panorama" data-i18n="m50TaramaPanorama">Panorama</option>
+              <option value="yelpaze" data-i18n="m50TaramaYelpaze">Yelpaze (sektör)</option>
+              <option value="kare" data-i18n="m50TaramaKare">Kare tarama</option>
+              <option value="desen" data-i18n="m50TaramaDesen">Desen (kayıtlı rota)</option>
+            </select></div>
+          <div style="flex:1"><label for="m50TaramaYol" data-i18n="m50TaramaYol">Yol no</label><input id="m50TaramaYol" type="number" min="0" max="31" step="1" value="0"></div>
+        </div>
+        <div class="satir m50-dugme-satir">
+          <button class="m50-tarama" data-kontrol="baslat"><i class="fa-solid fa-play"></i><span data-i18n="m50TaramaBaslat">BAŞLAT</span></button>
+          <button class="m50-tarama ikincil" data-kontrol="duraklat"><i class="fa-solid fa-pause"></i><span data-i18n="m50TaramaDuraklat">DURAKLAT</span></button>
+          <button class="m50-tarama ikincil" data-kontrol="devam"><i class="fa-solid fa-forward"></i><span data-i18n="m50TaramaDevam">DEVAM</span></button>
+          <button class="m50-tarama tehlike" data-kontrol="durdur"><i class="fa-solid fa-stop"></i><span data-i18n="m50TaramaDurdur">DURDUR</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumTakip">
+      <summary><i class="fa-solid fa-crosshairs"></i> <span data-i18n="m50BolumTakip">HEDEF TAKİBİ</span><span class="kam-bolum-rozet" id="m50TakipRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <p class="aciklama" data-i18n="m50TakipAciklama">Takip yalnız operatörün yerel video üzerindeki açık dikdörtgen seçimiyle başlar; otomatik hedef seçimi yoktur.</p>
+        <div class="satir">
+          <div style="flex:1"><label for="m50TakipKanal" data-i18n="m50TakipKanal">Takip kanalı</label><select id="m50TakipKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div>
+          <div style="flex:1"><label for="m50TakipMod" data-i18n="m50TakipMod">Takip modu</label><select id="m50TakipMod"><option value="hava_yari_otomatik" data-i18n="m50TakipModHava">Hava yarı otomatik</option><option value="kara_manuel" data-i18n="m50TakipModKaraManuel">Kara manuel</option><option value="kara_yari_otomatik" data-i18n="m50TakipModKaraYari">Kara yarı otomatik</option></select></div>
+          <div style="flex:1"><label data-i18n="m50TakipYetenek">Takip yeteneği</label>
+            <div class="satir" style="gap:4px"><button id="btnM50TakipYetenekAc" class="kucuk"><span data-i18n="acik">AÇIK</span></button><button id="btnM50TakipYetenekKapat" class="kucuk ikincil"><span data-i18n="kapali">KAPALI</span></button></div></div>
+        </div>
+        <div class="satir"><div style="flex:1"><label for="m50VideoDikdortgen" data-i18n="m50VideoDikdortgen">Video alanı (sol, üst, sağ, alt)</label><input id="m50VideoDikdortgen" type="text" value="" placeholder="0, 0, 1920, 1080" autocomplete="off" spellcheck="false"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50SecimDikdortgen" data-i18n="m50SecimDikdortgen">Operatör seçimi (sol, üst, sağ, alt)</label><input id="m50SecimDikdortgen" type="text" value="" placeholder="800, 300, 1100, 650" autocomplete="off" spellcheck="false"></div></div>
+        <div class="satir m50-dugme-satir">
+          <button id="btnM50TakipSec"><i class="fa-solid fa-vector-square"></i><span data-i18n="m50TakipSec">MANUEL SEÇİMİ GÖNDER</span></button>
+          <button id="btnM50TakipBaslat"><i class="fa-solid fa-crosshairs"></i><span data-i18n="m50TakipBaslat">TAKİBİ BAŞLAT</span></button>
+          <button id="btnM50TakipDurdur" class="tehlike"><i class="fa-solid fa-ban"></i><span data-i18n="m50TakipDurdur">TAKİBİ DURDUR</span></button>
+        </div>
+        <div id="m50TakipDurum" class="aciklama" aria-live="polite"></div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumBaglanti">
+      <summary><i class="fa-solid fa-network-wired"></i> <span data-i18n="m50BolumBaglanti">BAĞLANTI VE KİMLİK</span><span class="kam-bolum-rozet" id="m50KimlikRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <p class="aciklama" data-i18n="m50KimlikAciklama">Kimlik bir kez girilir ve kaydedilir; açılışta kendiliğinden bağlanılır. Değiştirmek için yeniden girin.</p>
+        <div class="alan" id="m50KopruSar" style="display:none">
+          <label for="m50KopruSec" data-i18n="m50SahaMakinesi">Saha makinesi</label>
+          <select id="m50KopruSec" style="width:100%"></select>
+        </div>
+        <div class="satir">
+          <div style="flex:2"><label for="m50Ip">M50 IP</label><input id="m50Ip" type="text" value="" placeholder="192.168.1.64" autocomplete="off" spellcheck="false"></div>
+          <div style="flex:1"><label for="m50Port">Port</label><input id="m50Port" type="text" value="" placeholder="39020" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="satir">
+          <div style="flex:1"><label for="m50Kullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input id="m50Kullanici" type="text" value="" autocomplete="username" spellcheck="false"></div>
+          <div style="flex:1"><label for="m50Parola" data-i18n="m50Parola">Parola</label><input id="m50Parola" type="password" value="" autocomplete="new-password"></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumAyar">
+      <summary><i class="fa-solid fa-sliders"></i> <span data-i18n="m50BolumAyar">GELİŞMİŞ AYARLAR</span></summary>
+      <div class="m50-bolum-ic">
+        <p class="aciklama" data-i18n="m50YerelVideoAciklama">RTSP adresleri cihazdan otomatik alınır; yalnız cihaz adres vermezse buradaki elle girilen adres kullanılır.</p>
+        <div class="satir"><div style="flex:1"><label for="m50RtspGorunur">RTSP görünür</label><input id="m50RtspGorunur" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50RtspTermal">RTSP termal</label><input id="m50RtspTermal" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50SdkDizin" data-i18n="m50SdkDizin">SDK dizini (boş = gömülü)</label><input id="m50SdkDizin" type="text" value="" placeholder="" autocomplete="off"></div></div>
+        <button id="btnM50AyarKaydet" style="width:100%;padding:8px;margin-top:7px"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50AyarKaydet">YEREL AYARLARI KAYDET</span></button>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -1857,7 +1980,7 @@
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24127"></script>
 <script src="js/radar_panel.js?v=v24127"></script>
-<script src="js/m50_panel.js?v=v24187"></script>
+<script src="js/m50_panel.js?v=v24188"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>
@@ -1868,7 +1991,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v2519"></script>
-<script src="js/kameralar.js?v=v24181"></script>
+<script src="js/kameralar.js?v=v24188"></script>
 <script src="js/kamera_takip.js?v=v24176"></script>
 <script src="js/rotalar.js?v=v24127"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>

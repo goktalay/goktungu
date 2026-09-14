@@ -199,6 +199,31 @@ class M50Servisi(Servis):
                 veri.get("kanal"), veri.get("mod"))}
         if eylem == "takip_durdur":
             return {"m50_durum": self.istemci.takip_durdur(veri.get("kanal"))}
+        # --- 1.7.18: SDK'nın geri kalanı (Merkez m50_yerel.py ile aynı sözleşme) ---
+        if eylem == "aci_oku":
+            return {"m50_durum": self.istemci.aci_oku()}
+        if eylem == "onayar_liste":
+            return {"m50_durum": dict(self.istemci.durum(),
+                                      onayarlar=self.istemci.onayarlar())}
+        if eylem == "onayar_kaydet":
+            self.istemci.onayar_kaydet(veri.get("no"), veri.get("ad"), veri.get("hiz", 5))
+            return {"m50_durum": dict(self.istemci.durum(),
+                                      onayarlar=self.istemci.onayarlar())}
+        if eylem == "onayar_cagir":
+            return {"m50_durum": self.istemci.onayar_cagir(veri.get("no"))}
+        if eylem == "onayar_sil":
+            self.istemci.onayar_sil(veri.get("no"))
+            return {"m50_durum": dict(self.istemci.durum(),
+                                      onayarlar=self.istemci.onayarlar())}
+        if eylem == "onayar_hepsini_sil":
+            self.istemci.onayar_hepsini_sil()
+            return {"m50_durum": dict(self.istemci.durum(), onayarlar=[])}
+        if eylem == "tarama":
+            return {"m50_durum": self.istemci.tarama(
+                veri.get("tur"), veri.get("kontrol"), veri.get("yol", 0))}
+        if eylem == "takip_yetenek":
+            return {"m50_durum": self.istemci.takip_yetenek(
+                veri.get("kanal"), veri.get("etkin", True))}
         raise ValueError("bilinmeyen M50 eylemi: %s" % eylem)
 
     def _durum_paketi(self) -> Dict[str, Any]:

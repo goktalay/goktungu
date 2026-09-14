@@ -18,8 +18,19 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.17"
+KOPRU_SURUM = "1.7.18"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.18",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "YENI: M50 servisi SDK'nin geri kalanini destekler: aci okuma "
+            "(GetAngleX/Y), on ayarlar (GetPresets/SetPreset/CallPreset/"
+            "ClearPreset/ClearAllPreset), tarama/devriye (ControlScan) ve "
+            "takip yetenegi (EnableTrackAbility). Merkez 2.4.188 Elektro-"
+            "Optik paneli bu komutlari kopru uzerinden de kullanabilir.",
+        ]
+    },
     {
         "surum": "1.7.17",
         "tarih": "2026-09-14",

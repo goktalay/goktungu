@@ -86,6 +86,7 @@ class M50Istemcisi:
             "sdk_surumu": M50_SDK_SURUM, "sdk_hazir": False,
             "ip": "", "port": 0, "hata": "", "azimut": None,
             "egim": None, "takip": {"etkin": False, "kanal": ""},
+            "tarama": {"tur": "yok", "kontrol": "durdur", "yol": 0},
             "video": {"gorunur": False, "termal": False,
                       "kaynak": "sdk_ham_veri_webde_desteklenmez"},
             "son_islem": "", "guncelleme": time.time(),
@@ -387,6 +388,165 @@ class M50Istemcisi:
         self._takip_secildi[kanal_ad] = True
         self._durum_yaz(son_islem="takip_sec")
         return self.durum()
+
+    # ------------------------------------------------------------------
+    # v2.4.188 — SDK'nın geri kalanı: açı okuma, ön ayarlar, tarama,
+    # takip yeteneği/modu. Hepsi üreticinin DemoPy/main.py örneğindeki
+    # çağrı biçimlerini birebir izler.
+    # ------------------------------------------------------------------
+    def aci_oku(self) -> Dict[str, Any]:
+        """Canlı azimut/eğim (GetAngleX/Y). Bağlı değilse None bırakır."""
+        cihaz = self._bagli_cihaz()
+        ct = importlib.import_module("ctypes")
+        x, y = ct.c_double(), ct.c_double()
+        try:
+            okx = bool(cihaz.GetAngleX(x))
+            oky = bool(cihaz.GetAngleY(y))
+        except Exception as exc:
+            raise M50Hata("M50 açı okunamadı: %s" % exc) from exc
+        self._durum_yaz(azimut=round(x.value, 2) if okx else None,
+                        egim=round(y.value, 2) if oky else None)
+        return self.durum()
+
+    def onayarlar(self) -> list:
+        """Cihazdaki ön ayar (preset) listesi: [{no, ad}]."""
+        cihaz = self._bagli_cihaz()
+        ct = importlib.import_module("ctypes")
+        PresetInfo_t = importlib.import_module("Hvs.preset").PresetInfo_t
+        bilgi = ct.POINTER(PresetInfo_t)()
+        sayi = ct.c_int()
+        try:
+            if not bool(cihaz.GetPresets(bilgi, sayi)):
+                return []
+            liste = []
+            for i in range(max(0, min(int(sayi.value), 256))):
+                try:
+                    ad = bilgi[i].name.decode("utf-8", errors="replace").strip("\x00 ")
+                except Exception:
+                    ad = ""
+                liste.append({"no": int(bilgi[i].preset), "ad": ad})
+            try:
+                cihaz.FreePresets(bilgi, sayi)
+            except Exception:
+                pass
+            return liste
+        except M50Hata:
+            raise
+        except Exception as exc:
+            raise M50Hata("M50 ön ayarları okunamadı: %s" % exc) from exc
+
+    @staticmethod
+    def _onayar_no(no: Any) -> int:
+        return int(_sayi(no, "ön ayar numarası", 0, 255))
+
+    def onayar_kaydet(self, no: Any, ad: Any, hiz: Any = 5) -> Dict[str, Any]:
+        n = self._onayar_no(no)
+        ad_m = _temiz_metin(ad or ("Onayar %d" % n), "ön ayar adı", 64)
+        hiz_i = int(_sayi(hiz, "ön ayar hızı", 1, 63))
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.SetPreset(n, ad_m.encode("utf-8"), hiz_i))
+        except Exception as exc:
+            raise M50Hata("M50 ön ayar kaydedilemedi: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 ön ayar kaydı kabul edilmedi")
+        self._durum_yaz(son_islem="onayar_kaydet:%d" % n)
+        return self.durum()
+
+    def onayar_cagir(self, no: Any) -> Dict[str, Any]:
+        n = self._onayar_no(no)
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.CallPreset(n))
+        except Exception as exc:
+            raise M50Hata("M50 ön ayara gidilemedi: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 ön ayar çağrısı kabul edilmedi")
+        self._durum_yaz(son_islem="onayar_cagir:%d" % n)
+        return self.durum()
+
+    def onayar_sil(self, no: Any) -> Dict[str, Any]:
+        n = self._onayar_no(no)
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.ClearPreset(n))
+        except Exception as exc:
+            raise M50Hata("M50 ön ayar silinemedi: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 ön ayar silme kabul edilmedi")
+        self._durum_yaz(son_islem="onayar_sil:%d" % n)
+        return self.durum()
+
+    def onayar_hepsini_sil(self) -> Dict[str, Any]:
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.ClearAllPreset())
+        except Exception as exc:
+            raise M50Hata("M50 ön ayarlar silinemedi: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 tüm ön ayarları silme kabul edilmedi")
+        self._durum_yaz(son_islem="onayar_hepsini_sil")
+        return self.durum()
+
+    def tarama(self, tur: Any, kontrol: Any, yol: Any = 0) -> Dict[str, Any]:
+        """Tarama/devriye: tür (onayar/yatay/panorama/yelpaze/kare/desen/dikey)
+        ve kontrol (baslat/durdur/duraklat/devam)."""
+        turler = {"yok": "SCAN_TYPE_NONE", "onayar": "SCAN_TYPE_PRESET",
+                  "yatay": "SCAN_TYPE_HORIZONTAL", "panorama": "SCAN_TYPE_PANORAMA",
+                  "yelpaze": "SCAN_TYPE_FAN", "kare": "SCAN_TYPE_FRAME",
+                  "desen": "SCAN_TYPE_PATTERN", "dikey": "SCAN_TYPE_VERTICAL"}
+        kontroller = {"baslat": "SCT_START", "durdur": "SCT_STOP",
+                      "duraklat": "SCT_PAUSE", "devam": "SCT_CONTINUE"}
+        t = str(tur or "").strip().lower()
+        k = str(kontrol or "").strip().lower()
+        if t not in turler:
+            raise M50Hata("izin verilmeyen M50 tarama türü")
+        if k not in kontroller:
+            raise M50Hata("izin verilmeyen M50 tarama kontrolü")
+        yol_i = int(_sayi(yol, "tarama yolu", 0, 31))
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.ControlScan(getattr(self._dat.ScanType_e, turler[t]),
+                                        getattr(self._dat.ScanCtrlType_e, kontroller[k]),
+                                        yol_i))
+        except Exception as exc:
+            raise M50Hata("M50 tarama komutu başarısız: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 tarama komutu kabul edilmedi")
+        self._durum_yaz(tarama={"tur": t, "kontrol": k, "yol": yol_i},
+                        son_islem="tarama:%s:%s" % (t, k))
+        return self.durum()
+
+    def takip_yetenek(self, kanal: Any, etkin: Any) -> Dict[str, Any]:
+        video = self._video_enum(kanal)
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(cihaz.EnableTrackAbility(video, bool(etkin)))
+        except Exception as exc:
+            raise M50Hata("M50 takip yeteneği değiştirilemedi: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 takip yeteneği komutu kabul edilmedi")
+        self._durum_yaz(son_islem="takip_yetenek:%s" % ("acik" if etkin else "kapali"))
+        return self.durum()
+
+    def takip_modu_oku(self, kanal: Any) -> Optional[str]:
+        video = self._video_enum(kanal)
+        cihaz = self._bagli_cihaz()
+        ct = importlib.import_module("ctypes")
+        mod = ct.c_int()
+        # IPC_device.GetTrackMode sarmalayıcısı `mode.value` çağırıp
+        # DEĞER geçirir (çıkış parametresi olamaz); ham bağlayıcı byref
+        # ile doğrudan çağrılır. `__handle__` çift alt çizgiyle bittiği
+        # için ad karıştırmaya (name mangling) uğramaz.
+        try:
+            if not bool(importlib.import_module("Hvs.track").GetTrackMode(
+                    cihaz.__handle__, video.value, ct.byref(mod))):
+                return None
+        except Exception:
+            return None
+        ters = {0: "hava_yari_otomatik", 1: "hava_otomatik", 2: "kara_manuel",
+                3: "kara_yari_otomatik", 4: "kara_otomatik"}
+        return ters.get(int(mod.value))
 
     def rtsp_url(self, kanal: Any) -> Optional[str]:
         """Cihazın kendi yayınladığı RTSP adresini SDK'dan okur.

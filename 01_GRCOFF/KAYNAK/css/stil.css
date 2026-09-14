@@ -9902,6 +9902,30 @@ body.tam-ekran-modu #altOrtaPanel {
   white-space: nowrap;
 }
 
+/* v2.4.188: Elektro-Optik (M50) paneli — acilir-kapanir bolumler + gomulu video */
+#yzM50 { min-width: 560px; }
+.m50-icerik { max-height: calc(100vh - 120px); overflow-y: auto; }
+.m50-ust { display: flex; align-items: center; gap: 10px; padding: 4px 2px 6px; }
+.m50-ust #m50Ozet { flex: 1; color: var(--soluk); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m50-ust #btnM50Baglan { margin-left: auto; }
+#m50Hata { color: var(--tehlike, #e5484d); font-size: 11px; margin: 0 2px 4px; display: none; }
+.m50-bolum-ic { padding: 8px 10px 10px; }
+.m50-video-sar { position: relative; background: #000; border-radius: 6px; overflow: hidden; aspect-ratio: 16 / 9; min-height: 200px; }
+.m50-video-sar img.kam-video-m50 { width: 100%; height: 100%; object-fit: contain; display: block; cursor: grab; touch-action: none; user-select: none; }
+.m50-video-sar img.kam-video-m50.m50-ptz-aktif { cursor: grabbing; }
+.m50-video-yok { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--soluk); font-size: 12px; }
+.m50-video-sar.var .m50-video-yok { display: none; }
+.m50-video-ust { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; gap: 6px; align-items: center; pointer-events: none; }
+.m50-video-ust button { pointer-events: auto; opacity: .85; }
+.m50-video-ust button.aktif { outline: 2px solid var(--vurgu, #35a7ff); opacity: 1; }
+.m50-video-ipucu { margin-left: auto; font-size: 10px; color: rgba(255,255,255,.7); background: rgba(0,0,0,.45); padding: 2px 6px; border-radius: 4px; }
+.m50-ptz-izgara { display: grid; grid-template-columns: repeat(3, 44px); gap: 6px; justify-content: center; margin: 8px 0; }
+.m50-ptz-izgara .m50-ptz { height: 40px; }
+.m50-lens-izgara { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.m50-dugme-satir { flex-wrap: wrap; gap: 6px; }
+.m50-dugme-satir button { flex: 1 1 auto; }
+.m50-bolum summary i { width: 14px; text-align: center; }
+
 /* v2.4.152: Kamera formu acilir-kapanir bolumler */
 #kamModalKutu .lok-kaydet-icerik { max-height: calc(100vh - 140px); overflow-y: auto; }
 .kam-bolum {
