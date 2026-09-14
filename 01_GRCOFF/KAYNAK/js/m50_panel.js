@@ -129,6 +129,7 @@ function eoPaneliTazele(){
 
 window.eoListesiGuncelle = function(liste, eski){
   eoListesi = Array.isArray(liste) ? liste : [];
+  if (typeof window.eoCihazListeCiz === "function") window.eoCihazListeCiz();
   if (!eoListesi.length){ if (eski) window.m50PaneliGuncelle(eski); return; }
   if (!eoListesi.some(c => Number(c.eo_id) === _eoSecili))
     _eoSecili = Number(eoListesi[0].eo_id);
@@ -758,9 +759,17 @@ m50AlanlariEtkinlestir();
     if (!liste) return;
     const t = m50T();
     liste.innerHTML = "";
+    const dc = document.getElementById("eoCihazDurum");
+    if (dc){
+      const bagli = eoListesi.filter(c => c.m50_durum && c.m50_durum.durum === "bagli").length;
+      dc.querySelector(".pd-sol").innerHTML = "<b>" + eoListesi.length + "</b> " + (t.pdCihaz || "cihaz") +
+        " · <b>" + bagli + "</b> " + (t.pdBagli || "bağlı");
+      dc.querySelector(".pd-sag").textContent = new Date().toLocaleTimeString();
+    }
     if (!eoListesi.length){
-      const b = document.createElement("div"); b.className = "cl-bos";
-      b.textContent = t.clBos || "Kayıtlı cihaz yok."; liste.appendChild(b); return;
+      if (typeof bosPanelYap === "function")
+        liste.appendChild(bosPanelYap(t.bosEo || "KAYITLI ELEKTRO OPTİK YOK", "fa-solid fa-binoculars"));
+      return;
     }
     for (const c of eoListesi){
       const d = (c.m50_durum && c.m50_durum.durum) || "kapali";

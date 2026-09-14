@@ -5077,10 +5077,25 @@ class WSSunucusu:
             # dosyasi vardir ama bellek bostur; bu durumda sihirbaz
             # "ilk kurulum" gibi davranmamali.
             yap = _pg.yapilandirma_var() or _pg.dosya_var()
+            # v2.4.195 (kullanici bildirimi: "yeniden kurdum, sihirbaz
+            # gelmedi"): karar ve dayandigi dosya yolu GUNLUGE yazilir.
+            # Boylece "neden sihirbaz acilmadi" sorusu tahminle degil
+            # konsol satiriyla yanitlanir (ornegin eski konumda kalmis
+            # bir pg.json).
+            try:
+                _pg_yol = _pg._pg_dosya_yolu()
+            except Exception:
+                _pg_yol = "?"
+            self.konsol("PG", "Sihirbaz karari: %s (pg.json %s: %s)"
+                        % ("yapilandirilmis, sihirbaz ACILMAZ" if yap
+                           else "yapilandirma YOK, kurulum sihirbazi ACILIR",
+                           "bulundu" if _pg.dosya_var() else "yok", _pg_yol),
+                        "bilgi")
             durum = {"tip": "pg_durum",
                      "yapilandirildi": bool(yap),
                      "surucu_var": bool(_pg.VAR),
-                     "kip": "pg" if yap else "yok"}
+                     "kip": "pg" if yap else "yok",
+                     "pg_dosya": _pg_yol}
             if yap:
                 if not _pg.yapilandirma_var():
                     # Diskte var, bellekte yok: yukle (baglanti ACMAZ).

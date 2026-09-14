@@ -10051,6 +10051,18 @@ body.tam-ekran-modu #altOrtaPanel {
 .cl-dgm { display: flex; gap: 4px; flex: 0 0 auto; }
 .cl-dgm button { padding: 4px 8px; }
 .cl-bos { padding: 14px; text-align: center; color: var(--soluk); font-size: 12px; }
+/* v2.4.195: dipli yuzen paneller — icerik akar, dip (durum cubugu veya
+   kaydet/iptal) her zaman altta sabit kalir. */
+.yuzen-panel.yz-dipli { display: flex; flex-direction: column; }
+.yuzen-panel.yz-dipli > .yuzen-icerik { flex: 1 1 auto; overflow: auto; min-height: 0; }
+.panel-durum-cubugu { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 6px 12px; border-top: 1px solid var(--cizgi); font-size: 11px;
+  color: var(--soluk); font-family: Consolas, monospace; letter-spacing: .04em;
+  background: rgba(0,0,0,.12); }
+.panel-durum-cubugu .pd-sol b { color: var(--metin); font-weight: 600; }
+.form-dip { flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 6px; padding: 10px 12px;
+  border-top: 1px solid var(--cizgi); background: rgba(0,0,0,.12); }
+.form-dip button { min-width: 110px; }
 .ra-liste { display: flex; flex-wrap: wrap; gap: 4px; }
 .ra-sekme { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px;
   border: 1px solid var(--cizgi); background: transparent; color: var(--soluk); font-size: 11px; cursor: pointer; }

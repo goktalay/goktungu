@@ -410,8 +410,25 @@ Section "Uninstall"
     DetailPrint "Veri dizini siliniyor: ${VERI_DIZINI}"
     RMDir /r "${VERI_DIZINI}"
     RMDir "C:\ProgramData\Goktungu"
+    ; OLCULEN KUSUR (kullanici bildirimi, 2.5.64): program dizinindeki
+    ; `veri\` alt klasoru HIC silinmiyordu. Ortam degiskeni servise
+    ; ulasmadan calisan ilk surumler pg.json'u BURAYA yazar; kod da
+    ; gecis kurali geregi bu eski konumu okumaya devam eder. Sonuc:
+    ; kullanici ProgramData'yi elle silse bile yeniden kurulumda eski
+    ; pg.json bulunuyor, "yapilandirilmis" sayiliyor ve kurulum
+    ; sihirbazi hic acilmiyordu.
+    RMDir /r "$INSTDIR\veri"
+    Delete "$INSTDIR\pg.json"
+    Delete "$INSTDIR\gcs_ayarlar.json"
+    Delete "$INSTDIR\gcs.db"
+    RMDir "$INSTDIR"
+    MessageBox MB_ICONINFORMATION|MB_OK \
+      "Veri silindi.$\r$\n$\r$\nNOT: PostgreSQL sunucusundaki veritabaninin kendisi (goktungu) SILINMEZ; sonraki kurulumda sihirbaz ayni veritabanina yeniden baglanabilir veya yenisini olusturabilir."
     Goto veri_bitti
   veri_koru:
     DetailPrint "Veri korundu: ${VERI_DIZINI}"
+    ; Eski konumdaki veri de korunur; kullanici nerede oldugunu bilsin.
+    IfFileExists "$INSTDIR\veri\*.*" 0 veri_bitti
+      DetailPrint "Eski konumdaki veri de korundu: $INSTDIR\veri"
   veri_bitti:
 SectionEnd

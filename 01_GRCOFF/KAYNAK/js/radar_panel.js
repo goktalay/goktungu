@@ -568,9 +568,19 @@ function siniflandirmaDurumSorgula(){
     if (!liste) return;
     const t = D();
     liste.innerHTML = "";
+    // v2.4.195: durum cubugu (kayit / bagli sayisi)
+    const dc = document.getElementById("radarlarDurum");
+    if (dc){
+      const bagli = radarListesi.filter(r => r.durum === "bagli").length;
+      dc.querySelector(".pd-sol").innerHTML = "<b>" + radarListesi.length + "</b> " + (t.pdRadar || "radar") +
+        " · <b>" + bagli + "</b> " + (t.pdBagli || "bağlı");
+      dc.querySelector(".pd-sag").textContent = new Date().toLocaleTimeString();
+    }
     if (!radarListesi.length){
-      const b = document.createElement("div"); b.className = "cl-bos";
-      b.textContent = t.clBos || "Kayıtlı cihaz yok."; liste.appendChild(b); return;
+      // v2.4.195: diger panellerle ayni buyuk silik ikon deseni
+      if (typeof bosPanelYap === "function")
+        liste.appendChild(bosPanelYap(t.bosRadar || "KAYITLI RADAR YOK", "fa-solid fa-satellite-dish"));
+      return;
     }
     for (const r of radarListesi){
       const sat = document.createElement("div");

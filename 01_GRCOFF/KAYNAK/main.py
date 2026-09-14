@@ -665,6 +665,13 @@ def uygulama_kur():
     from goktungu.guncelleme_dosya import DosyaGuncellemeYoneticisi
     from goktungu.sabitler import VERI_KOKU, PROJE_KOKU
     from goktungu.paket_surum import UYGULAMA_SURUM
+    # v2.4.195: "yeniden kurdum, sihirbaz gelmedi" teshisi icin veri
+    # kokunun NEREDE cozuldugu acikca yazilir (ortam degiskeni servise
+    # ulasmadiysa veri program dizinine duser ve kaldirmada gozden kacar).
+    konsol("VERI", "Veri koku: %s%s" % (
+        VERI_KOKU, "" if os.environ.get("GOKTUNGU_VERI_KOKU") else
+        "  (GOKTUNGU_VERI_KOKU tanimsiz; program dizini kullaniliyor)"),
+        "bilgi" if os.environ.get("GOKTUNGU_VERI_KOKU") else "uyari")
     ws_sunucu.guncelleme = DosyaGuncellemeYoneticisi(
         "gcs", UYGULAMA_SURUM, VERI_KOKU, kok=PROJE_KOKU, gunluk=konsol)
     ws_sunucu.guncelleme.denetle_arka_planda()

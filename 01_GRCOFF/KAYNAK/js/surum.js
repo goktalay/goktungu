@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.194";
+const GCS_SURUM = "2.4.195";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.195",
+    tarih: "2026-09-14",
+    baslik: "Kurulum sihirbazının atlanma nedeni giderildi; liste panellerinde durum çubuğu ve boş durum ikonu; form dipleri (paket 2.5.65)",
+    maddeler: [
+      "DÜZELTME (ölçüldü): Program kaldırılıp klasörler silindikten sonra yeniden kurulumda kurulum sihirbazı gelmiyordu. Neden: kaldırıcı program dizinindeki 'veri' alt klasörünü hiç silmiyordu; ortam değişkeni servise ulaşmadan çalışan ilk sürümler pg.json'u buraya yazar ve kod geçiş kuralı gereği bu eski konumu okumaya devam eder — dolayısıyla eski pg.json bulunuyor, sistem 'yapılandırılmış' sayılıyor ve PostgreSQL ayakta olduğu için sihirbaz açılmıyordu. Kaldırıcı 'veri silinsin mi?' sorusuna EVET denince artık program dizinindeki eski konumu da temizler. PostgreSQL'deki veritabanının kendisi silinmez (sihirbaz yeniden bağlanabilir).",
+      "TEŞHİS: Açılışta veri kökü ve sihirbaz kararı (pg.json bulundu/yok, hangi yolda) konsola yazılır; sihirbaz beklenmedik biçimde açılmazsa neden günlükte görünür.",
+      "YENİ: Radar menüsünden 'Radar Ayarları' kaldırıldı; radar yönetim paneli Radarlar listesindeki satıra tıklayınca açılır (listede Düzenle/Sil). Elektro-Optik menüsünden 'Yeni Elektro Optik' kaldırıldı; düğme liste panelindedir.",
+      "YENİ: Radarlar ve Elektro Optik Cihazları panellerinde durum çubuğu (kayıt / bağlı sayısı, son güncelleme) ve kayıt yokken diğer panellerdeki gibi büyük silik ikon.",
+      "YENİ: Kayıt formlarında KAYDET / İPTAL alt (footer) bölümünde."
+    ]
+  },
   {
     surum: "2.4.194",
     tarih: "2026-09-14",

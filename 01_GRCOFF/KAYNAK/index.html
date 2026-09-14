@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24194">
+<link rel="stylesheet" href="css/stil.css?v=v24195">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -57,7 +57,9 @@
         <div class="mb-dropdown">
           <!-- v2.4.194 (kullanici istegi #1): coklu radar -> once LISTE -->
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadarlar" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite-dish"></i><span data-i18n="mbRadarlar">Radarlar</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite"></i><span data-i18n="mbRadarAyar">Radar Ayarları</span></div>
+          <!-- v2.4.195: "Radar Ayarlari" menu ogesi KALDIRILDI (kullanici
+               istegi): radar yonetim paneli, Radarlar listesindeki satira
+               tiklaninca acilir. -->
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzFiltre" data-hizli="h"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-filter"></i><span data-i18n="mbHedefFiltre">Hedef Filtresi</span></div>
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzIz" data-hizli="i"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-route"></i><span data-i18n="mbIzAyar">İz Ayarları</span></div>
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzSinif" data-hizli="s"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-tags"></i><span data-i18n="mbSinif">Hedef Sınıflandırma</span></div>
@@ -76,7 +78,8 @@
                KALDIRILDI; kontrol paneli listedeki cihaza tiklaninca acilir.
                Cihazlar -> liste paneli, Yeni M50 -> kayit formu. -->
           <div class="mb-oge mb-popup-toggle pasif" id="mbEoCihazlar" data-yuzen="yzEoCihazlar" data-hizli="c"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
-          <div class="mb-oge" id="mbEoYeni" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbEoYeni">Yeni Elektro Optik</span></div>
+          <!-- v2.4.195: "Yeni Elektro Optik" menuden KALDIRILDI; dugme
+               Elektro Optik Cihazlari liste panelindedir. -->
           <div class="mb-ayrac"></div>
           <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm Cihazlara Bağlan</span></div>
         </div>
@@ -399,7 +402,7 @@
 </div>
 
 <!-- ============ v2.4.194: RADARLAR (liste) + RADAR KAYIT FORMU ============ -->
-<div id="yzRadarlar" class="yuzen-panel yuzen-gizli" style="min-width:440px">
+<div id="yzRadarlar" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:440px;min-height:300px">
   <div class="yuzen-baslik">
     <span><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="panelRadarlar">RADARLAR</span></span>
     <button class="yuzen-kapat" data-yuzen="yzRadarlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
@@ -411,8 +414,9 @@
     </div>
     <div id="radarlarListe" class="cl-liste"></div>
   </div>
+  <div class="panel-durum-cubugu" id="radarlarDurum"><span class="pd-sol"></span><span class="pd-sag"></span></div>
 </div>
-<div id="yzRadarForm" class="yuzen-panel yuzen-gizli" style="min-width:380px">
+<div id="yzRadarForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
   <div class="yuzen-baslik">
     <span><i class="fa-solid fa-satellite-dish"></i> <span id="radarFormBaslik" data-i18n="panelRadarFormYeni">YENİ RADAR</span></span>
     <button class="yuzen-kapat" data-yuzen="yzRadarForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
@@ -428,15 +432,15 @@
       <div style="flex:1"><label for="rfLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="rfLat" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
       <div style="flex:1"><label for="rfLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="rfLon" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
     </div>
-    <div class="satir" style="gap:6px;margin-top:8px">
-      <button id="btnRadarFormKaydet" style="flex:1"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
-      <button id="btnRadarFormIptal" class="ikincil" style="flex:1"><span data-i18n="btnFormIptal">İPTAL</span></button>
-    </div>
+  </div>
+  <div class="form-dip">
+    <button id="btnRadarFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnRadarFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
   </div>
 </div>
 
 <!-- ============ v2.4.194: ELEKTRO OPTIK CIHAZLARI (liste) + KAYIT FORMU ============ -->
-<div id="yzEoCihazlar" class="yuzen-panel yuzen-gizli" style="min-width:440px">
+<div id="yzEoCihazlar" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:440px;min-height:300px">
   <div class="yuzen-baslik">
     <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelEoCihazlar">ELEKTRO OPTİK CİHAZLARI</span></span>
     <button class="yuzen-kapat" data-yuzen="yzEoCihazlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
@@ -448,8 +452,9 @@
     </div>
     <div id="eoCihazListe" class="cl-liste"></div>
   </div>
+  <div class="panel-durum-cubugu" id="eoCihazDurum"><span class="pd-sol"></span><span class="pd-sag"></span></div>
 </div>
-<div id="yzEoForm" class="yuzen-panel yuzen-gizli" style="min-width:380px">
+<div id="yzEoForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
   <div class="yuzen-baslik">
     <span><i class="fa-solid fa-binoculars"></i> <span id="eoFormBaslik" data-i18n="panelEoFormYeni">YENİ ELEKTRO OPTİK</span></span>
     <button class="yuzen-kapat" data-yuzen="yzEoForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
@@ -466,10 +471,10 @@
       <div style="flex:1"><label for="efParola" data-i18n="m50Parola">Parola</label><input type="password" id="efParola" autocomplete="new-password"></div>
     </div>
     <p class="aciklama" id="efNot" data-i18n="efNot">Parola sunucuda cihaz kaydıyla saklanır; düzenlerken boş bırakılırsa değişmez.</p>
-    <div class="satir" style="gap:6px;margin-top:8px">
-      <button id="btnEoFormKaydet" style="flex:1"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
-      <button id="btnEoFormIptal" class="ikincil" style="flex:1"><span data-i18n="btnFormIptal">İPTAL</span></button>
-    </div>
+  </div>
+  <div class="form-dip">
+    <button id="btnEoFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnEoFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
   </div>
 </div>
 
@@ -2005,7 +2010,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24194"></script>
+<script src="js/i18n.js?v=v24195"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2071,8 +2076,8 @@
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24192"></script>
-<script src="js/radar_panel.js?v=v24194"></script>
-<script src="js/m50_panel.js?v=v24194"></script>
+<script src="js/radar_panel.js?v=v24195"></script>
+<script src="js/m50_panel.js?v=v24195"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>
