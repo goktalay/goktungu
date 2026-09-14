@@ -90,6 +90,12 @@ def kur_agaci(calisma):
     # --- /opt/goktungu/kopru: uygulama ---
     hedef = os.path.join(kok, HEDEF.lstrip("/"))
     os.makedirs(hedef, exist_ok=True)
+    # 1.7.19 DUZELTME: kok dizindeki SURUM dosyasi elle guncellenmedigi
+    # icin paketlere bayat surum (1.6.1) giriyordu (1.7.15-1.7.18'de
+    # olculdu). Tek kaynak surumler.KOPRU_SURUM'dur; dosya her paketlemede
+    # buradan yeniden yazilir (setup.nsi de ayni dosyayi kullanir).
+    with open(os.path.join(KOK, "SURUM"), "w", encoding="utf-8") as f:
+        f.write(f"{KOPRU_SURUM}\n")
     for d in DAHIL_DOSYA:
         k = os.path.join(KOK, d)
         if os.path.exists(k):
