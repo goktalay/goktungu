@@ -1151,9 +1151,22 @@ class AIIsci:
         #   hic secilmemisse tum siniflar acik (eski davranis / tek sinif).
         _olcek = getattr(akis, "_olcek", {})
 
+        # v2.4.182: modelin KENDI belgelenen sinif-bazli zayifligina gore
+        # taban esik farklilastirmasi. `Javvanny/yolov8m_flying_objects_
+        # detection` model kartinda raporlanan dogruluk: Ucak %99, Drone
+        # %85, Kus %68, Helikopter %67 — kus ve helikopter modelin ZAYIF
+        # oldugu siniflardir (birbirine ve drone'a karismasi daha olasi).
+        # Bu siniflarda daha yuksek bir taban esik uygulanir; kullanicinin
+        # hassasiyet kaydiricisi bu tabanin USTUNE eklenir, ALTINA
+        # dusuremez — boylece "hassasiyeti yukselt" dugmesi bilinen zayif
+        # siniflarda yanlis pozitifi asiri artirmaz.
+        _TABAN_ESIK = {"kus": 0.42, "helikopter": 0.38}
+
         def _esik(anahtar):
             kk = _olcek.get(anahtar) or _olcek.get("hava_araci", 1.0)
-            return max(0.10, min(0.90, 0.35 * min(1.5, kk)))
+            hesap = max(0.10, min(0.90, 0.35 * min(1.5, kk)))
+            taban = _TABAN_ESIK.get(anahtar)
+            return max(hesap, taban) if taban else hesap
 
         alt_secili = akis.gorevler & ALT_SINIFLAR
         esik_taban = 0.10   # aday toplama esigi; sinif esigi sonra uygulanir

@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.181";
+const GCS_SURUM = "2.4.182";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.182",
+    tarih: "2026-09-14",
+    baslik: "Hava aracı tespitinde sınıf-bazlı taban eşik sertleştirmesi (paket 2.5.52)",
+    maddeler: [
+      "ARAŞTIRMA SONUCU: Önerilen 'daha iyi' modellerin ikisi (BirdDrone-2C-FT/YOLO26 ve RT-DETR-R18) doğrudan doğrulandı ve GERÇEKTE MEVCUT DEĞİL (GitHub/HuggingFace'te böyle bir depo yok — büyük olasılıkla halüsinasyon). Mevcut kurulu modelin (Flying Objects YOLOv8m) yerine geçecek, doğrulanmış ve gerçekten daha iyi bir alternatif bulunamadı; model DEĞİŞTİRİLMEDİ.",
+      "Bunun yerine modelin KENDİ belgelenen sınıf bazlı zayıflığına göre (model kartı: Uçak %99, Drone %85, Kuş %68, Helikopter %67 doğruluk) taban güven eşiği sertleştirildi: Kuş ve Helikopter sınıflarında artık daha yüksek bir taban eşik zorunlu — kullanıcının hassasiyet kaydırıcısı bu tabanın ÜSTÜNE eklenir, ALTINA düşüremez. Amaç: modelin zayıf olduğu sınıflarda hassasiyeti yükseltmenin yanlış pozitifi aşırı artırmasını önlemek."
+    ]
+  },
   {
     surum: "2.4.181",
     tarih: "2026-09-14",
