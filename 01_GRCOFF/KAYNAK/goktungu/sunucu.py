@@ -5331,7 +5331,14 @@ class WSSunucusu:
                     return _goc.GocMotoru(
                         konsol=lambda m: self.konsol("PG", m)
                     ).calistir(ilerleme=_geri_cagir)
+                self.konsol("PG", "Kurulum basladi (pg_kur): %s@%s:%s/%s"
+                            % (cagri.get("user", "?"), cagri.get("host", "?"),
+                               cagri.get("port", "?"), cagri.get("dbname", "?")), "bilgi")
                 sonuc = await loop.run_in_executor(None, _db_iade_ederek, _kur)
+                self.konsol("PG", "Kurulum bitti (pg_kur): %s%s"
+                            % ("BASARILI" if sonuc.get("tamam") else "HATA",
+                               "" if sonuc.get("tamam") else " — " + str(sonuc.get("hata") or "")),
+                            "basari" if sonuc.get("tamam") else "hata")
             else:
                 def _goc_uygula():
                     from . import goc as _goc
@@ -5402,7 +5409,14 @@ class WSSunucusu:
         else:
             self.konsol("PG", f"{komut} basarisiz: {yanit['hata']}",
                         "hata")
-        await websocket.send(json.dumps(yanit))
+        # v2.4.196: yanit gonderilemezse (WS bu arada koptuysa) SESSIZ
+        # kalinmaz; istemci yeniden baglaninca pg_durum ile toparlar.
+        try:
+            await websocket.send(json.dumps(yanit))
+        except Exception as _ge:
+            self.konsol("PG", "Sihirbaz yaniti gonderilemedi (%s: %s); istemci "
+                        "yeniden baglaninca durumu sorup toparlayacak"
+                        % (type(_ge).__name__, _ge), "uyari")
 
     # ------------------------------------------------------------------
     # v2.4.67: KURULUM HESABI KIMLIGI

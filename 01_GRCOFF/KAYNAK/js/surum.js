@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.195";
+const GCS_SURUM = "2.4.196";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.196",
+    tarih: "2026-09-14",
+    baslik: "Gizli panellerin görünür kalması, kurulum sihirbazının sonsuz dönmesi, parola alanı görünümü (paket 2.5.66)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, ekran görüntüsü): Radarlar / Elektro Optik Cihazları / kayıt formu panelleri kapanmıyor ve aynı konumda üst üste görünüyordu (EO formunun arkasında radar formunun alanları). Neden: 2.4.195'te eklenen bir CSS kuralı gizli-panel kuralıyla aynı özgüllükteydi ve onu eziyordu. Kural kaldırıldı; paneller yeniden kapanıyor, boş durum ikonu ve durum çubuğu görünüyor.",
+      "DÜZELTME: Liste panelleri açılışta telemetri gelene kadar bomboş kalıyordu; artık ilk çizimde boş durum ikonu ve durum çubuğu (0 kayıt) hemen görünür.",
+      "DÜZELTME (ölçüldü): Kurulum sihirbazında PostgreSQL bilgileri girilip kurulum başlatılınca düğme sonsuza kadar dönüyor, sayfa yenilenince sistem kurulu açılıyordu. Neden: kurulum sürerken WS bağlantısı kopup yeniden kurulunca gelen durum yanıtı sihirbaz 'bekliyor' durumunda olduğu için yok sayılıyordu. Artık beklerken gelen 'yapılandırılmış + erişim var' durumu kurulumu tamamlanmış sayar; ayrıca 45 sn yanıt gelmezse durum yeniden sorgulanır. Sunucu kurulum başlangıç/bitişini ve gönderilemeyen yanıtı günlüğe yazar.",
+      "DÜZELTME: Yeni Elektro Optik formunda parola alanı diğer alanlardan farklı (beyaz, dar) görünüyordu; parola girdisi ortak alan stiline dahil edildi."
+    ]
+  },
   {
     surum: "2.4.195",
     tarih: "2026-09-14",

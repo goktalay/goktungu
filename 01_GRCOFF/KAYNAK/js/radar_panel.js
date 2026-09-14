@@ -628,4 +628,6 @@ function siniflandirmaDurumSorgula(){
   if (iptal) iptal.addEventListener("click", () => kapat("yzRadarForm"));
   const mbYeni = document.getElementById("mbRadarYeni");
   if (mbYeni) mbYeni.addEventListener("click", () => window.radarFormuAc(null));
+  // v2.4.196: liste telemetriyle gelir; gelene kadar panel BOS kalmasin
+  window.radarlarListeCiz();
 })();

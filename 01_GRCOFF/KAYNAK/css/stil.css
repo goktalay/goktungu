@@ -1317,7 +1317,9 @@
   .alan label{display:block;margin-bottom:5px;color:var(--soluk);
     font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
   .satir{display:flex;gap:8px;}
-  select,input[type=text],input[type=number]{width:100%;box-sizing:border-box;padding:8px 10px;
+  /* v2.4.196: parola alani da ayni gorunumde (kullanici bildirimi: EO
+     formunda parola beyaz/dar goruunuyordu). */
+  select,input[type=text],input[type=number],input[type=password]{width:100%;box-sizing:border-box;padding:8px 10px;
     background:var(--giris-arka);border:1px solid var(--cizgi);border-radius:3px;
     color:var(--metin);font-family:Consolas,monospace;font-size:13px;}
   select:focus,input:focus{outline:none;border-color:#3a6ea5;}
@@ -10053,7 +10055,13 @@ body.tam-ekran-modu #altOrtaPanel {
 .cl-bos { padding: 14px; text-align: center; color: var(--soluk); font-size: 12px; }
 /* v2.4.195: dipli yuzen paneller — icerik akar, dip (durum cubugu veya
    kaydet/iptal) her zaman altta sabit kalir. */
-.yuzen-panel.yz-dipli { display: flex; flex-direction: column; }
+/* OLCULEN KUSUR (2.5.65): `.yuzen-panel.yz-dipli{display:flex}` kurali
+   iki sinifli oldugu icin `.yuzen-panel.yuzen-gizli{display:none}` ile
+   AYNI ozgullukteydi ve dosyada sonra geldiginden onu eziyordu: gizli
+   dipli paneller gorunur kaliyor, ayni konumda ust uste ciziliyordu
+   (kullanici ekran goruntusu: EO formunun arkasinda radar formu).
+   `.yuzen-panel` zaten flex-column'dur (stil.css:316); display kurali
+   GEREKSIZDI ve kaldirildi. */
 .yuzen-panel.yz-dipli > .yuzen-icerik { flex: 1 1 auto; overflow: auto; min-height: 0; }
 .panel-durum-cubugu { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center;
   gap: 10px; padding: 6px 12px; border-top: 1px solid var(--cizgi); font-size: 11px;

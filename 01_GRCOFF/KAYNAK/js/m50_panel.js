@@ -817,4 +817,5 @@ m50AlanlariEtkinlestir();
   });
   const iptal = document.getElementById("btnEoFormIptal");
   if (iptal) iptal.addEventListener("click", () => { efParola.value = ""; kapat("yzEoForm"); });
+  window.eoCihazListeCiz();
 })();
