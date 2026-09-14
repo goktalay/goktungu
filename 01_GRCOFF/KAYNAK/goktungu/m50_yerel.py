@@ -12,10 +12,15 @@ Merkez tarafındaki ikizidir — aynı komut sözleşmesini (`durum`,
 `ayar_oku`, `ayar_yaz`, `baglan`, `kes`, `ptz`, `lens`, `aci_konumla`,
 `takip_sec`, `takip_baslat`, `takip_durdur`) uygular.
 
-GÜVENLİK: kullanıcı adı/parola hiçbir zaman `ayarlar`a (kalıcı depoya)
-yazılmaz; yalnız `baglan` çağrısı süresince RAM'de tutulur — tıpkı
-saha Köprüsündeki davranış gibi. Kalıcı ayar yalnız üç açık anahtarla
-sınırlıdır: `m50_sdk_dizin`, `rtsp_gorunur`, `rtsp_termal`.
+KİMLİK KALICILIĞI (v2.4.187 — kullanıcı isteği: "bir kere gireyim,
+veritabanına kaydet, sormasın"): saha Köprüsünün aksine bu modül TEK
+MAKİNELİK, tek-operatörlü yerel kuruluş içindir; ip/port/kullanıcı
+adı/parola başarılı bir `baglan` sonrası Merkez'in KENDİ yerel
+ayarlar tablosuna (aynı veritabanı, aynı güven sınırı — ağ üzerinden
+hiçbir yere gönderilmez) yazılır ve süreç yeniden başladığında
+(main.py) otomatik olarak yeniden bağlanmak için kullanılır. Parola
+API üzerinden asla GERİ okunmaz (`ayar_oku` yalnız ip/port/kullanıcı
+döner) — yalnızca yazılır ve dahili bağlantı çağrısında kullanılır.
 """
 from __future__ import annotations
 
@@ -38,6 +43,10 @@ class M50YerelServisi:
         self._ayar_kilidi = threading.RLock()
         self._kullanilabilir_onbellek = None
         self._kullanilabilir_ts = 0.0
+        # Bağlantı başına SDK'dan bir kez okunur; telemetri döngüsü her
+        # turda `_durum_paketi()` çağırdığı için SDK'ya saniyede iki
+        # GetRtspUrl gitmesin. baglan/kes temizler.
+        self._rtsp_onbellek: Dict[str, str] = {}
         self.istemci = M50Istemcisi(
             yaz=self._yaz, ayar_oku=self._ayar_oku, ayar_yaz=self._ayar_yaz_ic)
 
@@ -68,9 +77,13 @@ class M50YerelServisi:
         return sonuc
 
     # -----------------------------------------------------------------
-    # Kalıcı ayar — YALNIZ m50_sdk_dizin / rtsp_gorunur / rtsp_termal.
-    # Parola/kullanıcı adı BURADAN ASLA GEÇMEZ.
+    # Kalıcı ayar: m50_sdk_dizin / rtsp_gorunur / rtsp_termal (RTSP
+    # doğrulamalı, kimlik bilgisi taşıyamaz) + ip/port/kullanici/parola
+    # (v2.4.187 — bkz. modül başlığı). `_KIMLIK_ALANLARI` API üzerinden
+    # ASLA geri okunmaz; yalnız dahili `otomatik_baglan()` kullanır.
     # -----------------------------------------------------------------
+    _KIMLIK_ALANLARI = ("ip", "port", "kullanici", "parola")
+
     @staticmethod
     def _metin(deger: Any, ad: str, en_cok: int = 512) -> str:
         sonuc = str(deger or "").strip()
@@ -102,9 +115,24 @@ class M50YerelServisi:
         for anahtar in ("rtsp_gorunur", "rtsp_termal"):
             if anahtar in veri:
                 sonuc[anahtar] = cls._rtsp_uri(veri.get(anahtar), anahtar)
+        if "ip" in veri:
+            sonuc["ip"] = cls._metin(veri.get("ip"), "ip", 64)
+        if "port" in veri:
+            try:
+                sonuc["port"] = int(veri.get("port"))
+            except (TypeError, ValueError):
+                raise ValueError("port geçersiz")
+        if "kullanici" in veri:
+            sonuc["kullanici"] = cls._metin(veri.get("kullanici"), "kullanici", 64)
+        if "parola" in veri:
+            # Uzunluk sınırı hariç biçim denetimi yok: SDK'nın kabul
+            # ettiği her karakter kalıcı depoda da kabul edilir.
+            sonuc["parola"] = str(veri.get("parola") or "")[:128]
         return sonuc
 
     def _ayar_oku(self) -> Dict[str, Any]:
+        """SDK/RTSP çözümü için TÜM alanları (parola dahil) döner —
+        yalnız içeride kullanılır, WS'e asla verilmez (bkz. `_ayar_oku_disa`)."""
         with self._ayar_kilidi:
             try:
                 tumu = self._ayarlar.yukle()
@@ -112,6 +140,14 @@ class M50YerelServisi:
                 return {}
             deger = tumu.get(_AYAR_ANAHTARI)
             return dict(deger) if isinstance(deger, dict) else {}
+
+    def _ayar_oku_disa(self) -> Dict[str, Any]:
+        """`ayar_oku` WS yanıtı: parola KESİNLİKLE dışlanır; kullanıcı
+        adı/IP/port operatöre "zaten kayıtlı, tekrar girmene gerek yok"
+        göstermek için döner."""
+        a = dict(self._ayar_oku())
+        a.pop("parola", None)
+        return a
 
     def _ayar_yaz_ic(self, veri: Dict[str, Any]) -> None:
         if not isinstance(veri, dict):
@@ -129,6 +165,27 @@ class M50YerelServisi:
             except Exception as exc:
                 self._yaz("M50 ayarları yazılamadı: %s" % exc, "uyari")
 
+    def otomatik_baglan(self) -> None:
+        """Süreç başlarken (main.py) önceden kaydedilmiş kimlik bilgisi
+        varsa otomatik bağlanmayı dener. Hiçbir kayıt yoksa sessizce
+        çıkar; SDK kullanılamıyorsa (Linux/DLL yok) da sessizce çıkar —
+        çağıran yer zaten `kullanilabilir()` denetler."""
+        if not self.kullanilabilir():
+            return
+        a = self._ayar_oku()
+        if not (a.get("ip") and a.get("kullanici") and a.get("parola") and a.get("port")):
+            return
+        try:
+            self._rtsp_onbellek = {}
+            self.istemci.baglan({
+                "ip": a["ip"], "port": a["port"],
+                "kullanici": a["kullanici"], "parola": a["parola"],
+            })
+            self._yaz("Kayıtlı M50 kimliğiyle otomatik bağlanıldı: %s:%s"
+                      % (a["ip"], a["port"]))
+        except Exception as exc:
+            self._yaz("Otomatik M50 bağlantısı başarısız: %s" % exc, "uyari")
+
     # -----------------------------------------------------------------
     # Komut sözleşmesi — kopru/servis_m50.py._komut_uygula ile aynı şekil.
     # -----------------------------------------------------------------
@@ -141,8 +198,27 @@ class M50YerelServisi:
         elif eylem == "ayar_yaz":
             self._ayar_yaz_ic(veri)
         elif eylem == "baglan":
+            self._rtsp_onbellek = {}
             self.istemci.baglan(veri)
+            # Başarılı bağlantıdan SONRA kimlik kalıcılaştırılır (bkz.
+            # modül başlığı): bir dahaki sefere operatör tekrar girmez,
+            # süreç yeniden başlayınca `otomatik_baglan()` kullanır.
+            self._ayar_yaz_ic({a: veri.get(a) for a in self._KIMLIK_ALANLARI
+                               if a in veri})
+        elif eylem == "baglan_kayitli":
+            # Operatör alanları boş bıraktı: kayıtlı kimlikle bağlan.
+            a = self._ayar_oku()
+            if not (a.get("ip") and a.get("kullanici") and a.get("parola")
+                    and a.get("port")):
+                raise M50Hata("Kayıtlı M50 kimliği yok; IP, port, kullanıcı "
+                              "adı ve parolayı bir kez girin.")
+            self._rtsp_onbellek = {}
+            self.istemci.baglan({"ip": a["ip"], "port": a["port"],
+                                 "kullanici": a["kullanici"],
+                                 "parola": a["parola"],
+                                 "zaman_asimi": veri.get("zaman_asimi", 5000)})
         elif eylem == "kes":
+            self._rtsp_onbellek = {}
             self.istemci.kes()
         elif eylem == "ptz":
             self.istemci.ptz(veri.get("yon"), veri.get("hiz"),
@@ -167,13 +243,35 @@ class M50YerelServisi:
 
     def _durum_paketi(self) -> Dict[str, Any]:
         durum = self.istemci.durum()
-        ayarlar = self._ayar_oku()
+        # Parola bu paketten DIŞLANIR: paket `M50Vekili._uygula()` ve
+        # telemetriye gider; savunma derinliği için hiç girmemeli.
+        kayitli = self._ayar_oku_disa()
+        # Öncelik CİHAZIN KENDİ bildirdiği adrestedir (HVS_GetRtspUrl):
+        # operatörün elle girmesine gerek kalmaz. Bağlı değilse veya SDK
+        # adres vermiyorsa (None), operatörün elle kaydettiği adrese
+        # düşülür — eski davranış korunur. `ayarlar` alanına (video_proxy
+        # `M50Vekili.rtsp_url()` ile BURADAN okur) yazılır — yalnız
+        # `video` özetine değil; aksi halde kamera akışı hâlâ boş adrese
+        # düşerdi.
+        etkin = dict(kayitli)
+        etkin["kimlik_kayitli"] = bool(self._ayar_oku().get("parola"))
+        for kanal in ("gorunur", "termal"):
+            otomatik = self._rtsp_onbellek.get(kanal)
+            if not otomatik and bool(durum.get("bagli")):
+                try:
+                    otomatik = self.istemci.rtsp_url(kanal)
+                except Exception:
+                    otomatik = None
+                if otomatik:
+                    self._rtsp_onbellek[kanal] = otomatik
+            if otomatik:
+                etkin["rtsp_" + kanal] = otomatik
         video = dict(durum.get("video") or {})
-        video["rtsp_gorunur"] = ayarlar.get("rtsp_gorunur", "")
-        video["rtsp_termal"] = ayarlar.get("rtsp_termal", "")
+        video["rtsp_gorunur"] = etkin.get("rtsp_gorunur", "")
+        video["rtsp_termal"] = etkin.get("rtsp_termal", "")
         return {
             "m50_durum": durum,
-            "m50_ayarlar": ayarlar,
+            "m50_ayarlar": etkin,
             "m50_video": video,
             "m50_takip": dict(durum.get("takip") or {}),
         }

@@ -203,15 +203,31 @@ class M50Servisi(Servis):
 
     def _durum_paketi(self) -> Dict[str, Any]:
         durum = self.istemci.durum()
-        ayarlar = self._ayar_oku()
+        kayitli = self._ayar_oku()
+        # Öncelik CİHAZIN KENDİ bildirdiği adrestedir (HVS_GetRtspUrl):
+        # operatörün elle girmesine gerek kalmaz. Bağlı değilse veya SDK
+        # adres vermiyorsa (None), operatörün elle kaydettiği adrese
+        # düşülür — eski davranış korunur. `m50_ayarlar` alanına yazılır
+        # (Merkez'deki `M50Vekili.rtsp_url()` BURADAN okur) — yalnız
+        # `m50_video` özetine değil; aksi halde kamera akışı hâlâ boş
+        # adrese düşerdi. Ham SDK video olayı yine web aktarımı olarak
+        # varsayılmaz; yalnız RTSP URI'si taşınır.
+        etkin = dict(kayitli)
+        for kanal in ("gorunur", "termal"):
+            otomatik = None
+            if bool(durum.get("bagli")):
+                try:
+                    otomatik = self.istemci.rtsp_url(kanal)
+                except Exception:
+                    otomatik = None
+            if otomatik:
+                etkin["rtsp_" + kanal] = otomatik
         video = dict(durum.get("video") or {})
-        # RTSP kaynağı yalnız operatör açıkça tanımladıysa gösterilir. Ham SDK
-        # olayı web aktarımı olarak varsayılmaz.
-        video["rtsp_gorunur"] = ayarlar.get("rtsp_gorunur", "")
-        video["rtsp_termal"] = ayarlar.get("rtsp_termal", "")
+        video["rtsp_gorunur"] = etkin.get("rtsp_gorunur", "")
+        video["rtsp_termal"] = etkin.get("rtsp_termal", "")
         return {
             "m50_durum": durum,
-            "m50_ayarlar": ayarlar,
+            "m50_ayarlar": etkin,
             "m50_video": video,
             "m50_takip": dict(durum.get("takip") or {}),
             "m50_bagli": bool(durum.get("bagli")),

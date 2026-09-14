@@ -1,4 +1,9 @@
-"""GÖKTUNGU KÖPRÜ — M50 elektro-optik Windows SDK sürücüsü.
+"""GÖKTUNGU — M50 elektro-optik Windows SDK sürücüsü.
+
+`kopru/m50_hvs.py` ile BİREBİR aynı dosyadır (kasıtlı ikiz kopya): hem
+saha Köprüsü hem de Merkez'in kendi "doğrudan mod"u (bkz. m50_yerel.py)
+aynı, tek doğrulanmış sürücüyü kullanır. Biri değişirse diğeri elle
+senkronize edilmelidir.
 
 Bu modül yalnız üreticinin HVS SDK 3.0.10.869 Python örneğinde doğrulanan
 çağrıları kullanır. Cihaz, kullanıcı veya Merkez tarafından açıkça verilen
@@ -20,6 +25,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import Any, Dict, Optional, Tuple
 
 M50_SDK_SURUM = "3.0.10.869"
@@ -381,3 +387,36 @@ class M50Istemcisi:
         self._takip_secildi[kanal_ad] = True
         self._durum_yaz(son_islem="takip_sec")
         return self.durum()
+
+    def rtsp_url(self, kanal: Any) -> Optional[str]:
+        """Cihazın kendi yayınladığı RTSP adresini SDK'dan okur.
+
+        Operatörün elle bir RTSP adresi girmesine GEREK KALMAZ: M50
+        `HVS_GetRtspUrl` ile kendi akış adresini bildirir. Bağlı
+        değilse, SDK çağrısı başarısızsa ya da dönen değer kimlik
+        bilgisi taşıyan/şüpheli bir URI ise `None` döner — çağıran yer
+        (varsa) operatörün elle girdiği adrese düşer.
+        """
+        try:
+            cihaz = self._bagli_cihaz()
+        except M50Hata:
+            return None
+        try:
+            video = self._video_enum(kanal)
+            ham = cihaz.GetRtspUrl(video, 0)
+        except Exception:
+            return None
+        if not ham:
+            return None
+        try:
+            ayrik = urlparse(str(ham).strip())
+        except Exception:
+            return None
+        if ayrik.scheme.lower() not in ("rtsp", "rtsps") or not ayrik.hostname:
+            return None
+        # İkinci savunma hattı: cihaz sürümü/donanımı URI'ye kullanıcı
+        # bilgisi gömse dahi bu asla telemetriye/duruma taşınmaz.
+        if (ayrik.username is not None or ayrik.password is not None or
+                ayrik.query or ayrik.fragment):
+            return None
+        return str(ham).strip()

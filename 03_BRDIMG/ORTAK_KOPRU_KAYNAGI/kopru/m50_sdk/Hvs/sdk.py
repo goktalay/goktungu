@@ -1,4 +1,4 @@
-from ctypes import c_bool
+from ctypes import c_bool, create_string_buffer
 
 import Hvs.ptz as ptz
 import Hvs.angle as angle
@@ -101,6 +101,21 @@ class IPC_device(object):
 
     def RegRealDataEvent(self, event, this):
         return video.RegRealDataEvent(self.__handle__, event, this)
-    
+
+    def GetRtspUrl(self, video_type, stream=0):
+        """GOKTUNGU eklentisi: cihazin kendi yayinladigi RTSP adresini
+        SDK'dan okur (operator elle girmek zorunda kalmaz). Basarisizsa
+        None doner; cagiran yer eski (elle girilen) adrese duser."""
+        boyut = 256
+        arabellek = create_string_buffer(boyut)
+        basarili = video.GetRtspUrl(self.__handle__, video_type.value, stream,
+                                    boyut, arabellek)
+        if not basarili:
+            return None
+        try:
+            return arabellek.value.decode("utf-8", errors="replace").strip() or None
+        except Exception:
+            return None
+
     def ControlScan(self, scan_type, ctrl_type, path):
         return cruise.ControlScan(self.__handle__, scan_type.value, ctrl_type.value, path)

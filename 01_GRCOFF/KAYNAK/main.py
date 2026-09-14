@@ -476,6 +476,11 @@ def uygulama_kur():
     if m50_yerel.kullanilabilir():
         konsol("M50", "M50 elektro-optik: gömülü SDK bulundu, köprüsüz "
                       "doğrudan bağlantı kullanılabilir.", "bilgi")
+        # v2.4.187: kayıtlı kimlik varsa açılışta kendiliğinden bağlan.
+        # Ayrı iş parçacığı: SDK bağlantı zaman aşımı açılışı bekletmesin.
+        import threading as _thr
+        _thr.Thread(target=m50_yerel.otomatik_baglan,
+                    name="m50-otomatik-baglan", daemon=True).start()
     else:
         konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur "
                       "(bu makinede gömülü SDK yok/Windows değil).", "bilgi")

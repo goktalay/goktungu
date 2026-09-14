@@ -2965,6 +2965,8 @@ class WSSunucusu:
         "durum", "ayar_oku", "ayar_yaz", "baglan", "kes", "ptz", "lens",
         "aci_konumla", "takip_sec", "takip_baslat", "takip_durdur",
     ))
+    # Yalnız yerel (köprüsüz) modda anlamlı: köprüye asla iletilmez.
+    _M50_YEREL_EK_EYLEMLER = frozenset(("baglan_kayitli",))
 
     async def _m50_kopru_sec(self, websocket, istenen=None):
         """M50'nin çalıştığı tek yetkili saha Köprüsünü seçer."""
@@ -3024,6 +3026,12 @@ class WSSunucusu:
         yerel = getattr(self, "m50_yerel", None)
         if yerel is not None and yerel.kullanilabilir():
             return await self._m50_yerelden(websocket, eylem, veri)
+        if eylem in self._M50_YEREL_EK_EYLEMLER:
+            await self._uyari_gonder(
+                websocket, "M50",
+                "Kayıtlı kimlikle bağlanma yalnız köprüsüz modda çalışır; "
+                "IP, port, kullanıcı adı ve parolayı girin.", "hata")
+            return None
         istenen = k.get("kopru_ornek_id") if isinstance(k, dict) else None
         sonuc, hata = await self._m50_kopru_cagir(
             websocket, eylem, veri or {}, istenen_kopru=istenen)
@@ -6387,7 +6395,14 @@ class WSSunucusu:
                 gecerli_ip = True
             except (ValueError, TypeError):
                 gecerli_ip = False
-            if not ip or not kullanici or not parola or not gecerli_ip:
+            _yerel = getattr(self, "m50_yerel", None)
+            if (not ip and not kullanici and not parola and _yerel is not None
+                    and _yerel.kullanilabilir()):
+                # v2.4.187: alanlar boş bırakıldı → kayıtlı kimlikle bağlan
+                # (yerel mod kimliği bir kez girildikten sonra saklar).
+                await self._m50_kopruye(websocket, "baglan_kayitli", {
+                    "zaman_asimi": k.get("zaman_asimi", 5000)}, k)
+            elif not ip or not kullanici or not parola or not gecerli_ip:
                 await self._uyari_gonder(
                     websocket, "M50", "M50 bağlantısı için geçerli IP, port, kullanıcı adı ve parola gereklidir.", "hata")
             elif not (0 < port < 65536):
@@ -10353,7 +10368,18 @@ class WSSunucusu:
                 # yapılmaz; durum yalnız `_m50_yerelden()` çağrılarıyla
                 # güncellenir.
                 _m50_yerel = getattr(self, "m50_yerel", None)
-                if not (_m50_yerel is not None and _m50_yerel.kullanilabilir()):
+                if _m50_yerel is not None and _m50_yerel.kullanilabilir():
+                    # v2.4.187: yerel mod durumu (otomatik bağlanma dahil)
+                    # her turda vekile aktarılır; SDK'ya gitmez (RTSP
+                    # adresi bağlantı başına önbelleklidir).
+                    if self.m50 is not None:
+                        try:
+                            await _db_is_parcasi(
+                                lambda: self.m50._uygula(
+                                    _m50_yerel._durum_paketi()))
+                        except Exception:
+                            pass
+                else:
                     _m50_cek = getattr(self.m50, "cek_gerekirse", None)
                     if _m50_cek is not None:
                         try:

@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.186";
+const GCS_SURUM = "2.4.187";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.187",
+    tarih: "2026-09-14",
+    baslik: "M50: RTSP adresi SDK'dan otomatik; kimlik bir kez girilir, kaydedilir, açılışta kendiliğinden bağlanır (paket 2.5.57)",
+    maddeler: [
+      "YENİ: M50'nin görünür/termal RTSP yayın adresi artık cihazın kendisinden (HVS_GetRtspUrl) otomatik okunuyor; operatörün elle RTSP adresi girmesi gerekmiyor. Elle girilmiş adres varsa yalnız SDK adres vermediğinde kullanılır.",
+      "DÜZELTME: Otomatik/elle RTSP adresi kamera akışının gerçekten okuduğu alana (m50_ayarlar) yazılıyor; 2.4.186'da adres yalnız durum özetine gidiyor, 'Bağlı' görünse de video gelmiyordu.",
+      "YENİ (köprüsüz mod): IP, port, kullanıcı adı ve parola başarılı ilk bağlantıdan sonra Merkez'in yerel ayarlar tablosuna kaydedilir; bir daha sorulmaz. Merkez yeniden başlayınca kayıtlı kimlikle kendiliğinden bağlanır. M50 panelinde form boş bırakılıp 'Bağlan'a basılınca kayıtlı kimlik kullanılır; parola hiçbir zaman arayüze geri gönderilmez.",
+      "NOT: Bu kalıcılık yalnız Merkez'in kendi makinesindeki köprüsüz modda geçerlidir; saha Köprüsü üzerinden bağlantıda kimlik yine saklanmaz."
+    ]
+  },
   {
     surum: "2.4.186",
     tarih: "2026-09-14",

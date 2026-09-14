@@ -126,6 +126,11 @@ class M50Vekili:
                 for alan in ("rtsp_gorunur", "rtsp_termal"):
                     if alan in temiz_ayarlar:
                         self.ayarlar[alan] = str(temiz_ayarlar.get(alan) or "")
+                # v2.4.187: sır olmayan kimlik özeti — arayüz "IP/port
+                # kayıtlı, tekrar girmene gerek yok" gösterebilsin.
+                for alan in ("ip", "port", "kimlik_kayitli"):
+                    if alan in temiz_ayarlar:
+                        self.ayarlar[alan] = temiz_ayarlar.get(alan)
             if isinstance(ham_video, dict):
                 self.video.update(_arindir(ham_video))
             if isinstance(ham_takip, dict):

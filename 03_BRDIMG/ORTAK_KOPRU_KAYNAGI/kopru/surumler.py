@@ -18,8 +18,21 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.16"
+KOPRU_SURUM = "1.7.17"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.17",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "YENI: M50 gorunur/termal RTSP yayin adresi artik cihazin "
+            "kendisinden (HVS_GetRtspUrl) otomatik okunur; operatorun "
+            "elle RTSP adresi girmesi gerekmez. Elle girilmis adres "
+            "yalniz SDK adres vermediginde kullanilir.",
+            "DUZELTME: adres, Merkez'in kamera akisinin gercekten okudugu "
+            "m50_ayarlar alanina yazilir; onceden yalniz durum ozetine "
+            "gidiyor, 'bagli' gorunse de video gelmiyordu.",
+        ]
+    },
     {
         "surum": "1.7.16",
         "tarih": "2026-09-14",

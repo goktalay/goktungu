@@ -40,3 +40,19 @@ def RegRealDataEvent(device, event, this) -> c_bool:
     """
     func = prefix + "RegDataEvent"
     return eval(func)(device, event, c_void_p(id(this)))
+
+
+# GOKTUNGU eklentisi: uretici Python ornegi bu cagriyi sarmiyordu.
+# HVS_GetRtspUrl(DevHandle h, VideoType_e vt, int stream, int url_size,
+# char* url) -- SDK belgesindeki (ivideo.h) imza.
+def GetRtspUrl(device, video_type, stream, url_size, url) -> c_bool:
+    """
+    :param device:      设备句柄
+    :param video_type:  视频类型 (VT_LIGHT/VT_IRD)
+    :param stream:      视频流 (0 = ana akis)
+    :param url_size:    url tampon boyutu
+    :param url:         (cikti) create_string_buffer ornegi
+    :return:            成功返回true，失败返回false
+    """
+    func = prefix + "GetRtspUrl"
+    return eval(func)(device, video_type, stream, url_size, url)

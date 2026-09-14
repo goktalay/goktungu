@@ -32,6 +32,9 @@ let sonM50 = { durum: "kapali", bagli: false, hata: "" };
 let _m50Kopruler = [];
 let _m50KopruSecili = 0;
 let _m50AyarYuklendi = false;
+// v2.4.187: sunucudan gelen son M50 ayar özeti (kimlik_kayitli, ip, port;
+// parola ASLA gelmez). "Bağlan" boş formla basılınca kayıtlı kimlik kullanılır.
+let sonM50Ayar = {};
 
 function m50Gonder(paket){
   if (typeof ws === "undefined" || !ws || ws.readyState !== 1) return false;
@@ -124,6 +127,19 @@ function m50AlanlariEtkinlestir(){
 
 function m50AyarGuncelle(a){
   if (!a || typeof a !== "object") return;
+  sonM50Ayar = a;
+  // Kayıtlı kimlik varsa IP/port önceden doldurulur, parola alanı
+  // "kayıtlı" ipucu gösterir; operatör hiçbir şey girmeden BAĞLAN'a basar.
+  if (a.kimlik_kayitli){
+    if (m50Ip && document.activeElement !== m50Ip && !m50Ip.value && a.ip)
+      m50Ip.value = String(a.ip);
+    if (m50Port && document.activeElement !== m50Port && !m50Port.value && a.port)
+      m50Port.value = String(a.port);
+    if (m50Parola) m50Parola.placeholder =
+      (typeof D === "function" && D().m50ParolaKayitli) || "kayıtlı — boş bırakın";
+    if (m50Kullanici) m50Kullanici.placeholder =
+      (typeof D === "function" && D().m50KullaniciKayitli) || "kayıtlı — boş bırakın";
+  }
   // Kullanıcı yazarken alanları ezmeyiz. Bu URI'ler Köprü tarafından
   // kullanıcı bilgisini gömülü taşıma bakımından zaten doğrulanmıştır.
   const alanlar = [["m50RtspGorunur", "rtsp_gorunur"],
@@ -180,6 +196,16 @@ btnM50Baglan.addEventListener("click", () => {
   const port = Number.parseInt(m50Port.value, 10);
   const kullanici = String(m50Kullanici.value || "").trim();
   const parola = String(m50Parola.value || "");
+  // v2.4.187: kimlik bir kez kaydedildiyse alanlar BOŞ bırakılabilir;
+  // sunucu kayıtlı kimlikle bağlanır. Kısmen dolu form yine reddedilir.
+  // IP/port kayıttan otomatik doldurulmuş olabilir; "boş" sayımı yalnız
+  // kullanıcı adı + parolaya bakar.
+  const hepsiBos = !kullanici && !parola;
+  if (hepsiBos && sonM50Ayar && sonM50Ayar.kimlik_kayitli){
+    const gonderildi = m50Gonder({tip: "m50_baglan"});
+    if (gonderildi) m50AlanlariEtkinlestir();
+    return;
+  }
   if (!ip || !Number.isInteger(port) || port < 1 || port > 65535 || !kullanici || !parola){
     if (m50Hata){
       m50Hata.textContent = (typeof D === "function" && D().m50BaglantiEksik) ||
