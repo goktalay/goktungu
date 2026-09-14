@@ -382,8 +382,17 @@ def istemci_sunucu_kaydet(ad, aciklama="", makine_adi="", platform="",
     """
     from . import veritabani as vt
 
-    izinli_urunler = {"kopru", "video", "radar", "gccdual", "dji"}
+    izinli_urunler = {"kopru", "radar", "gccdual", "dji"}
     urun = str(urun or "kopru").strip().lower()
+    # v2.4.193 (Faz D): AYRI "Goruntu Koprusu" urunu (`video`) kaldirildi;
+    # islevi saha Koprusunun `video`/`ai` servislerine tasindi. Sahada
+    # KURULU eski surumler hala `urun="video"` ile kayit isteyebilir.
+    # Bunlari REDDETMEK, calisan bir saha makinesini sessizce cevrimdisi
+    # yapardi (operator sebebini goremez). Bu yuzden reddedilmez,
+    # `kopru` olarak KABUL EDILIR: makine kaydini korur ve guncelleme
+    # akisiyla yeni Kopruye gecebilir.
+    if urun == "video":
+        urun = "kopru"
     if urun not in izinli_urunler:
         return None, "Gecersiz sunucu urunu", 400
 

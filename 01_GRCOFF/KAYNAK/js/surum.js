@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.192";
+const GCS_SURUM = "2.4.193";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.193",
+    tarih: "2026-09-14",
+    baslik: "Faz D (1/2): kamera başına FPS sınırı; ayrı Görüntü Köprüsü ürünü sistemden kaldırıldı (paket 2.5.63)",
+    maddeler: [
+      "YENİ: Kamera ayarlarında KARE HIZI SINIRI (FPS) alanı — 1–30 arası, kamera başına. Önceden kare hızı üç ayrı yerde 15'e sabitlenmişti (ffmpeg çıkışı, yerel USB kamera döngüsü, ffmpeg'siz OpenCV yolu); üçü de artık kameranın kendi değerini kullanır. Değer değişince yayın kendiliğinden yeniden kurulur, yoksa ayar kaydedilir ama akış eski hızda kalırdı. Sınır saha Köprüsüne de iletilir.",
+      "KORUMA: FPS değeri yalnız alan gönderildiğinde yazılır. Yapay Zekâ Ayarları paneli kameranın tamamını değil bir bölümünü kaydeder; ortak güncellemeye konsaydı her AI ayar değişiminde operatörün verdiği FPS sessizce varsayılana dönerdi (aynı sınıf hata daha önce AI hassasiyeti ve kalibrasyonda yaşanmıştı).",
+      "KALDIRILDI: Ayrı 'Görüntü Köprüsü' ürünü — kendi kurulumu, kendi yerel paneli (8802) ve ayrı indirmesi olan ikinci yazılım. Kamera yakalama ve yapay zekâ çıkarımı artık saha Köprüsünün kendi servislerinde çalışır; menüdeki öğe, indirme girişi ve ilgili arayüz dosyaları sistemden çıkarıldı.",
+      "GERİYE UYUM: Sahada kurulu eski Görüntü Köprüsü sürümleri merkeze 'video' ürünüyle kayıt istemeye devam edebilir. Bu istekler REDDEDİLMEZ — makine kaydını kaybedip sessizce çevrimdışı görünmesin diye 'kopru' olarak kabul edilir ve güncelleme akışıyla yeni Köprüye geçebilir."
+    ]
+  },
   {
     surum: "2.4.192",
     tarih: "2026-09-14",

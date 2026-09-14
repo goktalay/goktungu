@@ -47,7 +47,6 @@
 <link rel="stylesheet" href="css/goruntu_hedefler.css?v=v24137">
   <link rel="stylesheet" href="css/dron_ekran_disi.css?v=v24127">
   <link rel="stylesheet" href="css/metin_secim.css?v=v24127">
-  <link rel="stylesheet" href="css/goruntu_koprusu.css?v=v24127">
 </head>
 <body>
 <div id="ustBar">
@@ -131,7 +130,10 @@
         <span class="mb-etiket" data-i18n="mbAI">AI</span>
         <div class="mb-dropdown">
           <div class="mb-oge mb-popup-toggle pasif" id="mbLokasyonlar" data-hizli="l" data-popup-hedef="lokasyonPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-location-dot"></i><span data-i18n="mbLokasyonlar">Kayıtlı Lokasyonlar</span></div>
-          <div class="mb-oge" id="mbGoruntuKoprusu" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-video"></i><span data-i18n="mbGoruntuKoprusu">Görüntü Köprüsü</span></div>
+          <!-- v2.4.193 (Faz D): AYRI "Goruntu Koprusu" urunu KALDIRILDI.
+               Kamera yakalama ve AI cikarimi artik saha Koprusunun kendi
+               `video` ve `ai` servislerinde calisir; ikinci bir kurulum,
+               ikinci bir panel (8802) ve ayri bir indirme yoktur. -->
           <!-- FAZ20-IS93 -->
           <div class="mb-oge" id="mbGoruntuHedefler" data-hizli="h"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-crosshairs"></i><span data-i18n="mbGoruntuHedefler">Görüntü Hedefleri</span></div>
 
@@ -1406,6 +1408,11 @@
       </div>
       <label for="kamUrl" id="lblKamUrlSatir" data-i18n="lblKamUrl">YAYIN ADRESİ (URL)</label>
       <input type="text" id="kamUrl" placeholder="rtsp://kamera-yerel-adres/akış" spellcheck="false" maxlength="500">
+      <!-- v2.4.193 (Faz D): kamera basina kare hizi tavani. Onceden uc
+           ayri yerde sabit 15 idi; artik operator belirler. -->
+      <label for="kamFps" data-i18n="lblKamFps">KARE HIZI SINIRI (FPS)</label>
+      <input type="number" id="kamFps" min="1" max="30" step="1" value="15">
+      <div class="form-not" data-i18n="kamFpsNot">1–30 arası. Düşük değer saha bilgisayarını ve ağı rahatlatır; yüksek değer hareketi daha akıcı gösterir. AI çözümlemesi bu akıştan beslenir.</div>
         </div>
       </details>
 
@@ -1940,7 +1947,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24192"></script>
+<script src="js/i18n.js?v=v24193"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2018,7 +2025,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v2519"></script>
-<script src="js/kameralar.js?v=v24191"></script>
+<script src="js/kameralar.js?v=v24193"></script>
 <script src="js/kamera_takip.js?v=v24176"></script>
 <script src="js/rotalar.js?v=v24127"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>
@@ -2073,7 +2080,6 @@
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24164"></script>
-<script src="js/goruntu_koprusu.js?v=v24130"></script>
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24183"></script>

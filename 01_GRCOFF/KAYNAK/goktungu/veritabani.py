@@ -2144,6 +2144,11 @@ def _sema_guncelle():
             ("firma_id", "INTEGER"),
         ],
         "kameralar": [
+            # v2.4.193 (Faz D, kullanici istegi "kamera ayarlarinda FPS
+            # siniri verebileyim"): kare hizi tavani. 0/NULL degil 15
+            # varsayilani verilir; eski davranis (kodda sabit 15) birebir
+            # korunur ve mevcut kayitlar davranis degistirmez.
+            ("fps", "INTEGER NOT NULL DEFAULT 15"),
             ("lokasyon_id", "INTEGER"),
             ("lat", "REAL"),
             ("lon", "REAL"),

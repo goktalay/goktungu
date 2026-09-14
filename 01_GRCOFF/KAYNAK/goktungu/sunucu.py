@@ -3211,6 +3211,10 @@ class WSSunucusu:
             "protokol": kayit.get("protokol"),
             "url": kayit.get("url"),
             "ai_gorevler": kayit.get("ai_gorevler") or "",
+            # v2.4.193: FPS tavani saha makinesine de gider (Kopru 1.7.20
+            # video vekili ayni alani okur). Eksik gonderilirse saha
+            # yayini hep 15'te kalir ve ayar yalniz yerel kipte islerdi.
+            "fps": kayit.get("fps") or 15,
         }
         _s, hata = await _db_is_parcasi(
             self._saha_komut_eszamanli, "video_kamera_yaz",
@@ -9253,7 +9257,8 @@ class WSSunucusu:
                     k.get("isim"), k.get("protokol"), k.get("url"),
                     k.get("lokasyon_id"), k.get("ai_gorevler", ""),
                     firma_id=_fid, kopru_ornek_id=_kopru,
-                    ai_hassasiyet=k.get("ai_hassasiyet", ""))
+                    ai_hassasiyet=k.get("ai_hassasiyet", ""),
+                    fps=k.get("fps"))
                 if yeni_id is not None:
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     if _dron_uid:
@@ -9300,15 +9305,27 @@ class WSSunucusu:
                 _eski_kam = self.kameralar.bul(kam_id) or {}
                 _eski_url = str(_eski_kam.get("url") or "")
                 _eski_prot = str(_eski_kam.get("protokol") or "")
+                _eski_fps = _eski_kam.get("fps")
                 liste = self.kameralar.guncelle(
                     kam_id, k.get("isim"), k.get("protokol"),
                     k.get("url"), k.get("lokasyon_id"),
                     k.get("ai_gorevler", ""),
                     firma_id=_fid, kopru_ornek_id=_kopru,
-                    ai_hassasiyet=k.get("ai_hassasiyet", None))
+                    ai_hassasiyet=k.get("ai_hassasiyet", None),
+                    fps=k.get("fps"))
                 if liste is not None:
+                    # v2.4.193: FPS tavani da "kaynak degisti" sayilir;
+                    # yeni hiz ancak yayin yeniden kurulunca uygulanir.
+                    _fps_degisti = False
+                    if k.get("fps") is not None:
+                        try:
+                            _fps_degisti = (int(k.get("fps")) !=
+                                            int(_eski_fps or 15))
+                        except (TypeError, ValueError):
+                            _fps_degisti = False
                     _kaynak_degisti = (str(k.get("url") or "") != _eski_url or
-                                       str(k.get("protokol") or "") != _eski_prot)
+                                       str(k.get("protokol") or "") != _eski_prot or
+                                       _fps_degisti)
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     self.kameralar.dron_bagla(kam_id, _dron_uid)
                     # v2.5.21: yerel AI angajman kalibrasyonunu guncelle.

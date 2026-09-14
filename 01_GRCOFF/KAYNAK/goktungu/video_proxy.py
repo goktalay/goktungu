@@ -172,10 +172,17 @@ class _Yayin:
     """Tek kaynak icin FFmpeg sureci (veya OpenCV yakalama) + fan-out."""
 
     def __init__(self, kamera_id, url, protokol, konsol=None,
-                 anotasyon=None):
+                 anotasyon=None, fps=15):
         self.kamera_id = kamera_id
         self.url = url
         self.protokol = protokol
+        # v2.4.193 (Faz D): kare hizi tavani kamera kaydindan gelir.
+        # Onceden UC ayri yerde sabit 15 yaziyordu (ffmpeg -r, donanim
+        # dongusu, OpenCV geri cekilmesi); ucu de bu alani kullanir.
+        try:
+            self.fps = max(1, min(30, int(fps or 15)))
+        except (TypeError, ValueError):
+            self.fps = 15
         self.konsol = konsol
         self.anotasyon = anotasyon   # AnotasyonDeposu (opsiyonel)
         self.surec = None
@@ -261,7 +268,7 @@ class _Yayin:
                 "-an",                       # ses yok
                 "-vf", "scale='min(960,iw)':-2",  # bant genisligi icin sinirla
                 "-q:v", "7",
-                "-r", "15",
+                "-r", str(self.fps),
                 "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"]
         try:
             self.surec = subprocess.Popen(
@@ -371,9 +378,9 @@ class _Yayin:
             if not ok:
                 self.hata = "cihaz karesi okunamadi"
                 break
-            # 15 fps sinirla
+            # Kamera kaydindaki tavana gore sinirla (v2.4.193)
             simdi = time.time()
-            if simdi - onceki < 1.0 / 15:
+            if simdi - onceki < 1.0 / self.fps:
                 continue
             onceki = simdi
             okk, jpg = cv2.imencode(".jpg", kare,
@@ -399,7 +406,7 @@ class _Yayin:
         Canli kaynaklar koptugunda 3 sn arayla yeniden baglanilir.
         Cikti ffmpeg yoluyla ayni: en cok 15 fps, genislik <= 960.
         """
-        CIKTI_FPS = 15.0
+        CIKTI_FPS = float(self.fps)
         while self.calisiyor:
             cap = None
             try:
@@ -653,14 +660,23 @@ class VideoProxy:
         # gercek protokol ("rtsp") verilir ki -rtsp_transport tcp gibi
         # rtsp'ye ozgu ffmpeg secenekleri uygulansin.
         fiili_protokol = "rtsp" if kam.get("protokol") == "m50" else kam["protokol"]
+        # v2.4.193: FPS tavani DEGISTIYSE de yayin yeniden kurulur;
+        # yoksa operator degeri kaydeder ama akis eski hizda kalir ve
+        # ayarin islemedigini sanir.
+        try:
+            istenen_fps = max(1, min(30, int(kam.get("fps") or 15)))
+        except (TypeError, ValueError):
+            istenen_fps = 15
         with self._kilit:
             y = self.yayinlar.get(kamera_id)
-            if y and (not y.calisiyor or y.url != url):
+            if y and (not y.calisiyor or y.url != url
+                      or getattr(y, "fps", 15) != istenen_fps):
                 y.durdur()
                 y = None
             if y is None:
                 y = _Yayin(kamera_id, url, fiili_protokol,
-                           self.konsol, anotasyon=self.anotasyon)
+                           self.konsol, anotasyon=self.anotasyon,
+                           fps=istenen_fps)
                 if not y.baslat():
                     self._son_hatalar[int(kamera_id)] = (
                         y.hata or "kaynak baslatilamadi")

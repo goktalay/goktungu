@@ -53,6 +53,22 @@ class KameraYoneticisi:
 
     # ------------------------------------------------------------------
     @staticmethod
+    def _fps(deger, varsayilan=15):
+        """Kare hizi tavani: 1-30 arasina kelepcelenir.
+
+        UST SINIR NEDEN 30: yakalama hatti her kareyi JPEG'e kodlar ve
+        AI isçisi ayni akisi yeniden acar. 30'un uzeri saha makinesinde
+        islemciyi doyurur, goruntu gecikmesi ARTAR. Alt sinir 1'dir:
+        0 verilirse yayin hic kare uretmez ve kullanici bunu "kamera
+        bozuk" diye okur.
+        """
+        try:
+            n = int(deger)
+        except (TypeError, ValueError):
+            return int(varsayilan)
+        return max(1, min(30, n))
+
+    @staticmethod
     def _dogrula(isim, protokol, url):
         isim = (isim or "").strip()[:60]
         protokol = (protokol or "").strip().lower()
@@ -168,7 +184,7 @@ class KameraYoneticisi:
 
     def ekle(self, isim, protokol, url, lokasyon_id=None,
              ai_gorevler="", firma_id=None, kopru_ornek_id=None,
-             ai_hassasiyet=""):
+             ai_hassasiyet="", fps=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None, None
@@ -183,15 +199,16 @@ class KameraYoneticisi:
                 cur = con.execute(
                     "INSERT INTO kameralar (isim, protokol, url, "
                     "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id, "
-                    "ai_hassasiyet) VALUES (?,?,?,?,?,?,?,?)",
-                    (isim, protokol, url, lok, gorevler, fid, kopru, hassas),
+                    "ai_hassasiyet, fps) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (isim, protokol, url, lok, gorevler, fid, kopru, hassas,
+                     self._fps(fps)),
                 )
                 yeni_id = cur.lastrowid
         return yeni_id, self.listele(firma_id)
 
     def guncelle(self, kamera_id, isim, protokol, url, lokasyon_id=None,
                  ai_gorevler="", firma_id=None, kopru_ornek_id=None,
-                 ai_hassasiyet=None):
+                 ai_hassasiyet=None, fps=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None
@@ -223,6 +240,14 @@ class KameraYoneticisi:
                     )
                 if cur.rowcount == 0:
                     return None
+                # v2.4.193: `fps` AYRI yazilir ve None iken HIC yazilmaz.
+                # Gerekce `ai_hassasiyet` ile ayni: AI ayar paneli gibi
+                # KISMI kaydetme yapan istemciler bu alani gondermez;
+                # ortak UPDATE'e konsaydi her AI ayarinda FPS varsayilana
+                # doner ve operatorun verdigi sinir sessizce kaybolurdu.
+                if fps is not None:
+                    con.execute("UPDATE kameralar SET fps=? WHERE id=?",
+                                (self._fps(fps), int(kamera_id)))
         return self.listele(firma_id)
 
     def sil(self, kamera_id, firma_id=None):

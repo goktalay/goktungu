@@ -97,6 +97,7 @@
     inLok.value = (secili != null) ? String(secili) : "";
   }
   const inProt = document.getElementById("kamProtokol");
+  const inFps = document.getElementById("kamFps");   // v2.4.193: FPS tavani
   const inUrl = document.getElementById("kamUrl");
   const hataEl = document.getElementById("kamHata");
   const baslikEl = document.getElementById("kamModalBaslik");
@@ -327,6 +328,7 @@
     inAd.value = kamera ? kamera.isim : "";
     inProt.value = kamera ? kamera.protokol : "rtsp";
     inUrl.value = kamera ? kamera.url : "";
+    if (inFps) inFps.value = String((kamera && kamera.fps) || 15);
     // v2.4.7: duzenlemede kayitli cihaz indeksi, liste gelince secilir
     if (kamera && kamera.protokol === "donanim" && cihazSec) {
       cihazSec.dataset.secili = kamera.url;
@@ -479,6 +481,10 @@
                 ai_gorevler: aiGorevleriOku() };
     if (inLok) k.lokasyon_id = inLok.value ? parseInt(inLok.value, 10) : null;
     if (inDron) k.dron_uid = String(inDron.value || "").trim();
+    if (inFps) {
+      const f = parseInt(inFps.value, 10);
+      k.fps = (Number.isFinite(f) && f > 0) ? Math.min(30, f) : 15;
+    }
     // v2.5.21: yerel AI angajman kalibrasyonu (kamera tipi + alanlar)
     kalibOku(k);
     if (prot === "m50") {
