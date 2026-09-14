@@ -62,6 +62,22 @@ TEKERLEKLER = [
     ("numpy", "1.26.4", "numpy-1.26.4-cp311-cp311-win_amd64.whl"),
     ("opencv-python-headless", "4.10.0.84",
      "opencv_python_headless-4.10.0.84-cp37-abi3-win_amd64.whl"),
+    # YEREL AI CIKARIMI ICIN (v1.7.20). `ai_sunucu.py` YOLO ONNX
+    # modelini varsa onnxruntime ile kosturur, yoksa cv2.dnn (CPU)
+    # yoluna duser. "directml" yapisi secildi cunku DX12 destekli TUM
+    # GPU'larda (NVIDIA/AMD/Intel) hizlandirma verir ve kullanicidan
+    # CUDA kurulumu ISTEMEZ; saha bilgisayarlarinin ekran karti markasi
+    # onceden bilinemez.
+    #
+    # Bu satir SILINMEMELIDIR: paket site-packages'a ELLE kopyalanmisti
+    # ve burada kayitli olmasaydi `gomulu_hazirla.py` bir sonraki
+    # calistirmada calisma zamanini onnxruntime'siz yeniden uretirdi.
+    # Belirti sahada sessiz olurdu: AI calisir ama yalniz CPU'da.
+    #
+    # Boyut: ~67 MB (DirectML.dll 18 MB + onnxruntime.dll 21 MB +
+    # pybind .pyd 26 MB).
+    ("onnxruntime-directml", "1.24.4",
+     "onnxruntime_directml-1.24.4-cp311-cp311-win_amd64.whl"),
 ]
 
 
@@ -169,10 +185,12 @@ AYIKLANACAK = [
     "pythonwin",
     # pywin32 yardim dosyasi (CHM). Olculdu: 3 MB.
     "PyWin32.chm",
-    # OpenCV Haar/LBP siniflandiricilari. Kopru bunlari KULLANMAZ --
-    # dogrulandi: `CascadeClassifier` ve `cv2.data` kodda hic
-    # gecmiyor. AI kutu cizimi merkezden gelen kutulari cizer, kendi
-    # yuz/nesne tespiti yapmaz. Olculdu: 10 MB.
+    # OpenCV'nin kendi Haar/LBP siniflandirici deposu. Kopru bunu
+    # KULLANMAZ -- dogrulandi (v1.7.20'de yeniden olculdu): `cv2.data`
+    # kodda hic gecmiyor. Yerel AI iscisi (ai_sunucu.py) plaka
+    # tespitinde CascadeClassifier kullanir ama cascade dosyasini
+    # `cv2.data`dan DEGIL, kendi `ai_modeller/` klasorunden okur
+    # (PLAKA_CASCADE). Olculdu: 10 MB.
     "cv2/data",
     # numpy'nin kendi sinav takimlari ve Fortran arayuz uretici.
     # Calisma zamaninda kullanilmaz. Olculdu: ~15 MB.

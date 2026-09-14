@@ -57,9 +57,40 @@ engellemez.
 Tespit kutulari merkeze DEGIL, ayni makinedeki video servisine gider
 (`anotasyon` eylemi): kutular karenin uzerine sahada cizilir, boylece
 merkeze ek yuk binmez.
+
+## YEREL AI ISCISI (v1.7.20 / servis 2.1.0)
+
+Kullanici istegi (birebir): "her goruntu baglantisi kendi AI alt
+yapisini calistirsin, su anki GRCOFF'daki gibi".
+
+Onceki surumlerde bu servis YALNIZ saha agindaki AYRI bir AI
+bilgisayarina baglanabiliyordu. Ayri AI donanimi OLMAYAN sahada AI
+hic calismiyordu: operator izleme baslatinca "Tanimli AI sunucusu yok"
+uyarisi aliyordu ve yapabilecegi hicbir sey yoktu.
+
+Cozum EN AZ RISKLI yoldan kuruldu: GRCOFF'un isci sureci
+(`ai_sunucu.py`) zaten `/izle`, `/durdur`, `/durum` sozlesmesini
+konusur ve bu servis TAM O SOZLESMEYI konusur. Bu yuzden protokol
+DEGISMEDI; yalnizca ayni isci, kopru kurulumunun ICINDEN `127.0.0.1`
+uzerinde baslatilir ve isci listesine EK bir aday olarak yazilir.
+
+Onemli ayrimlar:
+
+  * Uzak AI bilgisayari kayitlari KALDIRILMADI. Operator isterse
+    harici AI donanimini kullanmaya devam eder; yerel isci yalnizca
+    `_en_az_yuklu` secimine giren fazladan bir adaydir.
+  * Yerel isci baslatilamazsa (python/paket/model eksik) servis
+    COKMEZ: uyari yazilir ve yalniz uzak iscilerle devam edilir.
+  * Isci sureci `kapat()` icinde nazikce sonlandirilir; aksi halde
+    kopru durdurulunca port tutulmaya devam eder ve bir sonraki
+    baslatma "Address already in use" ile duser.
 """
+import http.server
 import json
 import os
+import socketserver
+import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -76,6 +107,56 @@ KONSOL_BILDIRIM_SN = 30.0   # konsola ozet yazim araligi
 HTTP_ZAMANASIMI = 6.0
 YOKLAMA_ZAMANASIMI = 4.0
 
+# ---------------------------------------------------------------------
+# YEREL AI ISCISI SABITLERI
+# ---------------------------------------------------------------------
+# Port SABIT KODLANMAZ: ayni bilgisayarda Merkez Uygulama da kurulu
+# olabilir ve o da kendi portlarini acar. Olculen kurulum (bkz.
+# surumler.py 1.5.6 kaydi): kopru 8790/8900, merkez 8000/8765/8811/8910.
+# Bu yuzden 8811 (merkezin MJPEG vekili) ve 8900 (elle kurulmus tekil
+# AI iscisinin varsayilani) BILEREK secilmedi; catisma halinde operator
+# ortam degiskeniyle kaydirabilsin diye disaridan da okunur.
+YEREL_AI_PORT_ORTAM = "GOKTUNGU_KOPRU_YEREL_AI_PORT"
+YEREL_AI_PORT_VARSAYILAN = 8902
+
+# Yerel iscinin kayit kimligi NEGATIFTIR: merkezin veritabani kimlikleri
+# daima pozitif oldugu icin cakisma OLANAKSIZDIR. Pozitif bir sabit
+# secilseydi (ornegin 9001) merkeze o kimlikle bir AI bilgisayari
+# eklendiginde iki kayit birbirini sessizce ezerdi.
+YEREL_AI_ID = -1
+YEREL_AI_AD = "Yerel AI (Kopru)"
+# Es zamanli islenebilecek akis sayisi. Yerel isci kopru ile AYNI
+# cekirdekleri paylasir; yuksek deger panelin ve video vekilinin
+# tepkisini oldurur. Iki akis, tek kameralik kurulumda bile yedek birak
+# ve dort cekirdekli saha bilgisayarini bogmaz.
+YEREL_AI_KAPASITE = 2
+YEREL_AI_BETIK = "ai_sunucu.py"
+# Surec ayaga kalkip portu dinlemeye baslayana kadar beklenecek sure.
+# Beklenmezse ilk saglik yoklamasi "cevrimici degil" der ve operator
+# yerel iscinin hic calismadigini sanir.
+YEREL_AI_HAZIR_SN = 25.0
+
+# ---------------------------------------------------------------------
+# 1.7.20 — TESPIT KUTUSU ALICISI
+# ---------------------------------------------------------------------
+# OLCULEN KUSUR: `ai_sunucu.py` canli tespit kutularini `--ana` adresine
+# `POST /ai/kutular` ile gonderir. Koprude `--ana` MERKEZI gosteriyordu;
+# dolayisiyla kutular sahadaki video servisine HIC ulasmiyor ve saha
+# goruntusune CIZILMIYORDU. `servis_video.py` icindeki `anotasyon`
+# eylemi yalnizca izleme durdurulunca (kutulari TEMIZLEMEK icin)
+# cagriliyordu -- yani cizim yolu vardi ama besleyeni yoktu.
+#
+# Cozum: bu servis 127.0.0.1 uzerinde kucuk bir alici acar ve isciye
+# `--ana` olarak KENDINI verir. Gelen kutular:
+#   1) ayni makinedeki video servisine `anotasyon` komutu olarak yazilir
+#      (kare uzerine sahada cizilir -- GRCOFF'taki davranisin aynisi),
+#   2) merkez adresi cozulebiliyorsa oraya AYNEN iletilir (eski davranis
+#      korunur; merkez paneli kutulari ve tespitleri gormeye devam eder).
+# Alici YALNIZ geri donus arayuzunu dinler: saha aginda kimliksiz bir uc
+# acmaz.
+YEREL_ALICI_PORT_ORTAM = "GOKTUNGU_KOPRU_AI_ALICI_PORT"
+YEREL_ALICI_PORT_VARSAYILAN = 8903
+
 
 class AiServisi(Servis):
     ad = "ai"
@@ -90,13 +171,454 @@ class AiServisi(Servis):
         self.gorevler = {}      # kamera_id -> sid
         self.gorev_bilgi = {}   # kamera_id -> {url, protokol, gorevler}
 
+        # Yerel AI iscisi (ai_sunucu.py) alt sureci. `hazirla` icinde
+        # kurulur ama ATAMA ONCE yapilir: baslatma basarisiz olsa bile
+        # `kapat()` bu alanlari her zaman bulmalidir.
+        self.yerel_surec = None
+        self.yerel_port = self._yerel_port_coz()
+        # Kutu alicisi: isci baslamadan ONCE ayaga kalkar, cunku isciye
+        # `--ana` olarak bu alicinin adresi verilir.
+        self.alici = None
+        self.alici_port = 0
+        self.merkez_taban = ""
+        self._alici_kur()
+
         self.hizlandirici = self._hizlandirici_bul()
         self.yaz("Yerel hesaplama birimi: %s" % self.hizlandirici,
                  "basari" if self.hizlandirici != "CPU" else "bilgi")
 
+        # Yerel isci, uzak AI bilgisayarlarindan ONCE ayaga kaldirilir:
+        # merkezden gelen ilk `izleme_baslat` komutu geldiginde aday
+        # listesinde hazir bulunmali.
+        self._yerel_isci_kur()
+
         self._son_yoklama = 0.0
         self._son_durum = 0.0
         self._son_konsol = 0.0
+
+    # -----------------------------------------------------------------
+    # YEREL AI ISCISI
+    # -----------------------------------------------------------------
+    @staticmethod
+    def _yerel_port_coz():
+        """Yerel iscinin dinleyecegi portu cozer (ortam > varsayilan)."""
+        ham = (os.environ.get(YEREL_AI_PORT_ORTAM) or "").strip()
+        if ham:
+            try:
+                port = int(ham)
+                if 1 <= port <= 65535:
+                    return port
+            except (TypeError, ValueError):
+                pass
+            # Gecersiz deger SESSIZCE yutulmaz: operator degiskeni
+            # yazdigini bilir, calismadigini bilmez.
+            return YEREL_AI_PORT_VARSAYILAN
+        return YEREL_AI_PORT_VARSAYILAN
+
+    @staticmethod
+    def _kopru_koku():
+        """Kurulum koku: `<kok>/kopru/servis_ai.py` -> `<kok>`.
+
+        `servisler.paket_koku()` ile ayni sonucu verir; o modul BURADA
+        ice aktarilmaz cunku servis surecinde yalniz bu dosya icin
+        surec yonetimi siniflarini yuklemek gereksiz yuktur.
+        """
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def _yerel_ana_adres(self):
+        """Iscinin tespit/kutu bildirimi gonderecegi taban adres.
+
+        1.7.20: bu adres artik MERKEZ DEGIL, ayni surecte kosan yerel
+        KUTU ALICISIDIR. Kutular once sahadaki video servisine (kare
+        uzerine cizim) gider, ardindan cozulebiliyorsa merkeze aynen
+        iletilir. Merkezi dogrudan gostermek, sahadaki goruntude kutu
+        hic cikmamasi demekti (bkz. YEREL_ALICI_PORT_VARSAYILAN notu).
+
+        Alici kurulamamissa BOS donulur ve `--ana` hic verilmez;
+        iscinin kendi varsayilani kullanilir, bildirimler sessizce
+        duser ama tespit/izleme calismaya devam eder.
+        """
+        if self.alici_port:
+            return "http://127.0.0.1:%d" % int(self.alici_port)
+        return ""
+
+    def _merkez_taban_coz(self):
+        """Merkezin HTTP tabani (kutu/tespit iletimi icin).
+
+        Ice aktarim try/except icindedir: `merkez` modulu ayar dosyasini
+        okur ve bu servis ayar dosyasi olmadan da (elle calistirma)
+        ayaga kalkabilmelidir.
+        """
+        try:
+            from .merkez import _http_taban
+            return str(_http_taban() or "").strip().rstrip("/")
+        except Exception:                                   # noqa: BLE001
+            return ""
+
+    # -----------------------------------------------------------------
+    # KUTU ALICISI
+    # -----------------------------------------------------------------
+    def _alici_kur(self):
+        """Yerel kutu/tespit alicisini baslatir. ASLA YUKSELTMEZ."""
+        try:
+            port = int(os.environ.get(YEREL_ALICI_PORT_ORTAM)
+                       or YEREL_ALICI_PORT_VARSAYILAN)
+        except (TypeError, ValueError):
+            port = YEREL_ALICI_PORT_VARSAYILAN
+        self.merkez_taban = self._merkez_taban_coz()
+        servis = self
+
+        class _Istek(http.server.BaseHTTPRequestHandler):
+            protocol_version = "HTTP/1.1"
+
+            def log_message(self, *_a):      # konsolu bosuna doldurmasin
+                pass
+
+            def do_POST(self):
+                try:
+                    n = int(self.headers.get("Content-Length") or 0)
+                except (TypeError, ValueError):
+                    n = 0
+                # Govde SINIRLANIR: bozuk/kotucul bir istek bellegi
+                # tuketmemeli. 2 MB, en kalabalik kutu listesinden kat
+                # kat buyuktur.
+                if n < 0 or n > 2 * 1024 * 1024:
+                    self.send_error(413)
+                    return
+                ham = self.rfile.read(n) if n else b""
+                yol = self.path.split("?")[0]
+                if yol == "/ai/kutular":
+                    servis._kutulari_isle(ham)
+                elif yol != "/ai/tespit":
+                    self.send_error(404)
+                    return
+                servis._merkeze_ilet(yol, ham)
+                self.send_response(200)
+                self.send_header("Content-Length", "2")
+                self.end_headers()
+                self.wfile.write(b"ok")
+
+        class _Sunucu(socketserver.ThreadingMixIn, http.server.HTTPServer):
+            daemon_threads = True
+            allow_reuse_address = True
+
+        try:
+            # YALNIZ geri donus arayuzu: saha aginda kimliksiz bir uc
+            # acmak, disaridan sahte tespit kutusu enjekte edilmesine
+            # kapi aralardi.
+            self.alici = _Sunucu(("127.0.0.1", port), _Istek)
+        except OSError as e:
+            self.alici = None
+            self.alici_port = 0
+            self.yaz("AI kutu alicisi acilamadi (127.0.0.1:%d): %s. "
+                     "Tespit kutulari saha goruntusune cizilmeyecek."
+                     % (port, e), "uyari")
+            return
+        self.alici_port = self.alici.server_address[1]
+        threading.Thread(target=self.alici.serve_forever,
+                         kwargs={"poll_interval": 0.4},
+                         name="ai-kutu-alici", daemon=True).start()
+        self.yaz("AI kutu alicisi hazir (127.0.0.1:%d)" % self.alici_port)
+
+    def _kutulari_isle(self, ham):
+        """Isciden gelen kutulari ayni makinedeki video servisine yazar."""
+        try:
+            veri = json.loads(ham.decode("utf-8") or "{}")
+        except (ValueError, UnicodeDecodeError):
+            return
+        if not isinstance(veri, dict):
+            return
+        try:
+            kamera_id = int(veri.get("kamera_id"))
+        except (TypeError, ValueError):
+            return
+        kutular = veri.get("kutular")
+        if not isinstance(kutular, list):
+            kutular = []
+        dizin = (self.kanal.dizin if self.kanal else "") or os.environ.get(
+            "GOKTUNGU_KOPRU_KANAL_DIZIN") or ""
+        if not dizin:
+            return
+        try:
+            komut_yaz(dizin, "video", "anotasyon",
+                      {"id": kamera_id, "kutular": kutular})
+        except Exception:                                   # noqa: BLE001
+            # Cizim kritik degildir: yazilamazsa izleme surer.
+            pass
+
+    def _merkeze_ilet(self, yol, ham):
+        """Gelen bildirimi merkeze AYNEN iletir (eski davranis).
+
+        Merkez adresi yoksa veya ulasilamazsa SESSIZ gecilir: saha
+        goruntusundeki cizim bu iletime bagli degildir.
+        """
+        taban = self.merkez_taban
+        if not taban or not ham:
+            return
+        def _gonder():
+            try:
+                istek = urllib.request.Request(
+                    taban + yol, data=ham,
+                    headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(istek, timeout=3).read()
+            except Exception:                               # noqa: BLE001
+                pass
+        threading.Thread(target=_gonder, name="ai-kutu-ilet",
+                         daemon=True).start()
+
+    def _port_dolu_mu(self):
+        """Yerel portu baska bir surec tutuyor mu?
+
+        Dogrudan `Popen` edip beklemek YETERSIZDIR: isci portu alamayinca
+        cikar, konsola yigin izi duser ve operator nedeni anlamaz.
+        """
+        import socket
+        yuva = None
+        try:
+            yuva = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            yuva.settimeout(0.5)
+            return yuva.connect_ex(("127.0.0.1", self.yerel_port)) == 0
+        except Exception:                                   # noqa: BLE001
+            return False
+        finally:
+            if yuva is not None:
+                try:
+                    yuva.close()
+                except Exception:
+                    pass
+
+    def _yerel_kayit(self):
+        """Yerel isciyi aday listesine yazar.
+
+        Kayit `_kayit_normalize` SUZGECINDEN GECIRILIR: uzak kayitlarla
+        birebir ayni bicimde tutulmasi sarttir, aksi halde
+        `_en_az_yuklu` ve `_sunucu_ozet` yerel kayitta eksik alan bulur.
+        """
+        k = self._kayit_normalize({"id": YEREL_AI_ID, "ad": YEREL_AI_AD,
+                                   "host": "127.0.0.1",
+                                   "port": self.yerel_port,
+                                   "kapasite": YEREL_AI_KAPASITE})
+        if not k:
+            return None
+        with self.kilit:
+            self.sunucular[k["id"]] = k
+        return k
+
+    def _yerel_isci_kur(self):
+        """Yerel AI iscisini baslatir ve aday listesine ekler.
+
+        BU ISLEV ASLA YUKSELTMEZ. Yerel isci bir EK yetenektir; eksik
+        python paketi ya da dolu port yuzunden tum AI servisinin (ve
+        onunla birlikte uzak AI bilgisayarlarinin) kaybedilmesi kabul
+        edilemez.
+        """
+        try:
+            self._yerel_isci_baslat()
+        except Exception as e:                              # noqa: BLE001
+            self.yaz("Yerel AI iscisi kurulamadi: %s: %s "
+                     "(yalniz uzak AI bilgisayarlari kullanilacak)"
+                     % (type(e).__name__, e), "uyari")
+
+    def _yerel_isci_baslat(self):
+        kok = self._kopru_koku()
+        betik = os.path.join(kok, YEREL_AI_BETIK)
+        if not os.path.isfile(betik):
+            self.yaz("Yerel AI iscisi betigi bulunamadi: %s "
+                     "(yalniz uzak AI bilgisayarlari kullanilacak)"
+                     % betik, "uyari")
+            return
+
+        # Port zaten dinleniyorsa: elle baslatilmis ya da onceki
+        # oturumdan kalmis bir isci olabilir. Ikinci bir surec
+        # baslatmak anlamsizdir (port alamaz), ama var olani yok
+        # saymak da yanlistir: yoklama zaten cevrimici/cevrimdisi
+        # kararini verecek.
+        if self._port_dolu_mu():
+            k = self._yerel_kayit()
+            self.yaz("Yerel AI portu %d zaten dinleniyor; yeni surec "
+                     "baslatilmadi, var olan isci aday listesine "
+                     "eklendi. Port cakismasi varsa %s ortam "
+                     "degiskeniyle baska bir port verin."
+                     % (self.yerel_port, YEREL_AI_PORT_ORTAM), "uyari")
+            if k:
+                self._yokla_tek(k)
+            return
+
+        yorumlayici = self._yorumlayici()
+        if not yorumlayici:
+            self.yaz("Yerel AI iscisi icin Python yorumlayicisi "
+                     "bulunamadi (yalniz uzak AI bilgisayarlari "
+                     "kullanilacak)", "uyari")
+            return
+
+        komut = [yorumlayici, betik,
+                 "--port", str(self.yerel_port),
+                 # YALNIZ geri donus arayuzu: isci disaridan
+                 # cagrilmamalidir. Gorevi ayni makinedeki bu servis
+                 # atar; 0.0.0.0 dinlemek saha aginda kimliksiz bir
+                 # cikarim ucu acardi.
+                 "--dinle", "127.0.0.1",
+                 "--ad", YEREL_AI_AD,
+                 "--tip", "cpu",
+                 "--kapasite", str(YEREL_AI_KAPASITE)]
+        ana = self._yerel_ana_adres()
+        if ana:
+            komut += ["--ana", ana]
+
+        ortam = dict(os.environ)
+        ortam["PYTHONUNBUFFERED"] = "1"   # cikti panelde aninda gorunsun
+        # Kurulum dizini (Program Files / /opt/goktungu/kopru) YAZMAYA
+        # KAPALIDIR. `ai_sunucu.py` kayitlarini (ai_kayitlar/) veri
+        # kokune yazar; degisken verilmezse kendi dizinine yazmaya
+        # calisir ve her tespitte izin hatasi alir.
+        try:
+            from . import ayar as ayar_mod
+            ortam["GOKTUNGU_VERI_KOKU"] = ayar_mod.veri_dizini()
+        except Exception:                                   # noqa: BLE001
+            pass
+
+        try:
+            ek = {}
+            if os.name == "posix":
+                # Surec grubu: iscinin acacagi torun surecler de
+                # birlikte sonlandirilabilsin.
+                ek["start_new_session"] = True
+            else:
+                ek["creationflags"] = getattr(
+                    subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+            self.yerel_surec = subprocess.Popen(
+                komut, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL, text=True, encoding="utf-8",
+                errors="replace", bufsize=1, env=ortam, cwd=kok, **ek)
+        except Exception as e:                              # noqa: BLE001
+            self.yerel_surec = None
+            self.yaz("Yerel AI iscisi baslatilamadi: %s: %s "
+                     "(yalniz uzak AI bilgisayarlari kullanilacak)"
+                     % (type(e).__name__, e), "uyari")
+            return
+
+        self.yaz("Yerel AI iscisi baslatildi (pid %d, 127.0.0.1:%d)"
+                 % (self.yerel_surec.pid, self.yerel_port), "basari")
+
+        # Cikti SUREKLI bosaltilmalidir: `subprocess.PIPE` dolarsa isci
+        # YAZARKEN bloke olur ve "calisiyor ama kare islemiyor" gibi
+        # teshisi zor bir donma ortaya cikar.
+        threading.Thread(target=self._yerel_cikti_oku,
+                         args=(self.yerel_surec,),
+                         name="yerel-ai-oku", daemon=True).start()
+
+        k = self._yerel_kayit()
+        if k:
+            self._yerel_hazir_bekle(k)
+
+    def _yorumlayici(self):
+        """Alt sureci calistiracak Python yorumlayicisinin yolu.
+
+        `sys.executable` DOGRUDAN kullanilmaz: kopru Windows'ta bir SCM
+        servisi olarak kosarken `sys.executable` pywin32'nin
+        `pythonservice.exe` barindiricisini gosterir ve o ikili bir
+        betigi calistiramaz (KUSUR-ALTSERVIS-140). Cozumleme mantigi
+        `servisler.yorumlayici_yolu()` icinde zaten dogrulanmistir;
+        tekrar yazmak iki yerde ayrisan kod uretirdi.
+        """
+        try:
+            from .servisler import yorumlayici_yolu
+            return yorumlayici_yolu()
+        except Exception:                                   # noqa: BLE001
+            # Son care: gercek bir yorumlayici gibi gorunuyorsa kullan.
+            yol = sys.executable or ""
+            if yol and not os.path.basename(yol).lower().startswith(
+                    "pythonservice"):
+                return yol
+            return ""
+
+    def _yerel_hazir_bekle(self, kayit):
+        """Isci portu dinlemeye baslayana kadar bekler.
+
+        Beklenmezse ilk `/durum` yoklamasi bos donerdi ve panel yerel
+        isciyi "cevrimdisi" gosterirdi. Isci acilista ONNX/OpenCV
+        modellerini yukler; bu yavas diskte saniyeler surer.
+        """
+        bitis = time.time() + YEREL_AI_HAZIR_SN
+        while time.time() < bitis and not self.durdur_istendi():
+            if self.yerel_surec is not None and \
+                    self.yerel_surec.poll() is not None:
+                self.yaz("Yerel AI iscisi acilista sonlandi "
+                         "(cikis kodu %s); yalniz uzak AI bilgisayarlari "
+                         "kullanilacak" % self.yerel_surec.poll(), "uyari")
+                with self.kilit:
+                    self.sunucular.pop(YEREL_AI_ID, None)
+                    self.saglik.pop(YEREL_AI_ID, None)
+                self.yerel_surec = None
+                return
+            if self._port_dolu_mu():
+                self._yokla_tek(kayit)
+                with self.kilit:
+                    cevrimici = bool((self.saglik.get(YEREL_AI_ID) or {})
+                                     .get("cevrimici"))
+                if cevrimici:
+                    self.yaz("Yerel AI iscisi hazir (127.0.0.1:%d)"
+                             % self.yerel_port, "basari")
+                    return
+            self.bekle(0.5)
+        # Zaman asimi COKME DEGILDIR: surec hala aciliyor olabilir.
+        # Duzenli yoklama kaydi birkac saniye sonra cevrimici yapar.
+        self.yaz("Yerel AI iscisi %.0f sn icinde hazir olmadi; yoklama "
+                 "surdurulecek" % YEREL_AI_HAZIR_SN, "uyari")
+
+    def _yerel_cikti_oku(self, surec):
+        """Isci sureci ciktisini servis konsoluna aktarir."""
+        try:
+            for satir in iter(surec.stdout.readline, ""):
+                satir = satir.rstrip("\r\n")
+                if satir:
+                    self.yaz("[yerel-ai] %s" % satir)
+        except Exception as e:                              # noqa: BLE001
+            self.yaz("Yerel AI iscisi ciktisi okunamadi: %s" % e, "uyari")
+        finally:
+            try:
+                surec.stdout.close()
+            except Exception:
+                pass
+            if self.durdur_istendi():
+                return
+            # Cikis kodu HENUZ YOKSA surec yasiyor, yalnizca borusu
+            # kapanmistir. "Sonlandi (cikis kodu None)" yazmak yanlis
+            # teshise goturur; bu yuzden iki durum ayri bildirilir.
+            try:
+                kod = surec.wait(timeout=2)
+            except Exception:                               # noqa: BLE001
+                kod = surec.poll()
+            if kod is None:
+                self.yaz("Yerel AI iscisinin cikti borusu kapandi; "
+                         "surec calismaya devam ediyor", "uyari")
+            else:
+                # Beklenmedik sonlanma GORUNUR olmalidir: aksi halde
+                # panelde yalniz "cevrimdisi" yazar ve nedeni bilinmez.
+                self.yaz("Yerel AI iscisi sonlandi (cikis kodu %s)"
+                         % kod, "uyari")
+
+    def _yerel_isci_durdur(self):
+        """Yerel isci surecini nazikce sonlandirir."""
+        surec = self.yerel_surec
+        self.yerel_surec = None
+        if surec is None or surec.poll() is not None:
+            return
+        try:
+            surec.terminate()
+        except Exception:                                   # noqa: BLE001
+            pass
+        try:
+            surec.wait(timeout=6)
+        except Exception:                                   # noqa: BLE001
+            # Nazik sonlandirma islemedi. Zorla oldurulmezse port
+            # tutulmaya devam eder ve bir sonraki baslatmada yerel isci
+            # "port dolu" diye hic ayaga kalkmaz.
+            try:
+                surec.kill()
+            except Exception:
+                pass
+        self.yaz("Yerel AI iscisi durduruldu")
 
     def _hizlandirici_bul(self):
         """Kullanilabilir hizlandiriciyi tespit eder.
@@ -212,8 +734,9 @@ class AiServisi(Servis):
     # Ana dongu
     # -----------------------------------------------------------------
     def dongu(self):
-        self.yaz("AI servisi hazir. Isciler BU agdan yoklanir; "
-                 "sunucu tanimlari merkezden gelir.", "basari")
+        self.yaz("AI servisi hazir. Isciler BU agdan yoklanir; uzak "
+                 "sunucu tanimlari merkezden gelir, yerel isci kopru "
+                 "kurulumundan gelir.", "basari")
         while not self.durdur_istendi():
             self._komutlari_isle()
             self._yoklama()
@@ -607,6 +1130,20 @@ class AiServisi(Servis):
                 self._izleme_durdur(kamera_id)
             except Exception:
                 pass
+        # Yerel isci gorevler BIRAKILDIKTAN SONRA durdurulur: once
+        # oldurulseydi `/durdur` istekleri bos bir porta gider ve her
+        # kamera icin gereksiz bir hata satiri dusuverirdi.
+        try:
+            self._yerel_isci_durdur()
+        except Exception:                                   # noqa: BLE001
+            pass
+        try:
+            if getattr(self, "alici", None) is not None:
+                self.alici.shutdown()
+                self.alici.server_close()
+                self.alici = None
+        except Exception:                                   # noqa: BLE001
+            pass
         # Servis durdugunda merkez isciyi "cevrimici" gormeye devam
         # etmemeli; aksi halde operator var olmayan bir izlemeye guvenir.
         try:

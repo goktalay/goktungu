@@ -1,0 +1,21 @@
+# KOPRU KAYNAK AGACI - depoya GIRMEYECEKLER
+#
+# NEDEN AYRI DOSYA: depo kokundeki .gitignore yalnizca GRCOFF'un
+# gomulu Windows calisma zamanini disliyordu. Koprunun kendi
+# `gomulu/calisma/` dizini (Python 3.11 + numpy + cv2 + onnxruntime,
+# ~250 MB) listede YOKTU; `git add -A` diyen biri onu sessizce depoya
+# sokabilirdi. Ikili calisma zamani `gomulu_hazirla.py` ile YENIDEN
+# URETILIR, bu yuzden surum kontrolunde tutulmasi gereksizdir.
+gomulu/calisma/
+gomulu/teker/
+gomulu/*.zip
+
+# AI model dosyalari: `ai_sunucu.py` eksikse resmi opencv_zoo
+# deposundan kendisi indirir (SFace tek basina 37 MB).
+ai_modeller/
+
+# Yerel calisma ciktilari
+ai_kayitlar/
+dagitim/
+__pycache__/
+*.pyc

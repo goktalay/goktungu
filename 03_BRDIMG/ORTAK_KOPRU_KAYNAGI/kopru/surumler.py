@@ -18,8 +18,50 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.19"
+KOPRU_SURUM = "1.7.20"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.20",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "DUZELTME (olculdu): AI tespit kutulari saha goruntusune HIC "
+            "cizilmiyordu. Isci kutulari `--ana` adresine gonderiyor, o "
+            "adres de MERKEZI gosteriyordu; sahadaki video servisine "
+            "besleyen yoktu (`anotasyon` eylemi yalnizca izleme "
+            "durdurulunca, kutulari TEMIZLEMEK icin cagriliyordu). Artik "
+            "servis 127.0.0.1 uzerinde kucuk bir alici acar: gelen kutular "
+            "once video servisine yazilir (kare uzerine sahada cizilir), "
+            "sonra merkeze AYNEN iletilir. Alici yalniz geri donus "
+            "arayuzunu dinler.",
+            "YENI: Linux kurulumu yerel AI icin numpy ve OpenCV'yi de "
+            "kurar. AYRI bir pip adimidir: ~100 MB indirir ve cekirdek "
+            "kopru islevleri buna bagli degildir; basarisiz olursa kurulum "
+            "dusmez, yalnizca yerel AI devre disi kalir.",
+            "YENI (Faz D): YEREL AI CIKARIMI KOPRUNUN ICINDE. Her kopru "
+            "kurulumu artik kendi AI iscisini (ai_sunucu.py) 127.0.0.1 "
+            "uzerinde alt surec olarak calistirir. Onceden AI yalnizca "
+            "saha agindaki AYRI bir AI bilgisayariyla mumkundu; o "
+            "donanim olmayan sahada izleme baslatma istegi 'Tanimli AI "
+            "sunucusu yok' diye reddediliyordu.",
+            "PROTOKOL DEGISMEDI: yerel isci de uzak isciyle ayni HTTP "
+            "sozlesmesini (/izle, /durdur, /durum) konusur. Uzak AI "
+            "bilgisayari kayitlari KALDIRILMADI; yerel isci yuk "
+            "dagitimina EK bir aday olarak girer, en az yuklu isci "
+            "secimi ikisini birlikte degerlendirir.",
+            "Yerel isci 127.0.0.1'i dinler (disaridan cagrilamaz), "
+            "varsayilan port 8902'dir ve GOKTUNGU_KOPRU_YEREL_AI_PORT "
+            "ile kaydirilabilir. 8811/8900 bilerek secilmedi: ayni "
+            "bilgisayarda Merkez Uygulama kuruluysa o portlar dolu "
+            "olabiliyor.",
+            "Yerel isci baslatilamazsa (python/paket/model eksik, port "
+            "dolu) AI servisi COKMEZ: konsola nedeni yazip yalniz uzak "
+            "iscilerle devam eder.",
+            "Windows kurulumuna onnxruntime-directml eklendi (~67 MB). "
+            "YOLO cikarimi DX12 destekli tum GPU'larda (NVIDIA/AMD/"
+            "Intel) donanimla hizlanir; CUDA kurulumu gerekmez, "
+            "yoksa CPU'ya dusulur.",
+        ]
+    },
     {
         "surum": "1.7.19",
         "tarih": "2026-09-14",
@@ -801,7 +843,7 @@ KOPRU_GECMIS = [
 # ---------------------------------------------------------------------
 SERVIS_SURUMLERI = {
     "dron": "1.0.0",
-    "ai": "2.0.2",
+    "ai": "2.1.0",
     "video": "2.0.1",
     "gcsdual": "1.1.0",
     "radar": "2.2.0",
@@ -822,6 +864,29 @@ SERVIS_GECMIS = {
         },
     ],
     "ai": [
+        {
+            "surum": "2.1.0",
+            "tarih": "2026-09-14",
+            "notlar": [
+                "YEREL AI ISCISI SERVISLE BIRLIKTE BASLIYOR. Servis "
+                "acilista kurulum kokundeki ai_sunucu.py dosyasini "
+                "127.0.0.1 uzerinde alt surec olarak calistirir ve "
+                "isci listesine 'Yerel AI (Kopru)' adiyla ekler. Ayri "
+                "AI bilgisayari olmayan sahada AI artik calisir.",
+                "Yerel isci EK bir adaydir: uzak AI bilgisayarlari "
+                "aynen kullanilmaya devam eder, gorevler en az yuklu "
+                "isciye gider.",
+                "Iscinin konsol ciktisi servis konsoluna '[yerel-ai]' "
+                "onekiyle aktarilir; boru dolup surecin donmasi "
+                "engellenir.",
+                "Isci sureci servis kapanirken nazikce sonlandirilir "
+                "(gerekirse zorla): aksi halde port tutulu kalir ve "
+                "sonraki baslatmada yerel isci ayaga kalkmaz.",
+                "Isci kayitlari veri kokune yazilir "
+                "(GOKTUNGU_VERI_KOKU): kurulum dizini yazmaya "
+                "kapalidir ve her tespitte izin hatasi alinirdi.",
+            ],
+        },
         {
             "surum": "2.0.2",
             "tarih": "2026-08-15",

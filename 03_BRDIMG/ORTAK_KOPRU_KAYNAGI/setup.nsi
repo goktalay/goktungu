@@ -165,6 +165,25 @@ Section "GOKTUNGU Kopru" AnaBolum
   File "servis_win.py"
   File "SURUM"
 
+  ; YEREL AI cikarim iscisi (v1.7.20). AI servisi bunu gomulu Python
+  ; ile 127.0.0.1 uzerinde alt surec olarak baslatir. Dosya yazilmazsa
+  ; kurulum sorunsuz biter, panel acilir, AI servisi "calisiyor"
+  ; gorunur - ama ayri AI bilgisayari olmayan sahada hicbir kamera
+  ; izlenemez. Hata ancak operator izlemeyi baslattiginda gorulur.
+  File "ai_sunucu.py"
+
+  ; AI modelleri ISTEGE BAGLIDIR: `ai_sunucu.py` eksik modeli acilista
+  ; resmi opencv_zoo deposundan kendisi indirir. Dizin kaynak agacinda
+  ; VARSA pakete alinir (internetsiz saha kurulumu icin); yoksa
+  ; `File /r` derleme hatasi vermesin diye kosula alinmistir.
+!if /FileExists "ai_modeller\*.*"
+  SetOutPath "$INSTDIR\ai_modeller"
+  File /r "ai_modeller\*.*"
+  SetOutPath "$INSTDIR"
+!else
+  !warning "ai_modeller\ yok: AI modelleri ilk calistirmada indirilecek."
+!endif
+
   SetOutPath "$INSTDIR\kopru"
   File "kopru\*.py"
 
@@ -358,10 +377,14 @@ Section "Uninstall"
   Delete "$INSTDIR\python\pywintypes311.dll"
   Delete "$INSTDIR\panel_ac.bat"
   Delete "$INSTDIR\main.py"
+  Delete "$INSTDIR\ai_sunucu.py"
   Delete "$INSTDIR\servis_win.py"
   Delete "$INSTDIR\SURUM"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR\kopru"
+  ; Modeller kurulum dizinindedir (salt okunur); silinmezse $INSTDIR
+  ; bos kalmaz ve "RMDir $INSTDIR" sessizce basarisiz olur.
+  RMDir /r "$INSTDIR\ai_modeller"
   RMDir /r "$INSTDIR\web"
   RMDir /r "$INSTDIR\varliklar"
   RMDir /r "$INSTDIR\python"

@@ -100,7 +100,12 @@ IZINLI_UZANTI = {
 PLATFORM = {
     "windows": {
         "arsiv": "zip",
-        "kok_dosyalar": ("main.py", "kur.bat", "kaldir.bat"),
+        # `ai_sunucu.py`: YEREL AI cikarim iscisi (v1.7.20). AI servisi
+        # bunu 127.0.0.1 uzerinde alt surec olarak baslatir. Pakette
+        # bulunmazsa panel acilir, AI servisi "calisiyor" gorunur ama
+        # ayri AI donanimi olmayan sahada hicbir kamera izlenemez.
+        "kok_dosyalar": ("main.py", "ai_sunucu.py",
+                         "kur.bat", "kaldir.bat"),
         "varlik_uzanti": {".ico"},
         "calisir": frozenset(),          # Windows'ta kip biti anlamsiz
         "yasak_ek": ("kur.sh", "kaldir.sh"),
@@ -111,7 +116,11 @@ PLATFORM = {
         # kullanicinin elinde tani araci bulunmali. Disaridan indirmesi
         # gerekirse tam o anda (panel yok, servis yok) en zor durumda
         # kalir. Windows'ta karsiligi services.msc ve kaldir.bat'tir.
-        "kok_dosyalar": ("main.py", "kur.sh", "kaldir.sh",
+        # `ai_sunucu.py` iki pakette de bulunur: yerel AI iscisi
+        # platformdan bagimsizdir (Windows'ta gomulu Python, Linux'ta
+        # .venv yorumlayicisi ile kosar).
+        "kok_dosyalar": ("main.py", "ai_sunucu.py",
+                         "kur.sh", "kaldir.sh",
                          "tani_sifirla.sh"),
         "varlik_uzanti": {".png", ".svg"},
         "calisir": frozenset({"kur.sh", "kaldir.sh", "tani_sifirla.sh"}),
@@ -135,6 +144,11 @@ YASAK_PARCA = (
 # Her iki pakette bulunmasi ZORUNLU ortak dosyalar.
 ZORUNLU_ORTAK = (
     "main.py", "SURUM",
+    # YEREL AI iscisi. Ayni tuzak: dosya olmadan kurulum tamamlanir,
+    # panel acilir, AI servisi ayaga kalkar ve yalniz konsolda tek bir
+    # "betik bulunamadi" satiri kalir. Ayri AI bilgisayari olmayan
+    # sahada bu, AI'nin HIC calismamasi demektir.
+    "ai_sunucu.py",
     "kopru/__init__.py", "kopru/ayar.py", "kopru/ajan.py",
     "kopru/akis.py", "kopru/kilit.py", "kopru/merkez.py",
     "kopru/ai_ssh.py",
@@ -214,6 +228,28 @@ def toplanacak_dosyalar(platform: str) -> list[tuple[str, str]]:
             altlar[:] = [a for a in altlar if a not in ("__pycache__", ".git")]
             for f in sorted(dosyalar):
                 if os.path.splitext(f)[1].lower() not in uz:
+                    continue
+                tam = os.path.join(dizin, f)
+                cift.append((tam, os.path.relpath(tam, KOK)))
+
+    # AI modelleri (ai_modeller/) - ISTEGE BAGLIDIR, bilerek.
+    #
+    # `ai_sunucu.py` eksik modeli acilista resmi opencv_zoo deposundan
+    # KENDISI indirir. Modeller (SFace tek basina 37 MB) pakete zorunlu
+    # kilinsaydi indirme boyutu ucler katina cikar, internet erisimi
+    # olan her kurulumda bosuna tasinirdi. Bu yuzden dizin VARSA
+    # eklenir (internetsiz saha icin onceden doldurulabilir), yoksa
+    # paketleme hatasiz surer.
+    model_kok = os.path.join(KOK, "ai_modeller")
+    if os.path.isdir(model_kok):
+        for dizin, altlar, dosyalar in os.walk(model_kok):
+            altlar[:] = [a for a in altlar
+                         if a not in ("__pycache__", ".git")]
+            for f in sorted(dosyalar):
+                # Yarim kalmis indirmeler pakete girmemeli: bozuk model
+                # dosyasi, eksik model dosyasindan daha kotudur (isci
+                # yuklemeyi dener, kilitlenir, kendisi indirmez).
+                if f.endswith(".indiriliyor"):
                     continue
                 tam = os.path.join(dizin, f)
                 cift.append((tam, os.path.relpath(tam, KOK)))

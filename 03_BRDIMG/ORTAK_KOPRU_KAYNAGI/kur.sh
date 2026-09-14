@@ -170,6 +170,11 @@ baslik "Bagimliliklar kuruluyor"
 # calismasi gerekir, o anda internet olmayabilir.
 sudo "$VENV/bin/python" -m pip install --upgrade pip -q
 sudo "$VENV/bin/python" -m pip install -q websockets pyserial
+# 1.7.20 — yerel AI iscisi (ai_sunucu.py) icin. AYRI adim: ~100 MB indirir
+# ve cekirdek kopru islevleri buna bagli degildir; basarisizligi kurulumu
+# dusurmemeli (servis_ai uzak AI bilgisayarlariyla calismaya devam eder).
+sudo "$VENV/bin/python" -m pip install -q numpy opencv-python-headless || \
+  echo "BILGI: yerel AI bagimliliklari kurulamadi; ayri AI bilgisayari gerekecek."
 yesil "websockets ve pyserial kuruldu"
 
 # ---------------------------------------------------------------------

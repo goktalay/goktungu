@@ -58,8 +58,15 @@ PANEL_PORT = 8790
 # `tani_sifirla.sh` pakete DAHILDIR: servis olusmadiginda kullanicinin
 # elinde tani araci bulunmali. Disaridan indirmesi gerekirse tam o anda
 # (panel calismiyor, servis yok) en zor durumda kalir.
-DAHIL_DOSYA = ["main.py", "SURUM", "tani_sifirla.sh"]
-DAHIL_DIZIN = ["kopru", "web", "varliklar"]
+# `ai_sunucu.py` pakete DAHILDIR (v1.7.20): AI servisi bunu 127.0.0.1
+# uzerinde alt surec olarak baslatir. Dosya olmadan kurulum sorunsuz
+# tamamlanir, panel acilir, AI servisi "calisiyor" gorunur - ama ayri
+# AI bilgisayari olmayan sahada hicbir kamera izlenemez.
+DAHIL_DOSYA = ["main.py", "ai_sunucu.py", "SURUM", "tani_sifirla.sh"]
+# `ai_modeller` ISTEGE BAGLIDIR: dizin yoksa kopyalanmaz ve isci eksik
+# modeli acilista kendisi indirir. Internet erisimi olmayan saha icin
+# kaynak agacina onceden konulabilir; o zaman pakete girer.
+DAHIL_DIZIN = ["kopru", "web", "varliklar", "ai_modeller"]
 
 # Dagitima girmemesi gerekenler: sinav betikleri, olcum araclari,
 # Windows'a ozgu dosyalar, gelistirme notlari.
@@ -365,6 +372,22 @@ case "$1" in
       echo "       Baglanti saglandiktan sonra su komutu calistirin:" >&2
       echo "       sudo $HEDEF/.venv/bin/python -m pip install websockets pyserial" >&2
     fi
+    # 1.7.20 — YEREL AI ISCISI icin numpy + OpenCV.
+    #
+    # AYRI BIR ADIM OLMASININ NEDENI: bu iki paket ~100 MB indirir ve
+    # cekirdek kopru islevleri (dron/radar/GCCDUAL/video aktarimi) bunlara
+    # BAGLI DEGILDIR. Ayni komuta konsalardi, yavas veya olcumlu baglantida
+    # tek bir zaman asimi butun bagimlilik kurulumunu dusurur ve kopru
+    # calismaz halde kalirdi. Basarisizlik BURADA olumcul degildir:
+    # `servis_ai` yerel isciyi baslatamayinca uyari yazip uzak AI
+    # bilgisayarlariyla devam eder.
+    echo "Yerel AI bagimliliklari kuruluyor (numpy, opencv)..."
+    if ! "$HEDEF/.venv/bin/python" -m pip install --quiet \\
+         numpy opencv-python-headless >/dev/null 2>&1; then
+      echo "BILGI: yerel AI bagimliliklari kurulamadi; goruntu cozumlemesi" >&2
+      echo "       ayri bir AI bilgisayari gerektirecek. Sonradan kurmak icin:" >&2
+      echo "       sudo $HEDEF/.venv/bin/python -m pip install numpy opencv-python-headless" >&2
+    fi
     chown -R root:root "$HEDEF"
     chmod -R go-w "$HEDEF"
 
@@ -661,6 +684,11 @@ def main():
     icerik = r.stdout
     d("uygulama /opt/goktungu/kopru altinda",
       "./opt/goktungu/kopru/main.py" in icerik)
+    # Yerel AI iscisi: eksikligi sessiz kalir (kurulum basarili gorunur),
+    # bu yuzden pakette oldugu BURADA olculur.
+    d("yerel AI iscisi var",
+      "./opt/goktungu/kopru/ai_sunucu.py" in icerik,
+      "ayri AI donanimi olmayan sahada AI hic calismaz")
     d("systemd birimi var",
       f"./lib/systemd/system/{PAKET_AD}.service" in icerik)
     d("masaustu girdisi var",
