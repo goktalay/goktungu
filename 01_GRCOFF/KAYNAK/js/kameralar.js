@@ -114,10 +114,18 @@
   const dosyaSatir = document.getElementById("kamDosyaSatir");
   const dosyaSec = document.getElementById("kamDosyaSec");
   const dosyaBilgi = document.getElementById("kamDosyaBilgi");
+  // v2.4.181: M50 kamerası — ağ/kimlik bilgisi M50 alt yapısına devredilir.
+  const m50Satir = document.getElementById("kamM50Satir");
+  const m50KanalSec = document.getElementById("kamM50Kanal");
+  const m50IpEl = document.getElementById("kamM50Ip");
+  const m50PortEl = document.getElementById("kamM50Port");
+  const m50KullaniciEl = document.getElementById("kamM50Kullanici");
+  const m50ParolaEl = document.getElementById("kamM50Parola");
 
   function protokolDegisti() {
     const prot = inProt.value;
     if (dosyaSatir) dosyaSatir.classList.toggle("gizli", prot !== "dosya");
+    if (m50Satir) m50Satir.classList.toggle("gizli", prot !== "m50");
     if (prot === "donanim") {
       cihazSatir.classList.remove("gizli");
       if (djiSatir) djiSatir.classList.add("gizli");
@@ -130,7 +138,7 @@
       lblUrlSatir.classList.add("gizli");
       inUrl.classList.add("gizli");
       djiCihazlariListele();
-    } else if (prot === "dosya") {
+    } else if (prot === "dosya" || prot === "m50") {
       cihazSatir.classList.add("gizli");
       if (djiSatir) djiSatir.classList.add("gizli");
       lblUrlSatir.classList.add("gizli");
@@ -323,6 +331,17 @@
     if (kamera && kamera.protokol === "donanim" && cihazSec) {
       cihazSec.dataset.secili = kamera.url;
     }
+    // v2.4.181: M50 kamerasi — kanal "m50:<kanal>" url'sinden okunur;
+    // kimlik bilgisi ASLA geri doldurulmaz (guvenlik: sunucuda saklanmaz).
+    if (m50KanalSec) {
+      const kanal = (kamera && kamera.protokol === "m50" && kamera.url)
+        ? String(kamera.url).split(":")[1] : "gorunur";
+      m50KanalSec.value = (kanal === "termal") ? "termal" : "gorunur";
+    }
+    if (m50IpEl) m50IpEl.value = "";
+    if (m50PortEl) m50PortEl.value = "";
+    if (m50KullaniciEl) m50KullaniciEl.value = "";
+    if (m50ParolaEl) m50ParolaEl.value = "";
     // v2.4.166: duzenlemede kayitli video dosyasi adi korunur/gosterilir
     if (dosyaSec) {
       dosyaSec.value = "";
@@ -436,6 +455,11 @@
         url = (dosyaSec && dosyaSec.dataset.mevcut) || url;
       }
       if (!url) { hataEl.textContent = t.kamHataDosya || "Video dosyas\u0131 se\u00e7in."; return; }
+    } else if (prot === "m50") {
+      // v2.4.181: url sunucuda "m50:<kanal>" olarak kesin uretilir; burada
+      // yalniz UI tutarliligi icin ayni degeri kuruyoruz.
+      const kanal = (m50KanalSec && m50KanalSec.value === "termal") ? "termal" : "gorunur";
+      url = "m50:" + kanal;
     } else {
       if (!url) { hataEl.textContent = t.kamHataUrl || "Yay\u0131n adresi bo\u015f olamaz."; return; }
     }
@@ -457,8 +481,26 @@
     if (inDron) k.dron_uid = String(inDron.value || "").trim();
     // v2.5.21: yerel AI angajman kalibrasyonu (kamera tipi + alanlar)
     kalibOku(k);
+    if (prot === "m50") {
+      k.m50_kanal = (m50KanalSec && m50KanalSec.value === "termal") ? "termal" : "gorunur";
+      const ip = m50IpEl ? m50IpEl.value.trim() : "";
+      const port = m50PortEl ? m50PortEl.value.trim() : "";
+      const kullanici = m50KullaniciEl ? m50KullaniciEl.value.trim() : "";
+      const parola = m50ParolaEl ? m50ParolaEl.value : "";
+      if (ip || port || kullanici || parola) {
+        if (!ip || !port || !kullanici || !parola) {
+          hataEl.textContent = t.kamHataM50Baglanti ||
+            "M50 bağlantısı için IP, port, kullanıcı adı ve parola birlikte girilmeli (ya da dördü de boş bırakılmalı).";
+          return;
+        }
+        k.m50_ip = ip; k.m50_port = parseInt(port, 10) || 0;
+        k.m50_kullanici = kullanici; k.m50_parola = parola;
+      }
+    }
     if (duzenlenenId !== null) k.id = duzenlenenId;
     wsGonder(k);
+    // Parola gönderimden hemen sonra ekrandan da silinir; yerel depoya yazılmaz.
+    if (m50ParolaEl) m50ParolaEl.value = "";
     modalKapat();
   }
 
@@ -531,9 +573,9 @@
     // MP4 kaynaklarinda da gorunur (ffmpeg -re -stream_loop ile dongulu).
     if (prot === "rtsp" || prot === "rtp" || prot === "mjpeg" ||
         prot === "dji" || prot === "donanim" || prot === "http" ||
-        prot === "dosya") {
+        prot === "dosya" || prot === "m50") {
       const img = document.createElement("img");
-      img.className = "kam-video";
+      img.className = "kam-video" + (prot === "m50" ? " kam-video-m50" : "");
       img.draggable = false;
       // v2.4.164: cift tikla takip modulu hangi kamerada oldugunu bilsin
       img.dataset.kameraId = String(kamera.id);
@@ -729,6 +771,43 @@
     // v2.5.24: Yapay Zeka Ayarlari dugmesi (paylasimli panel)
     if (typeof window.kameraAiAyarButonu === "function") {
       kutu.appendChild(window.kameraAiAyarButonu(kamera.id));
+    }
+    // v2.4.181: M50 kamerasina ozel dugmeler — PTZ/lens paneli acan
+    // dugme + gorunur/termal kanal gecisi (ayni kamera kaydinda).
+    if (kamera.protokol === "m50") {
+      const bM50Panel = document.createElement("button");
+      bM50Panel.className = "kam-btn";
+      bM50Panel.title = t.kamM50Panel || "M50 PTZ / Lens Kontrolü";
+      bM50Panel.innerHTML = "<i class='fa-solid fa-binoculars'></i>";
+      bM50Panel.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
+      });
+      kutu.appendChild(bM50Panel);
+
+      const kanalSu = String(kamera.url || "").split(":")[1] === "termal" ? "termal" : "gorunur";
+      const bKanal = document.createElement("button");
+      bKanal.className = "kam-btn";
+      bKanal.title = (t.kamM50KanalGecis || "Kanal değiştir") + " (" +
+        (kanalSu === "termal" ? (t.m50Gorunur || "Görünür") : (t.m50Termal || "Termal")) + "'e geç)";
+      bKanal.innerHTML = kanalSu === "termal"
+        ? "<i class='fa-solid fa-sun'></i>" : "<i class='fa-solid fa-fire'></i>";
+      bKanal.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const yeniKanal = kanalSu === "termal" ? "gorunur" : "termal";
+        wsGonder({
+          tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
+          protokol: "m50", url: "m50:" + yeniKanal, m50_kanal: yeniKanal,
+          kopru_ornek_id: kamera.kopru_ornek_id || null,
+          ai_gorevler: kamera.ai_gorevler || "",
+          ai_hassasiyet: kamera.ai_hassasiyet || "",
+          lokasyon_id: kamera.lokasyon_id || null,
+          dron_uid: kamera.dron_uid || ""
+          // kamera_tipi/kalibrasyon KASITLI atlanir: sunucu "kamera_tipi"
+          // yoksa mevcut angajman kalibrasyonunu SILMEZ (bkz. sunucu.py).
+        });
+      });
+      kutu.appendChild(bKanal);
     }
     kutu.append(bPlay, bAyir, bDuzenle, bSil);
     // v2.5.24: Goruntu hedefi secici (harita/yuzen/panel/tam) — tek konum
@@ -1132,6 +1211,16 @@
     sag.className = "kam-tam-arac";
     if (typeof window.kameraAiAyarButonu === "function")
       sag.appendChild(window.kameraAiAyarButonu(id));
+    if (kamera.protokol === "m50") {
+      const bM50PanelTE = document.createElement("button");
+      bM50PanelTE.className = "kam-btn";
+      bM50PanelTE.title = t.kamM50Panel || "M50 PTZ / Lens Kontrolü";
+      bM50PanelTE.innerHTML = "<i class='fa-solid fa-binoculars'></i>";
+      bM50PanelTE.addEventListener("click", () => {
+        if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
+      });
+      sag.appendChild(bM50PanelTE);
+    }
     if (typeof window.kameraGoruntuHedefSecici === "function")
       sag.appendChild(window.kameraGoruntuHedefSecici(id));
     const kapat = document.createElement("button");

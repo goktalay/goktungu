@@ -1222,6 +1222,9 @@
     width: 100%; height: 100%; object-fit: contain; display: block;
     background: #000;
   }
+  /* v2.4.181: M50 PTZ suruklemesi — basili+hareket ettir kipini belirtir */
+  .kam-video-m50 { cursor: grab; touch-action: none; }
+  .kam-video-m50:active, .kam-video-m50.m50-ptz-aktif { cursor: grabbing; }
   .kam-hata::after {
     content: "\26a0 YAYIN ALINAMIYOR"; position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;

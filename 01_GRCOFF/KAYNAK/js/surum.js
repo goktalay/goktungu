@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.180";
+const GCS_SURUM = "2.4.181";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.181",
+    tarih: "2026-09-14",
+    baslik: "M50 kamera protokolü, sürükle-bırak PTZ ve iki kameranın aynı anda AI çalışması (paket 2.5.51)",
+    maddeler: [
+      "YENİ: Kamera ekle/düzenle formunda 'M50 Elektro-Optik (PTZ)' protokolü. Artık M50 için RTSP adresi elle yazılmıyor — yalnız kanal (Görünür/Termal) seçiliyor; ağ/kimlik bilgisi (IP, port, kullanıcı adı, parola) tamamen mevcut M50 Köprü alt yapısına devrediliyor. Kimlik bilgisi doldurulursa kaydederken M50 bağlantısı da otomatik kurulur; sunucuda hiçbir zaman saklanmaz.",
+      "YENİ: M50 kameralarında video panelinde sol fare tuşuna basılı tutup hareket ettirmek PTZ'yi o yöne, sürükleme mesafesiyle orantılı hızda hareket ettirir (joystick kipi); tuş bırakılınca durur.",
+      "YENİ: M50 kamera satırında/panelinde iki yeni düğme: 'M50 PTZ/Lens Kontrolü' (mevcut M50 kontrol panelini açar) ve 'Kanal Değiştir' (aynı kamera kaydında Görünür⇄Termal geçişi; angajman kalibrasyonu korunur).",
+      "KÖK NEDEN DÜZELTMESİ: iki kamera aynı anda AI ile izlenirken biri diğerini durduruyordu. Sebep: YOLO çıkarım oturumu (ONNX Runtime/cv2.dnn) işçi genelinde TEK ve paylaşılan bir nesneydi; her kameranın kendi iş parçacığından eşzamanlı çağrılması GPU/CPU çıkarımını bozabiliyordu. Çıkarım çağrısı artık kilitle sıraya alınıyor — kare okuma, takip ve video akışı etkilenmeden, birden fazla kamera artık güvenle eşzamanlı AI çalıştırabiliyor."
+    ]
+  },
   {
     surum: "2.4.180",
     tarih: "2026-09-14",

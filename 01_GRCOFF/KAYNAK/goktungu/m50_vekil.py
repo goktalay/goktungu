@@ -136,6 +136,22 @@ class M50Vekili:
             self.durum["video"] = dict(self.video)
             self.durum["bagli"] = bool(self.durum.get("bagli"))
 
+    def rtsp_url(self, kanal: str):
+        """v2.4.181: kamera modülü için kanal->RTSP çözümü ('gorunur'/'termal').
+
+        Bu URL'ler kimlik bilgisi TAŞIMAZ (Köprü zaten `_arindir` ile
+        kullanıcı bilgili RTSP(S) URI'sini reddeder) — yerel Görüntü
+        Köprüsünün açık yeniden yayınıdır. Kamera kaydı bu değeri
+        DOĞRUDAN saklamaz; her akış açılışında burada TAZE okunur, böylece
+        Köprü ayarı sonradan değişse (SDK yeniden bağlanırsa port/URL
+        değişebilir) kamera kaydı güncellenmeden yeni adres kullanılır.
+        """
+        kanal = str(kanal or "").strip().lower()
+        if kanal not in ("gorunur", "termal"):
+            return None
+        with self.kilit:
+            return str(self.ayarlar.get("rtsp_" + kanal) or "").strip() or None
+
     def paket(self) -> Dict[str, Any]:
         """Telemetri için derin kopya niteliğinde, sırdan arındırılmış paket."""
         with self.kilit:

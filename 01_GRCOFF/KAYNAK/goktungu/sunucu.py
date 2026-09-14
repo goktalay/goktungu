@@ -8836,6 +8836,48 @@ class WSSunucusu:
                 {"tip": "kamera_cihazlari", "cihazlar": cihazlar}))
 
         elif komut == "kamera_kaydet" and self.kameralar:
+            # v2.4.181: 'm50' kamerasinda kullanici URL yazmaz — kanal
+            # (gorunur/termal) secer, ag/kimlik bilgisi TUM M50 alt
+            # yapisina (mevcut m50_baglan akisi) devredilir. Kamera
+            # kaydinda yalniz sentinel "m50:<kanal>" saklanir (dji:<sysid>
+            # ile ayni desen); gercek RTSP asla DB'ye yazilmaz.
+            if str(k.get("protokol") or "").strip().lower() == "m50":
+                _m50_kanal = str(k.get("m50_kanal") or "").strip().lower()
+                if _m50_kanal not in ("gorunur", "termal"):
+                    await self._hata_bildir(
+                        websocket, "KAMERA",
+                        "M50 kamerasi icin kanal (gorunur/termal) secilmelidir")
+                    return
+                k = dict(k)
+                k["url"] = "m50:" + _m50_kanal
+                _m50_ip = str(k.get("m50_ip") or "").strip()
+                _m50_kul = str(k.get("m50_kullanici") or "").strip()
+                _m50_par = str(k.get("m50_parola") or "")
+                if _m50_ip or _m50_kul or _m50_par:
+                    # Kismi doldurulmus kimlik bilgisi sessizce yok
+                    # sayilmaz: ya hepsi eksiksiz girilir ya hic girilmez.
+                    try:
+                        import ipaddress
+                        ipaddress.ip_address(_m50_ip)
+                        _m50_ip_gecerli = True
+                    except (ValueError, TypeError):
+                        _m50_ip_gecerli = False
+                    try:
+                        _m50_port = int(k.get("m50_port"))
+                    except (TypeError, ValueError):
+                        _m50_port = 0
+                    if not (_m50_ip and _m50_kul and _m50_par and
+                            _m50_ip_gecerli and 0 < _m50_port < 65536):
+                        await self._hata_bildir(
+                            websocket, "KAMERA",
+                            "M50 baglantisi icin gecerli IP, port, "
+                            "kullanici adi ve parola birlikte girilmelidir")
+                        return
+                    await self._m50_kopruye(websocket, "baglan", {
+                        "ip": _m50_ip, "port": _m50_port,
+                        "kullanici": _m50_kul, "parola": _m50_par,
+                        "zaman_asimi": 5000,
+                    }, k)
             kam_id = k.get("id")
             _fid = self._ws_firma_id(websocket)
             # v2.4.56: kamera hangi kopru makinesinde? Merkez kipinde

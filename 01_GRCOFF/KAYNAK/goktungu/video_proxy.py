@@ -556,6 +556,7 @@ class VideoProxy:
         self.yayinlar = {}          # kamera_id -> _Yayin
         self._kilit = threading.Lock()
         self.dji_kopru = None       # v2.1.8: main.py baglar
+        self.m50_vekil = None       # v2.4.181: main.py baglar (M50Vekili)
         self.anotasyon = AnotasyonDeposu()  # v2.4.7: AI tespit kutulari
         # v2.4.34: kamera_id -> son basarisizlik gerekcesi (istemciye iletilir)
         self._son_hatalar = {}
@@ -586,6 +587,10 @@ class VideoProxy:
 
         'dji' protokolunde url 'dji:<sysid>' bicimindedir; gercek MJPEG
         adresi Android kopru uygulamasinin bildirdigi video_url'dir.
+        'm50' protokolunde url 'm50:<kanal>' (gorunur/termal) bicimindedir;
+        gercek RTSP adresi M50 saha Koprusunun bildirdigi (kimlik bilgisiz)
+        yerel yeniden yayindir — kamera kaydinda ASLA saklanmaz, her
+        acilista taze okunur (bkz. M50Vekili.rtsp_url).
         """
         url = kam["url"]
         if kam.get("protokol") == "dji" and self.dji_kopru:
@@ -595,6 +600,9 @@ class VideoProxy:
                 return None
             gercek = self.dji_kopru.video_url(sysid)
             return gercek or None
+        if kam.get("protokol") == "m50" and self.m50_vekil:
+            kanal = str(url).split(":", 1)[1] if ":" in str(url) else ""
+            return self.m50_vekil.rtsp_url(kanal)
         return url
 
     # ------------------------------------------------------------------
@@ -617,18 +625,27 @@ class VideoProxy:
             return None
         url = self._url_coz(kam)
         if not url:
-            self._hata_yaz(
-                kamera_id,
-                "DJI kopru henuz video adresi bildirmedi"
-                if kam.get("protokol") == "dji" else "kaynak adresi bos")
+            if kam.get("protokol") == "dji":
+                gerekce = "DJI kopru henuz video adresi bildirmedi"
+            elif kam.get("protokol") == "m50":
+                gerekce = ("M50 saha Koprusu henuz bu kanal icin RTSP "
+                          "adresi bildirmedi (M50 baglantisi/ayarlari "
+                          "kontrol edilmeli)")
+            else:
+                gerekce = "kaynak adresi bos"
+            self._hata_yaz(kamera_id, gerekce)
             return None
+        # v2.4.181: 'm50' cozulmus URL'si duz bir RTSP adresidir; _Yayin'e
+        # gercek protokol ("rtsp") verilir ki -rtsp_transport tcp gibi
+        # rtsp'ye ozgu ffmpeg secenekleri uygulansin.
+        fiili_protokol = "rtsp" if kam.get("protokol") == "m50" else kam["protokol"]
         with self._kilit:
             y = self.yayinlar.get(kamera_id)
             if y and (not y.calisiyor or y.url != url):
                 y.durdur()
                 y = None
             if y is None:
-                y = _Yayin(kamera_id, url, kam["protokol"],
+                y = _Yayin(kamera_id, url, fiili_protokol,
                            self.konsol, anotasyon=self.anotasyon)
                 if not y.baslat():
                     self._son_hatalar[int(kamera_id)] = (

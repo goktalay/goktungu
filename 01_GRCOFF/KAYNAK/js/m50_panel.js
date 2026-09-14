@@ -311,3 +311,96 @@ if (_m50Panel){
 }
 m50KopruSeciciCiz();
 m50AlanlariEtkinlestir();
+
+// =================================================================
+// v2.4.181 — VİDEO ÖNİZLEMESİNDE SÜRÜKLE-BIRAK PTZ (JOYSTICK KİPİ)
+// -----------------------------------------------------------------
+// M50 kamerasının video görüntüsü üzerinde sol tuşa basılı tutup fareyi
+// hareket ettirmek, o yöne doğru PTZ hareketini başlatır (basma noktasından
+// uzaklaşma mesafesi hızı belirler); tuş bırakılınca PTZ durur. Mevcut
+// panel düğmelerinin kullandığı AYNI süreklilik sözleşmesi (m50_ptz
+// {yon, hiz, basili}) kullanılır — Köprü tarafında yeni bir komut
+// gerekmez. Yalnız protokolü "m50" olan kameraların <img> öğesinde
+// etkindir; "Hedef Seç" dikdörtgeni (kamera_takip.js) video üzerine
+// kendi örtüsünü koyduğunda bu örtü olayları önce yakalar, çakışma olmaz.
+// =================================================================
+(function () {
+  "use strict";
+  var OLU_BOLGE_PX = 8;     // bu yaricapin altinda hareket "dur" sayilir
+  var MAKS_SURUKLEME_PX = 140; // bu mesafede hiz=10'a ulasir
+  var GONDER_ARALIK_MS = 120;  // WS'i bogmamak icin sinirli tekrar hizi
+
+  function kamM50Mi(id) {
+    var kam = (window._kameralarSon || []).find(
+      function (k) { return Number(k.id) === Number(id); });
+    return !!(kam && kam.protokol === "m50");
+  }
+
+  var surukleme = null; // {img, bx, by, sonYon, sonHiz, sonGonderMs}
+
+  function yonHizHesapla(dx, dy) {
+    var mesafe = Math.sqrt(dx * dx + dy * dy);
+    if (mesafe < OLU_BOLGE_PX) return { yon: "dur", hiz: 1 };
+    var yon = Math.abs(dx) >= Math.abs(dy)
+      ? (dx > 0 ? "sag" : "sol")
+      : (dy > 0 ? "asagi" : "yukari");
+    var oran = Math.min(1, (mesafe - OLU_BOLGE_PX) / MAKS_SURUKLEME_PX);
+    var hiz = Math.max(1, Math.min(10, Math.round(1 + oran * 9)));
+    return { yon: yon, hiz: hiz };
+  }
+
+  // NOT: `m50BasiliGonder` PTZ hizini panelin #m50PtzHiz alanindan okur;
+  // surukleme mesafesiyle ORANTILI ozel hiz gondermek icin dogrudan
+  // `m50Gonder` kullanilir (panel alanina dokunulmaz).
+  function komutGonder(yon, hiz, zorla) {
+    var s = surukleme;
+    if (!s) return;
+    var simdi = Date.now();
+    if (!zorla && yon === s.sonYon && hiz === s.sonHiz &&
+        simdi - s.sonGonderMs < GONDER_ARALIK_MS) return;
+    // Yon degistiyse ONCE eskisini birak (basili paneldeki desenle ayni).
+    if (s.sonYon && s.sonYon !== yon && s.sonYon !== "dur") {
+      m50Gonder({ tip: "m50_ptz", yon: s.sonYon, hiz: s.sonHiz || 1, basili: false });
+    }
+    if (yon !== "dur") {
+      m50Gonder({ tip: "m50_ptz", yon: yon, hiz: hiz, basili: true });
+    }
+    s.sonYon = yon; s.sonHiz = hiz; s.sonGonderMs = simdi;
+  }
+
+  document.addEventListener("mousedown", function (ev) {
+    if (ev.button !== 0) return;
+    var img = ev.target && ev.target.closest &&
+      ev.target.closest("img.kam-video[data-kamera-id]");
+    if (!img) return;
+    var id = Number(img.dataset.kameraId);
+    if (!kamM50Mi(id)) return;
+    if (!m50BagliMi()) return; // baglanti yoksa surukleme baslatilmaz
+    ev.preventDefault();
+    surukleme = { img: img, bx: ev.clientX, by: ev.clientY,
+                 sonYon: "", sonHiz: 0, sonGonderMs: 0 };
+    img.classList.add("m50-ptz-aktif");
+    try { img.setPointerCapture && img.setPointerCapture(ev.pointerId); } catch (e) {}
+  }, true);
+
+  document.addEventListener("mousemove", function (ev) {
+    if (!surukleme) return;
+    var d = yonHizHesapla(ev.clientX - surukleme.bx, ev.clientY - surukleme.by);
+    komutGonder(d.yon, d.hiz, false);
+  });
+
+  function suruklemeBitir() {
+    if (!surukleme) return;
+    var s = surukleme;
+    surukleme = null;
+    if (s.img) s.img.classList.remove("m50-ptz-aktif");
+    if (s.sonYon && s.sonYon !== "dur") {
+      m50Gonder({ tip: "m50_ptz", yon: s.sonYon, hiz: s.sonHiz || 1, basili: false });
+    }
+  }
+  document.addEventListener("mouseup", suruklemeBitir);
+  document.addEventListener("mouseleave", function (ev) {
+    if (surukleme && ev.target === document.documentElement) suruklemeBitir();
+  });
+  window.addEventListener("blur", suruklemeBitir);
+})();

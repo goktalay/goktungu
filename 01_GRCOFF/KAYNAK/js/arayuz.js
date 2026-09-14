@@ -60,6 +60,11 @@
     if (typeof window.pencereEnUsteGetir === "function") window.pencereEnUsteGetir(panel);
     if (btn) btn.classList.add("acik");
   }
+  // v2.4.181: diger modullerin (ornegin kameralar.js'in M50 dugmesi)
+  // dinamik olarak eklenen dugmelerden ayni yuzen panel ac/getir
+  // davranisini tetikleyebilmesi icin disari acilir.
+  window.yuzenPanelAc = function (panelId){ panelAc(panelId, null); };
+
   function panelKapat(panelId){
     const panel = document.getElementById(panelId);
     if (panel) panel.classList.add("yuzen-gizli");

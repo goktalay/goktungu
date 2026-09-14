@@ -722,6 +722,20 @@ class AIIsci:
         self.kilit = threading.Lock()
         os.makedirs(KAYIT_KLASORU, exist_ok=True)
 
+        # v2.4.181 OLCULEN KOK NEDEN (iki kamera ayni anda calismiyordu):
+        # `self.ort`/`self.yolo` TEK bir isci-seviyesi model nesnesidir,
+        # TUM kameralar arasinda PAYLASILIR (her kameranin kendi
+        # `_yolo_dongu` ipligi olsa da, hepsi AYNI oturumu cagirir).
+        # ONNX Runtime DirectML (GPU) EP ve cv2.dnn.Net, AYNI oturum/ag
+        # nesnesine ES ZAMANLI (concurrent) `run()`/`forward()` cagrisini
+        # GUVENLI SAYMAZ — iki kamera birden kare beslediginde çakışan
+        # cagrilar cikarimi bozabilir/coker, isci "yeniden dagitim"
+        # mantigi da bunu bir kameranin digerini "kapattigi" gibi
+        # gosterebilir. Cikarimin kendisi (~50-150ms) kisa oldugu icin
+        # kilitleme, kare okuma/takip/video akisini ETKILEMEDEN yalniz
+        # GPU/CPU cagrisini sıraya sokar.
+        self._yolo_cikarim_kilit = threading.Lock()
+
         # C-UAS modu: hava_araci tespiti. Oncelik YOLO ONNX modeli
         # (varsa; hareketli kamerada da calisir), yoksa MOG2 hareket
         # tespiti (yalniz sabit kamera). Yuz/insan/plaka kaldirildi.
@@ -1103,11 +1117,19 @@ class AIIsci:
                                      swapRB=True, crop=False)
         try:
             _t0 = time.time()
-            if self.ort is not None:
-                cikti = self.ort.run(None, {self.ort_girdi: blob})[0]
-            else:
-                self.yolo.setInput(blob)
-                cikti = self.yolo.forward()
+            # v2.4.181: `self.ort`/`self.yolo` isci-seviyesinde TEK ve
+            # PAYLASILMIS bir oturumdur (bkz. yukaridaki not) — birden
+            # fazla kamera aktifken kendi `_yolo_dongu` ipliklerinden
+            # ES ZAMANLI cagrilabilir. DirectML (GPU) EP ve cv2.dnn.Net
+            # ayni oturuma/aga concurrent run()/forward() cagrisini
+            # guvenli saymaz; kilit yalnizca bu kisa cagriyi (~50-150ms)
+            # sıraya sokar, kare okuma/takip/video akisini etkilemez.
+            with self._yolo_cikarim_kilit:
+                if self.ort is not None:
+                    cikti = self.ort.run(None, {self.ort_girdi: blob})[0]
+                else:
+                    self.yolo.setInput(blob)
+                    cikti = self.yolo.forward()
             self._olcum_guncelle(akis, ts, (time.time() - _t0) * 1000.0)
         except Exception as e:
             if akis.sogutma_gecti("yolo_hata", saniye=60.0):

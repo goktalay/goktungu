@@ -1213,7 +1213,8 @@
       <div class="form-not" id="kamDronBilgi">Dron seçilirse kamera yalnız bu dronun harita ikonunda yerel canlı önizleme olarak gösterilir.</div>
       <label for="kamProtokol" data-i18n="lblKamProtokol">KAMERA TÜRÜ / PROTOKOL</label>
       <select id="kamProtokol">
-        <option value="rtsp">RTSP / M50 görünür veya termal akış</option>
+        <option value="rtsp">RTSP</option>
+        <option value="m50">M50 Elektro-Optik (PTZ)</option>
         <option value="rtp">RTP / UDP</option>
         <option value="mjpeg">MJPEG</option>
         <option value="hls">HLS (.m3u8)</option>
@@ -1231,7 +1232,28 @@
         <select id="kamCihazSec"><option value="" data-i18n="optCihazYukleniyor">— Cihazlar yükleniyor —</option></select>
       </div>
       <div id="kamDjiSatir" class="gizli"></div>
-      <div id="kamKopruAlan" style="display:none;"><select id="kamKopruSec"></select></div>
+      <!-- v2.4.181: M50 kamerası — kullanıcı RTSP yazmaz; kanal seçer,
+           ağ/kimlik bilgisi M50 Köprü alt yapısına (mevcut m50_baglan)
+           devredilir. Parola formdan gönderildikten sonra hemen silinir,
+           kamera kaydında ASLA saklanmaz. -->
+      <div id="kamM50Satir" class="gizli">
+        <label for="kamM50Kanal" data-i18n="lblKamM50Kanal">M50 KANALI</label>
+        <select id="kamM50Kanal">
+          <option value="gorunur" data-i18n="m50Gorunur">Görünür</option>
+          <option value="termal" data-i18n="m50Termal">Termal</option>
+        </select>
+        <div class="form-not" data-i18n="kamM50KanalNot">Aynı M50 cihazının görünür ve termal akışını ayrı kamera olarak eklemek isterseniz bu formu iki kez kullanın (kanalı değiştirip tekrar kaydedin).</div>
+        <label data-i18n="lblKamM50Baglanti">M50 CİHAZ BAĞLANTISI (yalnız bu Köprüye bağlı değilse doldurun)</label>
+        <div class="satir">
+          <div style="flex:2"><input type="text" id="kamM50Ip" placeholder="192.168.1.50" autocomplete="off" spellcheck="false"></div>
+          <div style="flex:1"><input type="text" id="kamM50Port" placeholder="Port" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="satir">
+          <div style="flex:1"><input type="text" id="kamM50Kullanici" placeholder="Kullanıcı adı" autocomplete="username" spellcheck="false"></div>
+          <div style="flex:1"><input type="password" id="kamM50Parola" placeholder="Parola" autocomplete="new-password"></div>
+        </div>
+        <div class="form-not" data-i18n="kamM50BaglantiNot">Dördü de doldurulursa kaydederken M50 Köprüsüne bağlanma isteği de gönderilir. Parola sunucuda saklanmaz; yalnız bağlantıyı kurmak için bir kez kullanılır. M50 zaten bağlıysa boş bırakın.</div>
+      </div>
       <label for="kamUrl" id="lblKamUrlSatir" data-i18n="lblKamUrl">YAYIN ADRESİ (URL)</label>
       <input type="text" id="kamUrl" placeholder="rtsp://kamera-yerel-adres/akış" spellcheck="false" maxlength="500">
         </div>
@@ -1767,7 +1789,7 @@
      yuklenmeli; bosPanelYap() penceresel kapsamda aranir. -->
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
-<script src="js/arayuz.js?v=v24127"></script>
+<script src="js/arayuz.js?v=v24181"></script>
 <script src="js/i18n.js?v=v24164"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
@@ -1835,7 +1857,7 @@
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24127"></script>
 <script src="js/radar_panel.js?v=v24127"></script>
-<script src="js/m50_panel.js?v=v24150"></script>
+<script src="js/m50_panel.js?v=v24181"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>
@@ -1846,7 +1868,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v2519"></script>
-<script src="js/kameralar.js?v=v24176"></script>
+<script src="js/kameralar.js?v=v24181"></script>
 <script src="js/kamera_takip.js?v=v24176"></script>
 <script src="js/rotalar.js?v=v24127"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>

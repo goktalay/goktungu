@@ -14,7 +14,7 @@ import os
 DOSYA_ESKI = _veri_yolu("gcs_kameralar.json")
 
 GECERLI_PROTOKOLLER = ("rtsp", "rtp", "mjpeg", "hls", "http", "donanim",
-                       "dji", "dosya")
+                       "dji", "dosya", "m50")
 PROXY_GEREKTIREN = ("rtsp", "rtp")
 
 

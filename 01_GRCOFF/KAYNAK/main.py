@@ -464,6 +464,7 @@ def uygulama_kur():
     # komutlar ortak Köprü kanalı üzerinden vekil edilir.
     from goktungu.m50_vekil import M50Vekili
     m50 = M50Vekili(konsol, kilit)
+    video_proxy.m50_vekil = m50  # v2.4.181: 'm50:<kanal>' kamera URL cozumu
     konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur; "
                   "Merkezde SDK/DLL yüklenmez.", "bilgi")
 
