@@ -428,6 +428,15 @@ function anaCiz(){
   if(olc.seri_port) o.push(['Seri port', String(olc.seri_port), '']);
   if(olc.bekleyen_telemetri !== undefined)
     o.push(['Kuyruk', String(olc.bekleyen_telemetri), '']);
+  // 1.7.19: çoklu radar / M50 özetleri
+  if(olc.radar_sayisi !== undefined)
+    o.push(['Radar', (olc.bagli_radar_sayisi||0)+' / '+olc.radar_sayisi+' bağlı',
+            (olc.bagli_radar_sayisi||0) ? 'iyi' : '']);
+  if(olc.iz_sayisi !== undefined && olc.radar_sayisi !== undefined)
+    o.push(['İz', String(olc.iz_sayisi), '']);
+  if(olc.eo_sayisi !== undefined)
+    o.push(['M50', (olc.bagli_eo_sayisi||0)+' / '+olc.eo_sayisi+' bağlı',
+            (olc.bagli_eo_sayisi||0) ? 'iyi' : '']);
 
   var serit = d('olcumSerit');
   if(serit){
@@ -456,12 +465,26 @@ function m50Hata(ileti){
   if(ileti) hataGoster(d('m50Hata'), ileti); else gizle(d('m50Hata'));
 }
 
+/* 1.7.19: çoklu M50 — her komut seçili cihaz kimliğini (eo_id) taşır. */
+function m50CihazNo(){
+  var e = d('m50CihazNo');
+  var n = Number(e && e.value) || 1;
+  return n > 0 ? Math.floor(n) : 1;
+}
+
 function m50Komut(eylem, veri){
+  veri = veri || {};
+  if(veri.eo_id === undefined) veri.eo_id = m50CihazNo();
+  var eid = String(veri.eo_id);
   return istek('/api/m50/komut', {method:'POST', govde:{
-    eylem: eylem, veri: veri || {}
+    eylem: eylem, veri: veri
   }}).then(function(sonuc){
-    if(sonuc && sonuc.m50_durum) m50DurumCiz(sonuc.m50_durum, sonuc.m50_video);
-    return sonuc || {};
+    sonuc = sonuc || {};
+    // Durum paketinin üst düzeyi BİRİNCİL cihazındır; seçili cihazın
+    // paketi eo_cihazlar[eo_id] altındadır (yoksa eski tek cihaz yolu).
+    var c = (sonuc.eo_cihazlar && sonuc.eo_cihazlar[eid]) ? sonuc.eo_cihazlar[eid] : sonuc;
+    if(c && c.m50_durum) m50DurumCiz(c.m50_durum, c.m50_video);
+    return sonuc;
   });
 }
 
@@ -469,6 +492,7 @@ function m50DurumCiz(durum, video){
   if(!durum) return;
   M50.sonDurum = durum;
   var olcum = [
+    ['Cihaz', '#' + m50CihazNo(), ''],
     ['Bağlantı', durum.bagli ? 'BAĞLI' : (durum.durum || 'KAPALI').toUpperCase(), durum.bagli ? 'iyi' : ''],
     ['SDK', durum.sdk_hazir ? 'HAZIR' : 'YÜKLENMEDİ', durum.sdk_hazir ? 'iyi' : ''],
     ['Takip', (durum.takip && durum.takip.etkin) ? ('ETKİN — '+(durum.takip.kanal || '').toUpperCase()) : 'KAPALI', ''],
@@ -553,6 +577,13 @@ function m50Kur(){
   function kapat(){ m50BasiliBirak(); d('m50Parola').value = ''; gizle(pencere); }
   d('m50Yonet').addEventListener('click', ac);
   d('m50Kapat').addEventListener('click', kapat);
+  // Cihaz no değişince o cihazın ayar ve durumu yüklenir.
+  d('m50CihazNo').addEventListener('change', function(){
+    m50BasiliBirak(); m50Hata('');
+    m50Komut('ayar_oku').then(function(v){
+      m50AyarYukle(v.ayarlar); return m50Komut('durum');
+    }).catch(function(e){ m50Hata(e.message); });
+  });
   pencere.addEventListener('click', function(ev){ if(ev.target === pencere) kapat(); });
   d('m50Form').addEventListener('submit', function(ev){ ev.preventDefault(); });
   d('m50AyarKaydet').addEventListener('click', function(){

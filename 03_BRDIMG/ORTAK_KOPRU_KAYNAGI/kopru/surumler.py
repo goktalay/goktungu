@@ -18,8 +18,27 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.18"
+KOPRU_SURUM = "1.7.19"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.19",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "YENI (Faz C): COKLU RADAR ve COKLU M50. Radar servisi radar_id, "
+            "M50 servisi eo_id basina ayri istemci calistirir; Merkez 2.4.192 "
+            "her cihazi ayri baglar/keser, RTK/ayar/PTZ komutlari cihaz "
+            "kimligiyle gider. Durum paketi 'radarlar' ve 'eo_cihazlar' "
+            "sozluklerini tasir; ust duzey alanlar birincil cihazindir "
+            "(eski Merkez surumleri bozulmaz).",
+            "YENI: Kopru paneli M50 penceresinde cihaz no secimi; radar/M50 "
+            "servis kartinda cihaz sayisi ve bagli cihaz sayisi.",
+            "YENI: M50 cihazinin RTK/GPS konumu ve pusulasi SDK'dan "
+            "(HVS_GetExternDeviceInfo) okunup Merkeze tasinir.",
+            "DUZELTME: 1.7.18'de eklenen M50 SDK eylemleri (aci_oku, on "
+            "ayarlar, tarama, takip yetenegi) ajan haritasinda eksikti; "
+            "Merkez bu komutlari gonderince kopru 'desteklemiyor' diyordu.",
+        ]
+    },
     {
         "surum": "1.7.18",
         "tarih": "2026-09-14",
@@ -785,7 +804,8 @@ SERVIS_SURUMLERI = {
     "ai": "2.0.2",
     "video": "2.0.1",
     "gcsdual": "1.1.0",
-    "radar": "2.1.0",
+    "radar": "2.2.0",
+    "m50": "1.1.0",
 }
 
 SERVIS_GECMIS = {
@@ -963,7 +983,36 @@ SERVIS_GECMIS = {
             ],
         },
     ],
+    "m50": [
+        {
+            "surum": "1.1.0",
+            "tarih": "2026-09-14",
+            "notlar": [
+                "COKLU CIHAZ: her eo_id icin ayri HVS SDK istemcisi; RTSP "
+                "adresleri cihaz basina saklanir (1 numara eski duz "
+                "anahtarlari korur). Kimlik bilgisi yine saklanmaz.",
+                "RTK/GPS ve pusula okuma (HVS_GetExternDeviceInfo).",
+            ]
+        },
+        {
+            "surum": "1.0.0",
+            "tarih": "2026-09-14",
+            "notlar": ["M50 elektro-optik servisi (1.7.15-1.7.18)."]
+        },
+    ],
     "radar": [
+        {
+            "surum": "2.2.0",
+            "tarih": "2026-09-14",
+            "notlar": [
+                "COKLU RADAR: her radar_id icin ayri C20 istemcisi. Kalici "
+                "kayit 'radar_cihazlar' sozlugudur; eski radar_son_ip/port "
+                "1 numaraya tasinir. RTK konumu ve merkez yonu radar basina "
+                "ayrisir (2+ icin radar_<id>_ on eki).",
+                "Durum paketinde 'radarlar' sozlugu; radar_bagli artik "
+                "herhangi bir radar bagliysa acik.",
+            ]
+        },
         {
             "surum": "2.1.0",
             "tarih": "2026-08-15",

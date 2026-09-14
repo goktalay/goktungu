@@ -589,6 +589,10 @@ class PanelIsleyici(BaseHTTPRequestHandler):
             izinli = {
                 "durum", "ayar_oku", "ayar_yaz", "baglan", "kes", "ptz",
                 "lens", "aci_konumla", "takip_sec", "takip_baslat", "takip_durdur",
+                # 1.7.19: SDK geri kalani + coklu cihaz listesi
+                "cihazlar", "aci_oku", "onayar_liste", "onayar_kaydet",
+                "onayar_cagir", "onayar_sil", "onayar_hepsini_sil", "tarama",
+                "takip_yetenek",
             }
             if eylem not in izinli:
                 self._hata("İzin verilmeyen M50 eylemi", 400)

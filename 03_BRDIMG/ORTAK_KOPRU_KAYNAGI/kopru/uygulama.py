@@ -460,6 +460,15 @@ class Uygulama:
                 sonuc.update(cikti)
             return sonuc
 
+        # 1.7.19 (Faz C): COKLU RADAR — her komut `radar_id` tasir
+        # (verilmezse servis 1 numarayi kullanir). Durum paketi
+        # `radarlar` sozlugunu de icerir.
+        def _rid(v):
+            try:
+                return int((v or {}).get("radar_id") or 1)
+            except (TypeError, ValueError):
+                return 1
+
         def radar_baglan(v):
             """Panelden girilen IP/port ile SAHADA baglanti kurar.
 
@@ -468,36 +477,53 @@ class Uygulama:
             """
             v = v or {}
             return _radar("baglan", {"ip": v.get("ip"),
-                                    "port": v.get("port")})
+                                    "port": v.get("port"),
+                                    "isim": v.get("isim"),
+                                    "radar_id": _rid(v)})
 
-        def radar_kes(_v):
-            return _radar("kes")
+        def radar_kes(v):
+            return _radar("kes", {"radar_id": _rid(v)})
 
         def radar_durum(_v):
-            """Canli radar durumu + cozumlenmis izler.
+            """Canli radar durumu + cozumlenmis izler (tum radarlar).
 
             Kisa zaman asimi: bu sorgu arayuzde duzenli aralikla
             yenilenir, uzun beklemek paneli dondurur.
             """
             return _radar("durum", {}, zaman_asimi=4.0)
 
-        def radar_ayar_oku(_v):
-            return _radar("ayar_oku")
+        def radar_cihazlar(_v):
+            return _radar("cihazlar", {}, zaman_asimi=4.0)
+
+        def radar_ayar_oku(v):
+            return _radar("ayar_oku", {"radar_id": _rid(v)})
 
         def radar_ayar_yaz(v):
-            return _radar("ayar_yaz", dict(v or {}))
+            veri = dict(v or {})
+            veri["radar_id"] = _rid(v)
+            return _radar("ayar_yaz", veri)
 
-        def radar_rtk(_v):
-            return _radar("rtk")
+        def radar_rtk(v):
+            return _radar("rtk", {"radar_id": _rid(v)})
 
         # -------------------------------------------------------------
         # M50 elektro-optik eylemleri: HVS DLL yalnız saha Köprüsündedir.
         # Merkezde hiçbir SDK yüklenmez. Genel bir aktarma kapısı yerine
         # burada kapalı izin listesi kullanılır; oturum parolası yanıtlara
         # hiçbir koşulda eklenmez.
-        def _m50(eylem, veri=None, zaman_asimi=8.0):
+        def _eid(v):
+            try:
+                return int((v or {}).get("eo_id") or 1)
+            except (TypeError, ValueError):
+                return 1
+
+        def _m50(eylem, veri=None, zaman_asimi=8.0, kaynak=None):
+            # 1.7.19 (Faz C): COKLU M50 — `eo_id` her komutla tasinir.
+            veri = dict(veri or {})
+            if "eo_id" not in veri:
+                veri["eo_id"] = _eid(kaynak)
             tamam, hata, cikti = self.servisler.komut_gonder(
-                "m50", eylem, veri or {}, zaman_asimi=zaman_asimi)
+                "m50", eylem, veri, zaman_asimi=zaman_asimi)
             sonuc = {"tamam": bool(tamam), "hata": hata or ""}
             if isinstance(cikti, dict):
                 sonuc.update(cikti)
@@ -510,15 +536,18 @@ class Uygulama:
         def m50_durum(_v):
             return _m50("durum", {}, zaman_asimi=4.0)
 
-        def m50_ayar_oku(_v):
-            return _m50("ayar_oku")
+        def m50_cihazlar(_v):
+            return _m50("cihazlar", {}, zaman_asimi=4.0)
+
+        def m50_ayar_oku(v):
+            return _m50("ayar_oku", {}, kaynak=v)
 
         def m50_ayar_yaz(v):
             v = dict(v or {})
             # Ağ/akış tercihleri kalıcı olabilir; bağlantı sırrı olamaz.
             for gizli in ("parola", "password", "pwd", "oturum", "token"):
                 v.pop(gizli, None)
-            return _m50("ayar_yaz", v)
+            return _m50("ayar_yaz", v, kaynak=v)
 
         def m50_baglan(v):
             v = v or {}
@@ -526,39 +555,61 @@ class Uygulama:
                 "ip": v.get("ip"), "port": v.get("port"),
                 "kullanici": v.get("kullanici"), "parola": v.get("parola"),
                 "zaman_asimi": v.get("zaman_asimi"),
-            }, zaman_asimi=35.0)
+            }, zaman_asimi=35.0, kaynak=v)
 
-        def m50_kes(_v):
-            return _m50("kes")
+        def m50_kes(v):
+            return _m50("kes", {}, kaynak=v)
 
         def m50_ptz(v):
             v = v or {}
             return _m50("ptz", {"yon": v.get("yon"), "hiz": v.get("hiz"),
-                                "basili": bool(v.get("basili", True))})
+                                "basili": bool(v.get("basili", True))}, kaynak=v)
 
         def m50_lens(v):
             v = v or {}
             return _m50("lens", {"eylem": v.get("eylem"), "kanal": v.get("kanal"),
-                                 "basili": bool(v.get("basili", True))})
+                                 "basili": bool(v.get("basili", True))}, kaynak=v)
 
         def m50_aci_konumla(v):
             v = v or {}
             return _m50("aci_konumla", {"azimut": v.get("azimut"),
-                                         "egim": v.get("egim"), "hiz": v.get("hiz")})
+                                         "egim": v.get("egim"), "hiz": v.get("hiz")}, kaynak=v)
 
         def m50_takip_sec(v):
             v = v or {}
             return _m50("takip_sec", {"kanal": v.get("kanal"),
                                        "video_dikdortgen": v.get("video_dikdortgen"),
-                                       "secim": v.get("secim")})
+                                       "secim": v.get("secim")}, kaynak=v)
 
         def m50_takip_baslat(v):
             v = v or {}
             return _m50("takip_baslat", {"kanal": v.get("kanal"),
-                                          "mod": v.get("mod")})
+                                          "mod": v.get("mod")}, kaynak=v)
 
         def m50_takip_durdur(v):
-            return _m50("takip_durdur", {"kanal": (v or {}).get("kanal")})
+            return _m50("takip_durdur", {"kanal": (v or {}).get("kanal")}, kaynak=v)
+
+        # 1.7.19 DUZELTME: 1.7.18 SDK eylemleri serviste vardi ama ajan
+        # haritasinda YOKTU; Merkez 'm50_aci_oku' gonderince kopru "bu
+        # kurulum eylemi desteklemiyor" diyordu. Veri alanlari kapali
+        # listeyle sinirlanir; parola/oturum hicbir eylemde tasinmaz.
+        _M50_EK = {
+            "aci_oku": (), "onayar_liste": (),
+            "onayar_kaydet": ("no", "ad", "hiz"), "onayar_cagir": ("no",),
+            "onayar_sil": ("no",), "onayar_hepsini_sil": (),
+            "tarama": ("tur", "kontrol", "yol"),
+            "takip_yetenek": ("kanal", "etkin"),
+        }
+
+        def _m50_ek_islev(eylem, alanlar):
+            def islev(v):
+                v = v or {}
+                return _m50(eylem, {a: v.get(a) for a in alanlar if a in v},
+                            kaynak=v)
+            return islev
+
+        m50_ek_islevler = {"m50_" + e: _m50_ek_islev(e, a)
+                           for e, a in _M50_EK.items()}
 
         # -------------------------------------------------------------
         # KUSUR-VIDEO-AI-KOPRU (2026-08-14): kamera ve AI eylemleri
@@ -684,7 +735,9 @@ class Uygulama:
             "radar_ayar_oku": radar_ayar_oku,
             "radar_ayar_yaz": radar_ayar_yaz,
             "radar_rtk": radar_rtk,
+            "radar_cihazlar": radar_cihazlar,
             "m50_durum": m50_durum,
+            "m50_cihazlar": m50_cihazlar,
             "m50_ayar_oku": m50_ayar_oku,
             "m50_ayar_yaz": m50_ayar_yaz,
             "m50_baglan": m50_baglan,
@@ -695,6 +748,7 @@ class Uygulama:
             "m50_takip_sec": m50_takip_sec,
             "m50_takip_baslat": m50_takip_baslat,
             "m50_takip_durdur": m50_takip_durdur,
+            **m50_ek_islevler,
             "video_cihazlar": video_cihazlar,
             "video_kamera_yaz": video_kamera_yaz,
             "video_kamera_sil": video_kamera_sil,

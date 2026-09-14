@@ -152,51 +152,166 @@ class RadarServisi(Servis):
         self._ayar_yolu = self._ayar_yolu_bul()
         self._ayar_yukle()
 
-        self.istemci = RadarIstemcisi(
-            yaz=self.yaz,
-            ayar_oku=self._ayar_oku,
-            ayar_yaz=self._ayar_yaz,
-        )
-        self.istemci.ayar_yukle()
-
+        # v2.2.0 (Faz C): COKLU RADAR. Her radar kimligi (radar_id) icin
+        # ayri bir C20 istemcisi tutulur; merkez komutlari `radar_id`
+        # tasir (verilmezse 1). Kalici kayit `radar_cihazlar` sozlugudur:
+        # {"1": {"ip":..., "port":..., "isim":...}, "2": {...}}.
+        # Eski tek kayit (`radar_son_ip/port`) 1 numaraya tasinir.
+        self.istemciler = {}
+        self._istekler = {}      # radar_id -> (ip, port)
         self._son_iz_yazim = 0.0
         self._son_konsol = 0.0
 
-        # Baslangic adresi UC kaynaktan gelebilir; hicbiri yoksa
-        # baglanti KURULMAZ. Sira onemlidir: ortam degiskeni ozel
-        # kurulum/sinav icindir ve en yuksek onceliktedir.
-        a = self._ayar_oku()
-        self._istek_ip = str(os.environ.get("GOKTUNGU_RADAR_IP")
-                             or a.get("radar_son_ip") or "").strip()
-        try:
-            self._istek_port = int(os.environ.get("GOKTUNGU_RADAR_PORT")
-                                   or a.get("radar_son_port")
-                                   or VARSAYILAN_PORT)
-        except (TypeError, ValueError):
-            self._istek_port = VARSAYILAN_PORT
+        cihazlar = self._cihaz_kayitlari()
+        # Ortam degiskeni ozel kurulum/sinav icindir ve 1 numarali radar
+        # icin en yuksek onceliktedir.
+        ort_ip = str(os.environ.get("GOKTUNGU_RADAR_IP") or "").strip()
+        if ort_ip:
+            try:
+                ort_port = int(os.environ.get("GOKTUNGU_RADAR_PORT")
+                               or VARSAYILAN_PORT)
+            except (TypeError, ValueError):
+                ort_port = VARSAYILAN_PORT
+            cihazlar[1] = dict(cihazlar.get(1) or {}, ip=ort_ip, port=ort_port)
 
-        self.yaz("C20 radar istemcisi hazir")
+        self.yaz("C20 radar istemcisi hazir (coklu radar; %d kayit)"
+                 % len(cihazlar))
         if self.kanal.etkin():
             self.yaz("Panel komut kanali etkin (baglan / ayar / RTK)")
         else:
             self.yaz("Panel komut kanali yok; merkezden baglan komutu "
                      "alinamayacak", "uyari")
 
-        if self._istek_ip:
+        bagli_sayisi = 0
+        for rid in sorted(cihazlar):
+            k = cihazlar[rid]
+            ip = str(k.get("ip") or "").strip()
+            if not ip:
+                continue
             # Bu adres kodun varsayimi DEGIL; operatorun daha once
             # merkezden verdigi baglan komutunun kalici kaydidir.
-            kaynak = ("ortam degiskeni"
-                      if os.environ.get("GOKTUNGU_RADAR_IP")
+            kaynak = ("ortam degiskeni" if (rid == 1 and ort_ip)
                       else "son kullanilan adres")
-            self.yaz("Baglaniliyor (%s): %s:%d"
-                     % (kaynak, self._istek_ip, self._istek_port))
-            self._baglan(self._istek_ip, self._istek_port)
-        else:
+            try:
+                self.yaz("Radar %d baglaniliyor (%s): %s:%s"
+                         % (rid, kaynak, ip, k.get("port") or VARSAYILAN_PORT))
+                self._baglan(ip, k.get("port"), radar_id=rid)
+                bagli_sayisi += 1
+            except Exception as e:
+                self.yaz("Radar %d baglanamadi: %s" % (rid, e), "uyari")
+        if not bagli_sayisi:
             # KASITLI: hicbir adrese baglanilmaz. Radarin adresi
             # merkezden bildirilmeden TCP oturumu acmak, sahada baska
             # bir cihazi yoklamak anlamina gelir.
             self.yaz("Radar adresi henuz bildirilmedi; merkezden "
                      "'Radara baglan' komutu bekleniyor")
+
+    # -----------------------------------------------------------------
+    # Coklu radar: kimlik, istemci ve kayit yardimcilari
+    # -----------------------------------------------------------------
+    @staticmethod
+    def _rid(veri):
+        """Komut verisindeki radar kimligi; yoksa/gecersizse 1."""
+        try:
+            rid = int((veri or {}).get("radar_id") or 1)
+        except (TypeError, ValueError):
+            rid = 1
+        return rid if rid > 0 else 1
+
+    def _cihaz_kayitlari(self):
+        """Kalici `radar_cihazlar` sozlugu (int anahtarli kopya).
+
+        Eski tek kayit (`radar_son_ip/port`, surum <2.2.0) varsa ve
+        1 numara kayitli degilse oraya tasinir; boylece yukseltme
+        sonrasi operator IP'yi yeniden girmek zorunda kalmaz.
+        """
+        a = self._ayar_oku()
+        ham = a.get("radar_cihazlar")
+        cihazlar = {}
+        if isinstance(ham, dict):
+            for k, v in ham.items():
+                try:
+                    rid = int(k)
+                except (TypeError, ValueError):
+                    continue
+                if rid > 0 and isinstance(v, dict):
+                    cihazlar[rid] = dict(v)
+        eski_ip = str(a.get("radar_son_ip") or "").strip()
+        if eski_ip and 1 not in cihazlar:
+            try:
+                eski_port = int(a.get("radar_son_port") or VARSAYILAN_PORT)
+            except (TypeError, ValueError):
+                eski_port = VARSAYILAN_PORT
+            cihazlar[1] = {"ip": eski_ip, "port": eski_port, "isim": ""}
+        return cihazlar
+
+    def _cihaz_kaydet(self, rid, ip=None, port=None, isim=None, sil=False):
+        cihazlar = {str(k): v for k, v in self._cihaz_kayitlari().items()}
+        anahtar = str(int(rid))
+        if sil:
+            cihazlar.pop(anahtar, None)
+        else:
+            k = dict(cihazlar.get(anahtar) or {})
+            if ip is not None:
+                k["ip"] = str(ip)
+            if port is not None:
+                k["port"] = int(port)
+            if isim is not None:
+                k["isim"] = str(isim)[:64]
+            cihazlar[anahtar] = k
+        self._ayar_yaz({"radar_cihazlar": cihazlar})
+        # Eski tek kayit artik yalniz goc icin okunur; yeni yazimdan
+        # sonra silinir ki iki kaynak birbirinden kopmasin.
+        self._ayar_sil(("radar_son_ip", "radar_son_port"))
+
+    def _ayar_oku_cihaz(self, rid):
+        """Radar basina ayar gorunumu.
+
+        1 numarali radar eski duz anahtarlari (merkez_lat/merkez_lon/
+        radar_merkez_yonu) kullanir — yukseltmede RTK kalibrasyonu
+        korunur. Diger radarlar `radar_<id>_<anahtar>` on ekiyle ayrisir.
+        """
+        a = self._ayar_oku()
+        if int(rid) == 1:
+            return a
+        on_ek = "radar_%d_" % int(rid)
+        sonuc = {k: v for k, v in a.items() if not k.startswith("radar_")}
+        for k, v in a.items():
+            if k.startswith(on_ek):
+                sonuc[k[len(on_ek):]] = v
+        # Ortak/duz anahtarlar diger radara SIZMAMALI: 2 numarali radar
+        # kendi RTK'sini almadan 1 numaranin konumunu kullanirsa izler
+        # yanlis yere duser.
+        for k in ("merkez_lat", "merkez_lon", "radar_merkez_yonu"):
+            if k not in {kk[len(on_ek):] for kk in a if kk.startswith(on_ek)}:
+                sonuc.pop(k, None)
+        return sonuc
+
+    def _ayar_yaz_cihaz(self, rid, yeni):
+        if not isinstance(yeni, dict):
+            return
+        if int(rid) == 1:
+            self._ayar_yaz(yeni)
+            return
+        on_ek = "radar_%d_" % int(rid)
+        self._ayar_yaz({on_ek + str(k): v for k, v in yeni.items()})
+
+    def _istemci(self, rid, olustur=True):
+        rid = int(rid)
+        ist = self.istemciler.get(rid)
+        if ist is None and olustur:
+            ist = RadarIstemcisi(
+                yaz=(lambda m, t="bilgi", _r=rid: self.yaz(
+                    ("[R%d] " % _r) + str(m), t)),
+                ayar_oku=lambda _r=rid: self._ayar_oku_cihaz(_r),
+                ayar_yaz=lambda d, _r=rid: self._ayar_yaz_cihaz(_r, d),
+            )
+            ist.ayar_yukle()
+            self.istemciler[rid] = ist
+        return ist
+
+    def _birincil_id(self):
+        return min(self.istemciler) if self.istemciler else 1
 
     # -----------------------------------------------------------------
     # Kalici ayar deposu
@@ -295,7 +410,7 @@ class RadarServisi(Servis):
     # -----------------------------------------------------------------
     # Baglanti
     # -----------------------------------------------------------------
-    def _baglan(self, ip, port, hatirla=False):
+    def _baglan(self, ip, port, hatirla=False, radar_id=1, isim=None):
         """Verilen adrese baglanir. Adres BOSSA hicbir sey yapmaz.
 
         `hatirla=True` yalnizca merkezden gelen `baglan` komutu icin
@@ -316,10 +431,11 @@ class RadarServisi(Servis):
             port = VARSAYILAN_PORT
         if not (0 < port < 65536):
             raise ValueError("gecersiz radar portu: %s" % port)
-        self._istek_ip, self._istek_port = ip, port
+        rid = int(radar_id or 1)
+        self._istekler[rid] = (ip, port)
         if hatirla:
-            self._ayar_yaz({"radar_son_ip": ip, "radar_son_port": port})
-        self.istemci.baglan(ip, port)
+            self._cihaz_kaydet(rid, ip=ip, port=port, isim=isim)
+        self._istemci(rid).baglan(ip, port)
         return ip, port
 
     # -----------------------------------------------------------------
@@ -347,35 +463,46 @@ class RadarServisi(Servis):
                 self.kanal.yanit(kid, False, str(e))
 
     def _komut_uygula(self, eylem, veri):
+        rid = self._rid(veri)
+
         if eylem == "baglan":
             # Operatorun niyeti: bu adres hatirlanir.
             ip, port = self._baglan(veri.get("ip"), veri.get("port"),
-                                    hatirla=True)
-            self.yaz("Merkez istegi: baglan %s:%d" % (ip, port))
-            return {"ip": ip, "port": port}
+                                    hatirla=True, radar_id=rid,
+                                    isim=veri.get("isim"))
+            self.yaz("Merkez istegi: radar %d baglan %s:%d" % (rid, ip, port))
+            return {"ip": ip, "port": port, "radar_id": rid}
 
         if eylem == "kes":
-            self.istemci.kes()
+            ist = self._istemci(rid, olustur=False)
+            if ist is not None:
+                ist.kes()
             # Kayit silinir: operator baglantiyi bilerek kestiyse servis
             # yeniden baslatildiginda onu geri getirmemelidir.
-            self._ayar_sil(("radar_son_ip", "radar_son_port"))
-            self._istek_ip = ""
-            self.yaz("Merkez istegi: baglanti kesildi "
-                     "(adres kaydi da silindi)")
-            return {}
+            self._cihaz_kaydet(rid, sil=True)
+            self._istekler.pop(rid, None)
+            self.yaz("Merkez istegi: radar %d baglantisi kesildi "
+                     "(adres kaydi da silindi)" % rid)
+            return {"radar_id": rid}
 
         if eylem == "durum":
             return self._durum_paketi()
 
+        if eylem == "cihazlar":
+            return {"radarlar": self._cihaz_listesi()}
+
         if eylem == "ayar_oku":
             # Radardan GUNCEL degerleri ister; yanit GETREG ile gelir ve
             # bir sonraki durum yaziminda panele ulasir.
-            with self.istemci.kilit:
-                self.istemci.ayar_kuyruk.append(("oku",))
-            return {}
+            ist = self._istemci(rid)
+            with ist.kilit:
+                ist.ayar_kuyruk.append(("oku",))
+            return {"radar_id": rid}
 
         if eylem == "ayar_yaz":
             a = dict(veri or {})
+            a.pop("radar_id", None)
+            ist = self._istemci(rid)
             # Merkez yonu ofseti RADARA yazilmaz; yerel kalibrasyondur ve
             # iz konumlandirmasinda kullanilir. Kalici olarak saklanir,
             # yoksa servis her yeniden baslatmada sifirlanir ve izler
@@ -385,21 +512,37 @@ class RadarServisi(Servis):
                     my = float(a["merkez_yonu"]) % 360.0
                 except (TypeError, ValueError):
                     my = 0.0
-                with self.istemci.kilit:
-                    self.istemci.radar_ayarlar["merkez_yonu"] = my
-                self._ayar_yaz({"radar_merkez_yonu": my})
-            with self.istemci.kilit:
-                self.istemci.ayar_kuyruk.append(("yaz", a))
-            self.yaz("Panel istegi: ayarlar yazilacak")
-            return {}
+                with ist.kilit:
+                    ist.radar_ayarlar["merkez_yonu"] = my
+                self._ayar_yaz_cihaz(rid, {"radar_merkez_yonu": my})
+            with ist.kilit:
+                ist.ayar_kuyruk.append(("yaz", a))
+            self.yaz("Panel istegi: radar %d ayarlari yazilacak" % rid)
+            return {"radar_id": rid}
 
         if eylem == "rtk":
-            with self.istemci.kilit:
-                self.istemci.ayar_kuyruk.append(("rtk",))
-            self.yaz("Panel istegi: RTK konumu alinacak")
-            return {}
+            ist = self._istemci(rid)
+            with ist.kilit:
+                ist.ayar_kuyruk.append(("rtk",))
+            self.yaz("Panel istegi: radar %d RTK konumu alinacak" % rid)
+            return {"radar_id": rid}
 
         raise ValueError("bilinmeyen eylem: %s" % eylem)
+
+    def _cihaz_listesi(self):
+        kayit = self._cihaz_kayitlari()
+        cikti = []
+        for rid in sorted(set(kayit) | set(self.istemciler)):
+            k = kayit.get(rid) or {}
+            ist = self.istemciler.get(rid)
+            bagli = False
+            if ist is not None:
+                with ist.kilit:
+                    bagli = ist.durum.get("durum") == "bagli"
+            cikti.append({"radar_id": rid, "isim": k.get("isim") or "",
+                          "ip": k.get("ip") or "", "port": k.get("port") or 0,
+                          "bagli": bagli})
+        return cikti
 
     # -----------------------------------------------------------------
     # Merkeze bildirim
@@ -440,12 +583,61 @@ class RadarServisi(Servis):
         aksi halde bellek sinirsiz buyur.
         """
         simdi = time.time()
-        with self.istemci.kilit:
-            durum = dict(self.istemci.durum)
-            ayarlar = dict(self.istemci.radar_ayarlar)
+        kayit = self._cihaz_kayitlari()
+        radarlar = {}
+        for rid in sorted(set(kayit) | set(self.istemciler)):
+            ist = self.istemciler.get(rid)
+            k = kayit.get(rid) or {}
+            if ist is None:
+                radarlar[str(rid)] = {
+                    "radar_id": rid, "isim": k.get("isim") or "",
+                    "radar_durum": {"durum": "kapali", "ip": k.get("ip") or "",
+                                    "port": k.get("port") or 0, "hata": ""},
+                    "radar_ayarlar": {}, "izler": [], "radar_bagli": False,
+                    "radar_adres_bekleniyor": not bool(k.get("ip")),
+                    "iz_sayisi": 0}
+                continue
+            radarlar[str(rid)] = self._radar_paketi(rid, ist, k, simdi)
+        # v2.1.0: "baglanti yok" iki cok farkli durumu ayni gosteriyordu:
+        # (a) adres henuz bildirilmedi, (b) adres verildi ama cihaza
+        # ulasilamiyor. Ilki normal bir bekleme halidir, ikincisi bir
+        # arizadir. Merkez ikisini ayirt edemezse operatore "radar
+        # cevrimdisi" gibi gorunur ve gercekte yapmasi gereken sey -
+        # IP adresi girmek - hic akla gelmez.
+        #
+        # v2.2.0 (Faz C): ust duzey alanlar BIRINCIL (en kucuk kimlikli)
+        # radarindir — eski Merkez surumleri (2.4.191 ve oncesi) yalniz
+        # bunlari okur. Yeni Merkez `radarlar` sozlugunden radar basina
+        # okur. `radar_bagli` menu gorunurlugu icindir: herhangi bir
+        # radar bagliysa radar menusu acik kalmalidir.
+        birincil = radarlar.get(str(self._birincil_id())) or (
+            next(iter(radarlar.values())) if radarlar else None)
+        if birincil is None:
+            birincil = {"radar_durum": {"durum": "kapali", "ip": "", "port": 0,
+                                        "hata": ""},
+                        "radar_ayarlar": {}, "izler": [], "radar_bagli": False,
+                        "radar_adres_bekleniyor": True, "iz_sayisi": 0}
+        toplam_iz = sum(int(p.get("iz_sayisi") or 0) for p in radarlar.values())
+        return {"radar_durum": birincil["radar_durum"],
+                "radar_ayarlar": birincil["radar_ayarlar"],
+                "izler": birincil["izler"],
+                "radar_bagli": any(p.get("radar_bagli") for p in radarlar.values()),
+                "radar_adres_bekleniyor": all(
+                    p.get("radar_adres_bekleniyor") for p in radarlar.values()
+                ) if radarlar else True,
+                "iz_sayisi": toplam_iz,
+                "radar_sayisi": len(radarlar),
+                "bagli_radar_sayisi": sum(
+                    1 for p in radarlar.values() if p.get("radar_bagli")),
+                "radarlar": radarlar}
+
+    def _radar_paketi(self, rid, ist, kayit, simdi):
+        with ist.kilit:
+            durum = dict(ist.durum)
+            ayarlar = dict(ist.radar_ayarlar)
             eskiler = []
             izler = []
-            for tid, v in self.istemci.hedefler.items():
+            for tid, v in ist.hedefler.items():
                 k = dict(v)
                 try:
                     yas = max(0.0, simdi - float(k["son"]))
@@ -457,17 +649,12 @@ class RadarServisi(Servis):
                 k["yas_sn"] = round(yas, 3)
                 izler.append(k)
             for tid in eskiler:
-                self.istemci.hedefler.pop(tid, None)
-        # v2.1.0: "baglanti yok" iki cok farkli durumu ayni gosteriyordu:
-        # (a) adres henuz bildirilmedi, (b) adres verildi ama cihaza
-        # ulasilamiyor. Ilki normal bir bekleme halidir, ikincisi bir
-        # arizadir. Merkez ikisini ayirt edemezse operatore "radar
-        # cevrimdisi" gibi gorunur ve gercekte yapmasi gereken sey -
-        # IP adresi girmek - hic akla gelmez.
-        return {"radar_durum": durum, "radar_ayarlar": ayarlar,
+                ist.hedefler.pop(tid, None)
+        return {"radar_id": rid, "isim": (kayit or {}).get("isim") or "",
+                "radar_durum": durum, "radar_ayarlar": ayarlar,
                 "izler": izler,
                 "radar_bagli": durum.get("durum") == "bagli",
-                "radar_adres_bekleniyor": not bool(self._istek_ip),
+                "radar_adres_bekleniyor": rid not in self._istekler,
                 "iz_sayisi": len(izler)}
 
     def _merkeze_yaz(self):
@@ -483,32 +670,39 @@ class RadarServisi(Servis):
         if simdi - self._son_konsol < KONSOL_BILDIRIM_SN:
             return
         self._son_konsol = simdi
-        with self.istemci.kilit:
-            d = self.istemci.durum.get("durum")
-            hata = self.istemci.durum.get("hata")
-            hiz = self.istemci.durum.get("veri_hizi")
-            n = len(self.istemci.hedefler)
-        satir = "Durum: %s, %d iz, %.1f mesaj/sn" % (d, n, hiz or 0.0)
-        if d == "hata" and hata:
-            satir += " (%s)" % hata
-        self.yaz(satir, "uyari" if d != "bagli" else "bilgi")
+        if not self.istemciler:
+            return
+        for rid in sorted(self.istemciler):
+            ist = self.istemciler[rid]
+            with ist.kilit:
+                d = ist.durum.get("durum")
+                hata = ist.durum.get("hata")
+                hiz = ist.durum.get("veri_hizi")
+                n = len(ist.hedefler)
+            satir = "Radar %d durum: %s, %d iz, %.1f mesaj/sn" % (
+                rid, d, n, hiz or 0.0)
+            if d == "hata" and hata:
+                satir += " (%s)" % hata
+            self.yaz(satir, "uyari" if d != "bagli" else "bilgi")
 
     # -----------------------------------------------------------------
     def kapat(self):
-        try:
-            self.istemci.kes()
-        except Exception:
-            pass
+        for ist in list(self.istemciler.values()):
+            try:
+                ist.kes()
+            except Exception:
+                pass
         # Servis durdugunda merkez "bagli" gormeye devam etmemeli:
         # menu acik kalir ve operator olmayan bir radara guvenir.
         try:
             self.durum_yaz(radar_bagli=False, iz_sayisi=0, izler=[],
                            radar_durum={"durum": "kapali", "ip": "",
                                         "port": 0, "hata": ""},
-                           radar_ayarlar={})
+                           radar_ayarlar={}, radarlar={}, radar_sayisi=0,
+                           bagli_radar_sayisi=0)
         except Exception:
             pass
-        self.yaz("Radar oturumu kapatildi")
+        self.yaz("Radar oturumlari kapatildi")
 
 
 if __name__ == "__main__":
