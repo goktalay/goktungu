@@ -22,11 +22,21 @@
 
 window.PANEL_SURUM = {
   ad: 'GÖKTUNGU Tanıtım Sitesi',
-  surum: '2.13.8',
-  tarih: '2026-09-11',
+  surum: '2.14.0',
+  tarih: '2026-09-14',
   logo: '/img/goktungu.webp',
   telif: '© 2026 Gökkubbe Teknoloji Anonim Şirketi',
   gecmis: [
+    {
+      /* YETENEK-ANLATIMI-20260914 */ s: "2.14.0", t: "14 Eylül 2026",
+      n: "Yetenek bölümü animasyonlu şemalarla yeniden anlatıldı",
+      d: [
+        "YETENEKLER BOLUMU DEGISTI: alti duragan kart yerine bes yetenek blogu geldi (C20 radar fuzyonu, M50 elektro-optik, goruntu cozumlemesi, angajman motoru, insansiz hava araclari). Her blok kendi animasyonlu SVG semasini ve teknik kunyesini tasir.",
+        "SEMALAR SAF SVG + CSS: kitaplik yuklenmez, sayfa agirligi artmaz. Renkler sitenin kendi tokenlarindan gelir (siyan = algilama, kehribar = angajman), bu yuzden acik/koyu tema anahtari bu bloklarda da dogru calisir.",
+        "HAREKET TERCIHI: `prefers-reduced-motion` acikken animasyonlar durur; semalar duragan halde de tam okunur -- hareket bilgi tasimaz, yalnizca dikkat yonlendirir.",
+        "INGILIZCE KARSILIKLAR EKLENDI: yeni bloklarin 60 metni sozluge islendi; EN kipinde Turkce metin kalmaz.",
+      ],
+    },
     {
       /* M50-OFFLINE-20260911 */ s: "2.13.8", t: "11 Eylül 2026",
       n: "M50 elektro-optik katmanı ve offline canlı kamera mimarisi",

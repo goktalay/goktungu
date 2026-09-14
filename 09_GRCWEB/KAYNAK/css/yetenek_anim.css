@@ -1,0 +1,105 @@
+/* ===================================================================
+   GOKTUNGU tanitim sitesi — YETENEK BLOKLARI (v2.14.0)
+   -------------------------------------------------------------------
+   `stil.css`ten SONRA yuklenir ve YALNIZ `yt-` onekli siniflari
+   tanimlar. Mevcut hicbir kural ezilmez: sayfanin geri kalani (ust
+   cubuk, fiyat, indirme, oturum penceresi) aynen calisir.
+
+   Renkler sitenin KENDI tokenlarindan gelir (--siyan, --kehribar,
+   --cizgi, --kart, --metin, --soluk); boylece acik/koyu tema anahtari
+   bu bloklarda da kendiliginden dogru calisir ve marka paleti tek
+   yerden yonetilmeye devam eder.
+   =================================================================== */
+
+.yt-satir{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(24px,3.4vw,54px);
+  align-items:center;
+  padding-block:clamp(26px,3.6vw,46px);
+  border-top:1px solid var(--cizgi);
+}
+.yt-satir:first-of-type{border-top:0;padding-top:0;}
+
+/* Ters satirda sema SAGA gecer. Tek sutuna dusunce sema HER ZAMAN
+   ustte kalir: sema anlatinin girisidir, metnin arkasina dusmemeli. */
+.yt-satir.ters .yt-sema{order:2;}
+@media(max-width:900px){
+  .yt-satir,.yt-satir.ters{grid-template-columns:minmax(0,1fr);gap:18px;}
+  .yt-satir.ters .yt-sema{order:0;}
+}
+
+.yt-sema{
+  position:relative;
+  background:var(--kart);
+  border:1px solid var(--cizgi);
+  border-radius:var(--radius,10px);
+  padding:14px;
+  overflow:hidden;
+  min-width:0;
+}
+.yt-sema svg{display:block;width:100%;height:auto;max-width:100%;}
+/* SVG metinleri: yazi tipi KURAL ile verilir. Sunum ozniteligi
+   (`font-family="..."`) yerine kural kullanmak, ozel ozellik cozumunun
+   her tarayicida ayni davranmasini garanti eder. */
+.yt-sema text{font-family:var(--mono);}
+.yt-sema-ad{
+  position:absolute;top:12px;left:16px;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;
+  color:var(--soluk);text-transform:uppercase;
+}
+
+.yt-metin{min-width:0;}
+.yt-etiket{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;
+  color:var(--siyan);text-transform:uppercase;
+  display:flex;align-items:center;gap:9px;margin-bottom:12px;
+}
+.yt-etiket::before{content:"";width:24px;height:1px;background:var(--siyan);flex:0 0 auto;}
+.yt-metin h3{
+  font-family:var(--baslik);
+  font-size:clamp(1.18rem,2vw,1.62rem);
+  line-height:1.12;margin:0 0 12px;
+  color:var(--baslik-renk,var(--metin));
+  text-wrap:balance;
+}
+.yt-metin > p{margin:0;color:var(--soluk);max-width:56ch;}
+
+.yt-kunye{
+  list-style:none;padding:0;margin:18px 0 0;
+  border-top:1px solid var(--cizgi);
+}
+.yt-kunye li{
+  display:grid;grid-template-columns:minmax(104px,30%) minmax(0,1fr);
+  gap:14px;padding:8px 0;border-bottom:1px solid var(--cizgi);
+  font-size:.9rem;color:var(--metin);
+}
+.yt-kunye b{
+  font-family:var(--mono);font-weight:500;font-size:.7rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--soluk);
+  padding-top:3px;
+}
+@media(max-width:520px){
+  .yt-kunye li{grid-template-columns:minmax(0,1fr);gap:2px;}
+}
+
+/* ---------- hareket ----------
+   Sema DURAGAN halde de tam okunur: animasyon yalniz dikkati
+   yonlendirir, bilgi tasimaz. Bu yuzden hareket kapatildiginda
+   hicbir sey kaybolmaz. */
+@keyframes ytTara{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes ytNabiz{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ytAkis{to{stroke-dashoffset:-320}}
+@keyframes ytSalin{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(24deg)}}
+@keyframes ytKilit{0%,40%{stroke-dasharray:2 8;opacity:.45}60%,100%{stroke-dasharray:22 0;opacity:1}}
+
+.yt-sweep{animation:ytTara 4.6s linear infinite;}
+.yt-nabiz{animation:ytNabiz 2.4s ease-in-out infinite;}
+.yt-akis{stroke-dasharray:6 6;animation:ytAkis 7s linear infinite;}
+.yt-gimbal{animation:ytSalin 6.5s ease-in-out infinite;}
+.yt-kilit{animation:ytKilit 3.4s ease-in-out infinite;}
+
+@media (prefers-reduced-motion:reduce){
+  .yt-sweep,.yt-nabiz,.yt-akis,.yt-gimbal,.yt-kilit{animation:none;}
+  .yt-sweep{opacity:.45;}
+}

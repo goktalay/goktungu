@@ -22,6 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/stil.css?v=2136">
 <link rel="stylesheet" href="/css/logo_anim.css?v=2136">
+<link rel="stylesheet" href="/css/yetenek_anim.css?v=2140">
 <!-- v2.9.0: taktik harekat temasi (v3) - murekkep laciverdi zemin,
      celik-siyan birincil (dost/sistem), kehribar ikincil (iz/uyari);
      Chakra Petch + IBM Plex tipografisi. Kopru indirme baglantisi
@@ -426,6 +427,13 @@
 </section>
 
 <!-- =========================== YETENEKLER =========================== -->
+<!-- ========================== YETENEKLER ==========================
+     v2.14.0 — her yetenek kendi animasyonlu semasiyla anlatilir.
+     Renk ROL tasir ve sitenin mevcut tokenlarindan gelir:
+       var(--siyan)    = ALGILAMA (sensor donusu)
+       var(--kehribar) = ANGAJMAN / KARAR
+     Semalar saf SVG + CSS'tir; kitaplik yuklenmez, `prefers-reduced-motion`
+     acikken hareket durur. -->
 <section id="yetenekler" class="koyu">
   <div class="ic">
     <div class="bolum-bas">
@@ -438,51 +446,249 @@
       </p>
     </div>
 
-    <div class="kartlar">
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="radar"></div>
-        <h3 data-i18n="yet.k1">Radar Tespit ve İz Takibi</h3>
-        <p data-i18n="yet.k1alt">Polar radar ölçümleri küresel koordinata dönüştürülür; onay eşiği,
-        zaman aşımı ve alfa filtreli hız kestirimi ile kararlı izler üretilir.
-        Kaybolan hedef menzil penceresinde geri belirirse eski izine bağlanır.</p>
+    <!-- ---------------- RADAR ---------------- -->
+    <div class="yt-satir">
+      <div class="yt-sema" aria-label="Çoklu radar füzyon şeması">
+        <span class="yt-sema-ad" data-i18n="yn.radar.semaAd">Füzyon · Ortak Çerçeve</span>
+        <svg viewBox="0 0 420 300" role="img">
+          <circle cx="130" cy="190" r="104" fill="var(--siyan)" opacity=".07"/>
+          <circle cx="130" cy="190" r="104" fill="none" stroke="var(--cizgi)"/>
+          <circle cx="290" cy="206" r="92" fill="var(--siyan)" opacity=".07"/>
+          <circle cx="290" cy="206" r="92" fill="none" stroke="var(--cizgi)"/>
+          <g class="yt-sweep" style="transform-origin:130px 190px">
+            <path d="M130 190 L234 190 A104 104 0 0 0 203.5 116.5 Z"
+                  fill="var(--siyan)" opacity=".16"/>
+            <line x1="130" y1="190" x2="234" y2="190" stroke="var(--siyan)" stroke-width="1.3"/>
+          </g>
+          <path d="M124 198 L136 198 L130 186 Z" fill="var(--siyan)"/>
+          <text x="98" y="217" font-family="var(--mono)" font-size="9" fill="var(--soluk)">RADAR 1</text>
+          <path d="M284 214 L296 214 L290 202 Z" fill="var(--siyan)"/>
+          <text x="260" y="233" font-family="var(--mono)" font-size="9" fill="var(--soluk)">RADAR 2</text>
+          <circle cx="206" cy="118" r="3.4" fill="var(--siyan)" class="yt-nabiz"/>
+          <circle cx="214" cy="126" r="3.4" fill="var(--siyan)" class="yt-nabiz" style="animation-delay:.9s"/>
+          <path d="M130 190 L206 118" stroke="var(--siyan)" stroke-width=".9" opacity=".45" stroke-dasharray="3 4"/>
+          <path d="M290 206 L214 126" stroke="var(--siyan)" stroke-width=".9" opacity=".45" stroke-dasharray="3 4"/>
+          <circle cx="210" cy="122" r="13" fill="none" stroke="var(--kehribar)" stroke-width="1.5" class="yt-kilit"/>
+          <path d="M150 168 L182 142 L210 122" fill="none" stroke="var(--kehribar)" stroke-width="1.4"/>
+          <text x="229" y="118" font-family="var(--mono)" font-size="9.5" fill="var(--kehribar)">TEK İZ</text>
+          <line x1="24" y1="266" x2="396" y2="266" stroke="var(--cizgi)"/>
+          <g font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">
+            <text x="24" y="283">KALMAN SÜZGECİ</text>
+            <text x="168" y="283">M-of-N ONAY</text>
+            <text x="278" y="283">MACAR ATAMA</text>
+          </g>
+        </svg>
       </div>
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="iha"></div>
-        <h3 data-i18n="yet.k2">İnsansız Hava Aracı Komutası</h3>
-        <p data-i18n="yet.k2alt">ArduCopter, ArduPlane ve ArduRover uçuş modları çözümlenir. Kalkış,
-        iniş, göreve dönüş ve yönlü hareket komutları arayüzden verilir; her
-        araca ayrı renk ve harita izi atanır.</p>
+      <div class="yt-metin">
+        <div class="yt-etiket" data-i18n="yn.radar.etiket">C20 Tarama Radarı</div>
+        <h3 data-i18n="yn.radar.baslik">Birden çok radar, tek izleme çerçevesi</h3>
+        <p data-i18n="yn.radar.metin">Her radar kendi konumundan bakar. Sistem bunları ayrı ayrı
+          listelemez: tüm plotlar merkez konumu orijinli ortak bir çerçeveye ötelenir ve aynı
+          takipçiye girer. İki radarın gördüğü tek hedef, haritada tek iz olur.</p>
+        <ul class="yt-kunye">
+          <li><b data-i18n="yn.radar.k1a">Protokol</b><span data-i18n="yn.radar.k1b">İkili çerçeve düzeyinde oturum, kalp atışı, CRC denetimi ve kayıt okuma/yazma</span></li>
+          <li><b data-i18n="yn.radar.k2a">Takip</b><span data-i18n="yn.radar.k2b">Eksen başına Kalman süzgeci, GNN ilişkilendirme, M-of-N iz onayı</span></li>
+          <li><b data-i18n="yn.radar.k3a">Konum</b><span data-i18n="yn.radar.k3b">RTK varsa cihazdan, yoksa kurulu enlem/boylam kaydından</span></li>
+          <li><b data-i18n="yn.radar.k4a">Kimlik</b><span data-i18n="yn.radar.k4b">Hedef kimliği radar bazında ayrışır; iki radar aynı numarayı çakıştırmaz</span></li>
+        </ul>
       </div>
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="kurum"></div>
-        <h3 data-i18n="yet.k4">Çok Kiracılı Kurum Yapısı</h3>
-        <p data-i18n="yet.k4alt">Her kurum kendi vergi kimliği, ünvanı ve logosu ile kayıtlıdır.
-        Arayüzün tamamında ve raporlarda giriş yapılan kurumun kimliği görünür;
-        veriler kiracı düzeyinde yalıtılır.</p>
+    </div>
+
+    <!-- ---------------- ELEKTRO-OPTİK ---------------- -->
+    <div class="yt-satir ters">
+      <div class="yt-sema" aria-label="Elektro-optik gimbal tarama şeması">
+        <span class="yt-sema-ad" data-i18n="yn.eo.semaAd">Gimbal · Sektör Taraması</span>
+        <svg viewBox="0 0 420 300" role="img">
+          <line x1="24" y1="238" x2="396" y2="238" stroke="var(--cizgi)"/>
+          <rect x="203" y="238" width="14" height="34" fill="var(--kart)" stroke="var(--cizgi)"/>
+          <g class="yt-gimbal" style="transform-origin:210px 246px">
+            <path d="M210 246 L128 76 A 172 172 0 0 1 292 76 Z" fill="var(--kehribar)" opacity=".12"/>
+            <path d="M210 246 L128 76" stroke="var(--kehribar)" stroke-width=".9" opacity=".55"/>
+            <path d="M210 246 L292 76" stroke="var(--kehribar)" stroke-width=".9" opacity=".55"/>
+            <line x1="210" y1="246" x2="210" y2="96" stroke="var(--kehribar)" stroke-width="1.4"/>
+            <g transform="translate(210,232)">
+              <rect x="-17" y="-13" width="34" height="26" rx="2" fill="var(--kart)"
+                    stroke="var(--kehribar)" stroke-width="1.6"/>
+              <circle cx="-6" cy="0" r="5" fill="none" stroke="var(--kehribar)" stroke-width="1.2"/>
+              <circle cx="8" cy="0" r="4" fill="none" stroke="var(--siyan)" stroke-width="1.2"/>
+            </g>
+          </g>
+          <g transform="translate(268,118)">
+            <path d="M-9 0 L0 -5 L9 0 L0 4 Z" fill="var(--metin)"/>
+            <rect x="-15" y="-11" width="30" height="22" fill="none" stroke="var(--kehribar)"
+                  stroke-width="1.4" class="yt-kilit"/>
+            <text x="21" y="4" font-family="var(--mono)" font-size="9" fill="var(--kehribar)">TAKİP</text>
+          </g>
+          <g font-family="var(--mono)" font-size="8.5">
+            <rect x="24" y="26" width="80" height="42" fill="var(--kart)" stroke="var(--siyan)"/>
+            <text x="33" y="44" fill="var(--siyan)">GÜNDÜZ</text>
+            <text x="33" y="59" fill="var(--soluk)">kanal 1</text>
+            <rect x="114" y="26" width="80" height="42" fill="var(--kart)" stroke="var(--kehribar)"/>
+            <text x="123" y="44" fill="var(--kehribar)">TERMAL</text>
+            <text x="123" y="59" fill="var(--soluk)">kanal 2</text>
+          </g>
+          <g font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">
+            <text x="300" y="44">AZ 118.4°</text>
+            <text x="300" y="59">EĞ −04.2°</text>
+            <text x="300" y="74" fill="var(--siyan)">RTK · SABİT</text>
+          </g>
+        </svg>
       </div>
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="pilot"></div>
-        <h3 data-i18n="yet.k5">Pilot ve Uçuş Kaydı Yönetimi</h3>
-        <p data-i18n="yet.k5alt">Kurumsal panelden pilot kadrosu, lisans bilgileri ve uçuş kayıtları
-        yönetilir. Uçuş süresi, görev tipi ve araç eşleşmesi kayıt altına alınır.</p>
+      <div class="yt-metin">
+        <div class="yt-etiket" data-i18n="yn.eo.etiket">M50 Elektro-Optik</div>
+        <h3 data-i18n="yn.eo.baslik">Gündüz ve termal, tek sistemde</h3>
+        <p data-i18n="yn.eo.metin">Üretici SDK'sının tamamı tek panelde toplanır: bağlantı ve
+          kimlik, PTZ ve lens, açı konumlama, ön ayarlar, tarama/devriye desenleri ve hedef
+          takibi. Yayın adresi cihazın kendisinden okunur — operatörün adres girmesi gerekmez.</p>
+        <ul class="yt-kunye">
+          <li><b data-i18n="yn.eo.k1a">Kontrol</b><span data-i18n="yn.eo.k1b">PTZ, lens, açıya git, ön ayar kaydet/çağır, tarama ve devriye</span></li>
+          <li><b data-i18n="yn.eo.k2a">Takip</b><span data-i18n="yn.eo.k2b">Video üzerinde dikdörtgen seçimiyle hedef kilitleme; hava ve kara modları</span></li>
+          <li><b data-i18n="yn.eo.k3a">Konum</b><span data-i18n="yn.eo.k3b">Cihazın RTK'sı ve elektronik pusulası haritada bakış yönüyle gösterilir</span></li>
+          <li><b data-i18n="yn.eo.k4a">Çoklu cihaz</b><span data-i18n="yn.eo.k4b">Her cihazın kimliği, yayını ve kamera kaydı ayrı yönetilir</span></li>
+        </ul>
       </div>
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="gecmis"></div>
-        <h3 data-i18n="yet.k6">Geçmiş Kayıt ve Oynatma</h3>
-        <p data-i18n="yet.k6alt">Tespit ve uçuş verileri arşivlenir; geçmiş bir görev harita üzerinde
-        yeniden oynatılabilir. Ekran yenilendiğinde izler sistemden geri getirilir.</p>
+    </div>
+
+    <!-- ---------------- YAPAY ZEKÂ ---------------- -->
+    <div class="yt-satir">
+      <div class="yt-sema" aria-label="Yapay zekâ tespit şeması">
+        <span class="yt-sema-ad" data-i18n="yn.ai.semaAd">Tespit · Sınıflandırma</span>
+        <svg viewBox="0 0 420 300" role="img">
+          <rect x="24" y="26" width="372" height="212" fill="var(--kart)" stroke="var(--cizgi)"/>
+          <line x1="24" y1="186" x2="396" y2="186" stroke="var(--cizgi)" stroke-dasharray="4 6"/>
+          <g transform="translate(148,92)">
+            <path d="M-14 0 L0 -7 L14 0 L0 6 Z" fill="var(--metin)"/>
+            <path d="M-20 -8 L20 -8 M-20 8 L20 8" stroke="var(--metin)" stroke-width="1.2" opacity=".5"/>
+            <rect x="-28" y="-18" width="56" height="36" fill="none" stroke="var(--kehribar)"
+                  stroke-width="1.6" class="yt-kilit"/>
+            <text x="-28" y="-24" font-family="var(--mono)" font-size="9" fill="var(--kehribar)">HAVA ARACI · 0.91</text>
+          </g>
+          <g transform="translate(300,124)">
+            <path d="M-10 0 L0 -5 L10 0 L0 4 Z" fill="var(--metin)" opacity=".8"/>
+            <rect x="-20" y="-13" width="40" height="26" fill="none" stroke="var(--kehribar)"
+                  stroke-width="1.4" class="yt-kilit" style="animation-delay:1.2s"/>
+            <text x="-20" y="-19" font-family="var(--mono)" font-size="9" fill="var(--kehribar)">HAVA ARACI · 0.74</text>
+          </g>
+          <g transform="translate(96,204)" opacity=".45">
+            <rect x="-12" y="-14" width="24" height="28" fill="none" stroke="var(--soluk)"
+                  stroke-width="1.2" stroke-dasharray="3 3"/>
+            <text x="-12" y="-19" font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">İNSAN · süzüldü</text>
+          </g>
+          <g transform="translate(24,254)">
+            <text font-family="var(--mono)" font-size="8.5" fill="var(--soluk)" y="-6">EŞİK 0.55</text>
+            <rect width="372" height="6" fill="var(--kart)" stroke="var(--cizgi)"/>
+            <rect width="205" height="6" fill="var(--siyan)"/>
+            <line x1="205" y1="-4" x2="205" y2="10" stroke="var(--kehribar)" stroke-width="1.4"/>
+          </g>
+          <g font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">
+            <text x="34" y="44">KAM 03 · 1920×1080</text>
+            <text x="322" y="44">15 FPS</text>
+          </g>
+        </svg>
       </div>
-      <div class="kart">
-        <div class="ikon gz-ikon" data-ikon="kamera"></div>
-        <h3 data-i18n="yet.k7">M50 Elektro-Optik Kontrol</h3>
-        <p data-i18n="yet.k7alt">Yetkili saha Köprüsünde, operatörün açık bağlantı girişiyle sınırlı PTZ,
-        lens ve manuel seçim temelli takip sağlanır. Görüntü kaynakları yerelde
-        işlenir; ham cihaz videosu ve oturum bilgileri merkez katmanına aktarılmaz.</p>
+      <div class="yt-metin">
+        <div class="yt-etiket" data-i18n="yn.ai.etiket">Görüntü Çözümlemesi</div>
+        <h3 data-i18n="yn.ai.baslik">Her görüntü bağlantısı kendi çözümlemesini çalıştırır</h3>
+        <p data-i18n="yn.ai.metin">Yapay zekâ ayrı bir bulut hizmeti değildir: çözümleme
+          görüntünün bulunduğu makinede koşar. Her kamera kendi iş parçacığında işlenir, tespit
+          kutuları kareye çizilir ve hedefler açısal uzaya taşınır. Görüntü ağdan dışarı çıkmaz.</p>
+        <ul class="yt-kunye">
+          <li><b data-i18n="yn.ai.k1a">C-UAS kipi</b><span data-i18n="yn.ai.k1b">Yalnız hava aracı sınıfı angajman zincirine girer; insan ve kara aracı süzülür</span></li>
+          <li><b data-i18n="yn.ai.k2a">Model</b><span data-i18n="yn.ai.k2b">ONNX çıkarımı; uygun donanımda GPU hızlandırma</span></li>
+          <li><b data-i18n="yn.ai.k3a">Kare hızı</b><span data-i18n="yn.ai.k3b">Kamera başına 1–30 FPS sınırı operatörün elindedir</span></li>
+          <li><b data-i18n="yn.ai.k4a">Açısal çözüm</b><span data-i18n="yn.ai.k4b">Piksel kutusu azimut/yükselişe çevrilir; mesafe tahmin olarak işaretlenir</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ---------------- ANGAJMAN ---------------- -->
+    <div class="yt-satir ters">
+      <div class="yt-sema" aria-label="Angajman kesişme çözümü geometrisi">
+        <span class="yt-sema-ad" data-i18n="yn.ang.semaAd">Kesişme Çözümü</span>
+        <svg viewBox="0 0 420 280" role="img">
+          <g stroke="var(--cizgi)" opacity=".6">
+            <line x1="24" y1="60" x2="396" y2="60"/><line x1="24" y1="130" x2="396" y2="130"/>
+            <line x1="24" y1="200" x2="396" y2="200"/>
+          </g>
+          <path d="M40 66 L150 92 L252 118" fill="none" stroke="var(--metin)" stroke-width="1.6"/>
+          <path d="M252 118 L340 140" fill="none" stroke="var(--metin)" stroke-width="1.2"
+                stroke-dasharray="5 5" opacity=".55"/>
+          <path d="M-11 0 L0 -5 L11 0 L0 4 Z" fill="var(--metin)" transform="translate(252,118)"/>
+          <text x="44" y="56" font-family="var(--mono)" font-size="9" fill="var(--soluk)">HEDEF İZİ</text>
+          <g transform="translate(316,132)">
+            <circle r="9" fill="none" stroke="var(--kehribar)" stroke-width="1.6" class="yt-kilit"/>
+            <circle r="2.4" fill="var(--kehribar)"/>
+            <text x="14" y="-8" font-family="var(--mono)" font-size="9" fill="var(--kehribar)">KESİŞME</text>
+            <text x="14" y="5" font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">t + 6.4 sn</text>
+          </g>
+          <circle cx="70" cy="226" r="5" fill="var(--siyan)"/>
+          <text x="52" y="248" font-family="var(--mono)" font-size="9" fill="var(--siyan)">ÖNLEYİCİ</text>
+          <path class="yt-akis" d="M70 226 C 170 214, 262 186, 316 132" fill="none"
+                stroke="var(--siyan)" stroke-width="1.8"/>
+          <path d="M70 226 C 150 200, 210 150, 252 118" fill="none" stroke="var(--soluk)"
+                stroke-width="1.1" stroke-dasharray="3 5" opacity=".6"/>
+          <text x="150" y="184" font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">saf takip</text>
+        </svg>
+      </div>
+      <div class="yt-metin">
+        <div class="yt-etiket" data-i18n="yn.ang.etiket">Angajman Motoru</div>
+        <h3 data-i18n="yn.ang.baslik">Peşinden değil, önünden</h3>
+        <p data-i18n="yn.ang.metin">Hedefin arkasından gitmek onu yakalamaz. Sistem hedefin
+          izinden kesişme noktasını çözer ve önleyiciyi oraya yöneltir; çözüm her güdüm adımında
+          yenilenir. Hedef radar izi, bir dron veya görüntü tespiti olabilir.</p>
+        <ul class="yt-kunye">
+          <li><b data-i18n="yn.ang.k1a">Eşzamanlı</b><span data-i18n="yn.ang.k1b">Hedef başına ayrı çözüm; bir görev sürerken diğerleri bağımsız ilerler</span></li>
+          <li><b data-i18n="yn.ang.k2a">Güdüm</b><span data-i18n="yn.ang.k2b">Ayarlanabilir güdüm frekansı; her adımda kesişme yeniden hesaplanır</span></li>
+          <li><b data-i18n="yn.ang.k3a">Sınır</b><span data-i18n="yn.ang.k3b">Kesişme öngörüsü üst sınırla kısıtlıdır; çözülemeyen durum operatöre bildirilir</span></li>
+          <li><b data-i18n="yn.ang.k4a">Görüntüden</b><span data-i18n="yn.ang.k4b">Video üzerinde çift tıkla takip; elle dikdörtgen seçimi</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ---------------- HAVA ARAÇLARI ---------------- -->
+    <div class="yt-satir">
+      <div class="yt-sema" aria-label="Sürü uçuş formasyon şeması">
+        <span class="yt-sema-ad" data-i18n="yn.hava.semaAd">Sürü · Ofsetli Formasyon</span>
+        <svg viewBox="0 0 420 260" role="img">
+          <path class="yt-akis" d="M40 176 C 140 120, 250 118, 372 66" fill="none"
+                stroke="var(--siyan)" stroke-width="1.5"/>
+          <g transform="translate(268,104)">
+            <circle r="7" fill="var(--siyan)"/>
+            <text x="-14" y="-14" font-family="var(--mono)" font-size="9" fill="var(--siyan)">LİDER</text>
+          </g>
+          <g fill="none" stroke="var(--metin)" stroke-width="1.4">
+            <circle cx="222" cy="132" r="5.4"/><circle cx="228" cy="76" r="5.4"/>
+            <circle cx="186" cy="106" r="5.4"/>
+          </g>
+          <g stroke="var(--cizgi)" stroke-dasharray="3 4">
+            <line x1="268" y1="104" x2="222" y2="132"/>
+            <line x1="268" y1="104" x2="228" y2="76"/>
+            <line x1="268" y1="104" x2="186" y2="106"/>
+          </g>
+          <g font-family="var(--mono)" font-size="8.5" fill="var(--soluk)">
+            <text x="196" y="151">+X −Y</text><text x="204" y="66">+X +Y</text>
+            <text x="148" y="100">−X</text>
+            <line x1="40" y1="200" x2="380" y2="200" stroke="var(--cizgi)"/>
+            <text x="40" y="222">5 Hz konum komutu · lider serbest uçar</text>
+          </g>
+        </svg>
+      </div>
+      <div class="yt-metin">
+        <div class="yt-etiket" data-i18n="yn.hava.etiket">İnsansız Hava Araçları</div>
+        <h3 data-i18n="yn.hava.baslik">Dört gövde sınıfı, dört protokol, tek arayüz</h3>
+        <p data-i18n="yn.hava.metin">Multikopter, sabit kanat, insansız helikopter ve VTOL aynı
+          ekrandan yönetilir. Telemetri radyosuna takılan cihazın protokolü kendiliğinden
+          anlaşılır; operatör protokol ayrımıyla uğraşmaz.</p>
+        <ul class="yt-kunye">
+          <li><b data-i18n="yn.hava.k1a">MAVLink</b><span data-i18n="yn.hava.k1b">ArduPilot: uçuş modları, görev ve telemetri</span></li>
+          <li><b data-i18n="yn.hava.k2a">Betaflight</b><span data-i18n="yn.hava.k2b">MSP üzerinden salt okunur tanılama; kurma ve motor komutu yoktur</span></li>
+          <li><b data-i18n="yn.hava.k3a">DJI</b><span data-i18n="yn.hava.k3b">Android köprü uygulaması üzerinden</span></li>
+          <li><b data-i18n="yn.hava.k4a">Sürü</b><span data-i18n="yn.hava.k4b">Lider serbest, takipçiler X/Y/Z ofsetiyle güdümlü</span></li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
-
 <!-- ========================== PLATFORMLAR ========================== -->
 <section id="platformlar">
   <div class="ic">
@@ -1573,11 +1779,11 @@
 <script src="/js/kita_verisi.js?v=2136"></script>
 <script src="/js/hero_taktik.js?v=2136"></script>
 <script src="/js/tema.js?v=2136"></script>
-<script src="/js/surum_verisi.js?v=2138"></script>
-<script src="/js/surum_defter.js?v=2138"></script>
+<script src="/js/surum_verisi.js?v=2140"></script>
+<script src="/js/surum_defter.js?v=2140"></script>
 <script src="/js/logo_anim.js?v=2136"></script>
 <script src="/js/destek_baglanti.js?v=2136"></script>
-<script src="/js/dil.js?v=2139"></script>
+<script src="/js/dil.js?v=2140"></script>
 <script src="/js/indir.js?v=2136"></script>
 <script src="/js/menu_grup.js?v=2136"></script>
 <!-- ikon.js: [data-ikon] ogelerini SVG ile doldurur.  vitrin.js'ten
