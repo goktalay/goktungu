@@ -73,7 +73,13 @@ function telemetriIsle(m){
   // Replay mesajindaki radar durumu gecmis kayittir; canli radar
   // panelini (baglanti/ayar/saglik) replay verisiyle ezme
   _guvenli("radar_paneli", () => {
-    if (m.radar && !m.replay) radarPaneliGuncelle(m.radar);
+    // v2.4.190: coklu radar — liste geldiyse secili radarin durumu panele
+    // gider; eski tek `radar` alani yalniz liste yoksa kullanilir.
+    if (!m.replay){
+      if (m.radarlar && typeof radarListesiGuncelle === "function")
+        radarListesiGuncelle(m.radarlar, m.radar);
+      else if (m.radar) radarPaneliGuncelle(m.radar);
+    }
   });
 
   // M50 HVS SDK Merkezde yüklenmez; bu alan yalnız yetkili saha

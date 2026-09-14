@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24189">
+<link rel="stylesheet" href="css/stil.css?v=v24190">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -403,6 +403,21 @@
     <button class="yuzen-kapat" data-yuzen="yzRadar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="yuzen-icerik">
+  <!-- v2.4.190: COKLU RADAR — ust seritte radar sekmeleri (+ ekle);
+       asagidaki form secili radara aittir. Eleman id'leri korunur. -->
+  <div class="alan ra-liste-alan">
+    <div id="raListe" class="ra-liste"></div>
+    <div class="satir" style="margin-top:6px">
+      <div style="flex:2"><label for="raIsim" data-i18n="lblRaIsim">Radar adı</label><input type="text" id="raIsim" value="" maxlength="64" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="raKayitLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="raKayitLat" value="" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="raKayitLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="raKayitLon" value="" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir" style="gap:6px;margin-top:6px">
+      <button id="btnRaKayitKaydet" class="kucuk"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnRaKayitKaydet">RADARI KAYDET</span></button>
+      <button id="btnRaKayitSil" class="kucuk tehlike ikincil"><i class="fa-solid fa-trash"></i><span data-i18n="btnRaKayitSil">SİL</span></button>
+      <span id="raKonumKaynak" class="aciklama" style="margin-left:auto"></span>
+    </div>
+  </div>
   <div class="alan">
     <div class="satir">
       <div style="flex:2">
@@ -1913,7 +1928,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24189"></script>
+<script src="js/i18n.js?v=v24190"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1978,8 +1993,8 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24127"></script>
-<script src="js/radar_panel.js?v=v24127"></script>
+<script src="js/radar_gorsel.js?v=v24190"></script>
+<script src="js/radar_panel.js?v=v24190"></script>
 <script src="js/m50_panel.js?v=v24188"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
@@ -2050,7 +2065,7 @@
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24183"></script>
-<script src="js/ws.js?v=v24189"></script>
+<script src="js/ws.js?v=v24190"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>

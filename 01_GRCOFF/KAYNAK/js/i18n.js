@@ -930,6 +930,10 @@ const DILLER = {
     dkGpsBekleniyor: "GPS BEKLENİYOR",
     // C20 radar
     panelRadar: "RADAR AYARLARI",
+    // v2.4.190 coklu radar
+    lblRaIsim: "Radar adı", lblRaKayitLat: "Enlem", lblRaKayitLon: "Boylam", btnRaKayitKaydet: "RADARI KAYDET", btnRaKayitSil: "SİL",
+    btnRaEkle: "Yeni radar ekle", raYeniAd: "Radar", raKonumRtk: "Konum: RTK", raKonumKayit: "Konum: kayıtlı", raKonumMerkez: "Konum: merkez",
+    onayRadarSil: "{ad} radar kaydı silinsin mi?",
     mbM50: "Elektro-Optik", mbM50Ayar: "M50 Kontrolü",
     panelM50: "M50 ELEKTRO-OPTİK KONTROLÜ",
     m50SahaMakinesi: "Saha makinesi", m50KopruSec: "Saha makinesi seç...",
@@ -3044,6 +3048,10 @@ const DILLER = {
     dkGpsBekleniyor: "WAITING FOR GPS",
     // C20 radar
     panelRadar: "RADAR SETTINGS",
+    // v2.4.190 multi radar
+    lblRaIsim: "Radar name", lblRaKayitLat: "Latitude", lblRaKayitLon: "Longitude", btnRaKayitKaydet: "SAVE RADAR", btnRaKayitSil: "DELETE",
+    btnRaEkle: "Add radar", raYeniAd: "Radar", raKonumRtk: "Position: RTK", raKonumKayit: "Position: saved", raKonumMerkez: "Position: center",
+    onayRadarSil: "Delete radar record {ad}?",
     mbM50: "Electro-Optic", mbM50Ayar: "M50 Control",
     panelM50: "M50 ELECTRO-OPTIC CONTROL",
     m50SahaMakinesi: "Field machine", m50KopruSec: "Select field machine...",

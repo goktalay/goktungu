@@ -361,6 +361,21 @@ def tablolari_olustur():
                 url         TEXT NOT NULL
             );
 
+            -- v2.4.190: coklu radar (radarlar.py). Eski tek radar ayari
+            -- ilk acilista 'Radar 1' olarak tasinir.
+            CREATE TABLE IF NOT EXISTS radarlar (
+                id              INTEGER PRIMARY KEY,
+                isim            TEXT NOT NULL DEFAULT 'Radar',
+                ip              TEXT NOT NULL DEFAULT '',
+                port            INTEGER NOT NULL DEFAULT 5001,
+                lat             REAL,
+                lon             REAL,
+                merkez_yonu     REAL NOT NULL DEFAULT 0.0,
+                kopru_ornek_id  INTEGER,
+                otomatik_baglan INTEGER NOT NULL DEFAULT 0,
+                firma_id        INTEGER
+            );
+
             CREATE TABLE IF NOT EXISTS lokasyonlar (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad          TEXT NOT NULL,

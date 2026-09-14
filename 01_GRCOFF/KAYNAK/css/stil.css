@@ -10022,6 +10022,18 @@ body.tam-ekran-modu #altOrtaPanel {
 .kai-panel-not { margin-top: 10px; font-size: 11px; color: var(--soluk, #95a9b8); line-height: 1.4; }
 
 /* Görüntü hedefi seçici (harita/yüzen/panel/tam) */
+/* v2.4.190: coklu radar sekmeleri */
+.ra-liste { display: flex; flex-wrap: wrap; gap: 4px; }
+.ra-sekme { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px;
+  border: 1px solid var(--cizgi); background: transparent; color: var(--soluk); font-size: 11px; cursor: pointer; }
+.ra-sekme:hover { color: var(--metin); background: var(--dugme-hover); }
+.ra-sekme.secili { color: var(--metin); border-color: var(--vurgu, #35a7ff); background: rgba(53,167,255,.12); }
+.ra-sekme.ra-ekle { padding: 4px 8px; }
+.ra-nokta { width: 8px; height: 8px; border-radius: 50%; background: #8a97a5; display: inline-block; }
+.ra-nokta.d-bagli { background: #6bd8b9; }
+.ra-nokta.d-hata { background: #e05555; }
+.ra-nokta.d-baglaniyor { background: #ffc94d; }
+
 /* v2.4.189: kamera satiri — tek konum dugmesi + "..." menusu + konsol */
 .kam-hedef-btn .kam-hedef-ok { font-size: 8px; margin-left: 3px; opacity: .7; }
 .kam-menu .dk-menu-item.secili, .kam-hedef-menu .dk-menu-item.secili { color: var(--vurgu, #35a7ff); }

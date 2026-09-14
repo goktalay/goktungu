@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.189";
+const GCS_SURUM = "2.4.190";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.190",
+    tarih: "2026-09-14",
+    baslik: "Çoklu radar (Faz A): birden fazla C20 radar, ortak izleme çerçevesi, haritada radar başına ikon (paket 2.5.60)",
+    maddeler: [
+      "YENİ: Radar Ayarları panelinde radar sekmeleri — istenildiği kadar radar eklenir (ad, IP, port, kurulu enlem/boylam, merkez yönü); her radar ayrı bağlanır/kesilir, ayarları ve RTK'sı ayrı yönetilir. Mevcut tek radar kurulumu otomatik 'Radar 1' olarak taşınır.",
+      "YENİ: Füzyon — takipçi artık tek bir ortak çerçevede (Merkez konumu orijin) çalışır; her radarın plotu kendi konumundan (RTK > kayıtlı > merkez) bu çerçeveye ötelenir, hedef kimlikleri radar bazında ayrıştırılır (radar_id×1.000.000+hedef). İki radarın gördüğü aynı hedefi GNN ataması birleştirir; angajman/kayıt zinciri değişmeden çok radarla çalışır.",
+      "YENİ: Haritada her radar kendi konumunda yön üçgeni + ad etiketi + menzil halkasıyla gösterilir; bağlı/hata/kapalı rengi. Radarın RTK konumu artık Merkez'i taşımaz, radarın kendi kaydına yazılır.",
+      "Arka uç: goktungu/radarlar.py (RadarKayitlari + RadarYoneticisi), veritabanında 'radarlar' tablosu, telemetride 'radarlar' listesi, WS: radar_listesi / radar_kaydet / radar_sil; mevcut radar_* komutları radar_id alır (verilmezse birincil radar).",
+      "NOT: Merkez kipinde (saha Köprüsü üzerinden) Faz C'ye kadar yalnız 1 numaralı radar köprüden beslenir."
+    ]
+  },
   {
     surum: "2.4.189",
     tarih: "2026-09-14",

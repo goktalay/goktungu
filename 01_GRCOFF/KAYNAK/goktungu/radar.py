@@ -28,15 +28,23 @@ from .sabitler import (
 
 class RadarIstemcisi:
 
-    def __init__(self, konsol, ayarlar, kilit):
+    def __init__(self, konsol, ayarlar, kilit, radar_id=1, konum_yedek=None,
+                 isim=""):
         """
         konsol : KonsolLog
         ayarlar: AyarYoneticisi (merkez konum / merkez yonu icin)
         kilit  : paylasilan threading.Lock
+        radar_id, konum_yedek, isim : v2.4.190 coklu radar — bu radarin
+            kayit kimligi, RTK yokken kullanilacak kurulu konumu (lat, lon)
+            ve gorunen adi. konum_yedek None ise merkez konumu kullanilir
+            (eski davranis).
         """
         self.konsol = konsol
         self.ayarlar = ayarlar
         self.kilit = kilit
+        self.radar_id = int(radar_id)
+        self.isim = str(isim or "")
+        self.konum_yedek = konum_yedek
         self.durum = {   # panelde gosterilen radar baglanti durumu
             "durum": "kapali",   # kapali | baglaniyor | bagli | hata
             "ip": "", "port": 0, "hata": "",
@@ -115,11 +123,18 @@ class RadarIstemcisi:
                 + struct.pack("<H", crc))
 
     def radar_konum(self):
-        """Radar konumu: RTK varsa onu, yoksa kayitli merkez konumu."""
+        """Radar konumu: RTK varsa onu, yoksa bu radarin kurulu konumu
+        (v2.4.190 coklu radar), o da yoksa kayitli merkez konumu."""
         with self.kilit:
             if (self.durum["lat"] is not None
                     and self.durum["lon"] is not None):
                 return self.durum["lat"], self.durum["lon"]
+        ky = self.konum_yedek
+        if ky and ky[0] is not None and ky[1] is not None:
+            try:
+                return float(ky[0]), float(ky[1])
+            except (TypeError, ValueError):
+                pass
         a = self.ayarlar.yukle()
         try:
             return float(a["merkez_lat"]), float(a["merkez_lon"])

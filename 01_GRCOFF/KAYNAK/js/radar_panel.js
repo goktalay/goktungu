@@ -35,9 +35,117 @@ function radarGonder(paket) {
   if (typeof ws === "undefined" || !ws || ws.readyState !== 1) return false;
   if (_raKopruSecili > 0 && paket && paket.kopru_ornek_id === undefined)
     paket.kopru_ornek_id = _raKopruSecili;
+  // v2.4.190: her radar komutu SECILI radara gider.
+  if (_raSecili > 0 && paket && paket.radar_id === undefined)
+    paket.radar_id = _raSecili;
   ws.send(JSON.stringify(paket));
   return true;
 }
+
+// =================================================================
+// v2.4.190 — COKLU RADAR: liste/sekmeler + kayit formu
+// Telemetri `radarlar: [{radar_id, isim, durum, ..., konum_lat, ...}]`
+// tasir; panel secili radari gosterir, komutlar radar_id ile gider.
+// =================================================================
+let radarListesi = [];
+let _raSecili = 0;            // 0 = henuz secilmedi (ilk kayit secilir)
+let _raKayitFormuDoldu = 0;   // formun hangi radar icin dolduruldugu
+const raListeEl = document.getElementById("raListe");
+const raIsimEl = document.getElementById("raIsim");
+const raKayitLatEl = document.getElementById("raKayitLat");
+const raKayitLonEl = document.getElementById("raKayitLon");
+const raKonumKaynakEl = document.getElementById("raKonumKaynak");
+
+function raSeciliRadar(){
+  return radarListesi.find(r => Number(r.radar_id) === _raSecili) || radarListesi[0] || null;
+}
+
+function raListeCiz(){
+  if (!raListeEl) return;
+  const t = D();
+  raListeEl.innerHTML = "";
+  for (const r of radarListesi){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "ra-sekme" + (Number(r.radar_id) === _raSecili ? " secili" : "");
+    b.innerHTML = "<span class='ra-nokta d-" + (r.durum || "kapali") + "'></span>" +
+      "<span>" + (r.isim || ("Radar " + r.radar_id)) + "</span>";
+    b.title = (r.konum_lat != null ? Number(r.konum_lat).toFixed(5) + ", " + Number(r.konum_lon).toFixed(5) : "") ;
+    b.addEventListener("click", () => { _raSecili = Number(r.radar_id); _raKayitFormuDoldu = 0; raListeCiz(); raPaneliTazele(); });
+    raListeEl.appendChild(b);
+  }
+  const ekle = document.createElement("button");
+  ekle.type = "button";
+  ekle.className = "ra-sekme ra-ekle";
+  ekle.innerHTML = "<i class='fa-solid fa-plus'></i>";
+  ekle.title = t.btnRaEkle || "Yeni radar";
+  ekle.addEventListener("click", () => {
+    radarGonder({tip: "radar_kaydet", radar_id: 0,
+                 isim: (t.raYeniAd || "Radar") + " " + (radarListesi.length + 1), port: 5001});
+  });
+  raListeEl.appendChild(ekle);
+}
+
+function raKayitFormuDoldur(r){
+  if (!r) return;
+  if (_raKayitFormuDoldu === Number(r.radar_id)) return;
+  const odak = document.activeElement;
+  if (odak && (odak === raIsimEl || odak === raKayitLatEl || odak === raKayitLonEl ||
+               odak === radarIpGiris || odak === radarPortGiris)) return;
+  _raKayitFormuDoldu = Number(r.radar_id);
+  if (raIsimEl) raIsimEl.value = r.isim || "";
+  if (raKayitLatEl) raKayitLatEl.value = (r.kayit_lat != null) ? Number(r.kayit_lat).toFixed(6) : "";
+  if (raKayitLonEl) raKayitLonEl.value = (r.kayit_lon != null) ? Number(r.kayit_lon).toFixed(6) : "";
+  if (radarIpGiris && !radarIpGiris.value) radarIpGiris.value = r.kayit_ip || "";
+  if (radarPortGiris && r.kayit_port) radarPortGiris.value = String(r.kayit_port);
+}
+
+function raPaneliTazele(){
+  const r = raSeciliRadar();
+  if (!r) return;
+  raKayitFormuDoldur(r);
+  if (raKonumKaynakEl){
+    const t = D();
+    raKonumKaynakEl.textContent = (typeof r.lat === "number")
+      ? (t.raKonumRtk || "Konum: RTK")
+      : (r.kayit_lat != null ? (t.raKonumKayit || "Konum: kayıtlı") : (t.raKonumMerkez || "Konum: merkez"));
+  }
+  radarPaneliGuncelle(r);
+}
+
+window.radarListesiGuncelle = function(liste, eski){
+  radarListesi = Array.isArray(liste) ? liste : [];
+  if (!radarListesi.length){ if (eski) radarPaneliGuncelle(eski); return; }
+  if (!radarListesi.some(r => Number(r.radar_id) === _raSecili))
+    _raSecili = Number(radarListesi[0].radar_id);
+  raListeCiz();
+  raPaneliTazele();
+  if (typeof window.radarIkonlariGuncelle === "function") window.radarIkonlariGuncelle(radarListesi);
+};
+
+(function raKayitDugmeleri(){
+  const kaydet = document.getElementById("btnRaKayitKaydet");
+  const sil = document.getElementById("btnRaKayitSil");
+  if (kaydet) kaydet.addEventListener("click", () => {
+    const r = raSeciliRadar();
+    const paket = {tip: "radar_kaydet", radar_id: r ? Number(r.radar_id) : 0,
+                   isim: raIsimEl ? raIsimEl.value.trim() : "",
+                   ip: radarIpGiris ? radarIpGiris.value.trim() : "",
+                   port: radarPortGiris ? (parseInt(radarPortGiris.value, 10) || 5001) : 5001};
+    const lat = parseFloat(raKayitLatEl && raKayitLatEl.value), lon = parseFloat(raKayitLonEl && raKayitLonEl.value);
+    paket.lat = isNaN(lat) ? "" : lat; paket.lon = isNaN(lon) ? "" : lon;
+    _raKayitFormuDoldu = 0;
+    radarGonder(paket);
+  });
+  if (sil) sil.addEventListener("click", () => {
+    const r = raSeciliRadar();
+    if (!r) return;
+    const t = D();
+    const metin = (t.onayRadarSil || "{ad} radar kaydı silinsin mi?").replace("{ad}", r.isim || ("Radar " + r.radar_id));
+    if (typeof onayIste === "function") onayIste(metin, () => radarGonder({tip: "radar_sil", radar_id: Number(r.radar_id)}));
+    else if (confirm(metin)) radarGonder({tip: "radar_sil", radar_id: Number(r.radar_id)});
+  });
+})();
 
 // program_ayar.js kopru listesi her tazelendiginde cagirir.
 window.radarKopruListesiGuncelle = function (liste) {
@@ -326,7 +434,18 @@ function radarRtkUygula(r){
       Math.abs(radarRtkSon.lon - r.lon) < 1e-7) return;   // degisim yok
   const ilkRtk = (radarRtkSon === null);   // bu oturumda ilk RTK konumu
   radarRtkSon = { lat: r.lat, lon: r.lon };
-  gcsGuncelle(r.lat, r.lon);   // ikon + kapsama halkalari + supurme merkezi
+  // v2.4.190: COKLU RADARDA RTK konumu MERKEZI TASIMAZ. Izleme orijini
+  // merkez konumudur; RTK bu radarin kendi konumudur ve kayda yazilir,
+  // haritada radarin kendi ikonu oraya gider (radar_gorsel.js).
+  if (radarListesi.length){
+    if (raKayitLatEl && document.activeElement !== raKayitLatEl) raKayitLatEl.value = r.lat.toFixed(6);
+    if (raKayitLonEl && document.activeElement !== raKayitLonEl) raKayitLonEl.value = r.lon.toFixed(6);
+    if (r.radar_id != null && (r.kayit_lat == null || Math.abs(Number(r.kayit_lat) - r.lat) > 1e-6 ||
+        r.kayit_lon == null || Math.abs(Number(r.kayit_lon) - r.lon) > 1e-6))
+      radarGonder({tip: "radar_kaydet", radar_id: Number(r.radar_id), lat: r.lat, lon: r.lon});
+    return;
+  }
+  gcsGuncelle(r.lat, r.lon);   // (eski tek radar) ikon + kapsama halkalari + supurme merkezi
   latGiris.value = r.lat.toFixed(6);
   lonGiris.value = r.lon.toFixed(6);
   konumKaynak.textContent = D().konumKaynakRtk || "Kaynak: radar RTK";

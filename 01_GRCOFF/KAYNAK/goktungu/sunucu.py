@@ -2959,6 +2959,26 @@ class WSSunucusu:
         return sonuc
 
     # ------------------------------------------------------------------
+    # v2.4.190 — COKLU RADAR yardimcilari
+    # ------------------------------------------------------------------
+    def _radar_istemci(self, radar_id=None):
+        """radar_id'ye gore istemci; RadarYoneticisi yoksa tek nesne."""
+        if hasattr(self.radar, "istemci"):
+            return self.radar.istemci(radar_id)
+        return self.radar
+
+    def _radar_birincil_mi(self, radar_id=None) -> bool:
+        """Merkez kipinde kopru yolu Faz C'ye kadar yalniz birincil
+        (1 numarali) radar icindir."""
+        if not hasattr(self.radar, "istemciler"):
+            return True
+        try:
+            rid = int(radar_id) if radar_id not in (None, "") else 0
+        except (TypeError, ValueError):
+            rid = 0
+        return rid <= 0 or rid == self.radar.birincil_id()
+
+    # ------------------------------------------------------------------
     # M50 ELEKTRO-OPTİK — SAHA KÖPRÜSÜ VEKİL KOMUTLARI
     # ------------------------------------------------------------------
     _M50_IZINLI_EYLEMLER = frozenset((
@@ -4875,6 +4895,9 @@ class WSSunucusu:
         "radar_kes":        ("radar", "parametre", "radar"),
         "radar_ayar_yaz":   ("radar", "parametre", "radar"),
         "rtk_konum_al":     ("radar", "parametre", "radar"),
+        "radar_listesi":    ("radar", "parametre", "radar"),
+        "radar_kaydet":     ("radar", "parametre", "radar"),
+        "radar_sil":        ("radar", "parametre", "radar"),
         "takipci_ayar":     ("radar", "hedef_yonetimi", "radar"),
         "filtre_ayar":      ("radar", "hedef_yonetimi", "radar"),
         "siniflandirma_ayar": ("radar", "hedef_yonetimi", "radar"),
@@ -5831,6 +5854,7 @@ class WSSunucusu:
         "radar_kes": "radar",
         "radar_ayar_yaz": "radar",
         "rtk_konum_al": "radar",
+        "radar_listesi": "radar", "radar_kaydet": "radar", "radar_sil": "radar",
         "takipci_ayar": "radar",
         "filtre_ayar": "radar",
         "siniflandirma_ayar": "radar",
@@ -6310,26 +6334,81 @@ class WSSunucusu:
             # v2.4.60: merkezde radar SAHADA acilir (KUSUR-RADAR-KOPRU).
             # Radar 192.168.8.x yerel agindadir; merkez sunucu oraya
             # ulasamaz ve panel "timed out" gosterirdi.
-            if self._merkez_kipinde():
+            # v2.4.190: radar_id ile hedeflenir; verilmezse birincil radar.
+            _rid = k.get("radar_id")
+            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
                 await self._radar_kopruye(
                     websocket, "radar_baglan",
                     {"ip": ip, "port": rport}, k)
+            elif hasattr(self.radar, "istemciler"):
+                if not self.radar.baglan(ip, rport, _rid):
+                    await self._uyari_gonder(websocket, "radar",
+                                             "Radar kaydi bulunamadi: %s" % _rid)
             else:
                 self.radar.baglan(ip, rport)
 
         elif komut == "radar_kes":
-            if self._merkez_kipinde():
+            _rid = k.get("radar_id")
+            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
                 await self._radar_kopruye(websocket, "radar_kes", {}, k)
+            elif hasattr(self.radar, "istemciler"):
+                self.radar.kes(_rid)
             else:
                 self.radar.kes()
 
         elif komut == "radar_ayar_oku":
-            if self._merkez_kipinde():
+            _rid = k.get("radar_id")
+            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
                 await self._radar_kopruye(websocket, "radar_ayar_oku",
                                           {}, k)
             else:
-                with self.kilit:
-                    self.radar.ayar_kuyruk.append(("oku",))
+                _ist = self._radar_istemci(_rid)
+                if _ist is not None:
+                    with self.kilit:
+                        _ist.ayar_kuyruk.append(("oku",))
+
+        # ---- v2.4.190: coklu radar kayit yonetimi ----
+        elif komut == "radar_listesi":
+            if hasattr(self.radar, "kayitlar"):
+                await websocket.send(json.dumps({
+                    "tip": "radar_listesi",
+                    "radarlar": self.radar.kayitlar.listele()}))
+
+        elif komut == "radar_kaydet":
+            if hasattr(self.radar, "kayitlar"):
+                try:
+                    _rid = k.get("radar_id") or k.get("id")
+                    if _rid:
+                        self.radar.kayitlar.guncelle(int(_rid), k)
+                    else:
+                        _rid = self.radar.kayitlar.ekle(k)
+                    self.radar.tazele()
+                    self.konsol("RADAR", "Radar kaydi guncellendi: #%s %s"
+                                % (_rid, k.get("isim") or ""), "basari")
+                    await websocket.send(json.dumps({
+                        "tip": "radar_listesi",
+                        "radarlar": self.radar.kayitlar.listele()}))
+                except Exception as _e:
+                    await self._uyari_gonder(websocket, "radar",
+                                             "Radar kaydi yazilamadi: %s" % _e)
+
+        elif komut == "radar_sil":
+            if hasattr(self.radar, "kayitlar"):
+                try:
+                    _rid = int(k.get("radar_id") or k.get("id") or 0)
+                except (TypeError, ValueError):
+                    _rid = 0
+                if _rid and len(self.radar.kayitlar.listele()) > 1:
+                    self.radar.kes(_rid)
+                    self.radar.kayitlar.sil(_rid)
+                    self.radar.tazele()
+                    self.konsol("RADAR", "Radar kaydi silindi: #%d" % _rid)
+                    await websocket.send(json.dumps({
+                        "tip": "radar_listesi",
+                        "radarlar": self.radar.kayitlar.listele()}))
+                else:
+                    await self._uyari_gonder(websocket, "radar",
+                                             "Son radar kaydi silinemez.")
 
         elif komut == "radar_ayar_yaz":
             a = {}
@@ -6346,7 +6425,8 @@ class WSSunucusu:
                     a["calisma_modu"] = k["calisma_modu"]
             except (TypeError, ValueError):
                 a = {}
-            if self._merkez_kipinde():
+            _rid = k.get("radar_id")
+            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
                 # Merkez yonu de KOPRUYE gider: kalibrasyon radarin
                 # bulundugu makinede saklanir, cunku izleri cografi
                 # konuma ceviren kod artik orada kosuyor. Merkezde
@@ -6359,36 +6439,44 @@ class WSSunucusu:
                     await self._radar_kopruye(websocket, "radar_ayar_yaz",
                                               gonder, k)
             else:
-                # Merkez yonu yerel bir kalibrasyon: dosyaya kaydedilir,
-                # radara gonderilmez (protokolde registeri yok)
-                if "merkez_yonu" in k:
+                _ist = self._radar_istemci(_rid)
+                # Merkez yonu yerel bir kalibrasyon: kayda/dosyaya
+                # kaydedilir, radara gonderilmez (protokolde registeri yok)
+                if "merkez_yonu" in k and _ist is not None:
                     try:
                         my = float(k["merkez_yonu"]) % 360.0
                         with self.kilit:
-                            self.radar.radar_ayarlar["merkez_yonu"] = my
-                        self.ayarlar.kaydet({"radar_merkez_yonu": my})
+                            _ist.radar_ayarlar["merkez_yonu"] = my
+                        if hasattr(self.radar, "kayitlar"):
+                            self.radar.kayitlar.guncelle(
+                                getattr(_ist, "radar_id", 1), {"merkez_yonu": my})
+                        else:
+                            self.ayarlar.kaydet({"radar_merkez_yonu": my})
                     except (TypeError, ValueError):
                         pass
-                if a:
+                if a and _ist is not None:
                     with self.kilit:
-                        self.radar.radar_ayarlar["son_sonuc"] = \
-                            "gonderiliyor"
-                        self.radar.ayar_kuyruk.append(("yaz", a))
+                        _ist.radar_ayarlar["son_sonuc"] = "gonderiliyor"
+                        _ist.ayar_kuyruk.append(("yaz", a))
 
         elif komut == "rtk_konum_al":
-            if self._merkez_kipinde():
+            _rid = k.get("radar_id")
+            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
                 # "Radar bagli mi" denetimi de SAHADA yapilir: bagli olup
                 # olmadigini bilen taraf oradaki C20 istemcisidir.
                 await self._radar_kopruye(websocket, "radar_rtk", {}, k)
             else:
-                with self.kilit:
-                    radar_bagli = self.radar.durum["durum"] == "bagli"
-                    if radar_bagli:
-                        self.radar.durum["rtk_durum"] = "aliniyor"
-                        self.radar.durum["rtk_ilerleme"] = 0
-                        self.radar.ayar_kuyruk.append(("rtk",))
-                    else:
-                        self.radar.durum["rtk_durum"] = "hata"
+                _ist = self._radar_istemci(_rid)
+                radar_bagli = False
+                if _ist is not None:
+                    with self.kilit:
+                        radar_bagli = _ist.durum["durum"] == "bagli"
+                        if radar_bagli:
+                            _ist.durum["rtk_durum"] = "aliniyor"
+                            _ist.durum["rtk_ilerleme"] = 0
+                            _ist.ayar_kuyruk.append(("rtk",))
+                        else:
+                            _ist.durum["rtk_durum"] = "hata"
                 if not radar_bagli:
                     self.konsol("RADAR",
                                 "RTK konumu alinamadi: radar bagli degil",
@@ -10486,6 +10574,14 @@ class WSSunucusu:
                     radar = dict(self.radar.durum)
                     radar["ayarlar"] = dict(self.radar.radar_ayarlar)
                     m50 = m50_paket
+                # v2.4.190: coklu radar listesi (kilit DISINDA: durumlar()
+                # kendi icinde kilit alir; Lock yeniden girisli degil).
+                try:
+                    radarlar = (self.radar.durumlar()
+                                if hasattr(self.radar, "durumlar") else [radar])
+                except Exception:
+                    radarlar = [radar]
+                with self.kilit:
                     r_hedefler_ham = []
                     for h in self.radar.hedefler.values():
                         if simdi - h["son"] <= RADAR_IZ_ZAMANASIMI:
@@ -10570,6 +10666,7 @@ class WSSunucusu:
                         "dron_renkler": dron_renkler,
                         "baglanti_durumlari": baglanti_durumlari,
                         "radar": radar,
+                        "radarlar": radarlar,
                         "radar_izler": radar_izler,
                         "yetim_izler": yetimler,
                         "takipci_ayarlar": self.takipci.ayar.to_dict(),

@@ -447,17 +447,40 @@ def uygulama_kur():
         _radar_merkez = _mk_radar.merkez_kipinde()
     except Exception:
         _radar_merkez = False
+    # v2.4.190 (Faz A): COKLU RADAR. `radar` artik RadarYoneticisi'dir;
+    # eski tek-nesne yuzunu (durum/hedefler/baglan/kes...) birebir tasir,
+    # ayrica kayit basina istemci ve merkez-orijinli fuzyon saglar.
+    from goktungu.radarlar import RadarKayitlari, RadarYoneticisi
+    _radar_kayitlar = RadarKayitlari()
+    _radar_kayitlar.eski_ayardan_goc(ayarlar)
     if _radar_merkez:
         from goktungu.radar_vekil import RadarVekili
         # `cek` geri cagrisi WSSunucusu kuruldugunda baglanir: kopru
         # secimi oturum/firma baglami gerektirir ve o baglam sunucuda
-        # durur.
-        radar = RadarVekili(konsol, ayarlar, kilit)
+        # durur. Faz C'ye kadar yalniz 1 numarali radar kopruden beslenir;
+        # digerleri vekil olarak "kopru yok" durumunda kalir.
+        _birincil = RadarVekili(konsol, ayarlar, kilit)
+
+        def _radar_fabrika(kayit):
+            v = RadarVekili(konsol, ayarlar, kilit)
+            v.radar_id = int(kayit["id"]); v.isim = kayit.get("isim") or ""
+            v.konum_yedek = (kayit.get("lat"), kayit.get("lon"))
+            return v
+        radar = RadarYoneticisi(konsol, ayarlar, kilit, _radar_kayitlar,
+                                _radar_fabrika, birincil_istemci=_birincil)
         konsol("RADAR", "Merkez kipi: radar oturumu saha koprusunde "
                         "kurulur; merkezde yerel baglanti denenmez.",
                "bilgi")
     else:
-        radar = RadarIstemcisi(konsol, ayarlar, kilit)
+        def _radar_fabrika(kayit):
+            return RadarIstemcisi(konsol, ayarlar, kilit,
+                                  radar_id=int(kayit["id"]),
+                                  konum_yedek=(kayit.get("lat"), kayit.get("lon")),
+                                  isim=kayit.get("isim") or "")
+        radar = RadarYoneticisi(konsol, ayarlar, kilit, _radar_kayitlar,
+                                _radar_fabrika)
+        konsol("RADAR", "Coklu radar yoneticisi hazir: %d kayit"
+               % len(radar.istemciler), "bilgi")
 
     # v2.4.184: M50 artık İKİ yoldan çalışabilir:
     #   1) SAHA KÖPRÜSÜ (değişmez) — çok-siteli/merkezi kurulumlarda,

@@ -559,6 +559,91 @@ function radarIkonGuncelle(){
   }
 }
 
+// =================================================================
+// v2.4.190 — COKLU RADAR IKONLARI
+// Her radar kendi konumunda (RTK > kayitli > merkez) yon ucgeni + ad
+// etiketi + kucuk menzil halkasi olarak cizilir. Merkezdeki supurme/
+// izgara (gcsKonum) izleme orijinini gosterir ve DEGISMEZ.
+// =================================================================
+const RADAR_IKON_HALKA_M = 1500;
+let radarIkonVarliklar = {};   // radar_id -> {ikon, halka, sonKey}
+
+window.radarIkonlariGuncelle = function(liste){
+  if (typeof viewer === "undefined" || !viewer) return;
+  const gorulen = {};
+  const _rg = (typeof window.radarYetenekVar === "function") ? window.radarYetenekVar() : true;
+  for (const r of (liste || [])){
+    const rid = Number(r.radar_id);
+    const lat = (typeof r.konum_lat === "number") ? r.konum_lat : null;
+    const lon = (typeof r.konum_lon === "number") ? r.konum_lon : null;
+    if (lat === null || lon === null) continue;
+    if (typeof window.gecerliKonumMu === "function" && !window.gecerliKonumMu(lat, lon)) continue;
+    gorulen[rid] = true;
+    const renk = r.durum === "bagli" ? RADAR_IKON_RENKLERI.bagli :
+                 r.durum === "hata" ? RADAR_IKON_RENKLERI.hata : RADAR_IKON_RENKLERI.kapali;
+    const yon = (r.ayarlar && typeof r.ayarlar.merkez_yonu === "number") ? r.ayarlar.merkez_yonu : 0;
+    const key = [lat.toFixed(6), lon.toFixed(6), renk, yon.toFixed(1), r.isim].join("|");
+    let v = radarIkonVarliklar[rid];
+    if (v && v.sonKey === key){ v.ikon.show = _rg; v.halka.show = _rg && r.durum === "bagli"; continue; }
+    const pos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
+    if (!v){
+      v = { sonKey: "", ikon: null, halka: null };
+      v.ikon = viewer.entities.add({
+        id: "radar_" + rid, position: pos, show: _rg,
+        billboard: {
+          image: ucgenIkon(renk), width: 36, height: 36,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          rotation: new Cesium.CallbackProperty(() => {
+            const kam = viewer ? viewer.camera.heading : 0;
+            const vv = radarIkonVarliklar[rid];
+            return -Cesium.Math.toRadians(vv ? vv.yon || 0 : 0) + kam;
+          }, false),
+        },
+        label: {
+          text: r.isim || ("Radar " + rid),
+          font: "bold 10px Consolas, monospace",
+          fillColor: Cesium.Color.fromCssColorString(renk),
+          style: Cesium.LabelStyle.FILL, showBackground: true,
+          backgroundColor: Cesium.Color.BLACK.withAlpha(0.7),
+          backgroundPadding: new Cesium.Cartesian2(5, 3),
+          verticalOrigin: Cesium.VerticalOrigin.TOP,
+          pixelOffset: new Cesium.Cartesian2(0, 20),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
+        }
+      });
+      v.halka = viewer.entities.add({
+        id: "radar_halka_" + rid, show: _rg && r.durum === "bagli",
+        polyline: { positions: dairePoz(lat, lon, RADAR_IKON_HALKA_M, 96), width: 1.5,
+                    material: Cesium.Color.fromCssColorString(renk).withAlpha(0.5),
+                    clampToGround: true }
+      });
+      radarIkonVarliklar[rid] = v;
+    } else {
+      v.ikon.position = pos;
+      v.ikon.billboard.image = ucgenIkon(renk);
+      v.ikon.label.text = r.isim || ("Radar " + rid);
+      v.ikon.label.fillColor = Cesium.Color.fromCssColorString(renk);
+      v.ikon.show = _rg;
+      v.halka.polyline.positions = dairePoz(lat, lon, RADAR_IKON_HALKA_M, 96);
+      v.halka.polyline.material = Cesium.Color.fromCssColorString(renk).withAlpha(0.5);
+      v.halka.show = _rg && r.durum === "bagli";
+    }
+    v.yon = yon; v.sonKey = key;
+  }
+  for (const rid of Object.keys(radarIkonVarliklar)){
+    if (!gorulen[rid]){
+      const v = radarIkonVarliklar[rid];
+      try { viewer.entities.remove(v.ikon); viewer.entities.remove(v.halka); } catch (e) {}
+      delete radarIkonVarliklar[rid];
+    }
+  }
+};
+
 let gcsVarlik = null;
 let gcsKonum = null;                 // {lat, lon}
 let sonSeri = {durum:"kapali", port:"", baud:0};
