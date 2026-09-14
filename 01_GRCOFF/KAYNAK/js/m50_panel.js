@@ -129,6 +129,11 @@ function eoPaneliTazele(){
 
 window.eoListesiGuncelle = function(liste, eski){
   eoListesi = Array.isArray(liste) ? liste : [];
+  // v2.4.200: ikinci guvence — menu bayragi burada da uygulanir.
+  try {
+    if (typeof window.m50YerelDurum === "function")
+      window.m50YerelDurum(eoListesi.some(c => c && c.yerel_sdk));
+  } catch (e) {}
   if (typeof window.eoCihazListeCiz === "function") window.eoCihazListeCiz();
   if (!eoListesi.length){ if (eski) window.m50PaneliGuncelle(eski); return; }
   if (!eoListesi.some(c => Number(c.eo_id) === _eoSecili))

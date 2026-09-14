@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.199";
+const GCS_SURUM = "2.4.200";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.200",
+    tarih: "2026-09-14",
+    baslik: "Elektro-Optik menüsü F5 sonrası kayboluyordu (paket 2.5.70)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): Menü sayfa yüklenince görünüyor, Köprü listesi 'Köprü yok' deyince gizleniyor, sonra gömülü SDK bayrağı menüyü geri açamıyordu — bayrak uygulaması cihaz listesi çiziminin arkasındaydı, orada bir hata olunca hiç çalışmıyordu. Bayrak artık listeden ÖNCE ve ayrı korumada uygulanır; ikinci güvence olarak liste işleyicisinin kendisi de uygular. Tarayıcı konsoluna teşhis satırı yazılır ([EO] gömülü SDK bayrağı …)."
+    ]
+  },
   {
     surum: "2.4.199",
     tarih: "2026-09-14",

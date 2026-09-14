@@ -265,6 +265,8 @@ window.m50YerelDurum = function(v){
   const yeni = !!v;
   if (yeni === _m50YerelAcik) return;
   _m50YerelAcik = yeni;
+  try { console.info("[EO] gomulu SDK bayragi:", yeni, "| kopru:", _kopruM50Acik,
+                     "| lisans:", lisansUstSinir("m50")); } catch (e) {}
   m50MenuGorunumGuncelle();
 };
 window.m50YetenekVar = m50YetenekVar;
