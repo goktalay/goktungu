@@ -168,6 +168,12 @@ Section "GOKTUNGU Kopru" AnaBolum
   SetOutPath "$INSTDIR\kopru"
   File "kopru\*.py"
 
+  ; M50 HVS SDK'sinin gomulu kopyasi (Hvs\*.py + bin\*.dll). `/r` ile
+  ; alt dizinler DAHIL yazilmazsa m50_hvs.py "_sdk_kok()" SDK'yi
+  ; bulamaz ve M50 servisi "Windows SDK bulunamadi" ile reddeder.
+  SetOutPath "$INSTDIR\kopru\m50_sdk"
+  File /r "kopru\m50_sdk\*.*"
+
   SetOutPath "$INSTDIR\web"
   File /r "web\*.*"
 

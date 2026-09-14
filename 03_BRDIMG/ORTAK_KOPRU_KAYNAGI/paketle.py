@@ -84,7 +84,11 @@ from kopru.surumler import KOPRU_SURUM  # noqa: E402
 DIZINLER = ("kopru", "web")
 # Bu dizinlerde YALNIZ su uzantilar pakete girer.
 IZINLI_UZANTI = {
-    "kopru": {".py"},
+    # `.dll`: M50 HVS SDK'sının calisma-zamani ikilileri
+    # (kopru/m50_sdk/bin/). Uretici bunlari derlenmis paylasimli
+    # kutuphane olarak dagitir; .py degildir ama SAHADA KOSAN modul
+    # (m50_hvs.py) bunlar olmadan hicbir sey yapamaz.
+    "kopru": {".py", ".dll"},
     "web": {".html", ".css", ".js", ".png", ".svg", ".ico"},
 }
 
@@ -148,6 +152,16 @@ ZORUNLU_ORTAK = (
     # yan etkisiydi, guvence degildi.
     "kopru/servis_kanal.py", "kopru/radar_c20.py",
     "kopru/m50_hvs.py", "kopru/servis_m50.py",
+    # Uretici HVS SDK'sinin gomulu kopyasi. Bunlar olmadan m50_hvs.py
+    # `_sdk_kok()` icinde "M50 Windows SDK bulunamadi" hatasi verir;
+    # panel acilir, M50 servisi "calisiyor" gorunur ama hicbir SDK
+    # cagrisi calismaz. Kusur ancak sahada, cihaz basindayken gorulur.
+    "kopru/m50_sdk/Hvs/__init__.py", "kopru/m50_sdk/Hvs/sdk.py",
+    "kopru/m50_sdk/Hvs/datdefs.py", "kopru/m50_sdk/Hvs/device.py",
+    "kopru/m50_sdk/Hvs/ptz.py", "kopru/m50_sdk/Hvs/angle.py",
+    "kopru/m50_sdk/Hvs/track.py", "kopru/m50_sdk/Hvs/preset.py",
+    "kopru/m50_sdk/Hvs/video.py", "kopru/m50_sdk/Hvs/cruise.py",
+    "kopru/m50_sdk/bin/HVideoSDK.dll", "kopru/m50_sdk/bin/HVideoUtility.dll",
     "kopru/video_vekil.py",
     "web/index.html", "web/stil.css", "web/uygulama.js",
     #
@@ -353,9 +367,9 @@ def dogrula(arsiv: str, platform: str) -> tuple[int, int]:
             kontrol(f"kurulum betigi pakette: {ad}",
                     f"{kok_ad}/{ad}" in adlar)
 
-        # BES SERVIS: kullanici istegi. Biri eksik olsa panel menusu yarim
-        # kalir ve kullanici nedenini anlamaz.
-        for s in ("dron", "ai", "video", "radar", "gcsdual"):
+        # ALTI SERVIS: kullanici istegi (M50 eklendi). Biri eksik olsa
+        # panel menusu yarim kalir ve kullanici nedenini anlamaz.
+        for s in ("dron", "ai", "video", "radar", "gcsdual", "m50"):
             kontrol(f"servis modulu pakette: {s}",
                     f"{kok_ad}/kopru/servis_{s}.py" in adlar)
 

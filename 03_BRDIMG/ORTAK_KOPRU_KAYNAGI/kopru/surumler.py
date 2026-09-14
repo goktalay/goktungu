@@ -18,8 +18,24 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.2"
+KOPRU_SURUM = "1.7.15"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.15",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "M50 SERVISI GERCEKTEN CALISIR HALE GELDI. Onceki surumde "
+            "servis_m50.py/m50_hvs.py koda girmisti ama pakette uretici "
+            "SDK'sinin calisma-zamani ikilileri (HVideoSDK.dll, "
+            "HVideoUtility.dll) ve Python baglayicisi (Hvs paketi) yoktu; "
+            "M50 servisi panelde goruniyor ama her baglanti denemesi "
+            "\"M50 Windows SDK bulunamadi\" ile reddediliyordu.",
+            "kopru/m50_sdk/ altina uretici SDK'sinin dogrulanmis calisma-"
+            "zamani kopyasi eklendi (bin/HVideoSDK.dll, "
+            "bin/HVideoUtility.dll, Hvs/*.py). Kurulum ayrica SDK dizini "
+            "belirtmeye gerek yok; m50_hvs.py bu yolu otomatik bulur.",
+        ]
+    },
     {
         "surum": "1.7.2",
         "tarih": "2026-09-11",
