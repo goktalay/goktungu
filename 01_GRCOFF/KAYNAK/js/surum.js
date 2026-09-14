@@ -2,11 +2,25 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.191";
+const GCS_SURUM = "2.4.192";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.192",
+    tarih: "2026-09-14",
+    baslik: "Faz C: Saha Köprüsü üzerinden çoklu radar ve çoklu M50; Program Ayarları açılır-kapanır bölümler; yardım, sürüm geçmişi ve Elektro-Optik menü iyileştirmeleri (paket 2.5.62, Köprü 1.7.19)",
+    maddeler: [
+      "YENİ (Faz C): Merkez kipinde her radar ve her M50 artık saha Köprüsünden kendi kimliğiyle (radar_id / eo_id) yönetilir — Köprü 1.7.19 her cihaz için ayrı istemci çalıştırır. Bağlan/kes, RTK, ayar, PTZ ve takip komutları cihaz kimliğiyle Köprüye gider; durum tek köprü sorgusuyla alınıp cihazlara dağıtılır. Kayıttaki 'köprü örneği' seçildiyse komut o Köprüye yönlenir. Eski Köprü (≤1.7.18) ile yalnız 1 numaralı cihaz çalışmaya devam eder.",
+      "YENİ: Elektro-Optik menüsüne 'Cihazlar', 'Yeni M50' ve 'Tüm Cihazlara Bağlan' kısayolları eklendi (tüm cihazlar kayıtlı kimlikle bağlanır).",
+      "YENİ: Haritadaki M50 ikonunun yanında sabit küçük canlı kamera çerçevesi (cihaz bağlıyken; kamera kaydı yoksa otomatik oluşturulur). Çift tık yüzen panelde açar.",
+      "DÜZELTME: Program Ayarları ekrana sığmıyordu — C20 Radar, GCCDUAL, Servis durumu, Merkez Sunucu, DJI Köprü Belirteci ve Köprü Kimlikleri artık açılır-kapanır bölümler; açık/kapalı durumu hatırlanır.",
+      "DÜZELTME: Destek > Yardım Merkezi 404 veriyordu (paket yerel /yardim/ sayfası taşımıyor); artık çevrimiçi Destek Merkezi'ne (support.goktungu.com) yönlendirilir, yerel kopya varsa o sunulur.",
+      "DÜZELTME: Sürüm Geçmişi penceresinde karanlık modda kapalı sürüm başlıkları görünmüyordu.",
+      "DÜZELTME: Merkez kipinde 'Tüm cihazlara bağlan' ve boş alanla bağlan, cihazın kayıtlı kimliğini Köprü bağlantısı için de kullanır; Köprü üzerinden başarılı bağlantıda kimlik cihaz kaydına yazılır."
+    ]
+  },
   {
     surum: "2.4.191",
     tarih: "2026-09-14",

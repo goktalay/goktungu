@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24190">
+<link rel="stylesheet" href="css/stil.css?v=v24192">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -72,6 +72,11 @@
         <span class="mb-etiket" data-i18n="mbM50">Elektro-Optik</span>
         <div class="mb-dropdown">
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzM50" data-hizli="e"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-binoculars"></i><span data-i18n="mbM50Ayar">M50 Kontrolü</span></div>
+          <!-- v2.4.192: coklu cihaz kisayollari (kullanici istegi) -->
+          <div class="mb-ayrac"></div>
+          <div class="mb-oge" id="mbEoCihazlar" data-hizli="c"><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
+          <div class="mb-oge" id="mbEoYeni" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbEoYeni">Yeni M50</span></div>
+          <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm Cihazlara Bağlan</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbDronlar" data-hizli="d">
@@ -1935,7 +1940,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24191"></script>
+<script src="js/i18n.js?v=v24192"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1986,7 +1991,7 @@
      popup cizilirken hazir olmalidir (kopru_kimlik.js ile ayni kural). -->
 <script src="js/dji_belirtec.js?v=v24127"></script>
 <script src="js/kopru_kimlik.js?v=v24127"></script>
-<script src="js/program_ayar.js?v=v24127"></script>
+<script src="js/program_ayar.js?v=v24192"></script>
 <script src="js/servis_panel.js?v=v24127"></script>
 <!-- v2.4.50: pilot bazli joystick ayarlari (ters cevirme, olu bolge,
      merkez kalibrasyonu). Kisisel ayardir; rol sarti yoktur. -->
@@ -2000,9 +2005,9 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24191"></script>
+<script src="js/radar_gorsel.js?v=v24192"></script>
 <script src="js/radar_panel.js?v=v24190"></script>
-<script src="js/m50_panel.js?v=v24191"></script>
+<script src="js/m50_panel.js?v=v24192"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>

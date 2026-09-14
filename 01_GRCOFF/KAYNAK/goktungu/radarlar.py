@@ -166,6 +166,10 @@ class RadarYoneticisi:
         self._birlesik_ts = 0.0
         self._merkez_konum = None
         self._merkez_ts = 0.0
+        self._kopru_cek = None
+        self._kopru_kilit = threading.Lock()
+        self._kopru_son = (None, "")
+        self._kopru_ts = 0.0
         if birincil_istemci is not None:
             self.istemciler[1] = birincil_istemci
         self.tazele()
@@ -187,6 +191,8 @@ class RadarYoneticisi:
                 ist = self._fabrika(k)
                 ist.kes_kancasi = self._kes_kancasi
                 self.istemciler[rid] = ist
+                if self._kopru_cek is not None and hasattr(ist, "_cek"):
+                    ist._cek = self._cek_icin(rid)
             # Kayıt değişmiş olabilir: konum/yön/isim tazele
             try:
                 ist.konum_yedek = (k.get("lat"), k.get("lon"))
@@ -241,16 +247,68 @@ class RadarYoneticisi:
         for ist in self.istemciler.values():
             ist.kes_kancasi = f
 
+    # ---------------- merkez kipi: köprü beslemesi (v2.4.192, Faz C) ----
+    # `sunucu.py` tek bir `_cek` (tüm radarların paketini döndüren
+    # `_radar_kopru_durum_cek`) bağlar. Yönetici bu çağrıyı 0.4 sn
+    # önbellekle TEK HTTP isteğine indirir ve her vekile `radarlar[id]`
+    # alt paketini veren bir kapanış dağıtır; böylece 3 radar için 3
+    # ayrı köprü sorgusu yapılmaz.
     @property
     def _cek(self):
-        ist = self.istemciler.get(1)
-        return getattr(ist, "_cek", "YOK") if ist is not None else "YOK"
+        if not any(hasattr(i, "_cek") for i in self.istemciler.values()):
+            return "YOK"          # yerel kurulum: vekil yok
+        return self._kopru_cek
 
     @_cek.setter
     def _cek(self, f):
-        ist = self.istemciler.get(1)
-        if ist is not None and hasattr(ist, "_cek"):
-            ist._cek = f
+        self._kopru_cek = f
+        self._cek_dagit()
+
+    def _cek_dagit(self) -> None:
+        if self._kopru_cek is None:
+            return
+        for rid, ist in self.istemciler.items():
+            if hasattr(ist, "_cek"):
+                ist._cek = self._cek_icin(rid)
+
+    def _cek_icin(self, rid):
+        def cek():
+            return self._kopru_alt_paket(int(rid))
+        return cek
+
+    def _kopru_paket(self):
+        simdi = time.time()
+        with self._kopru_kilit:
+            if simdi - self._kopru_ts < 0.4:
+                return self._kopru_son
+            f = self._kopru_cek
+            if f is None:
+                sonuc = (None, "Kopru baglantisi yapilandirilmadi")
+            else:
+                try:
+                    sonuc = f()
+                except Exception as e:
+                    sonuc = (None, "%s: %s" % (type(e).__name__, e))
+            self._kopru_son = sonuc
+            self._kopru_ts = simdi
+            return sonuc
+
+    def _kopru_alt_paket(self, rid: int):
+        paket, hata = self._kopru_paket()
+        if hata or not isinstance(paket, dict):
+            return None, hata or "Kopru yanit vermedi"
+        radarlar = paket.get("radarlar")
+        if isinstance(radarlar, dict):
+            alt = radarlar.get(str(rid))
+            if isinstance(alt, dict):
+                return alt, ""
+            return None, ("Saha Koprusu %d numarali radari bildirmiyor; "
+                          "bu radara 'Baglan' verin." % rid)
+        # Eski köprü (<1.7.19): yalnız tek radar taşır.
+        if rid == self.birincil_id():
+            return paket, ""
+        return None, ("Saha Koprusu coklu radar desteklemiyor "
+                      "(Kopru 1.7.19+ gerekir).")
 
     def cek_gerekirse(self):
         for ist in self.istemciler.values():

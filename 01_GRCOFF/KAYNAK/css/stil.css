@@ -1279,6 +1279,14 @@
   }
   .dron-kamera-onizleme:hover { border-color: #a8e2ff; box-shadow: 0 0 0 2px rgba(89,184,235,.28); }
   .dron-kamera-onizleme img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* v2.4.192: haritada M50 ikonunun yanindaki SABIT canli kamera cercevesi */
+  .eo-kamera-onizleme { width: 132px; height: 86px; border-color: #ffb454; }
+  .eo-kamera-onizleme:hover { border-color: #ffd28a; box-shadow: 0 0 0 2px rgba(255,180,84,.28); }
+  .eo-kamera-onizleme span { background: rgba(48,26,4,.82); color: #ffe6c2; }
+  /* v2.4.192: Program Ayarlari acilir-kapanir bolumleri */
+  .prog-ayar-popup .prog-bolum { margin: 6px 0; }
+  .prog-bolum-ic { padding: 4px 2px 2px; }
+  .prog-bolum-ic > hr:first-child { display: none; }
   .dron-kamera-onizleme span {
     position: absolute; left: 3px; bottom: 3px; padding: 1px 4px; border-radius: 2px;
     color: #eaf8ff; background: rgba(4,24,38,.78); font: 700 9px/1.2 Consolas,monospace;
@@ -1557,6 +1565,10 @@
   .sg-satir.acik .sg-ok {
     transform: rotate(90deg); color: var(--vurgu, #6ea8ff);
   }
+  /* v2.4.192 (kullanici bildirimi): karanlik modda kapali satir basliklari
+     gorunmuyordu — renk ust kapsayicidan miras aliniyordu. Tema
+     degiskenine sabitlenir. */
+  .sg-ust, .sg-no, .sg-ok { color: var(--metin); }
   .sg-no { font-weight: 700; font-size: 13px; }
   .sg-satir.acik .sg-no { color: var(--vurgu, #6ea8ff); }
   .sg-guncel {

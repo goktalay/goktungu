@@ -737,7 +737,92 @@ window.eoIkonlariGuncelle = function(liste){
       delete eoIkonVarliklar[eid];
     }
   }
+  eoKameraOnizlemeTazele(liste || []);
 };
+
+// ---------------------------------------------------------------------
+// v2.4.192: M50 ikonunun yaninda SABIT canli kamera cercevesi (kullanici
+// istegi). Dron onizlemesiyle ayni desen: ayni origin /kamera/<id> MJPEG
+// vekili, postRender'da ikonun ekran konumuna yapistirilir. Cihaz
+// bagliysa ve kamera kaydi yoksa kayit bir kez otomatik olusturulur.
+// Cift tik: yuzen kamera panelinde acar.
+// ---------------------------------------------------------------------
+const eoKameraOnizlemeler = {};   // eo_id -> DOM
+const eoKameraOlusturuldu = {};   // eo_id -> true (oturumda bir kez)
+let eoKameraOnizlemeKuruldu = false;
+function eoKameraOnizlemeKonumla(){
+  if (typeof viewer === "undefined" || !viewer || !viewer.scene) return;
+  for (const [eid, el] of Object.entries(eoKameraOnizlemeler)){
+    const v = eoIkonVarliklar[eid];
+    let pos = v && v.ikon && v.ikon.position;
+    if (pos && typeof pos.getValue === "function") pos = pos.getValue(Cesium.JulianDate.now());
+    if (!pos){ el.style.display = "none"; continue; }
+    const p = Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, pos);
+    const c = viewer.scene.canvas;
+    if (!p || p.x < -160 || p.y < -120 || p.x > c.clientWidth + 160 || p.y > c.clientHeight + 120){
+      el.style.display = "none"; continue;
+    }
+    el.style.display = "block";
+    el.style.transform = "translate(" + Math.round(p.x + 26) + "px," + Math.round(p.y - 44) + "px)";
+  }
+}
+function eoKameraOnizlemeSil(eid){
+  const el = eoKameraOnizlemeler[eid];
+  if (el) el.remove();
+  delete eoKameraOnizlemeler[eid];
+}
+function eoKameraOnizlemeTazele(liste){
+  const alan = document.getElementById("haritaAlan");
+  const gorulen = {};
+  if (alan && typeof window.kameraOnizlemeUrl === "function"){
+    for (const c of liste){
+      const eid = Number(c.eo_id);
+      const d = c.m50_durum || {};
+      if (!eoIkonVarliklar[eid] || d.durum !== "bagli") continue;
+      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(eid) : null;
+      if (!kam){
+        if (!eoKameraOlusturuldu[eid] && typeof window.m50KameraOlustur === "function"){
+          eoKameraOlusturuldu[eid] = true;
+          window.m50KameraOlustur(eid, c.isim || ("M50 " + eid));
+        }
+        continue;
+      }
+      gorulen[eid] = true;
+      let el = eoKameraOnizlemeler[eid];
+      if (!el){
+        el = document.createElement("button");
+        el.type = "button";
+        el.className = "dron-kamera-onizleme eo-kamera-onizleme";
+        el.title = "Çift tıklayın: yüzen panelde aç";
+        const img = document.createElement("img");
+        img.alt = "M50 canlı görüntü"; img.decoding = "async";
+        const etiket = document.createElement("span");
+        el.append(img, etiket);
+        el.addEventListener("click", ev => { ev.preventDefault(); ev.stopPropagation(); });
+        el.addEventListener("dblclick", ev => {
+          ev.preventDefault(); ev.stopPropagation();
+          const kid = Number(el.dataset.kameraId);
+          if (!Number.isFinite(kid)) return;
+          if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kid, "yuzen");
+          else if (typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kid);
+        });
+        alan.appendChild(el);
+        eoKameraOnizlemeler[eid] = el;
+      }
+      el.querySelector("span").textContent = (c.isim || ("M50 " + eid)).toUpperCase() + " · CANLI";
+      if (Number(el.dataset.kameraId) !== Number(kam.id)){
+        el.dataset.kameraId = String(kam.id);
+        el.querySelector("img").src = window.kameraOnizlemeUrl(kam.id);
+      }
+    }
+  }
+  for (const eid of Object.keys(eoKameraOnizlemeler)) if (!gorulen[eid]) eoKameraOnizlemeSil(eid);
+  if (!eoKameraOnizlemeKuruldu && typeof viewer !== "undefined" && viewer && viewer.scene){
+    eoKameraOnizlemeKuruldu = true;
+    viewer.scene.postRender.addEventListener(eoKameraOnizlemeKonumla);
+  }
+  eoKameraOnizlemeKonumla();
+}
 
 let gcsVarlik = null;
 let gcsKonum = null;                 // {lat, lon}

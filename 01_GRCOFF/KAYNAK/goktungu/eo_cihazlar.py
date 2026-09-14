@@ -16,6 +16,8 @@ biçimini alır; eski `m50:<kanal>` 1 numaralı cihaz sayılır.
 """
 from __future__ import annotations
 
+import threading
+import time
 from typing import Any, Dict, Optional, Tuple
 
 from .veritabani import baglanti
@@ -124,7 +126,62 @@ class EOYoneticisi:
         self._yerel_fabrika = yerel_fabrikasi
         self.vekiller: Dict[int, Any] = {}
         self.yereller: Dict[int, Any] = {}
+        # v2.4.192 (Faz C): köprü beslemesi — tek HTTP, cihaz başına dağıtım
+        self._kopru_cek = None
+        self._kopru_kilit = threading.Lock()
+        self._kopru_son = (None, "")
+        self._kopru_ts = 0.0
         self.tazele()
+
+    # ---------------- merkez kipi: köprü beslemesi (Faz C) ----------------
+    @property
+    def _cek(self):
+        return self._kopru_cek
+
+    @_cek.setter
+    def _cek(self, f):
+        self._kopru_cek = f
+        for eid, v in self.vekiller.items():
+            if hasattr(v, "_cek"):
+                v._cek = self._cek_icin(eid)
+
+    def _cek_icin(self, eid):
+        def cek():
+            return self._kopru_alt_paket(int(eid))
+        return cek
+
+    def _kopru_paket(self):
+        simdi = time.time()
+        with self._kopru_kilit:
+            if simdi - self._kopru_ts < 0.4:
+                return self._kopru_son
+            f = self._kopru_cek
+            if f is None:
+                sonuc = (None, "M50 saha Köprüsü yapılandırılmadı")
+            else:
+                try:
+                    sonuc = f()
+                except Exception as e:
+                    sonuc = (None, "%s: %s" % (type(e).__name__, e))
+            self._kopru_son = sonuc
+            self._kopru_ts = simdi
+            return sonuc
+
+    def _kopru_alt_paket(self, eid: int):
+        paket, hata = self._kopru_paket()
+        if hata or not isinstance(paket, dict):
+            return None, hata or "M50 saha Köprüsü yanıt vermedi"
+        cihazlar = paket.get("eo_cihazlar")
+        if isinstance(cihazlar, dict):
+            alt = cihazlar.get(str(eid))
+            if isinstance(alt, dict):
+                return alt, ""
+            return None, ("Saha Köprüsü %d numaralı M50'yi bildirmiyor; "
+                          "bu cihaza 'Bağlan' verin." % eid)
+        if eid == self.birincil_id():
+            return paket, ""          # eski köprü (<1.7.19): tek cihaz
+        return None, ("Saha Köprüsü çoklu M50 desteklemiyor "
+                      "(Köprü 1.7.19+ gerekir).")
 
     # ---------------- kayıt/istemci ----------------
     def tazele(self) -> None:
@@ -142,6 +199,8 @@ class EOYoneticisi:
             if eid not in self.vekiller:
                 self.vekiller[eid] = self._vekil_fabrika(k)
                 self.yereller[eid] = self._yerel_fabrika(k)
+                if self._kopru_cek is not None and hasattr(self.vekiller[eid], "_cek"):
+                    self.vekiller[eid]._cek = self._cek_icin(eid)
             v = self.vekiller[eid]
             v.isim = k.get("isim") or ("M50 %d" % eid)
             v.eo_id = eid

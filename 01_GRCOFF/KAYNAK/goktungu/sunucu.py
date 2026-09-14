@@ -2917,14 +2917,32 @@ class WSSunucusu:
         "baglaniyor" yazip sonsuza kadar oyle kalirdi.
         """
         istenen = None
+        rid = None
         if isinstance(k, dict):
             istenen = k.get("kopru_ornek_id")
+            rid = k.get("radar_id")
+        # v2.4.192 (Faz C): radar kimligi KOPRUYE tasinir (Kopru 1.7.19
+        # radar_id basina ayri C20 istemcisi calistirir). Kayittaki
+        # kopru ornegi (radarlar.kopru_ornek_id) verilmisse o kopru secilir.
+        ist = self._radar_istemci(rid)
+        try:
+            rid_int = int(getattr(ist, "radar_id", None) or rid or 1)
+        except (TypeError, ValueError):
+            rid_int = 1
+        veri = dict(veri or {})
+        veri.setdefault("radar_id", rid_int)
+        if not istenen and hasattr(self.radar, "kayitlar"):
+            try:
+                kayit = self.radar.kayitlar.bul(rid_int) or {}
+                istenen = kayit.get("kopru_ornek_id") or None
+            except Exception:
+                istenen = None
         sonuc, hata = await self._radar_kopru_cagir(
-            websocket, eylem, veri or {}, istenen_kopru=istenen)
+            websocket, eylem, veri, istenen_kopru=istenen)
         # Radar nesnesi kurulmamis olabilir (ornegin radar kapali bir
         # kurulum). Durum yazimi bu yuzden korumali yapilir; aksi halde
         # panele hata bildirmek yerine komut isleyici cokerdi.
-        durum = getattr(self.radar, "durum", None)
+        durum = getattr(ist if ist is not None else self.radar, "durum", None)
         if not isinstance(durum, dict):
             durum = None
         if hata:
@@ -2968,15 +2986,9 @@ class WSSunucusu:
         return self.radar
 
     def _radar_birincil_mi(self, radar_id=None) -> bool:
-        """Merkez kipinde kopru yolu Faz C'ye kadar yalniz birincil
-        (1 numarali) radar icindir."""
-        if not hasattr(self.radar, "istemciler"):
-            return True
-        try:
-            rid = int(radar_id) if radar_id not in (None, "") else 0
-        except (TypeError, ValueError):
-            rid = 0
-        return rid <= 0 or rid == self.radar.birincil_id()
+        """v2.4.192 (Faz C): merkez kipinde HER radar kopru yolundan
+        gider (Kopru 1.7.19 coklu radar). Islev geriye uyum icin durur."""
+        return True
 
     # ------------------------------------------------------------------
     # M50 ELEKTRO-OPTİK — SAHA KÖPRÜSÜ VEKİL KOMUTLARI
@@ -3068,9 +3080,25 @@ class WSSunucusu:
                 "IP, port, kullanıcı adı ve parolayı girin.", "hata")
             return None
         istenen = k.get("kopru_ornek_id") if isinstance(k, dict) else None
-        sonuc, hata = await self._m50_kopru_cagir(
-            websocket, eylem, veri or {}, istenen_kopru=istenen)
         hedef = self._eo_vekil(k)
+        # v2.4.192 (Faz C): cihaz kimligi KOPRUYE tasinir (Kopru 1.7.19
+        # eo_id basina ayri SDK istemcisi). Kayittaki kopru ornegi
+        # (eo_cihazlar.kopru_ornek_id) verilmisse o kopru secilir.
+        try:
+            eid = int(getattr(hedef, "eo_id", None) or 1)
+        except (TypeError, ValueError):
+            eid = 1
+        veri = dict(veri or {})
+        veri.setdefault("eo_id", eid)
+        _eo = getattr(self, "eo", None)
+        if not istenen and _eo is not None:
+            try:
+                kayit = _eo.kayitlar.bul(eid) or {}
+                istenen = kayit.get("kopru_ornek_id") or None
+            except Exception:
+                istenen = None
+        sonuc, hata = await self._m50_kopru_cagir(
+            websocket, eylem, veri, istenen_kopru=istenen)
         if hata:
             if hedef is not None:
                 with self.kilit:
@@ -6352,10 +6380,22 @@ class WSSunucusu:
             # ulasamaz ve panel "timed out" gosterirdi.
             # v2.4.190: radar_id ile hedeflenir; verilmezse birincil radar.
             _rid = k.get("radar_id")
-            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
+            if self._merkez_kipinde():
+                # Faz C: adres KAYDA da yazilir; kopru yeniden baslasa
+                # bile panel dogru IP'yi gosterir ve kopru kendi kalici
+                # kaydindan ayni radara baglanir.
+                _ist = self._radar_istemci(_rid)
+                if hasattr(self.radar, "kayitlar"):
+                    try:
+                        self.radar.kayitlar.guncelle(
+                            int(getattr(_ist, "radar_id", 1) or 1),
+                            {"ip": ip, "port": rport})
+                    except Exception:
+                        pass
                 await self._radar_kopruye(
                     websocket, "radar_baglan",
-                    {"ip": ip, "port": rport}, k)
+                    {"ip": ip, "port": rport,
+                     "isim": getattr(_ist, "isim", "")}, k)
             elif hasattr(self.radar, "istemciler"):
                 if not self.radar.baglan(ip, rport, _rid):
                     await self._uyari_gonder(websocket, "radar",
@@ -6365,7 +6405,7 @@ class WSSunucusu:
 
         elif komut == "radar_kes":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
+            if self._merkez_kipinde():
                 await self._radar_kopruye(websocket, "radar_kes", {}, k)
             elif hasattr(self.radar, "istemciler"):
                 self.radar.kes(_rid)
@@ -6374,7 +6414,7 @@ class WSSunucusu:
 
         elif komut == "radar_ayar_oku":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
+            if self._merkez_kipinde():
                 await self._radar_kopruye(websocket, "radar_ayar_oku",
                                           {}, k)
             else:
@@ -6490,7 +6530,7 @@ class WSSunucusu:
             except (TypeError, ValueError):
                 a = {}
             _rid = k.get("radar_id")
-            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
+            if self._merkez_kipinde():
                 # Merkez yonu de KOPRUYE gider: kalibrasyon radarin
                 # bulundugu makinede saklanir, cunku izleri cografi
                 # konuma ceviren kod artik orada kosuyor. Merkezde
@@ -6525,7 +6565,7 @@ class WSSunucusu:
 
         elif komut == "rtk_konum_al":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde() and self._radar_birincil_mi(_rid):
+            if self._merkez_kipinde():
                 # "Radar bagli mi" denetimi de SAHADA yapilir: bagli olup
                 # olmadigini bilen taraf oradaki C20 istemcisidir.
                 await self._radar_kopruye(websocket, "radar_rtk", {}, k)
@@ -6563,24 +6603,59 @@ class WSSunucusu:
                 gecerli_ip = True
             except (ValueError, TypeError):
                 gecerli_ip = False
-            _yerel = getattr(self, "m50_yerel", None)
+            _yerel = self._eo_yerel(k)   # v2.4.192: eo_id'ye gore yerel servis
             if (not ip and not kullanici and not parola and _yerel is not None
                     and _yerel.kullanilabilir()):
                 # v2.4.187: alanlar boş bırakıldı → kayıtlı kimlikle bağlan
                 # (yerel mod kimliği bir kez girildikten sonra saklar).
                 await self._m50_kopruye(websocket, "baglan_kayitli", {
                     "zaman_asimi": k.get("zaman_asimi", 5000)}, k)
+            elif (not ip and not kullanici and not parola
+                    and _yerel is not None):
+                # v2.4.192 (Faz C): KÖPRÜ modunda da kayıtlı kimlik. Alanlar
+                # boş bırakıldı ve bu makinede SDK yok (Linux Merkez): cihaz
+                # kaydındaki kimlikle saha Köprüsüne 'baglan' gönderilir.
+                # Parola Merkez belleğinde/durumda tutulmaz; yalnız bu
+                # istekte Köprüye taşınır.
+                _a = _yerel._ayar_oku()
+                if _a.get("ip") and _a.get("kullanici") and _a.get("parola"):
+                    try:
+                        _p = int(_a.get("port") or 39020)
+                    except (TypeError, ValueError):
+                        _p = 39020
+                    await self._m50_kopruye(websocket, "baglan", {
+                        "ip": str(_a["ip"]), "port": _p,
+                        "kullanici": str(_a["kullanici"]),
+                        "parola": str(_a["parola"]),
+                        "zaman_asimi": k.get("zaman_asimi", 5000),
+                    }, k)
+                else:
+                    await self._uyari_gonder(
+                        websocket, "M50",
+                        "Kayıtlı M50 kimliği yok; IP, port, kullanıcı adı ve "
+                        "parolayı bir kez girin.", "hata")
             elif not ip or not kullanici or not parola or not gecerli_ip:
                 await self._uyari_gonder(
                     websocket, "M50", "M50 bağlantısı için geçerli IP, port, kullanıcı adı ve parola gereklidir.", "hata")
             elif not (0 < port < 65536):
                 await self._uyari_gonder(websocket, "M50", "M50 portu geçersiz.", "hata")
             else:
-                await self._m50_kopruye(websocket, "baglan", {
+                _sonuc = await self._m50_kopruye(websocket, "baglan", {
                     "ip": ip, "port": port, "kullanici": kullanici,
                     "parola": parola,
                     "zaman_asimi": k.get("zaman_asimi", 5000),
                 }, k)
+                # v2.4.192: Köprü yoluyla bağlantı kabul edildiyse kimlik
+                # cihaz kaydına yazılır (yerel modda bunu yerel servis
+                # kendisi yapar). Bir dahaki sefer alanlar boş bırakılır.
+                if (_sonuc is not None and _yerel is not None
+                        and not _yerel.kullanilabilir()):
+                    try:
+                        _yerel._ayar_yaz_ic({"ip": ip, "port": port,
+                                             "kullanici": kullanici,
+                                             "parola": parola})
+                    except Exception:
+                        pass
         elif komut == "m50_kes":
             await self._m50_kopruye(websocket, "kes", {}, k)
         elif komut == "m50_ayar_oku":
@@ -12137,6 +12212,20 @@ class HttpSunucusu:
                     # Boylece kullanici tarayiciya yalnizca /flight yazar;
                     # uzantiya gerek kalmaz. Sorgu dizesi korunur.
                     yol = self.path.split("?")[0].rstrip("/")
+                    # v2.4.192 (kullanici bildirimi: "yardim gelmiyor",
+                    # 404): paket yerel /yardim/ sayfasi tasimiyor.
+                    # Yerel kopya varsa o sunulur; yoksa cevrimici Destek
+                    # Merkezi'ne yonlendirilir (kapali devrede bile
+                    # tarayici internete cikabiliyorsa yardim acilir).
+                    if yol == "/yardim" or yol.startswith("/yardim/"):
+                        _kok = getattr(self, "directory", None) or os.getcwd()
+                        if not os.path.isfile(os.path.join(_kok, "yardim",
+                                                           "index.html")):
+                            self.send_response(302)
+                            self.send_header("Location",
+                                             "https://support.goktungu.com/")
+                            self.end_headers()
+                            return None
                     if yol == "/flight":
                         kalan = self.path.split("?", 1)
                         self.path = "/flight.html"

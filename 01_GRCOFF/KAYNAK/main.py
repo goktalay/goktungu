@@ -643,6 +643,13 @@ def uygulama_kur():
                            istasyon2=istasyon2)
     # v2.4.191: coklu elektro-optik yoneticisi sunucuya baglanir.
     ws_sunucu.eo = eo
+    # v2.4.192 (Faz C): merkez kipinde her M50 vekili kopruden kendi
+    # alt paketini alir (tek HTTP, cihaz basina dagitim). Yerel SDK
+    # kullanilabilen cihazlar icin telemetri dongusu kopruyu hic sormaz.
+    try:
+        eo._cek = ws_sunucu._m50_kopru_durum_cek
+    except Exception:
+        pass
     # v2.4.39: sanal dron = gercek ArduPilot SITL sureci
     from goktungu.sitl import SitlYoneticisi
     ws_sunucu.sitl = SitlYoneticisi(konsol, ayarlar)

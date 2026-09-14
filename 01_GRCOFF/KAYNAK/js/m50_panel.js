@@ -91,6 +91,44 @@ function eoPaneliTazele(){
   }
   window.m50PaneliGuncelle(c);
 }
+// v2.4.192: Elektro-Optik menusu kisayollari (kullanici istegi):
+// Cihazlar (paneli acip cihaz sekmelerine gider), Yeni M50 (kayit
+// ekler), Tum Cihazlara Baglan (her cihaz icin kayitli kimlikle baglan).
+(function eoMenuKisayollari(){
+  const panelAc = () => {
+    if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
+    if (typeof menubarKapat === "function") menubarKapat();
+  };
+  const cihazlar = document.getElementById("mbEoCihazlar");
+  const yeni = document.getElementById("mbEoYeni");
+  const tum = document.getElementById("mbEoTumBaglan");
+  if (cihazlar) cihazlar.addEventListener("click", () => {
+    panelAc();
+    const b = document.getElementById("m50BolumCihaz") || eoListeEl;
+    if (b && b.tagName === "DETAILS") b.open = true;
+    if (b && typeof b.scrollIntoView === "function") b.scrollIntoView({block: "start", behavior: "smooth"});
+  });
+  if (yeni) yeni.addEventListener("click", () => {
+    panelAc();
+    m50Gonder({tip: "eo_kaydet", eo_id: 0, isim: "M50 " + (eoListesi.length + 1), port: 39020});
+  });
+  if (tum) tum.addEventListener("click", () => {
+    if (typeof menubarKapat === "function") menubarKapat();
+    let n = 0;
+    for (const c of eoListesi){
+      const d = c.m50_durum || {};
+      if (d.durum === "bagli" || d.durum === "baglaniyor") continue;
+      // Alanlar bos: sunucu kayitli kimligi kullanir (yerel modda
+      // baglan_kayitli, kopru modunda kayitli kimlik ile baglan).
+      m50Gonder({tip: "m50_baglan", eo_id: Number(c.eo_id), ip: "", port: 0,
+                 kullanici: "", parola: "", zaman_asimi: 5000});
+      n++;
+    }
+    if (typeof window.uyariGoster === "function")
+      window.uyariGoster("M50", n ? (n + " cihaza bağlantı isteği gönderildi") : "Bağlanacak cihaz yok", n ? "bilgi" : "uyari");
+  });
+})();
+
 window.eoListesiGuncelle = function(liste, eski){
   eoListesi = Array.isArray(liste) ? liste : [];
   if (!eoListesi.length){ if (eski) window.m50PaneliGuncelle(eski); return; }

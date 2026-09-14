@@ -84,19 +84,25 @@ class RadarVekili:
     okur.
     """
 
-    def __init__(self, konsol, ayarlar, kilit, cek=None):
+    def __init__(self, konsol, ayarlar, kilit, cek=None, radar_id=1):
         """
         konsol  : KonsolLog
         ayarlar : AyarYoneticisi (merkez konum yedegi icin)
         kilit   : paylasilan threading.Lock
-        cek     : `() -> (paket, hata)` — kopruden radar durumu getirir.
-                  `sunucu.py` bunu `_radar_kopru_durum_cek` ile baglar.
-                  None ise vekil "kopru yok" durumunda kalir.
+        cek     : `() -> (paket, hata)` — kopruden BU radarin durumunu
+                  getirir. v2.4.192 (Faz C): `RadarYoneticisi` tek kopru
+                  cagrisini radar_id'ye gore boler ve her vekile kendi
+                  alt paketini veren bir kapanis baglar. None ise vekil
+                  "kopru yok" durumunda kalir.
+        radar_id: bu vekilin radar kimligi (RadarIstemcisi ile ayni yuz).
         """
         self.konsol = konsol
         self.ayarlar = ayarlar
         self.kilit = kilit
         self._cek = cek
+        self.radar_id = int(radar_id or 1)
+        self.isim = ""
+        self.konum_yedek = (None, None)
         self._son_cekme = 0.0
         self._son_basarili = 0.0
         self._cekme_kilit = threading.Lock()
@@ -145,6 +151,15 @@ class RadarVekili:
             lon = self.durum.get("lon")
         if lat is not None and lon is not None:
             return lat, lon
+        # v2.4.192: kayittaki kurulu konum (radarlar.lat/lon) merkez
+        # ayarindan once gelir; aksi halde 2 numarali radar merkezin
+        # konumunda sanilir ve izleri yanlis yere duser.
+        try:
+            ky = self.konum_yedek
+            if ky and ky[0] is not None and ky[1] is not None:
+                return float(ky[0]), float(ky[1])
+        except (TypeError, ValueError):
+            pass
         try:
             a = self.ayarlar.yukle()
             return float(a["merkez_lat"]), float(a["merkez_lon"])
