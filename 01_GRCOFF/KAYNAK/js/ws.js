@@ -87,8 +87,12 @@ function telemetriIsle(m){
   // telemetri bileşenlerini etkilemez.
   _guvenli("m50_paneli", () => {
     // v2.4.191: coklu EO — liste geldiyse secili cihazin paketi panele gider.
-    if (!m.replay && m.eo_cihazlar && typeof window.eoListesiGuncelle === "function")
+    if (!m.replay && m.eo_cihazlar && typeof window.eoListesiGuncelle === "function"){
       window.eoListesiGuncelle(m.eo_cihazlar, m.m50);
+      // v2.4.199: gomulu SDK varsa Elektro-Optik menusu koprusuz de acilir
+      if (typeof window.m50YerelDurum === "function")
+        window.m50YerelDurum(m.eo_cihazlar.some(c => c && c.yerel_sdk));
+    }
     else if (m.m50 && !m.replay && typeof m50PaneliGuncelle === "function")
       m50PaneliGuncelle(m.m50);
   });

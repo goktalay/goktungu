@@ -73,6 +73,7 @@ let _kopruServisBilgiVar = false;   // kopru listesi hic geldi mi
 let _kopruRadarAcik = false;        // herhangi bir koprude radar calisiyor
 let _kopruGcsdualAcik = false;      // herhangi bir koprude gcsdual calisiyor
 let _kopruM50Acik = false;          // herhangi bir Köprüde M50 HVS hizmeti çalışıyor
+let _m50YerelAcik = false;          // v2.4.199: Merkez'in kendi gömülü SDK'sı kullanılabilir (köprüsüz)
 // v2.4.56: merkezde mi calisiyoruz. Sunucu `kopru_liste` yanitinda
 // bildirir (bkz. sunucu.py). Menu kurali merkezde ve lokalde FARKLIDIR:
 // merkezde yetenegin kaynagi kopru servisidir, lokalde program ayari.
@@ -257,8 +258,15 @@ window.radarYetenekVar = radarYetenekVar;
 // bağımsız GCS'de fiziksel cihaz hizmeti yoksa menü kapalı kalır; lisans
 // özeti bu donanım kanıtının yerine geçmez.
 function m50YetenekVar(){
-  return !!_kopruM50Acik && lisansUstSinir("m50");
+  // v2.4.199: koprusuz (dogrudan SDK) kurulumda da menu acilir.
+  return (!!_kopruM50Acik || !!_m50YerelAcik) && lisansUstSinir("m50");
 }
+window.m50YerelDurum = function(v){
+  const yeni = !!v;
+  if (yeni === _m50YerelAcik) return;
+  _m50YerelAcik = yeni;
+  m50MenuGorunumGuncelle();
+};
 window.m50YetenekVar = m50YetenekVar;
 
 function m50MenuGorunumGuncelle(){

@@ -260,6 +260,13 @@ class EOYoneticisi:
                       "kayit_ip": k.get("ip") or "", "kayit_port": k.get("port") or 39020,
                       "kayit_lat": k.get("lat"), "kayit_lon": k.get("lon"),
                       "konum": konum, "kopru_ornek_id": k.get("kopru_ornek_id"),
-                      "otomatik_baglan": bool(k.get("otomatik_baglan"))})
+                      "otomatik_baglan": bool(k.get("otomatik_baglan")),
+                      # v2.4.199: arayuz Elektro-Optik menusunu bu bayrakla
+                      # acar. Onceden menu yalniz "bir Kopru'de m50 servisi
+                      # calisiyor" bilgisine bagliydi; koprusuz (dogrudan
+                      # SDK) kurulumda bayrak hic gelmiyor, menu gizli
+                      # kaliyordu (kullanici bildirimi).
+                      "yerel_sdk": bool(self.yereller.get(eid) is not None
+                                        and self.yereller[eid].kullanilabilir())})
             cikti.append(p)
         return cikti

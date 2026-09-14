@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.198";
+const GCS_SURUM = "2.4.199";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.199",
+    tarih: "2026-09-14",
+    baslik: "Köprüsüz kurulumda Elektro-Optik menüsü görünmüyordu (paket 2.5.69)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): Elektro-Optik menüsü yalnız 'bir saha Köprüsünde M50 servisi çalışıyor' bilgisiyle açılıyordu; Merkez'in kendi gömülü SDK'sıyla (köprüsüz) çalışan kurulumda bu bilgi hiç gelmediği için menü gizli kalıyordu. Telemetri artık cihaz başına 'yerel_sdk' bayrağı taşır; gömülü SDK kullanılabilirse menü Köprü olmadan da açılır (lisans üst sınırı korunur)."
+    ]
+  },
   {
     surum: "2.4.198",
     tarih: "2026-09-14",
