@@ -124,11 +124,21 @@ class RadarIstemcisi:
 
     def radar_konum(self):
         """Radar konumu: RTK varsa onu, yoksa bu radarin kurulu konumu
-        (v2.4.190 coklu radar), o da yoksa kayitli merkez konumu."""
-        with self.kilit:
-            if (self.durum["lat"] is not None
-                    and self.durum["lon"] is not None):
-                return self.durum["lat"], self.durum["lon"]
+        (v2.4.190 coklu radar), o da yoksa kayitli merkez konumu.
+
+        v2.4.198 OLCULEN KUSUR (merkez_cokme.log, yigin izi): bu yordam
+        `with self.kilit:` aliyordu. Cagiran `RadarYoneticisi.hedefler`
+        ise telemetri dongusunde ZATEN ayni kilidin icinden cagrilir ve
+        `threading.Lock` yeniden girisli degildir -> olay dongusu
+        KILITLENIYOR, gozetmen 20 sn'de bir uygulamayi yeniden
+        baslatiyordu (sihirbaz donuyor, F5 gecici duzeltiyor). Konum iki
+        sayidan ibarettir; CPython'da sozluk okumasi GIL altinda
+        atomiktir. KILIT ALINMAZ.
+        """
+        lat = self.durum.get("lat")
+        lon = self.durum.get("lon")
+        if lat is not None and lon is not None:
+            return lat, lon
         ky = self.konum_yedek
         if ky and ky[0] is not None and ky[1] is not None:
             try:

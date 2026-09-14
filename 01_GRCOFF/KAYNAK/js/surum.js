@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.197";
+const GCS_SURUM = "2.4.198";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.198",
+    tarih: "2026-09-14",
+    baslik: "KRİTİK: taze kurulumda olay döngüsü kilitleniyordu (sihirbaz hiç gelmiyordu); panel stilleri Kameralar ile birleştirildi (paket 2.5.68)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, merkez_cokme.log yığın izi): Radar kaydı olan her kurulumda telemetri döngüsü ilk turunda KİLİTLENİYORDU — füzyon kodu (radarlar.hedefler) ortak kilidin içinden radarın radar_konum()'unu çağırıyor, o da aynı yeniden girişsiz kilidi tekrar almaya çalışıyordu. Gözetmen uygulamayı 20 sn'de bir yeniden başlattığı için sayfa yükleniyor ama WS üzerinden gelen her şey (kurulum sihirbazı dahil) donuyordu; F5 rastgele bir 'temiz an'a denk gelince çalışıyordu. radar_konum() artık kilit almaz (iki sayının okunması CPython'da atomiktir).",
+      "TUTARLILIK (kullanıcı isteği): Radarlar ve Elektro Optik Cihazları panelleri Kameralar paneliyle aynı desene alındı — alt çizgili başlık şeridi (RADAR YÖNETİMİ / ELEKTRO OPTİK YÖNETİMİ), sağa yaslı '+ Yeni …' düğmesi aynı stilde, alt durum çubuğu ortak modülden ('Radar Sayısı : 0/0 (Toplam / Bağlı)').",
+      "Sihirbaz komutlarının WS sırasından bağımsız işlenmesi (2.4.197) ve 30 sn bekçi korunur; asıl neden yukarıdaki kilittir."
+    ]
+  },
   {
     surum: "2.4.197",
     tarih: "2026-09-14",

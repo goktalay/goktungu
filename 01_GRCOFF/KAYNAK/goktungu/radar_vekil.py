@@ -145,10 +145,14 @@ class RadarVekili:
             self.radar_ayarlar["merkez_yonu"] = 0.0
 
     def radar_konum(self):
-        """Radar konumu: kopruden gelen RTK varsa onu, yoksa merkez ayari."""
-        with self.kilit:
-            lat = self.durum.get("lat")
-            lon = self.durum.get("lon")
+        """Radar konumu: kopruden gelen RTK varsa onu, yoksa merkez ayari.
+
+        v2.4.198: KILIT ALINMAZ — cagiran (`RadarYoneticisi.hedefler`)
+        telemetri dongusunde ayni yeniden girissiz kilidin icindedir;
+        burada alinsa olay dongusu kilitlenir (bkz. radar.py:radar_konum).
+        """
+        lat = self.durum.get("lat")
+        lon = self.durum.get("lon")
         if lat is not None and lon is not None:
             return lat, lon
         # v2.4.192: kayittaki kurulu konum (radarlar.lat/lon) merkez

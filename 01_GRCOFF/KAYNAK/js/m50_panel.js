@@ -759,13 +759,7 @@ m50AlanlariEtkinlestir();
     if (!liste) return;
     const t = m50T();
     liste.innerHTML = "";
-    const dc = document.getElementById("eoCihazDurum");
-    if (dc){
-      const bagli = eoListesi.filter(c => c.m50_durum && c.m50_durum.durum === "bagli").length;
-      dc.querySelector(".pd-sol").innerHTML = "<b>" + eoListesi.length + "</b> " + (t.pdCihaz || "cihaz") +
-        " · <b>" + bagli + "</b> " + (t.pdBagli || "bağlı");
-      dc.querySelector(".pd-sag").textContent = new Date().toLocaleTimeString();
-    }
+    // v2.4.198: durum cubugu ORTAK modulden (panel_durumcubugu.js) gelir.
     if (!eoListesi.length){
       if (typeof bosPanelYap === "function")
         liste.appendChild(bosPanelYap(t.bosEo || "KAYITLI ELEKTRO OPTİK YOK", "fa-solid fa-binoculars"));

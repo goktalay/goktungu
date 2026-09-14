@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24196">
+<link rel="stylesheet" href="css/stil.css?v=v24198">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -408,14 +408,17 @@
     <span><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="panelRadarlar">RADARLAR</span></span>
     <button class="yuzen-kapat" data-yuzen="yzRadarlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
+  <!-- v2.4.198: Kameralar paneliyle AYNI desen — panel-toolbar (alt cizgili
+       baslik seridi, saga yasli "+ Yeni ..." dugmesi) ve ortak durum
+       cubugu (panel_durumcubugu.js otomatik ekler). -->
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketRadarlar">RADAR YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnRadarYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnRadarYeni" title="Yeni Radar"><i class="fa-solid fa-plus"></i><span data-i18n="btnRadarYeni">Yeni Radar</span></button>
+  </div>
   <div class="yuzen-icerik">
-    <div class="cl-ust">
-      <span class="aciklama" data-i18n="radarlarAciklama">Satıra tıklayınca o radarın ayar paneli açılır.</span>
-      <button id="btnRadarYeni" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnRadarYeni">YENİ RADAR</span></button>
-    </div>
     <div id="radarlarListe" class="cl-liste"></div>
   </div>
-  <div class="panel-durum-cubugu" id="radarlarDurum"><span class="pd-sol"></span><span class="pd-sag"></span></div>
 </div>
 <div id="yzRadarForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
   <div class="yuzen-baslik">
@@ -446,14 +449,14 @@
     <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelEoCihazlar">ELEKTRO OPTİK CİHAZLARI</span></span>
     <button class="yuzen-kapat" data-yuzen="yzEoCihazlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketEo">ELEKTRO OPTİK YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnEoYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnEoYeni" title="Yeni Elektro Optik"><i class="fa-solid fa-plus"></i><span data-i18n="btnEoYeni">Yeni Elektro Optik</span></button>
+  </div>
   <div class="yuzen-icerik">
-    <div class="cl-ust">
-      <span class="aciklama" data-i18n="eoCihazlarAciklama">Satıra tıklayınca cihazın kontrol paneli açılır.</span>
-      <button id="btnEoYeni" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnEoYeni">YENİ ELEKTRO OPTİK</span></button>
-    </div>
     <div id="eoCihazListe" class="cl-liste"></div>
   </div>
-  <div class="panel-durum-cubugu" id="eoCihazDurum"><span class="pd-sol"></span><span class="pd-sag"></span></div>
 </div>
 <div id="yzEoForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
   <div class="yuzen-baslik">
@@ -2011,7 +2014,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24195"></script>
+<script src="js/i18n.js?v=v24198"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2077,8 +2080,8 @@
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24192"></script>
-<script src="js/radar_panel.js?v=v24196"></script>
-<script src="js/m50_panel.js?v=v24196"></script>
+<script src="js/radar_panel.js?v=v24198"></script>
+<script src="js/m50_panel.js?v=v24198"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>
@@ -2164,7 +2167,7 @@
 <script src="js/pencere_iskelet.js?v=v24127"></script>
 <!-- IS51-PANEL-DURUMCUBUGU-V1: on yonetim panelinin altina ozet
      sayac seridi ekler. Gorsel sozlesme css/panel_durumcubugu.css. -->
-<script src="js/panel_durumcubugu.js?v=v24127"></script>
+<script src="js/panel_durumcubugu.js?v=v24198"></script>
 <!-- FAZ19-IS71-K1-INDEX-SOKUM -->
 <!-- FAZ19-IS71-K1B-DIV-ONARIM -->
 <!-- FAZ19-IS71-K3-DRONKAMERA-SOKUM -->
