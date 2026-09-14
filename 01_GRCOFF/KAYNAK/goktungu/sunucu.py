@@ -325,7 +325,8 @@ class WSSunucusu:
                  manuel_kontrol=None, dron_takip=None, suru=None,
                  pilot=None,
                  dji_kopru=None, ai_yonetici=None, kisiler=None,
-                 araclar=None, mesajlar=None, istasyon2=None, m50=None):
+                 araclar=None, mesajlar=None, istasyon2=None, m50=None,
+                 m50_yerel=None):
         self.konsol = konsol
         self.ayarlar = ayarlar
         self.kullanicilar = kullanicilar
@@ -342,6 +343,11 @@ class WSSunucusu:
         # M50 HVS SDK bu süreçte yüklenmez; nesne yalnız saha Köprüsünün
         # arındırılmış durumunu taşıyan vekildir.
         self.m50 = m50
+        # v2.4.184: Merkez KENDİSİ Windows x64 ise ve gömülü SDK varsa
+        # (m50_sdk/), M50 köprüsüz de çalışabilir. `_m50_kopruye` önce
+        # bunu dener; kullanılamazsa (Linux Merkez, SDK eksik) saha
+        # Köprüsü akışına sessizce düşer.
+        self.m50_yerel = m50_yerel
         self.angajman = angajman
         self.takipci = takipci
         self.kilit = dron.kilit          # paylasilan threading.Lock
@@ -2986,8 +2992,38 @@ class WSSunucusu:
         sonuc["kopru_ornek_id"] = oid
         return sonuc, ""
 
+    async def _m50_yerelden(self, websocket, eylem, veri=None):
+        """M50 komutunu Merkez'in kendi gömülü SDK'sıyla (köprüsüz) uygular.
+
+        SDK çağrıları senkron/bloklayıcı olduğu için asyncio döngüsünü
+        kilitlememek adına `asyncio.to_thread` ile ayrı iş parçacığında
+        çalıştırılır — `ai_track_baslat/durdur` ile aynı desen.
+        """
+        yerel = self.m50_yerel
+        try:
+            sonuc = await asyncio.to_thread(yerel.uygula, eylem, veri or {})
+        except Exception as exc:
+            hata = str(exc)[:256] or "M50 komutu uygulanamadı"
+            hedef = getattr(self, "m50", None)
+            if hedef is not None:
+                with self.kilit:
+                    hedef.durum.update({"durum": "hata", "bagli": False,
+                                         "hata": hata, "ip": "", "port": 0})
+            self.konsol("M50", hata, "hata")
+            await self._uyari_gonder(websocket, "M50", hata, "hata")
+            return None
+        hedef = getattr(self, "m50", None)
+        if hedef is not None and isinstance(sonuc, dict):
+            hedef._uygula(sonuc)
+        return sonuc
+
     async def _m50_kopruye(self, websocket, eylem, veri=None, k=None):
-        """M50 komutunu saha Köprüsüne iletir; sır içeren veriyi yazmaz."""
+        """M50 komutunu uygular: köprüsüz mod kullanılabilirse ONU, aksi
+        halde saha Köprüsünü seçer. Sır içeren veriyi hiçbir durumda
+        günlüğe/duruma yazmaz."""
+        yerel = getattr(self, "m50_yerel", None)
+        if yerel is not None and yerel.kullanilabilir():
+            return await self._m50_yerelden(websocket, eylem, veri)
         istenen = k.get("kopru_ornek_id") if isinstance(k, dict) else None
         sonuc, hata = await self._m50_kopru_cagir(
             websocket, eylem, veri or {}, istenen_kopru=istenen)

@@ -459,14 +459,26 @@ def uygulama_kur():
     else:
         radar = RadarIstemcisi(konsol, ayarlar, kilit)
 
-    # M50 HVS SDK yalnız Windows x64 SAHA Köprüsünde yüklenir. GCS/Merkez
-    # süreci, yerel kipte dahi cihaz DLL'si açmaz; M50 durumu ve izinli
-    # komutlar ortak Köprü kanalı üzerinden vekil edilir.
+    # v2.4.184: M50 artık İKİ yoldan çalışabilir:
+    #   1) SAHA KÖPRÜSÜ (değişmez) — çok-siteli/merkezi kurulumlarda,
+    #      M50 SDK'sı hiçbir zaman bu süreçte açılmaz; `m50_vekil.py`
+    #      yalnız Köprünün arındırılmış durumunu taşır.
+    #   2) DOĞRUDAN (yeni) — Merkez'in KENDİSİ Windows x64 ise ve gömülü
+    #      SDK kopyası (goktungu/m50_sdk/) varsa, `m50_yerel.py` SDK'yı
+    #      doğrudan bu süreçte çağırır; ayrı köprü kurulumu gerekmez.
+    #      `sunucu.py:_m50_kopruye` doğrudan modu kullanılamıyorsa
+    #      (Linux Merkez, SDK eksik) sessizce Köprü akışına düşer.
     from goktungu.m50_vekil import M50Vekili
+    from goktungu.m50_yerel import M50YerelServisi
     m50 = M50Vekili(konsol, kilit)
+    m50_yerel = M50YerelServisi(konsol, ayarlar)
     video_proxy.m50_vekil = m50  # v2.4.181: 'm50:<kanal>' kamera URL cozumu
-    konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur; "
-                  "Merkezde SDK/DLL yüklenmez.", "bilgi")
+    if m50_yerel.kullanilabilir():
+        konsol("M50", "M50 elektro-optik: gömülü SDK bulundu, köprüsüz "
+                      "doğrudan bağlantı kullanılabilir.", "bilgi")
+    else:
+        konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur "
+                      "(bu makinede gömülü SDK yok/Windows değil).", "bilgi")
 
     # --- Islem katmani ---
     takipci = Takipci()
@@ -576,7 +588,8 @@ def uygulama_kur():
     # --- Sunucu katmani ---
     ws_sunucu = WSSunucusu(konsol, ayarlar, kullanicilar, lokasyonlar,
                            kayit, dron, radar, angajman, takipci,
-                           m50=m50, etiket=etiket, rotalar=rotalar, gorev=gorev,
+                           m50=m50, m50_yerel=m50_yerel,
+                           etiket=etiket, rotalar=rotalar, gorev=gorev,
                            baglantilar=baglantilar, kameralar=kameralar,
                            video_proxy=video_proxy,
                            ucus_gecmisi=ucus_gecmisi,

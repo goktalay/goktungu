@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.183";
+const GCS_SURUM = "2.4.184";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.184",
+    tarih: "2026-09-14",
+    baslik: "M50 köprüsüz (doğrudan) bağlantı desteği eklendi (paket 2.5.54)",
+    maddeler: [
+      "YENİ: M50 artık ayrı bir 'Görüntü Köprüsü' kurmadan da çalışabilir. Merkez'in kendisi Windows x64 üzerinde çalışıyorsa ve gömülü HVS SDK kopyası (goktungu/m50_sdk/) mevcutsa, M50 bağlantı/PTZ/lens/takip komutları doğrudan bu süreçte işlenir; ayrı bir köprü kurulumu ve bağlantısı gerekmez.",
+      "Saha Köprüsü desteği KALDIRILMADI: Merkez Linux'ta çalışıyorsa veya gömülü SDK bulunmuyorsa sistem otomatik olarak eski köprü akışına düşer — çok siteli/merkezi kurulumlar etkilenmez.",
+      "GÜVENLİK KORUNDU: kullanıcı adı/parola doğrudan modda da kalıcı ayara veya günlüğe yazılmaz, yalnız bağlantı çağrısı süresince bellekte tutulur. Kalıcı olarak saklanan tek M50 ayarı RTSP görünür/termal adresleri ve SDK dizinidir (parola içermezler)."
+    ]
+  },
   {
     surum: "2.4.183",
     tarih: "2026-09-14",
