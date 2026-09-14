@@ -4906,6 +4906,7 @@ class WSSunucusu:
         "servis_eylem":     ("sistem", "servis", "servis"),
         "makine_kapat":     ("sistem", "servis", "servis"),
         "dron_isim_kaydet": ("dron", "kayit_yonetimi", "dron"),
+        "dron_renk_kaydet": ("dron", "kayit_yonetimi", "dron"),
         "param_yaz":        ("dron", "parametre", "parametre"),
         # v2.5.0: MOTOR TESTI VE ARAC HAZIRLIK ARACLARI
         # Motor testi pervaneleri dondurur: pilotluk izni ister ve
@@ -7390,6 +7391,16 @@ class WSSunucusu:
                                 f"sysid={sysid} {aksiyon} gonderilemedi: "
                                 "seri baglanti yok", "hata")
 
+        elif komut == "dron_renk_kaydet":
+            # v2.4.202: {"tip":"dron_renk_kaydet","sysid":7,"renk":"#ff8800"}
+            sysid = int(k.get("sysid", 0))
+            renk = str(k.get("renk", "")).strip()
+            if sysid and renk:
+                if self.dron.dron_renk_kaydet(sysid, renk):
+                    self.konsol("DRON", "Dron %s rengi %s olarak kaydedildi" % (sysid, renk), "basari")
+                else:
+                    await self._uyari_gonder(websocket, "DRON",
+                        "Renk kaydedilemedi: dron kaydi henuz yok (UID alinmadi) ya da renk gecersiz.", "hata")
         elif komut == "dron_isim_kaydet":
             # {"tip":"dron_isim_kaydet","sysid":7,"isim":"Kartal-1"}
             sysid = int(k.get("sysid", 0))

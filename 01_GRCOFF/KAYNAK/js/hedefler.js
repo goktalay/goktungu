@@ -200,6 +200,7 @@ function radarHedefleriGuncelle(hedefler){
       const hTanim = {
         position: poz,
         label: {
+          show: false,   // v2.4.202: fareyle uzerine gelince gorunur (harita_hover.js)
           text: etiket,
           font: "bold 12px Consolas, monospace",
           fillColor: Cesium.Color.fromCssColorString(renk),

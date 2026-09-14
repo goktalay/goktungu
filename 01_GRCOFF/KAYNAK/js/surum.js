@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.201";
+const GCS_SURUM = "2.4.202";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.202",
+    tarih: "2026-09-14",
+    baslik: "Harita etiketleri fareyle üzerine gelince; dron rengi kullanıcı seçimi (paket 2.5.72)",
+    maddeler: [
+      "YENİ (kullanıcı isteği): Dron ve radar hedefi ikonlarının altındaki bilgi etiketi varsayılan gizli; fare ikonun üzerine gelince yalnız o ikonun etiketi görünür, çekilince kapanır.",
+      "YENİ (kullanıcı isteği): Dron düzenleme penceresine 'Harita rengi' seçici eklendi; seçilen renk dron kaydına kalıcı yazılır ve haritadaki ikon, etiket, iz ve dikey çizgi hemen o renge döner."
+    ]
+  },
   {
     surum: "2.4.201",
     tarih: "2026-09-14",

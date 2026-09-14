@@ -1283,6 +1283,8 @@
   .eo-kamera-onizleme { width: 132px; height: 86px; border-color: #ffb454; }
   .eo-kamera-onizleme:hover { border-color: #ffd28a; box-shadow: 0 0 0 2px rgba(255,180,84,.28); }
   .eo-kamera-onizleme span { background: rgba(48,26,4,.82); color: #ffe6c2; }
+  /* v2.4.202: dron duzenleme penceresinde renk secici */
+  .dk-renk-sec { width: 64px; height: 30px; padding: 2px; cursor: pointer; }
   /* v2.4.192: Program Ayarlari acilir-kapanir bolumleri */
   .prog-ayar-popup .prog-bolum { margin: 6px 0; }
   .prog-bolum-ic { padding: 4px 2px 2px; }

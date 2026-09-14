@@ -866,6 +866,9 @@ function varlikGuncelle(d){
       id: "dron_" + d.sysid,
       position: pos,
       label: {
+        // v2.4.202 (kullanici istegi): bilgi etiketi VARSAYILAN GIZLI;
+        // fare ikonun uzerine gelince harita_hover.js acar.
+        show: false,
         text: etiket,
         font: "bold 12px Consolas, monospace",
         fillColor: Cesium.Color.fromCssColorString(renk),
@@ -2108,6 +2111,20 @@ function dkIsimDuzenlePopup(anka, sysid) {
   isimInput.placeholder = dronUid || "D" + sysid;
   isimAlan.append(isimEtiket, isimInput);
   govde.appendChild(isimAlan);
+  // v2.4.202 (kullanici istegi): dronun harita rengi secilebilir.
+  const renkAlan = document.createElement("label");
+  renkAlan.className = "dk-dron-duzenle-alan";
+  const renkEtiket = document.createElement("span");
+  renkEtiket.className = "dk-mp-etiket";
+  renkEtiket.textContent = t.dkRenkEtiket || "Harita rengi";
+  const renkInput = document.createElement("input");
+  renkInput.type = "color";
+  renkInput.className = "dk-mp-input dk-renk-sec";
+  const _ilkRenk = (typeof dronRengi === "function") ? dronRengi(sysid) : "#5cc8ff";
+  renkInput.value = /^#[0-9a-fA-F]{6}$/.test(_ilkRenk || "") ? _ilkRenk : "#5cc8ff";
+  renkInput.dataset.ilk = renkInput.value;
+  renkAlan.append(renkEtiket, renkInput);
+  govde.appendChild(renkAlan);
 
   const kaynakBolum = document.createElement("section");
   kaynakBolum.className = "dk-dron-duzenle-kaynak";
@@ -2179,6 +2196,12 @@ function dkIsimDuzenlePopup(anka, sysid) {
     if (yeniIsim && ws && ws.readyState === 1) {
       ws.send(JSON.stringify({tip: "dron_isim_kaydet", sysid: sysid, isim: yeniIsim}));
       if (d) d.kullanici_isim = yeniIsim;
+    }
+    const yeniRenk = String(renkInput.value || "").toLowerCase();
+    if (yeniRenk && yeniRenk !== renkInput.dataset.ilk && ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({tip: "dron_renk_kaydet", sysid: sysid, renk: yeniRenk}));
+      if (!window.dronRenkler) window.dronRenkler = {};
+      window.dronRenkler[String(sysid)] = yeniRenk;
     }
     const mevcut = pop._gkMevcut;
     const oid = Number(kopruSel.value || 0);
