@@ -291,3 +291,47 @@ def esitle(adres, eposta, sifre):
         return None, hata2
     return {"cekilen": len(liste), "eklendi": eklendi,
             "guncellendi": guncellendi}, ""
+
+
+def lisans_cek(adres, eposta, sifre):
+    """v2.4.201: Merkezden GUNCEL imzali lisans belgesini ceker.
+
+    Kullanici bildirimi: yerel `merkez_lisans.json` eski kalinca (ornegin
+    M50 yetkisi merkezde sonradan acildiginda) Elektro-Optik menusu
+    gorunmuyordu ve tek yol belgeyi kurumsal panelden elle indirip
+    dosyayi degistirmekti. Bu islev `kullanicilari_cek` ile AYNI giris
+    yolunu kullanir (firma yoneticisi oturumu), belgeyi
+    `/api/firma/merkez_lisans` ucundan alir ve imza dogrulamasi ile
+    diske yazilmasi icin `lisans.lisans_yaz`e verilecek sozlugu doner.
+
+    Doner: (belge, hata). Belge None ise hata metni doludur.
+    """
+    taban = _adres_duzelt(adres)
+    if not taban:
+        return None, "Merkez adresi gecersiz. Ornek: goktungu.com"
+    dogrula = not _yerel_mi(taban)
+    durum, govde, cerez = _istek(
+        taban, "/api/firma/giris",
+        {"eposta": str(eposta or "").strip().lower(),
+         "sifre": str(sifre or "")},
+        dogrula=dogrula)
+    if durum != 200:
+        ileti = (govde or {}).get("hata") or "Giris basarisiz"
+        if durum == 0:
+            return None, ileti
+        return None, "Merkez girisi basarisiz (%s): %s" % (durum, ileti)
+    if not cerez:
+        return None, ("Merkez oturum cerezi alinamadi. Adresin dogru "
+                      "oldugundan emin olun.")
+    durum, govde, _ = _istek(taban, "/api/firma/merkez_lisans",
+                             cerez=cerez, dogrula=dogrula)
+    if durum == 403:
+        return None, ((govde or {}).get("hata") or
+                      "Bu firmanin Merkez Uygulama lisansi yok ya da "
+                      "hesap firma yoneticisi degil")
+    if durum != 200:
+        return None, ("Lisans belgesi alinamadi (%s): %s"
+                      % (durum, (govde or {}).get("hata") or ""))
+    if not isinstance(govde, dict) or not govde.get("lisans") or not govde.get("imza"):
+        return None, "Merkez gecerli bir lisans belgesi dondurmedi"
+    return {"lisans": govde["lisans"], "imza": govde["imza"]}, ""

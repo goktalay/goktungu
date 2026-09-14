@@ -162,6 +162,8 @@
         <span class="mb-etiket" data-i18n="mbYardim">Destek</span>
         <div class="mb-dropdown">
           <div class="mb-oge" id="mbYardimMerkez" data-hizli="y"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-book-open"></i><span data-i18n="mbYardimMerkez">Destek Merkezi</span></div>
+          <!-- v2.4.201: uygulama icinden lisans yenileme -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbLisansYenile" data-yuzen="yzLisans" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-key"></i><span data-i18n="mbLisansYenile">Lisansı Yenile</span></div>
           <div class="mb-oge" id="mbGuncelleme" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-cloud-arrow-down"></i><span data-i18n="mbGuncelleme">Güncellemeleri Denetle</span></div>
           <div class="mb-ayrac"></div>
           <div class="mb-oge mb-popup-toggle pasif" id="mbHakkinda" data-yuzen="yzHakkinda" data-hizli="p"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-circle-info"></i><span data-i18n="mbHakkinda">Program Hakkında</span></div>
@@ -399,6 +401,26 @@
         <button id="btnM50AyarKaydet" style="width:100%;padding:8px;margin-top:7px"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50AyarKaydet">YEREL AYARLARI KAYDET</span></button>
       </div>
     </details>
+  </div>
+</div>
+
+<!-- ============ v2.4.201: LISANS YENILE ============ -->
+<div id="yzLisans" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:400px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-key"></i> <span data-i18n="panelLisans">LİSANSI YENİLE</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzLisans" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <p class="aciklama" data-i18n="lisansAciklama">Merkezdeki güncel lisans belgesi indirilip yerel belgenin üzerine yazılır; yetkiler (radar, elektro-optik, yapay zekâ) servis yeniden başlatılmadan güncellenir. Firma yöneticisi hesabı gerekir; şifre kaydedilmez.</p>
+    <div class="alan"><label for="lsAdres" data-i18n="lblLsAdres">Merkez sunucu adresi</label><input type="text" id="lsAdres" value="goktungu.com" spellcheck="false" autocomplete="off"></div>
+    <div class="alan"><label for="lsEposta" data-i18n="lblLsEposta">Firma yöneticisi e-postası</label><input type="text" id="lsEposta" autocomplete="username" spellcheck="false"></div>
+    <div class="alan"><label for="lsSifre" data-i18n="lblLsSifre">Şifre</label><input type="password" id="lsSifre" autocomplete="current-password"></div>
+    <div id="lsDurum" class="aciklama"></div>
+    <div id="lsOzet" class="aciklama" style="font-family:Consolas,monospace;font-size:11px"></div>
+  </div>
+  <div class="form-dip">
+    <button id="btnLsIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnLsYenile"><i class="fa-solid fa-rotate"></i><span data-i18n="btnLsYenile">YENİLE</span></button>
   </div>
 </div>
 
@@ -2014,7 +2036,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24198"></script>
+<script src="js/i18n.js?v=v24201"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2066,6 +2088,7 @@
 <script src="js/dji_belirtec.js?v=v24127"></script>
 <script src="js/kopru_kimlik.js?v=v24127"></script>
 <script src="js/program_ayar.js?v=v24200"></script>
+<script src="js/lisans_yenile.js?v=v24201"></script>
 <script src="js/servis_panel.js?v=v24127"></script>
 <!-- v2.4.50: pilot bazli joystick ayarlari (ters cevirme, olu bolge,
      merkez kalibrasyonu). Kisisel ayardir; rol sarti yoktur. -->
@@ -2150,7 +2173,7 @@
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24183"></script>
-<script src="js/ws.js?v=v24200"></script>
+<script src="js/ws.js?v=v24201"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>

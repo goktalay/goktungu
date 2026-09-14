@@ -5670,6 +5670,61 @@ class WSSunucusu:
     # ------------------------------------------------------------------
     # v2.4.66: MERKEZ KULLANICI ESITLEMESI
     # ------------------------------------------------------------------
+    async def _lisans_yenile(self, websocket, k):
+        """v2.4.201: Merkezden guncel lisans belgesini indirip yerine koyar.
+
+        Istek : {"tip":"lisans_yenile","adres":..,"eposta":..,"sifre":..}
+        Yanit : {"tip":"lisans_yenile_sonuc","basarili":bool,"hata":str,
+                 "lisans": <yetki ozeti>}
+        Yalniz yonetici. Ag islemi executor'da kosar (WS dongusu donmasin).
+        Basarida yeni ozet yanita konur; arayuz menuleri servis yeniden
+        baslatilmadan gunceller. Sifre gunluge/duruma yazilmaz.
+        """
+        p = self._pilot_bilgi(websocket) or {}
+        if p.get("rol") != "yonetici":
+            await websocket.send(json.dumps(
+                {"tip": "lisans_yenile_sonuc", "basarili": False,
+                 "hata": "Lisansi yalnizca yonetici yenileyebilir."}))
+            return
+        adres = str(k.get("adres") or "").strip()
+        eposta = str(k.get("eposta") or "").strip()
+        sifre = str(k.get("sifre") or "")
+        eksik = [a for a, v in (("Merkez adresi", adres), ("E-posta", eposta),
+                                ("Sifre", sifre)) if not v]
+        if eksik:
+            await websocket.send(json.dumps(
+                {"tip": "lisans_yenile_sonuc", "basarili": False,
+                 "hata": ", ".join(eksik) + " zorunludur."}))
+            return
+        loop = asyncio.get_event_loop()
+
+        def _calistir():
+            from . import merkez_esitle as _me
+            from . import lisans as _lis
+            belge, hata = _me.lisans_cek(adres, eposta, sifre)
+            if hata:
+                return None, hata
+            tamam, hata2 = _lis.lisans_yaz(belge)
+            if not tamam:
+                return None, hata2
+            return _lis.yetki_ozeti(), ""
+        try:
+            ozet, hata = await loop.run_in_executor(None, _db_iade_ederek, _calistir)
+        except Exception as e:
+            ozet, hata = None, "Lisans yenileme basarisiz: %s" % e
+        if hata:
+            self.konsol("LISANS", "Lisans yenilenemedi: %s" % hata, "hata")
+            await websocket.send(json.dumps(
+                {"tip": "lisans_yenile_sonuc", "basarili": False, "hata": hata}))
+            return
+        self.konsol("LISANS", "Lisans belgesi yenilendi: %s (ai=%s radar=%s "
+                    "gccdual=%s m50=%s)" % (ozet.get("firma_unvan") or "?",
+                    ozet.get("ai"), ozet.get("radar"), ozet.get("gccdual"),
+                    ozet.get("m50")), "basari")
+        await websocket.send(json.dumps(
+            {"tip": "lisans_yenile_sonuc", "basarili": True, "hata": "",
+             "lisans": ozet}))
+
     async def _merkez_esitle(self, websocket, k):
         """Merkezden firma kullanicilarini cekip yerel tabloya yazar.
 
@@ -10497,6 +10552,8 @@ class WSSunucusu:
                              "degistirilebilir.",
                      "eposta": "", "degistirildi": False,
                      "kapali": True}))
+        elif komut == "lisans_yenile":
+            await self._lisans_yenile(websocket, k)
         elif komut == "merkez_esitle":
             # v2.4.66: MERKEZ KULLANICI ESITLEMESI
             #

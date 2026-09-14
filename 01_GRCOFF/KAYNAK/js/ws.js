@@ -682,6 +682,8 @@ function wsBaglan(){
     // v2.4.66: merkez kullanici esitlemesi (sihirbaz adim 4).
     // GIRIS ONCESI gelir: yerel kullanici tablosu bos oldugu icin
     // kimlik dogrulanamaz; yonlendirme KOSULSUZ olmalidir.
+    } else if (m.tip === "lisans_yenile_sonuc"){
+      if (typeof window.lisansYenileSonuc === "function") window.lisansYenileSonuc(m);
     } else if (m.tip === "merkez_esitle_sonuc"){
       if (typeof window.pgSonucGeldi === "function")
         window.pgSonucGeldi(m);

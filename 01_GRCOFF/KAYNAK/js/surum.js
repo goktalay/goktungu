@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.200";
+const GCS_SURUM = "2.4.201";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.201",
+    tarih: "2026-09-14",
+    baslik: "Yardım > Lisansı Yenile: güncel lisans belgesi uygulama içinden alınır (paket 2.5.71)",
+    maddeler: [
+      "YENİ (kullanıcı bildirimi): Merkezde bir yetki (örn. M50 elektro-optik) sonradan açıldığında yerel imzalı lisans belgesi eski kalıyor, menü görünmüyor ve tek yol belgeyi kurumsal panelden elle indirip dosyayı değiştirmekti. Yardım menüsüne 'Lisansı Yenile' eklendi: merkez adresi + firma yöneticisi hesabıyla güncel belge indirilir, imzası doğrulanıp yerine yazılır ve yetkiler servis yeniden başlatılmadan uygulanır. Şifre kaydedilmez."
+    ]
+  },
   {
     surum: "2.4.200",
     tarih: "2026-09-14",
