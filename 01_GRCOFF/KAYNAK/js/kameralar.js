@@ -771,65 +771,176 @@
       ayrikToggle(kamera.id);
     });
 
-    const bDuzenle = document.createElement("button");
-    bDuzenle.className = "kam-btn";
-    bDuzenle.title = t.kamDuzenle || "Düzenle";
-    bDuzenle.innerHTML = "<i class='fa-solid fa-pen'></i>";
-    bDuzenle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modalAc(kamera);
-    });
+    // v2.4.189: Kullanici istegi — "cok fazla dugme oldu": duzenle / AI /
+    // (M50: Elektro-Optik paneli, kanal) / sil TEK "..." menusune; goruntu
+    // konumu (4 dugme) TEK acilir dugmeye indi (kamera_ai_panel.js).
+    kutu.append(bPlay, bAyir);
+    if (typeof window.kameraGoruntuHedefSecici === "function") {
+      kutu.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
+    }
 
-    const bSil = document.createElement("button");
-    bSil.className = "kam-btn kam-btn-sil";
-    bSil.title = t.kamSil || "Sil";
-    bSil.innerHTML = "<i class='fa-solid fa-trash'></i>";
-    bSil.addEventListener("click", (e) => {
-      e.stopPropagation();
+    const bMenu = document.createElement("button");
+    bMenu.className = "kam-btn kam-menu-btn";
+    bMenu.title = t.kamMenu || "Diğer işlemler";
+    bMenu.innerHTML = "<i class='fa-solid fa-ellipsis-vertical'></i>";
+    const dd = document.createElement("div");
+    dd.className = "dk-menu-dropdown kam-menu";
+    const oge = (ikon, metin, tik, sinif) => {
+      const it = document.createElement("div");
+      it.className = "dk-menu-item" + (sinif ? " " + sinif : "");
+      it.innerHTML = "<i class='fa-solid " + ikon + "'></i><span>" + metin + "</span>";
+      it.addEventListener("click", (e) => { e.stopPropagation(); dd.classList.remove("acik"); tik(); });
+      dd.appendChild(it);
+    };
+    oge("fa-pen", t.kamDuzenle || "Düzenle", () => modalAc(kamera));
+    if (typeof window.kameraAiAyarPanelAc === "function")
+      oge("fa-robot", t.kaiBaslik || "Yapay Zeka Ayarları", () => window.kameraAiAyarPanelAc(kamera.id));
+    if (kamera.protokol === "m50") {
+      const kanalSu = String(kamera.url || "").split(":")[1] === "termal" ? "termal" : "gorunur";
+      oge("fa-binoculars", t.kamM50Panel || "Elektro-Optik paneli", () => {
+        if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
+      });
+      oge(kanalSu === "termal" ? "fa-sun" : "fa-fire",
+          (t.kamM50KanalGecis || "Kanal değiştir") + " → " +
+          (kanalSu === "termal" ? (t.m50Gorunur || "Görünür") : (t.m50Termal || "Termal")),
+          () => window.m50KanalDegistir(kamera, kanalSu === "termal" ? "gorunur" : "termal"));
+    }
+    const ayrac = document.createElement("div"); ayrac.className = "dk-menu-ayrac"; dd.appendChild(ayrac);
+    oge("fa-trash", t.kamSil || "Sil", () => {
       onayIste(onayMetni("onayKameraSil", {ad: kamera.isim || kamera.id}), () => {
         durdur(kamera.id);
         ayrikKapat(kamera.id);
         wsGonder({ tip: "kamera_sil", id: kamera.id });
       });
-    });
-
-    // v2.5.24: Yapay Zeka Ayarlari dugmesi (paylasimli panel)
-    if (typeof window.kameraAiAyarButonu === "function") {
-      kutu.appendChild(window.kameraAiAyarButonu(kamera.id));
-    }
-    // v2.4.181: M50 kamerasina ozel dugmeler — PTZ/lens paneli acan
-    // dugme + gorunur/termal kanal gecisi (ayni kamera kaydinda).
-    if (kamera.protokol === "m50") {
-      const bM50Panel = document.createElement("button");
-      bM50Panel.className = "kam-btn";
-      bM50Panel.title = t.kamM50Panel || "M50 PTZ / Lens Kontrolü";
-      bM50Panel.innerHTML = "<i class='fa-solid fa-binoculars'></i>";
-      bM50Panel.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
-      });
-      kutu.appendChild(bM50Panel);
-
-      const kanalSu = String(kamera.url || "").split(":")[1] === "termal" ? "termal" : "gorunur";
-      const bKanal = document.createElement("button");
-      bKanal.className = "kam-btn";
-      bKanal.title = (t.kamM50KanalGecis || "Kanal değiştir") + " (" +
-        (kanalSu === "termal" ? (t.m50Gorunur || "Görünür") : (t.m50Termal || "Termal")) + "'e geç)";
-      bKanal.innerHTML = kanalSu === "termal"
-        ? "<i class='fa-solid fa-sun'></i>" : "<i class='fa-solid fa-fire'></i>";
-      bKanal.addEventListener("click", (e) => {
-        e.stopPropagation();
-        window.m50KanalDegistir(kamera, kanalSu === "termal" ? "gorunur" : "termal");
-      });
-      kutu.appendChild(bKanal);
-    }
-    kutu.append(bPlay, bAyir, bDuzenle, bSil);
-    // v2.5.24: Goruntu hedefi secici (harita/yuzen/panel/tam) — tek konum
-    if (typeof window.kameraGoruntuHedefSecici === "function") {
-      kutu.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
-    }
+    }, "tehlikeli");
+    bMenu.addEventListener("click", (e) => { e.stopPropagation(); window.kamMenuAcKapa(bMenu, dd); });
+    kutu.append(bMenu, dd);
     return kutu;
   }
+
+  // v2.4.189: ortak acilir menu ac/kapa (sabit konumlu .dk-menu-dropdown;
+  // arayuz.js'teki hedef menusuyle ayni yerlesim kurali). Disari tiklama ve
+  // Escape kapatir; ayni anda yalniz bir menu acik kalir.
+  window.kamMenuAcKapa = function (btn, dd) {
+    const acilacak = !dd.classList.contains("acik");
+    document.querySelectorAll(".dk-menu-dropdown.acik").forEach(m => m.classList.remove("acik"));
+    if (!acilacak) return;
+    dd.classList.add("acik");
+    const r = btn.getBoundingClientRect();
+    let top = r.bottom + 4, left = r.left;
+    dd.style.top = top + "px"; dd.style.left = left + "px";
+    const mr = dd.getBoundingClientRect();
+    if (mr.right > window.innerWidth) left = Math.max(4, window.innerWidth - mr.width - 8);
+    if (mr.bottom > window.innerHeight) top = Math.max(4, r.top - mr.height - 4);
+    dd.style.top = top + "px"; dd.style.left = left + "px";
+  };
+  document.addEventListener("click", (ev) => {
+    if (!ev.target.closest(".kam-menu, .kam-hedef-menu"))
+      document.querySelectorAll(".kam-menu.acik, .kam-hedef-menu.acik").forEach(m => m.classList.remove("acik"));
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape")
+      document.querySelectorAll(".kam-menu.acik, .kam-hedef-menu.acik").forEach(m => m.classList.remove("acik"));
+  });
+
+  // =================================================================
+  // v2.4.189: KAMERA BASINA HABERLESME KONSOLU — dronlar.js'teki
+  // dk-konsol deseninin esi. Satir yeniden cizilse de konsol DOM'u ve
+  // acik/kapali durumu `kamKonsollar[id]` icinde korunur.
+  // =================================================================
+  const KAM_KONSOL_DOM_LIMIT = 400;
+  const KAM_KONSOL_SEV = { bilgi: "dk-kons-bilgi", basari: "dk-kons-basari",
+                           uyari: "dk-kons-uyari", hata: "dk-kons-hata" };
+  const kamKonsollar = {};
+  function kamKonsolSaat(ts) {
+    const n = Number(ts);
+    if (!isFinite(n) || n <= 0) return "";
+    const d = new Date(n * 1000);
+    const iki = (x) => String(x).padStart(2, "0");
+    return iki(d.getHours()) + ":" + iki(d.getMinutes()) + ":" + iki(d.getSeconds());
+  }
+  function kamKonsolSatirBas(k, s) {
+    if (s && s.yeni === false && k.sonSatirEl && k.sonMetin === (s.etiket + " " + s.metin)) {
+      let roz = k.sonSatirEl.querySelector(".dk-kons-tekrar");
+      if (!roz) { roz = document.createElement("span"); roz.className = "dk-kons-tekrar"; k.sonSatirEl.appendChild(roz); }
+      roz.textContent = "×" + (s.tekrar || 2);
+      return;
+    }
+    const el = document.createElement("div");
+    el.className = "dk-kons-satir " + (KAM_KONSOL_SEV[s.sev] || KAM_KONSOL_SEV.bilgi);
+    const zs = document.createElement("span"); zs.className = "dk-kons-ts"; zs.textContent = kamKonsolSaat(s.ts);
+    const es = document.createElement("span"); es.className = "dk-kons-etiket"; es.textContent = s.etiket || "";
+    const ms = document.createElement("span"); ms.className = "dk-kons-metin"; ms.textContent = s.metin || "";
+    el.append(zs, es, ms);
+    if (s.tekrar && s.tekrar > 1) { const roz = document.createElement("span"); roz.className = "dk-kons-tekrar"; roz.textContent = "×" + s.tekrar; el.appendChild(roz); }
+    k.govde.appendChild(el);
+    k.sonSatirEl = el; k.sonMetin = (s.etiket || "") + " " + (s.metin || "");
+    k.adet++;
+    while (k.govde.childElementCount > KAM_KONSOL_DOM_LIMIT) k.govde.removeChild(k.govde.firstElementChild);
+  }
+  function kamKonsolBolumu(id) {
+    if (kamKonsollar[id]) return kamKonsollar[id];
+    const t = T();
+    const kok = document.createElement("div"); kok.className = "dk-konsol kam-konsol";
+    const bas = document.createElement("div"); bas.className = "dk-konsol-bas kapali";
+    const ok = document.createElement("i"); ok.className = "fa-solid fa-chevron-down dk-konsol-ok";
+    const ikon = document.createElement("i"); ikon.className = "fa-solid fa-terminal dk-konsol-ikon";
+    const ad = document.createElement("span"); ad.className = "dk-konsol-ad";
+    ad.textContent = t.kamKonsolBaslik || "Kamera konsolu";
+    const sayac = document.createElement("span"); sayac.className = "dk-konsol-sayac"; sayac.textContent = "0";
+    const araclar = document.createElement("span"); araclar.className = "dk-konsol-araclar";
+    const btnDur = document.createElement("button"); btnDur.type = "button"; btnDur.className = "dk-konsol-btn";
+    btnDur.innerHTML = '<i class="fa-solid fa-pause"></i>'; btnDur.title = t.dkKonsolDurdur || "Akışı duraklat";
+    const btnTemiz = document.createElement("button"); btnTemiz.type = "button"; btnTemiz.className = "dk-konsol-btn";
+    btnTemiz.innerHTML = '<i class="fa-solid fa-trash-can"></i>'; btnTemiz.title = t.dkKonsolTemizle || "Konsolu temizle";
+    araclar.append(btnDur, btnTemiz);
+    bas.append(ok, ikon, ad, sayac, araclar);
+    const govde = document.createElement("div"); govde.className = "dk-konsol-govde gizli";
+    kok.append(bas, govde);
+    const k = { kok, bas, govde, sayac, ok, btnDur, acik: false, duraklat: false,
+                gecmisIstendi: false, adet: 0, sonMetin: null, sonSatirEl: null };
+    bas.addEventListener("click", (e) => {
+      if (e.target.closest(".dk-konsol-araclar")) return;
+      e.stopPropagation();
+      k.acik = !k.acik;
+      bas.classList.toggle("kapali", !k.acik);
+      govde.classList.toggle("gizli", !k.acik);
+      if (k.acik) {
+        if (!k.gecmisIstendi) { k.gecmisIstendi = true; wsGonder({ tip: "kamera_konsol_gecmis", id }); }
+        govde.scrollTop = govde.scrollHeight;
+      }
+    });
+    btnDur.addEventListener("click", (e) => {
+      e.stopPropagation();
+      k.duraklat = !k.duraklat;
+      btnDur.innerHTML = k.duraklat ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+      btnDur.classList.toggle("etkin", k.duraklat);
+    });
+    btnTemiz.addEventListener("click", (e) => {
+      e.stopPropagation();
+      wsGonder({ tip: "kamera_konsol_temizle", id });
+      govde.innerHTML = ""; k.adet = 0; k.sonMetin = null; k.sonSatirEl = null; sayac.textContent = "0";
+    });
+    kamKonsollar[id] = k;
+    return k;
+  }
+  window.kameraKonsolSatir = function (m) {
+    const k = kamKonsollar[m.id];
+    if (!k) return;
+    k.sayac.textContent = String(Math.min(k.adet + 1, 9999));
+    if (k.duraklat || !k.gecmisIstendi) return;
+    const dipte = (k.govde.scrollHeight - k.govde.scrollTop - k.govde.clientHeight) < 24;
+    kamKonsolSatirBas(k, m.satir || {});
+    if (dipte) k.govde.scrollTop = k.govde.scrollHeight;
+  };
+  window.kameraKonsolGecmis = function (m) {
+    const k = kamKonsollar[m.id];
+    if (!k) return;
+    k.govde.innerHTML = ""; k.adet = 0; k.sonMetin = null; k.sonSatirEl = null;
+    (m.satirlar || []).forEach((s) => kamKonsolSatirBas(k, s));
+    k.sayac.textContent = String(k.adet);
+    k.govde.scrollTop = k.govde.scrollHeight;
+  };
 
   function satirOlustur(kamera) {
     // LISTE gorunumu: tek satir (ad + protokol + araclar)
@@ -852,18 +963,21 @@
     if (aiRozetS) sol.appendChild(aiRozetS);
     satir.append(sol, araclarOlustur(kamera));
 
+    // v2.4.189: her satirin altinda acilir-kapanir, kameraya ozel konsol
+    // (dron panelindeki gibi). Konsol DOM'u yeniden cizimde korunur.
+    const dis = document.createElement("div");
+    dis.className = "kam-blok";
+    dis.appendChild(satir);
     // Liste gorunumunde oynayan kameranin videosu satirin altinda gosterilir
     // (v2.5.24: yalniz goruntu hedefi 'panel' iken; tek konumda gosterim)
     if (oynayanlar.has(kamera.id) && !ayrikler[kamera.id] && hedef(kamera.id) === "panel") {
       const kutu = document.createElement("div");
       kutu.className = "kam-video-kutu";
       kutu.appendChild(videoOlustur(kamera));
-      const dis = document.createElement("div");
-      dis.className = "kam-blok";
-      dis.append(satir, kutu);
-      return dis;
+      dis.appendChild(kutu);
     }
-    return satir;
+    dis.appendChild(kamKonsolBolumu(kamera.id).kok);
+    return dis;
   }
 
   function kartOlustur(kamera) {

@@ -17,6 +17,9 @@ class KonsolLog:
         self._tampon = collections.deque(maxlen=kapasite)
         self._sira = 0    # artan satir no (istemci ayni satiri iki kez basmasin)
         self._kilit = threading.Lock()
+        # v2.4.189: kamera basina konsol (kamera_konsol.py) her satiri
+        # buradan alir; None ise hicbir sey yapilmaz.
+        self.kamera_kancasi = None
 
     def log(self, kaynak, mesaj, seviye="bilgi"):
         """Konsola satir ekle. seviye: bilgi | uyari | hata | basari"""
@@ -30,6 +33,12 @@ class KonsolLog:
                 "seviye": seviye,
             })
         print(f"[{kaynak}] {mesaj}")
+        kanca = self.kamera_kancasi
+        if callable(kanca):
+            try:
+                kanca(kaynak, mesaj, seviye)
+            except Exception:
+                pass          # kamera konsolu genel konsolu asla dusurmez
 
     # Fonksiyon gibi cagrilabilir: konsol("KAYNAK", "mesaj", "seviye")
     __call__ = log

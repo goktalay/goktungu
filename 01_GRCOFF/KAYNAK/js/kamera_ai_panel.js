@@ -299,28 +299,47 @@
       window.kameraGoruntuHedefiUygula(id);
   };
 
-  // Segment seçici (harita | yüzen | panel | tam)
+  // v2.4.189: Görüntü konumu TEK düğme + açılır menü (kullanıcı: "dört
+  // düğme yerine bir düğme olsun, menü altında gösterelim"). Düğmenin
+  // ikonu seçili konumu gösterir; menü .dk-menu-dropdown desenini kullanır.
   window.kameraGoruntuHedefSecici = function (kameraId) {
     var t = T();
     var kap = document.createElement("div");
     kap.className = "kam-hedef-secici";
     var aktif = window.kameraGoruntuHedefi(kameraId);
-    HEDEFLER.forEach(function (h) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "kam-hedef-btn" + (h[0] === aktif ? " secili" : "");
-      b.dataset.hedef = h[0];
-      b.title = t["kaiHedef_" + h[0]] || h[1];
-      b.innerHTML = "<i class='fa-solid " + h[2] + "'></i>";
-      b.addEventListener("click", function (ev) {
-        ev.stopPropagation();
-        window.kameraGoruntuHedefiAyarla(kameraId, h[0]);
-        kap.querySelectorAll(".kam-hedef-btn").forEach(function (x) {
-          x.classList.toggle("secili", x.dataset.hedef === h[0]);
-        });
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "kam-btn kam-hedef-btn secili";
+    var dd = document.createElement("div");
+    dd.className = "dk-menu-dropdown kam-hedef-menu";
+    function ciz() {
+      var h = HEDEFLER.find(function (x) { return x[0] === aktif; }) || HEDEFLER[1];
+      b.title = (t.kaiHedefBaslik || "Görüntü konumu") + ": " + (t["kaiHedef_" + h[0]] || h[1]);
+      b.innerHTML = "<i class='fa-solid " + h[2] + "'></i><i class='fa-solid fa-caret-down kam-hedef-ok'></i>";
+      dd.querySelectorAll(".dk-menu-item").forEach(function (it) {
+        it.classList.toggle("secili", it.dataset.hedef === aktif);
       });
-      kap.appendChild(b);
+    }
+    HEDEFLER.forEach(function (h) {
+      var it = document.createElement("div");
+      it.className = "dk-menu-item";
+      it.dataset.hedef = h[0];
+      it.innerHTML = "<i class='fa-solid " + h[2] + "'></i><span>" + (t["kaiHedef_" + h[0]] || h[1]) + "</span>";
+      it.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        aktif = h[0];
+        window.kameraGoruntuHedefiAyarla(kameraId, h[0]);
+        dd.classList.remove("acik");
+        ciz();
+      });
+      dd.appendChild(it);
     });
+    b.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (typeof window.kamMenuAcKapa === "function") window.kamMenuAcKapa(b, dd);
+    });
+    kap.appendChild(b); kap.appendChild(dd);
+    ciz();
     return kap;
   };
 

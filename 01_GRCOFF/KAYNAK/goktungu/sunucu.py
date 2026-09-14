@@ -4903,6 +4903,7 @@ class WSSunucusu:
         "m50_takip_yetenek": ("radar", "hedef_yonetimi", "m50"),
         "kamera_kaydet":    ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_sil":       ("kamera", "kayit_yonetimi", "kamera"),
+        "kamera_konsol_temizle": ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_dron_bagla": ("kamera", "kayit_yonetimi", "kamera"),
         "rota_kaydet":      ("rota", "kayit_yonetimi", "rota"),
         "rota_sil":         ("rota", "kayit_yonetimi", "rota"),
@@ -7323,6 +7324,23 @@ class WSSunucusu:
                 await websocket.send(json.dumps({
                     "tip": "dron_konsol_gecmis", "sysid": sysid,
                     "satirlar": []}))
+
+        elif komut == "kamera_konsol_gecmis":
+            # v2.4.189: {"tip":"kamera_konsol_gecmis","id":3,"adet":200}
+            kk = getattr(self, "kamera_konsol", None)
+            kid = int(k.get("id", 0) or 0)
+            if kk is not None and kid:
+                await websocket.send(json.dumps({
+                    "tip": "kamera_konsol_gecmis", "id": kid,
+                    "satirlar": kk.gecmis(kid, int(k.get("adet", 0)) or None)}))
+
+        elif komut == "kamera_konsol_temizle":
+            kk = getattr(self, "kamera_konsol", None)
+            kid = int(k.get("id", 0) or 0)
+            if kk is not None and kid:
+                kk.temizle(kid)
+                await websocket.send(json.dumps({
+                    "tip": "kamera_konsol_gecmis", "id": kid, "satirlar": []}))
 
         elif komut == "rota_ucus_param":
             # v2.4.21: harita rota cizimi icin sabit kanat donus

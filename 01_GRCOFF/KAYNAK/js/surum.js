@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.188";
+const GCS_SURUM = "2.4.189";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.189",
+    tarih: "2026-09-14",
+    baslik: "Kamera Yönetimi sadeleşti: tek konum düğmesi, '…' menüsü, kameraya özel konsol (paket 2.5.59)",
+    maddeler: [
+      "YENİ: Her kamera satırında görüntü konumu (harita / yüzen / panel / tam ekran) artık dört ayrı düğme yerine tek bir açılır düğme; düğmenin ikonu seçili konumu gösterir.",
+      "YENİ: Düzenle, Yapay Zeka Ayarları, (M50 için) Elektro-Optik paneli ve kanal geçişi, Sil — tek bir '…' menüsünde toplandı. Satırda yalnız Oynat/Durdur, Ayrı Pencere, Konum ve '…' kaldı.",
+      "YENİ: Her kameranın satırının altında, dron panelindeki gibi açılır-kapanır bir kamera konsolu: o kameraya ait VIDEO/KAMERA/AI/M50 satırları (kaynak açıldı, hata, AI izleme, M50 bağlantı/PTZ) yalnız orada; duraklat/temizle; ardışık tekrarlar ×N rozetiyle sıkıştırılır. Tampon arka uçta tutulur, konsol ilk açıldığında geçmiş hazır gelir."
+    ]
+  },
   {
     surum: "2.4.188",
     tarih: "2026-09-14",

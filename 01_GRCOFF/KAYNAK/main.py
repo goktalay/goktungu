@@ -696,6 +696,29 @@ def uygulama_kur():
                                    "sysid": sysid, "satir": kayit})
     dron.konsol_kancasi = _dron_konsol_kancasi
 
+    # v2.4.189: KAMERA BASINA HABERLESME KONSOLU (dron konsolunun esi).
+    # Genel konsolun her satiri kamera numarasina gore suzulur; M50
+    # satirlari kayitli M50 kamerasina baglanir.
+    from goktungu.kamera_konsol import KameraKonsol
+
+    def _m50_kamera_id():
+        try:
+            liste = kameralar.listele() or []
+        except Exception:
+            return None
+        for k in liste:
+            if str(k.get("protokol") or "").lower() == "m50":
+                return int(k.get("id"))
+        return None
+    kamera_konsol = KameraKonsol(m50_kamera_id_bul=_m50_kamera_id)
+
+    def _kamera_konsol_kancasi(kamera_id, kayit):
+        ws_sunucu.duyur_threadden({"tip": "kamera_konsol_satir",
+                                   "id": kamera_id, "satir": kayit})
+    kamera_konsol.kanca = _kamera_konsol_kancasi
+    konsol.kamera_kancasi = kamera_konsol.konsoldan
+    ws_sunucu.kamera_konsol = kamera_konsol
+
     # v2.4.45: AI bilgisayarlarini SSH ile uzaktan baslatma + canli konsol
     # (kullanici istegi: play dugmesi SSH ile baglanip sunucuyu baslatsin,
     #  consol dugmesi SSH ciktilarini gostersin).

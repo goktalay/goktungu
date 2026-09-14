@@ -10022,6 +10022,12 @@ body.tam-ekran-modu #altOrtaPanel {
 .kai-panel-not { margin-top: 10px; font-size: 11px; color: var(--soluk, #95a9b8); line-height: 1.4; }
 
 /* Görüntü hedefi seçici (harita/yüzen/panel/tam) */
+/* v2.4.189: kamera satiri — tek konum dugmesi + "..." menusu + konsol */
+.kam-hedef-btn .kam-hedef-ok { font-size: 8px; margin-left: 3px; opacity: .7; }
+.kam-menu .dk-menu-item.secili, .kam-hedef-menu .dk-menu-item.secili { color: var(--vurgu, #35a7ff); }
+.kam-hedef-menu .dk-menu-item.secili i { color: var(--vurgu, #35a7ff); }
+.kam-blok .kam-konsol { margin: 0 2px 4px; }
+.kam-blok .kam-konsol .dk-konsol-govde { max-height: 180px; }
 .kam-hedef-secici { display: inline-flex; gap: 2px; margin-left: 4px;
   border: 1px solid var(--cizgi, #2a3542); border-radius: 6px; overflow: hidden; }
 .kam-hedef-btn {

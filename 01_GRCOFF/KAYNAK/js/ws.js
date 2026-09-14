@@ -583,6 +583,13 @@ function wsBaglan(){
       // v2.4.45: konsol ilk acildiginda (ya da temizlendiginde) gecmis
       if (typeof window.dronKonsolGecmis === "function")
         window.dronKonsolGecmis(m);
+    } else if (m.tip === "kamera_konsol_satir"){
+      // v2.4.189: kamera satirinin altindaki konsola tek satir
+      if (typeof window.kameraKonsolSatir === "function")
+        window.kameraKonsolSatir(m);
+    } else if (m.tip === "kamera_konsol_gecmis"){
+      if (typeof window.kameraKonsolGecmis === "function")
+        window.kameraKonsolGecmis(m);
     } else if (m.tip === "log_listesi"){
       if (typeof window.dkLogListesiGeldi === "function")
         window.dkLogListesiGeldi(m.sysid, m.loglar || [], m.hata);
