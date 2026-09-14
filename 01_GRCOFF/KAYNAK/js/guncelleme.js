@@ -223,7 +223,14 @@
     if (!kopuk) kopusBasi = kopusBasi && izliyor && il && il.asama !== 'tamam' ? kopusBasi : 0;
 
     $('gu-mevcut').textContent = d.mevcut_surum || (il && il.mevcut_surum) || '—';
-    $('gu-hedef').textContent = (il && izliyor && il.hedef_surum) || d.hedef_surum || d.mevcut_surum || '—';
+    // v2.4.183 OLCULEN KUSUR: denetim hatasi (ornegin DNS/ag hatasi)
+    // varken hedef surum bilinmiyorken bu alan sessizce KURULU surume
+    // dusuyordu — "zaten guncelsiniz" izlenimi veriyordu, oysa asagida
+    // ayni ekranda bir hata mesaji goruluyordu (celiskili gorunum).
+    // Hata durumunda hedef surum ACIKCA "bilinmiyor" gosterilir.
+    $('gu-hedef').textContent = d.hata
+      ? (sozluk().guHedefBilinmiyor || 'Bilinmiyor (denetim başarısız)')
+      : ((il && izliyor && il.hedef_surum) || d.hedef_surum || d.mevcut_surum || '—');
     $('gu-asama').textContent = asamaAd;
     $('gu-yuzde').textContent = belirsiz ? '…' : (Math.round(yuzde) + '%');
     cubuk.classList.toggle('belirsiz', belirsiz);

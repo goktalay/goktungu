@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.182";
+const GCS_SURUM = "2.4.183";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.183",
+    tarih: "2026-09-14",
+    baslik: "Köprü listesi 'Oturum gerekli' hatası düzeltildi; güncelleme hatasında hedef sürüm artık yanıltıcı görünmüyor (paket 2.5.53)",
+    maddeler: [
+      "DÜZELTME: Yerel/offline kurulumlarda (çok kiracılı 'merkez kipi' DEĞİL) firma_id hiçbir zaman atanmaz; bağlantı yöneticisi ve M50 panelinin 'saha makinesi' listesi bu yüzden konsola sürekli '[KÖPRÜ] liste hatası: Oturum gerekli' yazıyor ve (birden fazla köprü varsa) seçici hiç dolmuyordu. Kontrol artık yalnız gerçekten merkez kipindeyken firma oturumu zorunlu kılıyor; yerel kurulumda boş liste sessizce dönüyor.",
+      "DÜZELTME: Güncelleme denetimi ağ/DNS hatasıyla başarısız olduğunda 'HEDEF SÜRÜM' alanı artık yanıltıcı biçimde kurulu sürümle aynı görünmüyor — 'Bilinmiyor (denetim başarısız)' gösteriyor.",
+      "ÖNEMLİ HATIRLATMA: M50 kamerası için 'Merkez' kurulumu TEK BAŞINA yeterli değildir — M50 HVS SDK yalnız ayrı 'Görüntü Köprüsü' (BRDIMG) yazılımında çalışır ve güvenlik gereği Merkez'e asla yüklenmez. M50'nin video/PTZ vermesi için aynı ağdaki bir makinede Görüntü Köprüsü kurulu, çalışır ve Merkez'e bağlı olmalı; aksi halde '[M50] Çevrimiçi saha makinesi yok' hatası alınır."
+    ]
+  },
   {
     surum: "2.4.182",
     tarih: "2026-09-14",

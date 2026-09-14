@@ -8174,7 +8174,19 @@ class WSSunucusu:
             _fid = self._ws_firma_id(websocket)
             _kopruler = []
             _hata = ""
-            if _fid is None:
+            # v2.4.183 OLCULEN KUSUR: `_fid is None` KOSULSUZ "Oturum
+            # gerekli" donuyordu — ama YEREL/offline kurulumda firma_id
+            # HICBIR ZAMAN atanmaz (tek kiracili kurulum, oturum acik
+            # olsa BILE None kalir). Asagidaki `else` dalinin kendisi
+            # zaten bu durumu doğru ele aliyordu ("Yerel kurulumda kopru
+            # kavrami yoktur: bos liste doner") ama bu satir oraya HIC
+            # ULASILMASINI engelliyordu. Sonuc: her yerel kurulumda
+            # Baglanti Yoneticisi/M50 saha makinesi secici konsola surekli
+            # "[KOPRU] liste hatasi: Oturum gerekli" yaziyor VE M50 panel
+            # kopru secicisi (birden fazla saha koprusu varsa) hic
+            # dolmuyordu. Artik yalniz GERCEKTEN merkez kipindeyken
+            # (coklu kiracili/bulut kurulum) firma_id zorunlu tutulur.
+            if self._merkez_kipinde() and _fid is None:
                 _hata = "Oturum gerekli."
             else:
                 try:
