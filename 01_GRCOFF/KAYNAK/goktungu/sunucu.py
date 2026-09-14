@@ -6444,6 +6444,24 @@ class WSSunucusu:
                     else:
                         _eid = _eo.kayitlar.ekle(k)
                     _eo.tazele()
+                    # v2.4.194 (kullanici istegi): kimlik (IP, port,
+                    # kullanici adi, parola) CIHAZ KAYDIYLA BIRLIKTE
+                    # kaydedilir; kontrol panelinde ayrica sorulmaz.
+                    # Parola/kullanici BOS gonderildiyse mevcut deger
+                    # KORUNUR (duzenleme formu parolayi geri gostermez;
+                    # bos alan "degistirme" demektir). Kayit yerel ayar
+                    # anahtarindadir; parola WS'e/telemetriye asla cikmaz.
+                    _kimlik = {}
+                    for _a in ("ip", "port", "kullanici", "parola"):
+                        _v = k.get(_a)
+                        if _v not in (None, "", 0):
+                            _kimlik[_a] = _v
+                    _y = _eo.yerel(int(_eid)) if _eid else None
+                    if _kimlik and _y is not None:
+                        try:
+                            _y._ayar_yaz_ic(_kimlik)
+                        except Exception as _ke:
+                            self.konsol("M50", "EO kimligi yazilamadi: %s" % _ke, "uyari")
                     self.konsol("M50", "Elektro-optik kaydi guncellendi: #%s %s"
                                 % (_eid, k.get("isim") or ""), "basari")
                     await websocket.send(json.dumps({

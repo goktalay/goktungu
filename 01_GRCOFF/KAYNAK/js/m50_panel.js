@@ -79,13 +79,16 @@ function eoListeCiz(){
   ekle.innerHTML = "<i class='fa-solid fa-plus'></i>";
   ekle.title = t.btnEoEkle || "Yeni elektro-optik cihaz";
   ekle.addEventListener("click", () => {
-    m50Gonder({tip: "eo_kaydet", eo_id: 0, isim: "M50 " + (eoListesi.length + 1), port: 39020});
+    if (typeof window.eoFormuAc === "function") window.eoFormuAc(null);
   });
   eoListeEl.appendChild(ekle);
 }
 function eoPaneliTazele(){
   const c = eoSecili();
   if (!c) return;
+  // v2.4.194: panel basliginda secili cihazin adi
+  const ad = document.getElementById("m50BaslikAd");
+  if (ad) ad.textContent = "· " + (c.isim || ("M50 " + c.eo_id));
   if (eoIsimEl && _eoFormuDoldu !== Number(c.eo_id) && document.activeElement !== eoIsimEl){
     eoIsimEl.value = c.isim || ""; _eoFormuDoldu = Number(c.eo_id);
   }
@@ -99,18 +102,13 @@ function eoPaneliTazele(){
     if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzM50");
     if (typeof menubarKapat === "function") menubarKapat();
   };
-  const cihazlar = document.getElementById("mbEoCihazlar");
+  // v2.4.194: "Cihazlar" data-yuzen ile liste panelini acar (arayuz.js);
+  // "Yeni Elektro Optik" kayit formunu acar.
   const yeni = document.getElementById("mbEoYeni");
   const tum = document.getElementById("mbEoTumBaglan");
-  if (cihazlar) cihazlar.addEventListener("click", () => {
-    panelAc();
-    const b = document.getElementById("m50BolumCihaz") || eoListeEl;
-    if (b && b.tagName === "DETAILS") b.open = true;
-    if (b && typeof b.scrollIntoView === "function") b.scrollIntoView({block: "start", behavior: "smooth"});
-  });
   if (yeni) yeni.addEventListener("click", () => {
-    panelAc();
-    m50Gonder({tip: "eo_kaydet", eo_id: 0, isim: "M50 " + (eoListesi.length + 1), port: 39020});
+    if (typeof menubarKapat === "function") menubarKapat();
+    if (typeof window.eoFormuAc === "function") window.eoFormuAc(null);
   });
   if (tum) tum.addEventListener("click", () => {
     if (typeof menubarKapat === "function") menubarKapat();
@@ -136,6 +134,7 @@ window.eoListesiGuncelle = function(liste, eski){
     _eoSecili = Number(eoListesi[0].eo_id);
   eoListeCiz();
   eoPaneliTazele();
+  if (typeof window.eoCihazListeCiz === "function") window.eoCihazListeCiz();
   if (typeof window.eoIkonlariGuncelle === "function") window.eoIkonlariGuncelle(eoListesi);
 };
 (function eoKayitDugmeleri(){
@@ -305,31 +304,10 @@ btnM50Baglan.addEventListener("click", () => {
     m50Gonder({tip: "m50_kes"});
     return;
   }
-  const ip = String(m50Ip.value || "").trim();
-  const port = Number.parseInt(m50Port.value, 10);
-  const kullanici = String(m50Kullanici.value || "").trim();
-  const parola = String(m50Parola.value || "");
-  // v2.4.187: kimlik bir kez kaydedildiyse alanlar BOŞ bırakılabilir;
-  // sunucu kayıtlı kimlikle bağlanır. Kısmen dolu form yine reddedilir.
-  // IP/port kayıttan otomatik doldurulmuş olabilir; "boş" sayımı yalnız
-  // kullanıcı adı + parolaya bakar.
-  const hepsiBos = !kullanici && !parola;
-  if (hepsiBos && sonM50Ayar && sonM50Ayar.kimlik_kayitli){
-    const gonderildi = m50Gonder({tip: "m50_baglan"});
-    if (gonderildi) m50AlanlariEtkinlestir();
-    return;
-  }
-  if (!ip || !Number.isInteger(port) || port < 1 || port > 65535 || !kullanici || !parola){
-    if (m50Hata){
-      m50Hata.textContent = (typeof D === "function" && D().m50BaglantiEksik) ||
-        "IP, port, kullanıcı adı ve parola girilmelidir.";
-      m50Hata.style.display = "block";
-    }
-    return;
-  }
-  const gonderildi = m50Gonder({tip: "m50_baglan", ip, port, kullanici, parola});
-  // Parola gönderimden hemen sonra ekrandan da silinir; yerel depoya yazılmaz.
-  m50Parola.value = "";
+  // v2.4.194: kontrol paneli kimlik alani tasimaz; IP/port/kullanici/
+  // parola cihaz KAYDINDADIR (Elektro Optik Cihazlari > Duzenle). Sunucu
+  // kayitli kimlikle baglanir; kayit yoksa anlamli uyari doner.
+  const gonderildi = m50Gonder({tip: "m50_baglan"});
   if (gonderildi) m50AlanlariEtkinlestir();
 });
 
@@ -646,7 +624,7 @@ if (_btn("btnM50TakipYetenekKapat")) _btn("btnM50TakipYetenekKapat").addEventLis
 const _m50Panel = document.getElementById("yzM50");
 if (_m50Panel){
   const kapat = _m50Panel.querySelector(".yuzen-kapat");
-  if (kapat) kapat.addEventListener("click", () => { m50BasiliBirak(); m50Parola.value = ""; });
+  if (kapat) kapat.addEventListener("click", () => { m50BasiliBirak(); if (m50Parola) m50Parola.value = ""; });
 }
 m50KopruSeciciCiz();
 m50AlanlariEtkinlestir();
@@ -742,4 +720,92 @@ m50AlanlariEtkinlestir();
     if (surukleme && ev.target === document.documentElement) suruklemeBitir();
   });
   window.addEventListener("blur", suruklemeBitir);
+})();
+
+
+// =================================================================
+// v2.4.194 — ELEKTRO OPTIK CIHAZLARI liste paneli + kayit formu
+// (kullanici istegi #2). Form yalniz: ad, IP, kullanici adi, parola,
+// port. Kaydet -> listeye eklenir; satira tiklama -> kontrol paneli;
+// Duzenle -> form (parola bos gelir; bos birakilirsa degismez).
+// =================================================================
+(function eoCihazlarPaneli(){
+  const liste = document.getElementById("eoCihazListe");
+  const efId = document.getElementById("efId"), efIsim = document.getElementById("efIsim");
+  const efIp = document.getElementById("efIp"), efPort = document.getElementById("efPort");
+  const efKullanici = document.getElementById("efKullanici"), efParola = document.getElementById("efParola");
+  const baslik = document.getElementById("eoFormBaslik");
+  const ac = id => { if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc(id); };
+  const kapat = id => { const p = document.getElementById(id); if (p) p.classList.add("yuzen-gizli"); };
+
+  window.eoFormuAc = function(c){
+    const t = m50T();
+    if (!efId) return;
+    const a = (c && c.m50_ayarlar) || {};
+    efId.value = c ? String(c.eo_id) : "";
+    efIsim.value = c ? (c.isim || "") : ("M50 " + (eoListesi.length + 1));
+    efIp.value = c ? (c.kayit_ip || a.ip || "") : "";
+    efPort.value = c ? String(c.kayit_port || a.port || 39020) : "39020";
+    efKullanici.value = ""; efParola.value = "";
+    efKullanici.placeholder = (c && a.kimlik_kayitli) ? (t.m50KullaniciKayitli || "kayıtlı — boş bırakın") : "";
+    efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "kayıtlı — boş bırakın") : "";
+    if (baslik) baslik.textContent = c ? (t.panelEoFormDuzenle || "CİHAZI DÜZENLE") : (t.panelEoFormYeni || "YENİ ELEKTRO OPTİK");
+    ac("yzEoForm");
+    setTimeout(() => efIsim.focus(), 50);
+  };
+
+  window.eoCihazListeCiz = function(){
+    if (!liste) return;
+    const t = m50T();
+    liste.innerHTML = "";
+    if (!eoListesi.length){
+      const b = document.createElement("div"); b.className = "cl-bos";
+      b.textContent = t.clBos || "Kayıtlı cihaz yok."; liste.appendChild(b); return;
+    }
+    for (const c of eoListesi){
+      const d = (c.m50_durum && c.m50_durum.durum) || "kapali";
+      const sat = document.createElement("div");
+      sat.className = "cl-satir" + (Number(c.eo_id) === _eoSecili ? " secili" : "");
+      sat.innerHTML =
+        "<span class='ra-nokta d-" + d + "'></span>" +
+        "<div class='cl-govde'><div class='cl-ad'></div><div class='cl-alt'></div></div>" +
+        "<div class='cl-dgm'>" +
+          "<button type='button' class='kucuk ikincil cl-duzenle' title='" + (t.btnDuzenle || "Düzenle") + "'><i class='fa-solid fa-pen'></i></button>" +
+          "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
+        "</div>";
+      sat.querySelector(".cl-ad").textContent = c.isim || ("M50 " + c.eo_id);
+      const adres = c.kayit_ip || (c.m50_ayarlar && c.m50_ayarlar.ip) || "";
+      sat.querySelector(".cl-alt").textContent =
+        (adres ? adres + ":" + (c.kayit_port || (c.m50_ayarlar && c.m50_ayarlar.port) || 39020) : (t.clAdresYok || "adres yok")) +
+        "  ·  " + (t["m50Durum_" + d] || d);
+      sat.addEventListener("click", () => {
+        _eoSecili = Number(c.eo_id); _eoFormuDoldu = 0; _m50VideoKamId = null; _m50AyarYuklendi = false;
+        eoListeCiz(); eoPaneliTazele(); window.eoCihazListeCiz(); ac("yzM50");
+      });
+      sat.querySelector(".cl-duzenle").addEventListener("click", ev => { ev.stopPropagation(); window.eoFormuAc(c); });
+      sat.querySelector(".cl-sil").addEventListener("click", ev => {
+        ev.stopPropagation();
+        const metin = (t.onayEoSil || "{ad} elektro-optik kaydı silinsin mi?").replace("{ad}", c.isim || ("M50 " + c.eo_id));
+        const sil = () => m50Gonder({tip: "eo_sil", eo_id: Number(c.eo_id)});
+        if (typeof onayIste === "function") onayIste(metin, sil); else if (confirm(metin)) sil();
+      });
+      liste.appendChild(sat);
+    }
+  };
+
+  const yeni = document.getElementById("btnEoYeni");
+  if (yeni) yeni.addEventListener("click", () => window.eoFormuAc(null));
+  const kaydet = document.getElementById("btnEoFormKaydet");
+  if (kaydet) kaydet.addEventListener("click", () => {
+    const paket = {tip: "eo_kaydet", eo_id: parseInt(efId.value, 10) || 0,
+                   isim: efIsim.value.trim(), ip: efIp.value.trim(),
+                   port: parseInt(efPort.value, 10) || 39020};
+    const ku = efKullanici.value.trim(), pa = efParola.value;
+    if (ku) paket.kullanici = ku;
+    if (pa) paket.parola = pa;
+    if (!paket.isim){ efIsim.focus(); return; }
+    if (m50Gonder(paket)){ efParola.value = ""; kapat("yzEoForm"); }
+  });
+  const iptal = document.getElementById("btnEoFormIptal");
+  if (iptal) iptal.addEventListener("click", () => { efParola.value = ""; kapat("yzEoForm"); });
 })();

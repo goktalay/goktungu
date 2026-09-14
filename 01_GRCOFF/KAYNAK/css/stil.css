@@ -10035,6 +10035,22 @@ body.tam-ekran-modu #altOrtaPanel {
 
 /* Görüntü hedefi seçici (harita/yüzen/panel/tam) */
 /* v2.4.190: coklu radar sekmeleri */
+/* v2.4.194: RADARLAR / ELEKTRO-OPTIK CIHAZLARI liste panelleri */
+.cl-ust { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cl-ust .aciklama { flex: 1 1 auto; margin: 0; }
+.cl-liste { display: flex; flex-direction: column; gap: 4px; }
+.cl-satir { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: 1px solid var(--cizgi); border-radius: 6px; background: var(--panel-arka, transparent);
+  cursor: pointer; }
+.cl-satir:hover { border-color: var(--vurgu, #35a7ff); }
+.cl-satir.secili { background: rgba(53,167,255,.08); border-color: var(--vurgu, #35a7ff); }
+.cl-govde { flex: 1 1 auto; min-width: 0; }
+.cl-ad { font-weight: 600; font-size: 13px; color: var(--metin); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.cl-alt { font-family: Consolas, monospace; font-size: 11px; color: var(--soluk); }
+.cl-dgm { display: flex; gap: 4px; flex: 0 0 auto; }
+.cl-dgm button { padding: 4px 8px; }
+.cl-bos { padding: 14px; text-align: center; color: var(--soluk); font-size: 12px; }
 .ra-liste { display: flex; flex-wrap: wrap; gap: 4px; }
 .ra-sekme { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px;
   border: 1px solid var(--cizgi); background: transparent; color: var(--soluk); font-size: 11px; cursor: pointer; }

@@ -80,8 +80,7 @@ function raListeCiz(){
   ekle.innerHTML = "<i class='fa-solid fa-plus'></i>";
   ekle.title = t.btnRaEkle || "Yeni radar";
   ekle.addEventListener("click", () => {
-    radarGonder({tip: "radar_kaydet", radar_id: 0,
-                 isim: (t.raYeniAd || "Radar") + " " + (radarListesi.length + 1), port: 5001});
+    if (typeof window.radarFormuAc === "function") window.radarFormuAc(null);
   });
   raListeEl.appendChild(ekle);
 }
@@ -96,8 +95,9 @@ function raKayitFormuDoldur(r){
   if (raIsimEl) raIsimEl.value = r.isim || "";
   if (raKayitLatEl) raKayitLatEl.value = (r.kayit_lat != null) ? Number(r.kayit_lat).toFixed(6) : "";
   if (raKayitLonEl) raKayitLonEl.value = (r.kayit_lon != null) ? Number(r.kayit_lon).toFixed(6) : "";
-  if (radarIpGiris && !radarIpGiris.value) radarIpGiris.value = r.kayit_ip || "";
-  if (radarPortGiris && r.kayit_port) radarPortGiris.value = String(r.kayit_port);
+  // v2.4.194: adres KAYITTAN gelir ve panelde salt okunurdur.
+  if (radarIpGiris) radarIpGiris.value = r.kayit_ip || "";
+  if (radarPortGiris) radarPortGiris.value = r.kayit_port ? String(r.kayit_port) : "5001";
 }
 
 function raPaneliTazele(){
@@ -115,6 +115,10 @@ function raPaneliTazele(){
 
 window.radarListesiGuncelle = function(liste, eski){
   radarListesi = Array.isArray(liste) ? liste : [];
+  // v2.4.194: kayit degismis olabilir (form ile duzenlendi) -> alanlar
+  // yeniden doldurulur; liste paneli de tazelenir.
+  _raKayitFormuDoldu = 0;
+  if (typeof window.radarlarListeCiz === "function") window.radarlarListeCiz();
   if (!radarListesi.length){ if (eski) radarPaneliGuncelle(eski); return; }
   if (!radarListesi.some(r => Number(r.radar_id) === _raSecili))
     _raSecili = Number(radarListesi[0].radar_id);
@@ -530,3 +534,88 @@ function siniflandirmaDurumSorgula(){
   if (!ws || ws.readyState !== 1) return;
   ws.send(JSON.stringify({tip:"siniflandirma_ayar"}));
 }
+
+
+// =================================================================
+// v2.4.194 — RADARLAR liste paneli + radar kayit formu
+// (kullanici istegi #1: "Radarlar menusu -> listeleyen yuzen panel,
+//  Yeni Radar dugmesi; satira tiklaninca radarin ayar paneli")
+// =================================================================
+(function radarlarPaneli(){
+  const liste = document.getElementById("radarlarListe");
+  const rfId = document.getElementById("rfId"), rfIsim = document.getElementById("rfIsim");
+  const rfIp = document.getElementById("rfIp"), rfPort = document.getElementById("rfPort");
+  const rfLat = document.getElementById("rfLat"), rfLon = document.getElementById("rfLon");
+  const baslik = document.getElementById("radarFormBaslik");
+  const ac = id => { if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc(id); };
+  const kapat = id => { const p = document.getElementById(id); if (p) p.classList.add("yuzen-gizli"); };
+
+  window.radarFormuAc = function(r){
+    const t = D();
+    if (!rfId) return;
+    rfId.value = r ? String(r.radar_id) : "";
+    rfIsim.value = r ? (r.isim || "") : ((t.raYeniAd || "Radar") + " " + (radarListesi.length + 1));
+    rfIp.value = r ? (r.kayit_ip || "") : "";
+    rfPort.value = r && r.kayit_port ? String(r.kayit_port) : "5001";
+    rfLat.value = r && r.kayit_lat != null ? Number(r.kayit_lat).toFixed(6) : "";
+    rfLon.value = r && r.kayit_lon != null ? Number(r.kayit_lon).toFixed(6) : "";
+    if (baslik) baslik.textContent = r ? (t.panelRadarFormDuzenle || "RADARI DÜZENLE") : (t.panelRadarFormYeni || "YENİ RADAR");
+    ac("yzRadarForm");
+    setTimeout(() => rfIsim.focus(), 50);
+  };
+
+  window.radarlarListeCiz = function(){
+    if (!liste) return;
+    const t = D();
+    liste.innerHTML = "";
+    if (!radarListesi.length){
+      const b = document.createElement("div"); b.className = "cl-bos";
+      b.textContent = t.clBos || "Kayıtlı cihaz yok."; liste.appendChild(b); return;
+    }
+    for (const r of radarListesi){
+      const sat = document.createElement("div");
+      sat.className = "cl-satir" + (Number(r.radar_id) === _raSecili ? " secili" : "");
+      const d = r.durum || "kapali";
+      sat.innerHTML =
+        "<span class='ra-nokta d-" + d + "'></span>" +
+        "<div class='cl-govde'><div class='cl-ad'></div><div class='cl-alt'></div></div>" +
+        "<div class='cl-dgm'>" +
+          "<button type='button' class='kucuk ikincil cl-duzenle' title='" + (t.btnDuzenle || "Düzenle") + "'><i class='fa-solid fa-pen'></i></button>" +
+          "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
+        "</div>";
+      sat.querySelector(".cl-ad").textContent = r.isim || ("Radar " + r.radar_id);
+      sat.querySelector(".cl-alt").textContent =
+        (r.kayit_ip ? r.kayit_ip + ":" + (r.kayit_port || 5001) : (t.clAdresYok || "adres yok")) +
+        "  ·  " + (t["raDurum_" + d] || d);
+      sat.addEventListener("click", () => {
+        _raSecili = Number(r.radar_id); _raKayitFormuDoldu = 0;
+        raListeCiz(); raPaneliTazele(); window.radarlarListeCiz(); ac("yzRadar");
+      });
+      sat.querySelector(".cl-duzenle").addEventListener("click", ev => { ev.stopPropagation(); window.radarFormuAc(r); });
+      sat.querySelector(".cl-sil").addEventListener("click", ev => {
+        ev.stopPropagation();
+        const metin = (t.onayRadarSil || "{ad} radar kaydı silinsin mi?").replace("{ad}", r.isim || ("Radar " + r.radar_id));
+        const sil = () => radarGonder({tip: "radar_sil", radar_id: Number(r.radar_id)});
+        if (typeof onayIste === "function") onayIste(metin, sil); else if (confirm(metin)) sil();
+      });
+      liste.appendChild(sat);
+    }
+  };
+
+  const yeni = document.getElementById("btnRadarYeni");
+  if (yeni) yeni.addEventListener("click", () => window.radarFormuAc(null));
+  const kaydet = document.getElementById("btnRadarFormKaydet");
+  if (kaydet) kaydet.addEventListener("click", () => {
+    const paket = {tip: "radar_kaydet", radar_id: parseInt(rfId.value, 10) || 0,
+                   isim: rfIsim.value.trim(), ip: rfIp.value.trim(),
+                   port: parseInt(rfPort.value, 10) || 5001};
+    const lat = parseFloat(rfLat.value), lon = parseFloat(rfLon.value);
+    paket.lat = isNaN(lat) ? "" : lat; paket.lon = isNaN(lon) ? "" : lon;
+    if (!paket.isim){ rfIsim.focus(); return; }
+    if (radarGonder(paket)) kapat("yzRadarForm");
+  });
+  const iptal = document.getElementById("btnRadarFormIptal");
+  if (iptal) iptal.addEventListener("click", () => kapat("yzRadarForm"));
+  const mbYeni = document.getElementById("mbRadarYeni");
+  if (mbYeni) mbYeni.addEventListener("click", () => window.radarFormuAc(null));
+})();

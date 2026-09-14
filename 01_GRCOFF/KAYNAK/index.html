@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24192">
+<link rel="stylesheet" href="css/stil.css?v=v24194">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -55,6 +55,8 @@
       <div class="mb-item" id="mbRadar" data-hizli="r">
         <span class="mb-etiket" data-i18n="mbRadar">Radar</span>
         <div class="mb-dropdown">
+          <!-- v2.4.194 (kullanici istegi #1): coklu radar -> once LISTE -->
+          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadarlar" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite-dish"></i><span data-i18n="mbRadarlar">Radarlar</span></div>
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite"></i><span data-i18n="mbRadarAyar">Radar Ayarları</span></div>
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzFiltre" data-hizli="h"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-filter"></i><span data-i18n="mbHedefFiltre">Hedef Filtresi</span></div>
           <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzIz" data-hizli="i"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-route"></i><span data-i18n="mbIzAyar">İz Ayarları</span></div>
@@ -70,11 +72,12 @@
       <div class="mb-item" id="mbM50" data-hizli="e">
         <span class="mb-etiket" data-i18n="mbM50">Elektro-Optik</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzM50" data-hizli="e"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-binoculars"></i><span data-i18n="mbM50Ayar">M50 Kontrolü</span></div>
-          <!-- v2.4.192: coklu cihaz kisayollari (kullanici istegi) -->
+          <!-- v2.4.194 (kullanici istegi #2): "M50 Kontrolu" menu ogesi
+               KALDIRILDI; kontrol paneli listedeki cihaza tiklaninca acilir.
+               Cihazlar -> liste paneli, Yeni M50 -> kayit formu. -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbEoCihazlar" data-yuzen="yzEoCihazlar" data-hizli="c"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
+          <div class="mb-oge" id="mbEoYeni" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbEoYeni">Yeni Elektro Optik</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbEoCihazlar" data-hizli="c"><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
-          <div class="mb-oge" id="mbEoYeni" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbEoYeni">Yeni M50</span></div>
           <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm Cihazlara Bağlan</span></div>
         </div>
       </div>
@@ -230,7 +233,7 @@
 <!-- YUZEN PANEL: M50 ELEKTRO-OPTIK -->
 <div id="yzM50" class="yuzen-panel yuzen-gizli" style="min-width:500px;min-height:400px">
   <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelM50">M50 ELEKTRO-OPTİK KONTROLÜ</span></span>
+    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelM50">M50 ELEKTRO-OPTİK KONTROLÜ</span> <span id="m50BaslikAd" class="yuzen-baslik-ek"></span></span>
     <button class="yuzen-kapat" data-yuzen="yzM50" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="yuzen-icerik m50-icerik">
@@ -238,11 +241,12 @@
          bolumlerde toplar (kullanici istegi). Eleman id'leri korunur;
          m50_panel.js her bolumu surer. -->
     <!-- v2.4.191: coklu EO sekmeleri -->
+    <!-- v2.4.194: bu panel YALNIZ KONTROL tasir. Cihaz adi/IP/kimlik
+         "Elektro Optik Cihazlari" listesinden ve kayit formundan yonetilir. -->
     <div id="eoListe" class="ra-liste" style="margin-bottom:6px"></div>
-    <div class="satir" style="gap:6px;margin-bottom:6px">
-      <div style="flex:1"><label for="eoIsim" data-i18n="lblEoIsim">Cihaz adı</label><input type="text" id="eoIsim" value="" maxlength="64" spellcheck="false" autocomplete="off"></div>
-      <button id="btnEoKaydet" class="kucuk" style="align-self:flex-end"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnEoKaydet">KAYDET</span></button>
-      <button id="btnEoSil" class="kucuk tehlike ikincil" style="align-self:flex-end"><i class="fa-solid fa-trash"></i><span data-i18n="btnEoSil">SİL</span></button>
+    <div class="alan" id="m50KopruSar" style="display:none">
+      <label for="m50KopruSec" data-i18n="m50SahaMakinesi">Saha makinesi</label>
+      <select id="m50KopruSec" style="width:100%"></select>
     </div>
     <div class="m50-ust">
       <span id="m50DurumMetin" class="d-kapali" data-i18n="m50Kapali">Bağlı değil</span>
@@ -378,25 +382,9 @@
       </div>
     </details>
 
-    <details class="kam-bolum m50-bolum" id="m50BolumBaglanti">
-      <summary><i class="fa-solid fa-network-wired"></i> <span data-i18n="m50BolumBaglanti">BAĞLANTI VE KİMLİK</span><span class="kam-bolum-rozet" id="m50KimlikRozet"></span></summary>
-      <div class="m50-bolum-ic">
-        <p class="aciklama" data-i18n="m50KimlikAciklama">Kimlik bir kez girilir ve kaydedilir; açılışta kendiliğinden bağlanılır. Değiştirmek için yeniden girin.</p>
-        <div class="alan" id="m50KopruSar" style="display:none">
-          <label for="m50KopruSec" data-i18n="m50SahaMakinesi">Saha makinesi</label>
-          <select id="m50KopruSec" style="width:100%"></select>
-        </div>
-        <div class="satir">
-          <div style="flex:2"><label for="m50Ip">M50 IP</label><input id="m50Ip" type="text" value="" placeholder="192.168.1.64" autocomplete="off" spellcheck="false"></div>
-          <div style="flex:1"><label for="m50Port">Port</label><input id="m50Port" type="text" value="" placeholder="39020" autocomplete="off" spellcheck="false"></div>
-        </div>
-        <div class="satir">
-          <div style="flex:1"><label for="m50Kullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input id="m50Kullanici" type="text" value="" autocomplete="username" spellcheck="false"></div>
-          <div style="flex:1"><label for="m50Parola" data-i18n="m50Parola">Parola</label><input id="m50Parola" type="password" value="" autocomplete="new-password"></div>
-        </div>
-      </div>
-    </details>
-
+    <!-- v2.4.194: "BAGLANTI VE KIMLIK" bolumu KALDIRILDI (kullanici
+         istegi #2): IP/port/kullanici/parola cihaz kaydinda tutulur ve
+         Elektro Optik Cihazlari > Duzenle ile degistirilir. -->
     <details class="kam-bolum m50-bolum" id="m50BolumAyar">
       <summary><i class="fa-solid fa-sliders"></i> <span data-i18n="m50BolumAyar">GELİŞMİŞ AYARLAR</span></summary>
       <div class="m50-bolum-ic">
@@ -410,6 +398,81 @@
   </div>
 </div>
 
+<!-- ============ v2.4.194: RADARLAR (liste) + RADAR KAYIT FORMU ============ -->
+<div id="yzRadarlar" class="yuzen-panel yuzen-gizli" style="min-width:440px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="panelRadarlar">RADARLAR</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzRadarlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div class="cl-ust">
+      <span class="aciklama" data-i18n="radarlarAciklama">Satıra tıklayınca o radarın ayar paneli açılır.</span>
+      <button id="btnRadarYeni" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnRadarYeni">YENİ RADAR</span></button>
+    </div>
+    <div id="radarlarListe" class="cl-liste"></div>
+  </div>
+</div>
+<div id="yzRadarForm" class="yuzen-panel yuzen-gizli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-satellite-dish"></i> <span id="radarFormBaslik" data-i18n="panelRadarFormYeni">YENİ RADAR</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzRadarForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <input type="hidden" id="rfId" value="">
+    <div class="alan"><label for="rfIsim" data-i18n="lblRaIsim">Radar adı</label><input type="text" id="rfIsim" maxlength="64" spellcheck="false" autocomplete="off"></div>
+    <div class="satir">
+      <div style="flex:2"><label for="rfIp" data-i18n="lblRadarIp">Radar IP</label><input type="text" id="rfIp" placeholder="192.168.1.50" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="rfPort" data-i18n="lblRadarPort">Port</label><input type="text" id="rfPort" value="5001" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir">
+      <div style="flex:1"><label for="rfLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="rfLat" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="rfLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="rfLon" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir" style="gap:6px;margin-top:8px">
+      <button id="btnRadarFormKaydet" style="flex:1"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
+      <button id="btnRadarFormIptal" class="ikincil" style="flex:1"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ v2.4.194: ELEKTRO OPTIK CIHAZLARI (liste) + KAYIT FORMU ============ -->
+<div id="yzEoCihazlar" class="yuzen-panel yuzen-gizli" style="min-width:440px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelEoCihazlar">ELEKTRO OPTİK CİHAZLARI</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzEoCihazlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div class="cl-ust">
+      <span class="aciklama" data-i18n="eoCihazlarAciklama">Satıra tıklayınca cihazın kontrol paneli açılır.</span>
+      <button id="btnEoYeni" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnEoYeni">YENİ ELEKTRO OPTİK</span></button>
+    </div>
+    <div id="eoCihazListe" class="cl-liste"></div>
+  </div>
+</div>
+<div id="yzEoForm" class="yuzen-panel yuzen-gizli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-binoculars"></i> <span id="eoFormBaslik" data-i18n="panelEoFormYeni">YENİ ELEKTRO OPTİK</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzEoForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <input type="hidden" id="efId" value="">
+    <div class="alan"><label for="efIsim" data-i18n="lblEoIsim">Cihaz adı</label><input type="text" id="efIsim" maxlength="64" spellcheck="false" autocomplete="off"></div>
+    <div class="satir">
+      <div style="flex:2"><label for="efIp">IP</label><input type="text" id="efIp" placeholder="192.168.1.64" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="efPort" data-i18n="lblRadarPort">Port</label><input type="text" id="efPort" value="39020" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir">
+      <div style="flex:1"><label for="efKullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input type="text" id="efKullanici" autocomplete="off" spellcheck="false"></div>
+      <div style="flex:1"><label for="efParola" data-i18n="m50Parola">Parola</label><input type="password" id="efParola" autocomplete="new-password"></div>
+    </div>
+    <p class="aciklama" id="efNot" data-i18n="efNot">Parola sunucuda cihaz kaydıyla saklanır; düzenlerken boş bırakılırsa değişmez.</p>
+    <div class="satir" style="gap:6px;margin-top:8px">
+      <button id="btnEoFormKaydet" style="flex:1"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
+      <button id="btnEoFormIptal" class="ikincil" style="flex:1"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- YUZEN PANEL: RADAR AYARLARI -->
 <div id="yzRadar" class="yuzen-panel yuzen-gizli">
   <div class="yuzen-baslik">
@@ -419,19 +482,10 @@
   <div class="yuzen-icerik">
   <!-- v2.4.190: COKLU RADAR — ust seritte radar sekmeleri (+ ekle);
        asagidaki form secili radara aittir. Eleman id'leri korunur. -->
-  <div class="alan ra-liste-alan">
-    <div id="raListe" class="ra-liste"></div>
-    <div class="satir" style="margin-top:6px">
-      <div style="flex:2"><label for="raIsim" data-i18n="lblRaIsim">Radar adı</label><input type="text" id="raIsim" value="" maxlength="64" spellcheck="false" autocomplete="off"></div>
-      <div style="flex:1"><label for="raKayitLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="raKayitLat" value="" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
-      <div style="flex:1"><label for="raKayitLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="raKayitLon" value="" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
-    </div>
-    <div class="satir" style="gap:6px;margin-top:6px">
-      <button id="btnRaKayitKaydet" class="kucuk"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnRaKayitKaydet">RADARI KAYDET</span></button>
-      <button id="btnRaKayitSil" class="kucuk tehlike ikincil"><i class="fa-solid fa-trash"></i><span data-i18n="btnRaKayitSil">SİL</span></button>
-      <span id="raKonumKaynak" class="aciklama" style="margin-left:auto"></span>
-    </div>
-  </div>
+  <!-- v2.4.194: kayit alanlari (ad/enlem/boylam/kaydet/sil) RADARLAR
+       paneline ve kayit formuna tasindi; burada yalniz hangi radarin
+       ayarlandigini gosteren sekmeler kalir. -->
+  <div id="raListe" class="ra-liste" style="margin-bottom:8px"></div>
   <div class="alan">
     <div class="satir">
       <div style="flex:2">
@@ -442,14 +496,16 @@
              baglanma denemesi basliyordu. Kullanici istegi: "kopru
              kendisine baglan komutu gelmeden baglanmamali". Ipucu
              metni bicimi gosterir ama DEGER olarak gonderilmez. -->
-        <input type="text" id="radarIp" value=""
+        <!-- v2.4.194: adres KAYITTAN gelir, burada degistirilemez
+             (duzenlemek icin Radarlar > Duzenle). -->
+        <input type="text" id="radarIp" value="" readonly
                placeholder="192.168.1.50"
                data-i18n-ph="phRadarIp"
                spellcheck="false" autocomplete="off">
       </div>
       <div style="flex:1">
         <label for="radarPort" data-i18n="lblRadarPort">Port</label>
-        <input type="text" id="radarPort" value="5001"
+        <input type="text" id="radarPort" value="5001" readonly
                spellcheck="false" autocomplete="off">
       </div>
     </div>
@@ -1366,7 +1422,9 @@
       <label for="kamProtokol" data-i18n="lblKamProtokol">KAMERA TÜRÜ / PROTOKOL</label>
       <select id="kamProtokol">
         <option value="rtsp">RTSP</option>
-        <option value="m50">M50 Elektro-Optik (PTZ)</option>
+        <!-- v2.4.194: M50 secenegi KALDIRILDI (kullanici istegi): elektro-
+             optik cihaz kamera degil, ayri bir sistemdir; kamera kaydi
+             Elektro-Optik panelinden kendiliginden olusturulur. -->
         <option value="rtp">RTP / UDP</option>
         <option value="mjpeg">MJPEG</option>
         <option value="hls">HLS (.m3u8)</option>
@@ -1947,7 +2005,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24181"></script>
-<script src="js/i18n.js?v=v24193"></script>
+<script src="js/i18n.js?v=v24194"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2013,8 +2071,8 @@
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24192"></script>
-<script src="js/radar_panel.js?v=v24190"></script>
-<script src="js/m50_panel.js?v=v24192"></script>
+<script src="js/radar_panel.js?v=v24194"></script>
+<script src="js/m50_panel.js?v=v24194"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24134"></script>
 <script src="js/filtreler.js?v=v24127"></script>
@@ -2025,7 +2083,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v2519"></script>
-<script src="js/kameralar.js?v=v24193"></script>
+<script src="js/kameralar.js?v=v24194"></script>
 <script src="js/kamera_takip.js?v=v24176"></script>
 <script src="js/rotalar.js?v=v24127"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>

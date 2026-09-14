@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.193";
+const GCS_SURUM = "2.4.194";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.194",
+    tarih: "2026-09-14",
+    baslik: "Radarlar ve Elektro Optik Cihazları liste panelleri; kayıt formları; kontrol panelleri yalnız kontrol (paket 2.5.64)",
+    maddeler: [
+      "YENİ: Radar menüsüne 'Radarlar' — kayıtlı radarları listeleyen yüzen panel, YENİ RADAR düğmesi, satırda Düzenle/Sil. Satıra tıklayınca o radarın Radar Ayarları paneli açılır. Kayıt formu (ad, IP, port, enlem, boylam) ayrı yüzen paneldir; Radar Ayarları'nda IP/port artık salt okunurdur.",
+      "YENİ: Elektro-Optik menüsünden 'M50 Kontrolü' kaldırıldı. 'Cihazlar' → Elektro Optik Cihazları liste paneli (YENİ ELEKTRO OPTİK, Düzenle/Sil). Satıra tıklayınca cihazın kontrol paneli açılır; kontrol panelinde yalnız kontroller vardır, 'Bağlantı ve Kimlik' bölümü kaldırıldı.",
+      "YENİ: Elektro optik kayıt formu yalnız Cihaz adı, IP, Kullanıcı adı, Parola ve Port sorar; KAYDET listeye ekler. Kimlik cihaz kaydıyla birlikte sunucuda saklanır (parola arayüze/telemetriye çıkmaz); düzenlerken boş bırakılan parola değişmez. Kontrol panelindeki BAĞLAN kayıtlı kimliği kullanır.",
+      "KALDIRILDI: Kamera kaydı formundaki 'M50 Elektro-Optik' protokol seçeneği — elektro optik cihaz kamera değil, ayrı bir sistemdir; kamera kaydı Elektro-Optik panelinden kendiliğinden oluşur.",
+      "DÜZELTME (kurulum): Program kaldırılırken veri dizini (veritabanı ayarı, lisans, kayıtlar) her zaman korunuyordu; yeniden kurulumda eski yapılandırma bulunup kurulum sihirbazı atlanıyordu. Kaldırıcı artık soruyor: EVET → veri de silinir, sonraki kurulum sihirbazla sıfırdan başlar; HAYIR (varsayılan) → veri korunur."
+    ]
+  },
   {
     surum: "2.4.193",
     tarih: "2026-09-14",

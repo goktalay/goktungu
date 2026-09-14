@@ -396,7 +396,22 @@ Section "Uninstall"
   ; 5.000 $ karsiligi tek seferlik satin alinmistir ve yeniden kurulumda
   ; musteriyi lisanssiz birakmak kabul edilemez. Ayni gerekce `pg.json`
   ; ve ucus kayitlari icin de gecerlidir.
-  DetailPrint "Veri korundu: ${VERI_DIZINI}"
-  MessageBox MB_ICONINFORMATION|MB_OK \
-    "Kaldirma tamamlandi.$\r$\n$\r$\nVeritabani ayarlariniz, ucus kayitlariniz ve merkez lisansiniz korundu:$\r$\n${VERI_DIZINI}$\r$\n$\r$\nTamamen silmek isterseniz bu dizini elle kaldirabilirsiniz."
+  ; v2.5.64 (kullanici bildirimi #4): "Sistemden her seyi kaldirdim,
+  ; yeniden kurdum; kurulum sihirbazi yerine dogrudan sayfa acildi."
+  ; Neden: veri dizini (pg.json, lisans, kayitlar) kaldirmada
+  ; KORUNUYORDU; yeni kurulum eski yapilandirmayi bulup sihirbazi
+  ; atliyordu. Varsayilan yine KORUMA (lisans 5.000 $'lik tek seferlik
+  ; satin almadir); ama kullanici ACIKCA isterse veri de silinir ve
+  ; sonraki kurulum sifirdan (sihirbazla) baslar.
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 \
+    "Program kaldirildi.$\r$\n$\r$\nVERI DIZINI DE SILINSIN MI?$\r$\n${VERI_DIZINI}$\r$\n$\r$\nEVET: veritabani ayari, ucus kayitlari ve MERKEZ LISANSI silinir; sonraki kurulum sifirdan (kurulum sihirbaziyla) baslar.$\r$\nHAYIR: veri korunur (onerilen)." \
+    IDYES veri_sil IDNO veri_koru
+  veri_sil:
+    DetailPrint "Veri dizini siliniyor: ${VERI_DIZINI}"
+    RMDir /r "${VERI_DIZINI}"
+    RMDir "C:\ProgramData\Goktungu"
+    Goto veri_bitti
+  veri_koru:
+    DetailPrint "Veri korundu: ${VERI_DIZINI}"
+  veri_bitti:
 SectionEnd
