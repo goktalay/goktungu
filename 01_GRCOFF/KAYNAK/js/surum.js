@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.185";
+const GCS_SURUM = "2.4.186";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.186",
+    tarih: "2026-09-14",
+    baslik: "M50 köprüsüz modda durum sürekli 'hata'ya dönüyordu — düzeltildi (paket 2.5.56)",
+    maddeler: [
+      "DÜZELTME: Telemetri döngüsü, köprüsüz (doğrudan) M50 modu aktifken de her saniye saha Köprüsü aramaya devam ediyordu; köprü bulunamayınca durumu 'hata'ya çeviriyor ve doğrudan bağlantının az önce yazdığı 'bağlı' durumunu anında eziyordu. Kullanıcı gerçekten bağlansa bile arayüz hep bağlantısız görünüyor, kamera formu sürekli bilgi girmeyi istiyordu. Doğrudan mod kullanılabilirken köprü sorgusu artık hiç yapılmıyor."
+    ]
+  },
   {
     surum: "2.4.185",
     tarih: "2026-09-14",

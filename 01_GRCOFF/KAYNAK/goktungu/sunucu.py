@@ -10341,12 +10341,25 @@ class WSSunucusu:
                         pass
                 # M50 yalnız saha Köprüsünden arındırılmış durum çeker;
                 # hata telemetri döngüsünü veya diğer sistemleri durdurmaz.
-                _m50_cek = getattr(self.m50, "cek_gerekirse", None)
-                if _m50_cek is not None:
-                    try:
-                        await _db_is_parcasi(_m50_cek)
-                    except Exception:
-                        pass
+                #
+                # KUSUR (v2.4.184-185): köprüsüz (doğrudan) mod aktifken
+                # bu döngü YİNE DE her turda bridge'i aramaya çalışıyordu
+                # (`m50._cek` her zaman `_m50_kopru_durum_cek`e sabitti);
+                # köprü bulunamayınca `_kopru_hatasi()` durumu "hata"ya
+                # çeviriyor, `_m50_yerelden()`in az önce yazdığı "bağlı"
+                # durumunu SANİYEDE BİR eziyordu. Kullanıcı gerçekten
+                # bağlansa bile arayüz hep "bağlı değil" görüyordu. Artık
+                # doğrudan mod kullanılabilirken köprü sorgusu hiç
+                # yapılmaz; durum yalnız `_m50_yerelden()` çağrılarıyla
+                # güncellenir.
+                _m50_yerel = getattr(self, "m50_yerel", None)
+                if not (_m50_yerel is not None and _m50_yerel.kullanilabilir()):
+                    _m50_cek = getattr(self.m50, "cek_gerekirse", None)
+                    if _m50_cek is not None:
+                        try:
+                            await _db_is_parcasi(_m50_cek)
+                        except Exception:
+                            pass
                 # `M50Vekili.paket()` aynı ortak kilidi alır; bu nedenle
                 # kopyayı telemetri ana kilidine girmeden önce oluştururuz.
                 # Aksi halde `threading.Lock` yeniden girişsiz olduğu için
