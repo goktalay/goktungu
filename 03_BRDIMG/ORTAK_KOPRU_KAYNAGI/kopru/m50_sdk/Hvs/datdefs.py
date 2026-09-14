@@ -2,8 +2,20 @@ import os
 from enum import Enum
 from ctypes import CDLL
 
-dir = os.getcwd()+ r'\..\bin'
-os.add_dll_directory(dir)
+# DUZELTME (GOKTUNGU): uretici demo kodu `os.getcwd() + r'\..\bin'`
+# kullaniyordu -- yalniz kendi demo klasor duzeninde (calisma dizini
+# DemoPy/ iken bin/ onun bir ustunun kardesi) dogru sonuc verir. GRCOFF
+# Merkez ve GOKTUNGU Kopru surecleri BASKA bir dizinden calistigi icin
+# bu, yanlis yola (ornegin `...\Merkez\..\bin`) cikip "WinError 2"
+# aratiyordu. Bunun yerine bu dosyanin KENDI konumundan (Hvs/'in bir
+# ust dizini olan m50_sdk/bin) hesaplanir -- calisma dizininden bagimsiz.
+dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
+try:
+    os.add_dll_directory(dir)
+except (AttributeError, FileNotFoundError, OSError):
+    # `_sdk_yukle()` (m50_hvs.py) zaten dogru dizini eklemis olabilir;
+    # burada ikinci kez eklemenin basarisiz olmasi ölümcül degildir.
+    pass
 sdk = CDLL(r'HVideoSdk.dll')
 
 prefix = "sdk.HVS_"

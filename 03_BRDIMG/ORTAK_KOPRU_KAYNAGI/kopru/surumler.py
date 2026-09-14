@@ -18,8 +18,21 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.15"
+KOPRU_SURUM = "1.7.16"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.16",
+        "tarih": "2026-09-14",
+        "notlar": [
+            "DUZELTME: uretici SDK'sinin Hvs/datdefs.py dosyasi DLL "
+            "dizinini calisma dizinine (cwd) gore `..\\bin` olarak "
+            "hesapliyordu; bu yalniz ureticinin kendi demo klasor "
+            "duzeninde dogruydu. Koprunun calisma dizini farkli oldugu "
+            "icin M50 baglantisi \"[WinError 2] Sistem belirtilen "
+            "dosyayi bulamiyor\" ile reddediliyordu. Yol artik dosyanin "
+            "KENDI konumundan hesaplaniyor; calisma dizininden bagimsiz.",
+        ]
+    },
     {
         "surum": "1.7.15",
         "tarih": "2026-09-14",
