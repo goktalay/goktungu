@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.184";
+const GCS_SURUM = "2.4.185";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.185",
+    tarih: "2026-09-14",
+    baslik: "M50 SDK yol düzeltmesi — köprüsüz mod artık gerçekten bağlanabiliyor (paket 2.5.55)",
+    maddeler: [
+      "DÜZELTME: Üretici HVS SDK'sının Python bağlayıcısı (Hvs/datdefs.py), DLL dizinini çalışma dizinine (cwd) göre '..\\bin' olarak hesaplıyordu — bu yalnız üreticinin kendi demo klasör düzeninde doğruydu. Merkez'in çalışma dizini farklı olduğu için M50 bağlantısı '[WinError 2] Sistem belirtilen dosyayı bulamıyor' ile reddediliyordu (2.4.184'te köprüsüz mod aktifti ama bu yüzden hâlâ bağlanamıyordu). Yol artık dosyanın kendi konumundan hesaplanıyor; çalışma dizininden bağımsız."
+    ]
+  },
   {
     surum: "2.4.184",
     tarih: "2026-09-14",
