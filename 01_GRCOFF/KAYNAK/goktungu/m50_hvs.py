@@ -130,27 +130,69 @@ class M50Istemcisi:
         ayar_yol = str(ayar.get("m50_sdk_dizin") or "").strip()
         if ayar_yol:
             adaylar.append(Path(ayar_yol))
+        windows = platform.system().lower() == "windows"
         for kok in adaylar:
-            if (kok / "Hvs" / "sdk.py").is_file() and (
-                    (kok / "HVideoSDK.dll").is_file() or
-                    (kok / "bin" / "HVideoSDK.dll").is_file()):
+            if not (kok / "Hvs" / "sdk.py").is_file():
+                continue
+            if windows and ((kok / "HVideoSDK.dll").is_file() or
+                            (kok / "bin" / "HVideoSDK.dll").is_file()):
                 return kok
-        raise M50Hata("M50 Windows SDK bulunamadı; desteklenen SDK paketini kurun")
+            # v2.4.216: Linux — ureticinin .so paketi (aarch64 ile dogrulandi)
+            if not windows and ((kok / "lib" / "libHVideoSDK.so").is_file() or
+                                (kok / "libHVideoSDK.so").is_file()):
+                return kok
+        if windows:
+            raise M50Hata("M50 Windows SDK bulunamadı; desteklenen SDK paketini kurun")
+        raise M50Hata("M50 Linux SDK (lib/libHVideoSDK.so) bulunamadı; bu mimari için "
+                      "üreticinin Linux paketi gerekir (%s)" % platform.machine())
+
+    @classmethod
+    def yerli_sdk_var(cls, ayar=None) -> bool:
+        """Bu platformda SDK dogrudan yuklenebilir mi? (Wine'a gerek var mi?)"""
+        try:
+            cls._sdk_kok(ayar or {})
+        except Exception:
+            return False
+        if platform.system().lower() == "windows":
+            return platform.architecture()[0] == "64bit"
+        # Linux: .so'nun mimarisi ile makine uyusmali (aarch64 paketi x86_64'te yuklenmez)
+        try:
+            kok = cls._sdk_kok(ayar or {})
+            so = kok / "lib" / "libHVideoSDK.so"
+            if not so.is_file():
+                so = kok / "libHVideoSDK.so"
+            with open(so, "rb") as f:
+                bas = f.read(20)
+            e_machine = int.from_bytes(bas[18:20], "little")
+            mak = platform.machine().lower()
+            return (e_machine == 183 and mak in ("aarch64", "arm64")) or \
+                   (e_machine == 62 and mak in ("x86_64", "amd64"))
+        except Exception:
+            return False
 
     def _sdk_yukle(self) -> None:
-        if platform.system().lower() != "windows" or platform.architecture()[0] != "64bit":
-            raise M50Hata("M50 HVS SDK yalnız Windows x64 Köprü üzerinde çalışır")
+        windows = platform.system().lower() == "windows"
+        if windows and platform.architecture()[0] != "64bit":
+            raise M50Hata("M50 HVS SDK yalnız 64 bit Windows'ta çalışır")
         if self._sdk is not None:
             return
         ayar = self._ayar_oku() or {}
         kok = self._sdk_kok(ayar)
-        dll_dizin = kok / "bin" if (kok / "bin" / "HVideoSDK.dll").is_file() else kok
-        try:
-            # Dönüş nesnesi tutulur; çöp toplayıcı aksi halde DLL arama
-            # yolunu bağlantı sürerken kapatabilir.
-            self._dll_dizin_handle = os.add_dll_directory(str(dll_dizin))
-        except (AttributeError, FileNotFoundError, OSError) as exc:
-            raise M50Hata("M50 DLL dizini yüklenemedi: %s" % exc) from exc
+        if windows:
+            dll_dizin = kok / "bin" if (kok / "bin" / "HVideoSDK.dll").is_file() else kok
+            try:
+                # Dönüş nesnesi tutulur; çöp toplayıcı aksi halde DLL arama
+                # yolunu bağlantı sürerken kapatabilir.
+                self._dll_dizin_handle = os.add_dll_directory(str(dll_dizin))
+            except (AttributeError, FileNotFoundError, OSError) as exc:
+                raise M50Hata("M50 DLL dizini yüklenemedi: %s" % exc) from exc
+        else:
+            # v2.4.216: Linux — .so dizini bağlayıcıya ortamla bildirilir.
+            if not self.yerli_sdk_var(ayar):
+                raise M50Hata("M50 Linux SDK bu makinenin mimarisiyle (%s) uyuşmuyor"
+                              % platform.machine())
+            lib_dizin = kok / "lib" if (kok / "lib" / "libHVideoSDK.so").is_file() else kok
+            os.environ["GOKTUNGU_M50_SDK_LIB"] = str(lib_dizin)
         # Üreticinin bağlayıcısı Hvs mutlak paket adını kullanır.
         sys.path.insert(0, str(kok))
         try:
@@ -158,6 +200,9 @@ class M50Istemcisi:
             self._dat = importlib.import_module("Hvs.datdefs")
         except Exception as exc:
             self._sdk = self._dat = None
+            # Linux'ta en sik neden eksik sistem kutuphanesi (libtiff.so.5,
+            # libasound2, libX11...); OSError iletisi hangi dosyanin
+            # eksik oldugunu soyler — aynen aktarilir.
             raise M50Hata("M50 SDK Python bağlayıcısı yüklenemedi: %s" % exc) from exc
         finally:
             try:

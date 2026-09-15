@@ -30,6 +30,8 @@ from typing import Any, Dict
 from urllib.parse import urlparse
 
 from .m50_hvs import M50Hata, M50Istemcisi
+from . import m50_wine
+import platform as _platform
 
 _AYAR_ANAHTARI = "m50_yerel"
 
@@ -56,8 +58,18 @@ class M50YerelServisi:
         self._rtsp_onbellek: Dict[str, str] = {}
         self._onayar_onbellek = None
         self._aci_ts = 0.0
-        self.istemci = M50Istemcisi(
-            yaz=self._yaz, ayar_oku=self._ayar_oku, ayar_yaz=self._ayar_yaz_ic)
+        # v2.4.216 (kullanici karari: Wine kopru sureci): Windows'ta DLL
+        # dogrudan; Linux'ta SDK, wine64 altindaki yardimci surecte kosar
+        # ve ayni yuzle vekillenir (m50_wine.M50WineIstemcisi).
+        if (_platform.system().lower() != "windows" and not M50Istemcisi.yerli_sdk_var(self._ayar_oku())
+                and m50_wine.kullanilabilir()):
+            self.istemci = m50_wine.M50WineIstemcisi(
+                yaz=self._yaz, ayar_oku=self._ayar_oku, ayar_yaz=self._ayar_yaz_ic,
+                eo_id=self.eo_id)
+            self._yaz("M50 SDK Linux'ta Wine köprüsüyle çalışacak (cihaz %d)" % self.eo_id)
+        else:
+            self.istemci = M50Istemcisi(
+                yaz=self._yaz, ayar_oku=self._ayar_oku, ayar_yaz=self._ayar_yaz_ic)
 
     # -----------------------------------------------------------------
     def _yaz(self, mesaj: str, seviye: str = "bilgi") -> None:
@@ -81,6 +93,15 @@ class M50YerelServisi:
             sonuc = True
         except Exception:
             sonuc = False
+        # v2.4.216: Linux'ta DLL dogrudan yuklenemez; Wine koprusu yoksa
+        # "kullanilabilir" DEGIL — komutlar Kopru yoluna duser (onceden
+        # True donup her komut "yalniz Windows" hatasi veriyordu).
+        if sonuc and _platform.system().lower() != "windows":
+            # v2.4.216: once yerli Linux SDK (.so, mimari uyumlu), yoksa Wine
+            sonuc = M50Istemcisi.yerli_sdk_var(self._ayar_oku()) or m50_wine.kullanilabilir()
+            if not sonuc and not getattr(self, "_wine_uyari_yazildi", False):
+                self._wine_uyari_yazildi = True
+                self._yaz("M50 doğrudan bağlantı Linux'ta kapalı: %s" % m50_wine.eksik_gerekce(), "uyari")
         self._kullanilabilir_onbellek = sonuc
         self._kullanilabilir_ts = simdi
         return sonuc

@@ -9,14 +9,28 @@ from ctypes import CDLL
 # bu, yanlis yola (ornegin `...\Merkez\..\bin`) cikip "WinError 2"
 # aratiyordu. Bunun yerine bu dosyanin KENDI konumundan (Hvs/'in bir
 # ust dizini olan m50_sdk/bin) hesaplanir -- calisma dizininden bagimsiz.
-dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
-try:
-    os.add_dll_directory(dir)
-except (AttributeError, FileNotFoundError, OSError):
-    # `_sdk_yukle()` (m50_hvs.py) zaten dogru dizini eklemis olabilir;
-    # burada ikinci kez eklemenin basarisiz olmasi ölümcül degildir.
-    pass
-sdk = CDLL(r'HVideoSdk.dll')
+import sys as _sys
+_kok = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _sys.platform.startswith("win"):
+    dir = os.path.join(_kok, 'bin')
+    try:
+        os.add_dll_directory(dir)
+    except (AttributeError, FileNotFoundError, OSError):
+        # `_sdk_yukle()` (m50_hvs.py) zaten dogru dizini eklemis olabilir;
+        # burada ikinci kez eklemenin basarisiz olmasi ölümcül degildir.
+        pass
+    sdk = CDLL(r'HVideoSdk.dll')
+else:
+    # v2.4.216 (GOKTUNGU): LINUX — ureticinin Linux paketi (lib/libHVideoSDK.so,
+    # libHVideoUtility.so; aarch64). Yardimci kutuphane once RTLD_GLOBAL ile
+    # yuklenir; asil kutuphane ona baglidir. Dizin: GOKTUNGU_M50_SDK_LIB
+    # ortam degiskeni ya da m50_sdk/lib.
+    from ctypes import RTLD_GLOBAL as _RG
+    dir = os.environ.get("GOKTUNGU_M50_SDK_LIB") or os.path.join(_kok, 'lib')
+    _yardimci = os.path.join(dir, 'libHVideoUtility.so')
+    if os.path.isfile(_yardimci):
+        CDLL(_yardimci, mode=_RG)
+    sdk = CDLL(os.path.join(dir, 'libHVideoSDK.so'), mode=_RG)
 
 prefix = "sdk.HVS_"
 

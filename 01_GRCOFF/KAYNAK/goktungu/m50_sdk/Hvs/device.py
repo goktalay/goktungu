@@ -101,7 +101,9 @@ def PGetLastErrCode(handle) -> c_int:
 # GOKTUNGU eklentisi: cevre birimi (pusula/GPS/hava) verisi.
 # HVS_GetExternDeviceInfo(DevHandle h, ExternDevice_e type, ExternData_CB cb, PVoid user)
 # ExternData_CB: void STDCALL (PVoid user, ExternDevice_e type, PVoid data, int size)
-ExternData_CB = WINFUNCTYPE(None, c_void_p, c_int, c_void_p, c_int)
+# v2.4.216 (GOKTUNGU): STDCALL yalniz Windows'ta anlamlidir; Linux'ta cdecl.
+import sys as _sys
+ExternData_CB = (WINFUNCTYPE if _sys.platform.startswith("win") else CFUNCTYPE)(None, c_void_p, c_int, c_void_p, c_int)
 
 
 class GPSData_t(Structure):

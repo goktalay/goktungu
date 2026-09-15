@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.215";
+const GCS_SURUM = "2.4.216";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.216",
+    tarih: "2026-09-15",
+    baslik: "Ubuntu (ARM64) M50: üreticinin Linux SDK'sı doğrudan; x86_64 için Wine köprüsü (paket 2.5.86)",
+    maddeler: [
+      "M50 LINUX YERLİ SDK (kullanıcı üreticiden Linux aarch64 paketini buldu): lib/libHVideoSDK.so + libHVideoUtility.so paketle gelir; sürücü Linux'ta .so'yu yükler (bağlayıcı platforma göre DLL/.so, geri çağrılar cdecl), mimari uyumu dosyadan denetlenir (aarch64 ↔ makine). PTZ, lens, açı, takip, ön ayar, tarama, RTK/GPS, RTSP adresi ve cihaz OSD'si aynı sürücüyle çalışır. Sistem kütüphaneleri: libX11, libxcb-*, libasound2, libtiff (5/6), libfreetype6, libbz2, liblzma, libatomic1 (paket Recommends). Ubuntu 24.04'te libtiff.so.5 yoksa: sudo apt install libtiff5 ya da libtiff6 için sembolik bağ.",
+      "M50 SDK LINUX (kullanıcı kararı: 'Wine köprü süreci'): üreticinin Windows x64 DLL'i Ubuntu'da wine64 altında ayrı bir yardımcı süreçte (goktungu/m50_sdk_servis.py, gömülü Windows Python) çalışır; Merkez'deki vekil (goktungu/m50_wine.py) aynı sürücü yüzünü sunar ve her komutu 127.0.0.1 üzerinde JSON satırıyla iletir. PTZ, lens, açı, takip, ön ayar, tarama, RTK/GPS, RTSP adresi ve cihaz OSD'si aynı yoldan geçer.",
+      "Gereksinim: Ubuntu'da 'sudo apt install wine64'. Gömülü Windows Python zip'i Merkez paketiyle gelir (/opt/goktungu/merkez/wine) ve veri kökündeki wine/python dizinine ilk bağlantıda açılır; WINEPREFIX veri kökündedir (ProtectSystem=strict ile uyumlu). Yardımcı süreç yalnız 'Bağlan' istendiğinde başlar, jetonla korunur, çökerse bir kez yeniden başlatılır.",
+      "DÜZELTME: Linux'ta doğrudan SDK 'kullanılabilir' sayılıp her komut 'yalnız Windows' hatası veriyordu; artık wine yoksa komutlar Köprü yoluna düşer ve eksik gereksinim bir kez günlüğe yazılır.",
+      "NOT: Wine yolu sahada doğrulama ister; Docker'da DLL yükleme/CreateDevice testi paket notunda raporlanır."
+    ]
+  },
   {
     surum: "2.4.215",
     tarih: "2026-09-15",

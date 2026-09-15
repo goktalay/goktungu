@@ -166,7 +166,8 @@ Section "GOKTUNGU Merkez" AnaBolum
   ; assets/ agaci: paketle_merkez.py duz dizinleri buraya esler.
   DetailPrint "Uygulama dosyalari yaziliyor..."
   SetOutPath "$INSTDIR\assets"
-  File /r "dagitim\agac\assets\*.*"
+  ; v2.4.216: Linux SDK (.so, aarch64) Windows kurulumuna GIRMEZ (30 MB)
+  File /r /x "*.so" "dagitim\agac\assets\*.*"
 
   SetOutPath "$INSTDIR\varliklar"
   File "varliklar\goktungu.ico"

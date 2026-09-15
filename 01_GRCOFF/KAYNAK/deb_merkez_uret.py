@@ -286,6 +286,16 @@ def kur_agaci(calisma, agac_kaynak, surum):
         else:
             shutil.copy2(k, h)
 
+    # --- v2.4.216: M50 SDK Wine koprusu icin gomulu Windows Python ---
+    # Linux'ta ureticinin Windows DLL'i wine64 altinda bu yorumlayiciyla
+    # kosar (goktungu/m50_wine.py). Zip veri kokune ilk kullanimda acilir.
+    _embed = os.path.join(KOK, "gomulu_merkez", "python-3.11.9-embed-amd64.zip")
+    if os.path.isfile(_embed):
+        os.makedirs(os.path.join(hedef, "wine"), exist_ok=True)
+        shutil.copy2(_embed, os.path.join(hedef, "wine", "python-3.11.9-embed-amd64.zip"))
+    else:
+        print("[UYARI] gomulu Windows Python zip'i yok; Wine koprusu paketten cikacak")
+
     # --- Ikonlar: hicolor temasina (kopru paketinden devralinir) ---
     # Kopru calisma dizini adi gecis sirasinda degisebilir; iki adayi da
     # dene. Tek ada baglanmak sessiz atlamaya yol aciyordu: yol yoksa
@@ -466,7 +476,9 @@ Priority: optional
 Architecture: {MIMARI}
 Depends: python3 (>= 3.10), python3-venv, python3-pip, adduser, xdg-utils,
  python3-psycopg2, python3-numpy, python3-opencv, python3-serial
-Recommends: postgresql, postgresql-contrib, ffmpeg
+Recommends: postgresql, postgresql-contrib, ffmpeg,
+ libx11-6, libxcb1, libxcb-shm0, libxcb-render0, libxcb-shape0, libxcb-xfixes0,
+ libasound2t64 | libasound2, libtiff6 | libtiff5, libfreetype6, libbz2-1.0, liblzma5, libatomic1
 Suggests: postgis
 Maintainer: {BAKIMCI}
 Installed-Size: {kurulu_boyut}
