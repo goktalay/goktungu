@@ -236,6 +236,43 @@ class EOYoneticisi:
         v = self.vekil(eo_id)
         return v.rtsp_url(kanal) if v is not None else None
 
+    def rtsp_url_yakalama(self, kanal, eo_id=None):
+        """v2.4.204: YALNIZ yakalama süreci için, kayıtlı kimlikle RTSP.
+
+        M50 RTSP akışı SDK oturumuyla aynı kullanıcı/parolayı ister.
+        Arındırılmış adres (kimliksiz) telemetride/arayüzde kalır; bu
+        yordam yerel SDK servisinin kayıtlı kimliğini (varsa) yalnız
+        ffmpeg/OpenCV girdisine ekler. Dönen dize günlüğe YAZILMAZ
+        (video_proxy adresi maskeleyerek loglar).
+        """
+        temel = self.rtsp_url(kanal, eo_id)
+        if not temel:
+            return None
+        y = self.yerel(eo_id)
+        if y is None:
+            return temel
+        try:
+            a = y._ayar_oku() or {}
+        except Exception:
+            return temel
+        ku, pa = str(a.get("kullanici") or ""), str(a.get("parola") or "")
+        if not ku or not pa:
+            return temel
+        try:
+            from urllib.parse import urlsplit, urlunsplit, quote
+            p = urlsplit(temel)
+            if p.username or p.password:
+                return temel
+            host = p.hostname or ""
+            if ":" in host:
+                host = "[%s]" % host
+            if p.port:
+                host += ":%d" % p.port
+            netloc = "%s:%s@%s" % (quote(ku, safe=""), quote(pa, safe=""), host)
+            return urlunsplit((p.scheme, netloc, p.path or "/", p.query, p.fragment))
+        except Exception:
+            return temel
+
     def m50_kamera_id_bul(self):
         return None
 

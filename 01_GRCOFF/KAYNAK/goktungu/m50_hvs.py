@@ -613,9 +613,12 @@ class M50Istemcisi:
             return None
         if ayrik.scheme.lower() not in ("rtsp", "rtsps") or not ayrik.hostname:
             return None
-        # İkinci savunma hattı: cihaz sürümü/donanımı URI'ye kullanıcı
-        # bilgisi gömse dahi bu asla telemetriye/duruma taşınmaz.
-        if (ayrik.username is not None or ayrik.password is not None or
-                ayrik.query or ayrik.fragment):
-            return None
-        return str(ham).strip()
+        # v2.4.204 OLCULEN KUSUR (kullanici: "PTZ calisiyor ama goruntu
+        # gelmiyor"): cihaz URI'ye kullanici bilgisi gomdugunde bu yordam
+        # None donuyor, kamera "adres bildirilmedi" hatasiyla hic
+        # acilmiyordu. Kimlik yine telemetriye/duruma TASINMAZ: adres
+        # ARINDIRILARAK (kullanici/parola/sorgu atilarak) doner; yakalama
+        # katmani gerekirse kayitli kimligi kendi ekler.
+        port = (":%d" % ayrik.port) if ayrik.port else ""
+        return "%s://%s%s%s" % (ayrik.scheme.lower(), ayrik.hostname, port,
+                                ayrik.path or "/")

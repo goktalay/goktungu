@@ -620,6 +620,13 @@ class VideoProxy:
                 kanal = parcalar[2]
             elif len(parcalar) == 2:
                 kanal = parcalar[1]
+            # v2.4.204: yakalama icin KIMLIKLI adres (varsa); arayuze/
+            # telemetriye giden arindirilmis adres degismez.
+            if hasattr(self.m50_vekil, "rtsp_url_yakalama"):
+                try:
+                    return self.m50_vekil.rtsp_url_yakalama(kanal, eo_id)
+                except Exception:
+                    pass
             try:
                 return self.m50_vekil.rtsp_url(kanal, eo_id)
             except TypeError:
@@ -683,8 +690,10 @@ class VideoProxy:
                     return None
                 self._son_hatalar.pop(int(kamera_id), None)
                 self.yayinlar[kamera_id] = y
+                # v2.4.204: adreste kimlik varsa gunluge MASKELI yazilir.
+                import re as _re
                 self.konsol("[VIDEO] Kaynak acildi (kamera %s): %s"
-                            % (kamera_id, url))
+                            % (kamera_id, _re.sub(r"//[^/@]+@", "//***:***@", str(url))))
             return y
 
     def _hata_yaz(self, kamera_id, gerekce):

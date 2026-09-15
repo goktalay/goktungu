@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.203";
+const GCS_SURUM = "2.4.204";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.204",
+    tarih: "2026-09-15",
+    baslik: "M50 canlı görüntü: RTSP adresine kayıtlı kimlik yalnız yakalama katmanında eklenir (paket 2.5.74)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi: bağlantı/PTZ/tarama çalışıyor, görüntü gelmiyor): M50 RTSP akışı SDK oturumuyla aynı kullanıcı/parolayı ister. (a) Cihaz RTSP adresini kimlikle bildirdiğinde kod bunu 'şüpheli' sayıp adres yok diyordu — artık adres arındırılarak kabul edilir. (b) Kimliksiz adresle yakalayıcı 401 alıyordu — kayıtlı kimlik artık YALNIZ ffmpeg/OpenCV girdisine eklenir; arayüze ve telemetriye giden adres kimliksiz kalır, günlükte maskelenir.",
+      "2.4.203 içeriği dahil: açılış lisans özetine 'm50' alanı (Lisansı Yenile sonrası F5'te menünün kaybolması)."
+    ]
+  },
   {
     surum: "2.4.203",
     tarih: "2026-09-15",
