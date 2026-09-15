@@ -88,6 +88,7 @@ class M50Vekili:
                       "kaynak": "yerel_kopru",
                       "rtsp_gorunur": "", "rtsp_termal": ""}
         self.takip = {"etkin": False, "kanal": "", "secim_hazir": False}
+        self.osd = {}      # v2.4.215: kanal -> cihaz OSD ayarlari
 
     def cek_gerekirse(self):
         """Telemetri döngüsünden çağrılır; gerektiğinde Köprüden durum çeker."""
@@ -117,6 +118,7 @@ class M50Vekili:
         ham_ayarlar = paket.get("m50_ayarlar")
         ham_video = paket.get("m50_video")
         ham_takip = paket.get("m50_takip")
+        ham_osd = paket.get("m50_osd")          # v2.4.215
         with self.kilit:
             if isinstance(ham_durum, dict):
                 self.durum.update(_arindir(ham_durum))
@@ -141,6 +143,8 @@ class M50Vekili:
                 self.video.update(_arindir(ham_video))
             if isinstance(ham_takip, dict):
                 self.takip.update(_arindir(ham_takip))
+            if isinstance(ham_osd, dict):
+                self.osd = _arindir(ham_osd)
             # Tek durum kaynağı korunur: UI eski Köprü sürümlerinde dahi
             # `m50_durum.takip/video` üzerinden geriye düşebilir.
             self.durum["takip"] = dict(self.takip)
@@ -172,6 +176,7 @@ class M50Vekili:
                                     kullanici=str(self.ayarlar.get("kullanici") or "")),
                 "m50_video": _arindir(dict(self.video)),
                 "m50_takip": _arindir(dict(self.takip)),
+                "m50_osd": _arindir(dict(self.osd)),
             }
 
     def _kopru_yok(self, mesaj):

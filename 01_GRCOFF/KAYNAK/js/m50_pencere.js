@@ -395,6 +395,7 @@
   function kanalDegistir(k){
     k.anaKanal = digerKanal(k.anaKanal);
     yerel.yaz("m50kanal_" + k.eoId, k.anaKanal);
+    if (k.oc){ k.oc.sonImza = ""; k.oc.kirli = false; k.ocIstek = 0; }
     if (k.aiTakip) aiTakipDurdur(k, true);
     k.cerceve = null; cerceveCiz(k);
     videoBagla(k); pipBagla(k); durumYaz(k);
@@ -436,6 +437,124 @@
     el.textContent = ""; for (const m of sat){ const sp = document.createElement("span"); sp.textContent = m; el.appendChild(sp); }
   }
   function sureMetni(sn){ sn = Math.max(0, Math.round(Number(sn) || 0)); const d = Math.floor(sn / 60), s = sn % 60; return (d < 10 ? "0" : "") + d + ":" + (s < 10 ? "0" : "") + s; }
+  // =================================================================
+  // v2.4.215 — CİHAZ OSD'Sİ (SDK HVS_GetOsdInfo / HVS_SetOsdInfo)
+  // Kullanıcı: "m50 sdk'sı ile görüntünün üzerine basılan OSD". Yapı
+  // üreticinin datdefs.h dosyasından (OsdInfo_t) aktarıldı. Form, seçili
+  // ana kanal için cihazdan okunur (telemetri: eo_cihazlar[].m50_osd[kanal])
+  // ve "Cihaza yaz" ile geri yazılır. Değerler cihazda kalıcıdır.
+  // =================================================================
+  const OSDC_KONUM = [[0, "Sol üst"], [1, "Sağ üst"], [2, "Sol alt"], [3, "Sağ alt"], [4, "Gizli"], [5, "Özel"]];
+  function osdCihazBolumDoldur(k, kap){
+    const t = T();
+    const oc = { girdi: {}, kirli: false, sonImza: "" };
+    const satir = (etiket, el) => { const l = document.createElement(el.type === "checkbox" ? "label" : "div"); l.className = "m50-pc-ayar-satir";
+      const s2 = document.createElement("span"); s2.textContent = etiket; if (el.type === "checkbox"){ l.append(el, s2); } else { l.append(s2, el); } kap.appendChild(l); return l; };
+    const kirlet = el => el.addEventListener("input", () => { oc.kirli = true; });
+    const secim = (ad, etiket, secenekler) => { const s = document.createElement("select"); s.className = "m50-pc-sb";
+      for (const [v, e] of secenekler){ const o = document.createElement("option"); o.value = String(v); o.textContent = e; s.appendChild(o); }
+      s.addEventListener("change", () => { oc.kirli = true; }); oc.girdi[ad] = s; satir(etiket, s); return s; };
+    const kutu = (ad, etiket) => { const c = document.createElement("input"); c.type = "checkbox"; c.addEventListener("change", () => { oc.kirli = true; }); oc.girdi[ad] = c; satir(etiket, c); return c; };
+    const metin = (ad, etiket, uz) => { const i = document.createElement("input"); i.type = "text"; i.maxLength = uz || 64; i.className = "m50-pc-sb"; kirlet(i); oc.girdi[ad] = i; satir(etiket, i); return i; };
+    const baslik = (m) => { const h = document.createElement("div"); h.className = "m50-pc-osdc-baslik"; h.textContent = m; kap.appendChild(h); };
+    const konum = (ad, etiket) => secim(ad, etiket, OSDC_KONUM.map(([v, e]) => [v, t["m50OsdcKonum" + v] || e]));
+    const durumSatiri = document.createElement("p"); durumSatiri.className = "m50-pc-ayar-not"; oc.durum = durumSatiri; kap.appendChild(durumSatiri);
+    baslik(t.m50OsdcAd || "KANAL ADI");
+    metin("channelName", t.m50OsdcAdMetin || "Metin", 120);
+    konum("namePos", t.m50OsdcKonumEtiket || "Konum");
+    secim("channelNameAlign", t.m50OsdcHiza || "Hizalama", [[0, t.m50OsdcSol || "Sol"], [1, t.m50OsdcSag || "Sağ"]]);
+    baslik(t.m50OsdcSaat || "TARİH / SAAT");
+    konum("timePos", t.m50OsdcKonumEtiket || "Konum");
+    secim("timeFormat", t.m50OsdcBicim || "Biçim", [[0, "yyyy-MM-dd"], [1, "dd/MM/yyyy"], [2, "MM/dd/yyyy"]]);
+    secim("timeMode", t.m50OsdcSaatKip || "Saat", [[0, "24"], [1, "12"]]);
+    kutu("displayWeek", t.m50OsdcHafta || "Haftanın günü");
+    kutu("showMilliSec", t.m50OsdcOndalikSn || "1/10 saniye");
+    baslik(t.m50OsdcPtz || "PTZ BİLGİSİ");
+    konum("osdPtzPos", t.m50OsdcKonumEtiket || "Konum");
+    kutu("displayPtz", t.m50OsdcAzimut || "Azimut (P/T)");
+    kutu("displayPtzAngDir", t.m50OsdcAciYon || "Açı ve yön");
+    kutu("displayFocalPos", t.m50OsdcOdak || "Odak konumu");
+    kutu("displayFov", t.m50OsdcFov || "Görüş açısı");
+    kutu("displayZoomTimes", t.m50OsdcZoom || "Büyütme (zoom)");
+    kutu("displayTrackState", t.m50OsdcTakip || "Takip durumu");
+    kutu("displayPtzState", t.m50OsdcPtzDurum || "PTZ durumu");
+    secim("ptzAngleDecCount", t.m50OsdcOndalik || "Açı ondalık basamağı", [[0, "0"], [1, "1"], [2, "2"]]);
+    baslik(t.m50OsdcPusula || "PUSULA / GPS");
+    konum("osdCompassPos", t.m50OsdcKonumEtiket || "Konum");
+    kutu("showCompass", t.m50OsdcPusulaGoster || "Pusula");
+    kutu("showGPS", "GPS");
+    kutu("displaySelfDefine", t.m50OsdcOzelMetin || "Özel metin");
+    metin("radarInfo", t.m50OsdcOzelMetinIcerik || "Özel metin içeriği", 120);
+    baslik(t.m50OsdcGenel || "GENEL");
+    const fs = document.createElement("input"); fs.type = "range"; fs.min = "16"; fs.max = "64"; fs.step = "8"; kirlet(fs); oc.girdi.fontSize = fs;
+    const fsDeger = document.createElement("b"); fsDeger.textContent = "";
+    fs.addEventListener("input", () => { fsDeger.textContent = fs.value; });
+    const fsSatir = document.createElement("div"); fsSatir.className = "m50-pc-ayar-satir"; const fsEt = document.createElement("span"); fsEt.textContent = t.m50OsdBoy || "Yazı boyu"; fsSatir.append(fsEt, fs, fsDeger); kap.appendChild(fsSatir); oc.fsDeger = fsDeger;
+    metin("fontColor", t.m50OsdcYaziRengi || "Yazı rengi", 15);
+    kutu("multiLine", t.m50OsdcCokSatir || "Çok satırlı");
+    kutu("colorInvert", t.m50OsdcRenkTers || "Otomatik renk tersleme");
+    kutu("cross", t.m50OsdcArti || "Artı (cross)");
+    kutu("showGrid", t.m50OsdcIzgara || "Izgara");
+    kutu("dpyLaserRange", t.m50OsdcLazer || "Lazer mesafe");
+    const dgm = document.createElement("div"); dgm.className = "m50-pc-satir";
+    const bOku = document.createElement("button"); bOku.type = "button"; bOku.className = "m50-pc-sb"; bOku.innerHTML = "<i class='fa-solid fa-rotate'></i><span>" + (t.m50OsdcOku || "Cihazdan oku") + "</span>";
+    bOku.addEventListener("click", ev => { ev.stopPropagation(); oc.kirli = false; oc.sonImza = ""; osdCihazIste(k); });
+    const bYaz = document.createElement("button"); bYaz.type = "button"; bYaz.className = "m50-pc-sb m50-pc-sb-tanima acik"; bYaz.innerHTML = "<i class='fa-solid fa-upload'></i><span>" + (t.m50OsdcYaz || "Cihaza yaz") + "</span>";
+    bYaz.addEventListener("click", ev => { ev.stopPropagation(); osdCihazYaz(k); });
+    dgm.append(bOku, bYaz); kap.appendChild(dgm);
+    oc.bOku = bOku; oc.bYaz = bYaz;
+    k.oc = oc;
+  }
+  function osdCihazIste(k){
+    const c = eoKaydi(k.eoId), d = (c && c.m50_durum) || {};
+    if (!d.bagli){ if (k.oc) k.oc.durum.textContent = T().m50OsdcBagliDegil || "Cihaz bağlı değil; OSD okunamaz."; return; }
+    gonder({ tip: "m50_osd_oku", eo_id: k.eoId, kanal: k.anaKanal });
+    if (k.oc) k.oc.durum.textContent = T().m50OsdcOkunuyor || "Cihazdan okunuyor…";
+    k.ocIstek = Date.now();
+  }
+  function osdCihazDoldur(k){
+    const oc = k.oc; if (!oc) return;
+    const c = eoKaydi(k.eoId);
+    const hepsi = c && c.m50_osd && typeof c.m50_osd === "object" ? c.m50_osd : null;
+    const v = hepsi && hepsi[k.anaKanal];
+    const t = T();
+    if (!v){
+      if (!k.ocIstek && c && c.m50_durum && c.m50_durum.bagli) osdCihazIste(k);
+      else if (k.ocIstek && Date.now() - k.ocIstek > 8000) oc.durum.textContent = t.m50OsdcOkunamadi || "Cihazdan OSD bilgisi gelmedi.";
+      return;
+    }
+    const imza = JSON.stringify(v);
+    if (imza === oc.sonImza) return;
+    if (oc.kirli) { oc.durum.textContent = t.m50OsdcYeniVar || "Cihazda yeni değer var; 'Cihazdan oku' ile yenileyin."; return; }
+    oc.sonImza = imza;
+    for (const ad of Object.keys(oc.girdi)){
+      const el = oc.girdi[ad];
+      let deger = v[ad];
+      if (ad === "channelName") deger = Array.isArray(v.channelName) ? (v.channelName[0] || "") : (v.channelName || "");
+      if (el.type === "checkbox") el.checked = !!deger;
+      else if (el.tagName === "SELECT") el.value = String(deger == null ? 0 : deger);
+      else el.value = deger == null ? "" : String(deger);
+    }
+    if (oc.fsDeger) oc.fsDeger.textContent = String(v.fontSize || "");
+    oc.durum.textContent = (t.m50OsdcOkundu || "Cihazdan okundu") + " · " + (k.anaKanal === "termal" ? (t.m50Termal || "Termal") : (t.m50Gorunur || "Görünür"));
+  }
+  function osdCihazYaz(k){
+    const oc = k.oc; if (!oc) return;
+    const alanlar = {};
+    for (const ad of Object.keys(oc.girdi)){
+      const el = oc.girdi[ad];
+      if (el.type === "checkbox") alanlar[ad] = !!el.checked;
+      else if (el.tagName === "SELECT" || el.type === "range") alanlar[ad] = parseInt(el.value, 10) || 0;
+      else alanlar[ad] = String(el.value || "");
+    }
+    alanlar.channelName = [alanlar.channelName];
+    if (!alanlar.fontColor) delete alanlar.fontColor;
+    oc.kirli = false; oc.sonImza = "";
+    gonder({ tip: "m50_osd_yaz", eo_id: k.eoId, kanal: k.anaKanal, alanlar });
+    oc.durum.textContent = T().m50OsdcYaziliyor || "Cihaza yazılıyor…";
+    k.ocIstek = Date.now();
+  }
+
   // v2.4.211: ekran bilgileri ayarları SOL PANELDE satır içi bölüm (popover değil)
   function osdBolumDoldur(k, kap){
     const t = T();
@@ -538,6 +657,7 @@
     k.sbHassasKap.style.display = aiAktifMi(kam) ? "" : "none";
     osdCiz(k);
     if (k.pip) pipBagla(k);
+    osdCihazDoldur(k);
     // --- takip düğmesi ---
     const takipDurumu = etkin || bekliyor || !!k.aiTakip;
     k.sbTakip.querySelector("span").textContent = k.aiTakip
@@ -676,8 +796,11 @@
     sbPip.title = t.m50PipIpucu || "Diğer kanalı (gündüz ⇄ gece) küçük pencerede göster";
     sbPip.addEventListener("click", ev => { ev.stopPropagation(); pipAcKapa(k); });
     const pipSatir = document.createElement("div"); pipSatir.className = "m50-pc-satir"; pipSatir.appendChild(sbPip); bPip.appendChild(pipSatir);
-    // EKRAN BİLGİLERİ
-    const bOsd = bolum(t.m50OsdBaslik || "Ekran bilgileri", "fa-sliders", false);
+    // CİHAZ OSD'Sİ (SDK)
+    const bOsdc = bolum(t.m50OsdcBaslik || "Cihaz OSD'si", "fa-font", false);
+    osdCihazBolumDoldur(k, bOsdc);
+    // MERKEZ BİLGİ KATMANI
+    const bOsd = bolum(t.m50OsdBaslik || "Merkez bilgi katmanı", "fa-sliders", false);
     osdBolumDoldur(k, bOsd);
     p.append(baslik, govde);
     Object.assign(k, { pencere: p, baslik, video, sol, ad, rozetKanal, rozetBag, rozetTakip,

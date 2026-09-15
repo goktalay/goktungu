@@ -4995,6 +4995,8 @@ class WSSunucusu:
         "m50_takip_sec":    ("radar", "hedef_yonetimi", "m50"),
         "m50_takip_baslat": ("radar", "hedef_yonetimi", "m50"),
         "m50_takip_durdur": ("radar", "hedef_yonetimi", "m50"),
+        "m50_osd_oku":      ("radar", "parametre", "m50"),
+        "m50_osd_yaz":      ("radar", "parametre", "m50"),
         "m50_aci_oku":      ("radar", "parametre", "m50"),
         "m50_onayar_liste": ("radar", "parametre", "m50"),
         "m50_onayar_kaydet": ("radar", "parametre", "m50"),
@@ -6040,6 +6042,7 @@ class WSSunucusu:
         "m50_takip_sec": "m50",
         "m50_takip_baslat": "m50",
         "m50_takip_durdur": "m50",
+        "m50_osd_oku": "m50", "m50_osd_yaz": "m50",
         "m50_aci_oku": "m50", "m50_onayar_liste": "m50",
         "m50_onayar_kaydet": "m50", "m50_onayar_cagir": "m50",
         "m50_onayar_sil": "m50", "m50_onayar_hepsini_sil": "m50",
@@ -6890,6 +6893,17 @@ class WSSunucusu:
             await self._m50_kopruye(websocket, "takip_durdur", {
                 "kanal": k.get("kanal"),
             }, k)
+        # --- v2.4.215: cihaz OSD'si (HVS_GetOsdInfo / HVS_SetOsdInfo) ---
+        elif komut == "m50_osd_oku":
+            await self._m50_kopruye(websocket, "osd_oku", {"kanal": k.get("kanal")}, k)
+        elif komut == "m50_osd_yaz":
+            _alan = k.get("alanlar")
+            _s = await self._m50_kopruye(websocket, "osd_yaz", {
+                "kanal": k.get("kanal"),
+                "alanlar": _alan if isinstance(_alan, dict) else {},
+            }, k)
+            if _s is not None:
+                self.konsol("M50", "Cihaz OSD ayarı yazıldı (kanal %s)" % k.get("kanal"), "basari")
         # --- v2.4.188: SDK'nın geri kalanı (açı, ön ayar, tarama, takip yeteneği) ---
         elif komut == "m50_aci_oku":
             await self._m50_kopruye(websocket, "aci_oku", {}, k)

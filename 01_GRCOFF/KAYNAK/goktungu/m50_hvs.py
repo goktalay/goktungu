@@ -646,6 +646,185 @@ class M50Istemcisi:
             raise M50Hata("M50 konum/pusula istenemedi: %s" % exc) from exc
         return self.durum()
 
+    # ------------------------------------------------------------------
+    # v2.4.215 — CİHAZ OSD'Sİ (kareye basılan yazı). Yapı üreticinin
+    # datdefs.h (OSD_INFO, `_OsdInfo`) tanımından birebir aktarıldı;
+    # POINTEx_t = {long x; long y} (Windows x64'te long = 4 bayt, ctypes
+    # c_long buna uyar). Desen belge örneğiyle aynı: Get → değiştir → Set.
+    # ------------------------------------------------------------------
+    _OSD_KONUM_ALANLARI = ("namePos", "timePos", "osdPtzPos", "osdCompassPos")
+    _OSD_BOOL_ALANLARI = ("displayWeek", "displayPtz", "displayFocalPos", "displayFov",
+                          "displayZoomTimes", "showMilliSec", "snapshotOsd", "cpuInfo",
+                          "displayFocalMax", "showCtrlStatus", "displayPtzState",
+                          "displayLensSelf", "displayTrackState", "displayPtzAngDir",
+                          "multiLine", "colorInvert", "horCoord", "cross", "showGrid",
+                          "crossRuler", "showCompass", "showGPS", "displaySelfDefine",
+                          "dpyLaserRange", "dpyCoolIrUnuserTime", "dpyBurglaAlarm",
+                          "dpySelfDefineLaserRange")
+    _OSD_INT_ALANLARI = {"fontSize": (16, 64), "channelNameAlign": (0, 1), "timeFormat": (0, 2),
+                         "timeMode": (0, 1), "timeAlign": (0, 1), "ptzAlign": (0, 1),
+                         "ptzMode": (0, 9), "ptzAngleDecCount": (0, 2), "zoomDisMode": (0, 1),
+                         "compassAlign": (0, 1), "crossPosType": (0, 1), "crossType": (0, 1),
+                         "rulerType": (0, 1), "crossAlpha": (0, 128), "osdOtherRegionType": (0, 2),
+                         "regionWidthCoef": (1, 100), "regionHeightCoef": (1, 100)}
+    _OSD_METIN_ALANLARI = {"crossColor": 16, "fontColor": 16, "radarInfo": 128, "selfDefineSetOsd": 128}
+
+    def _osd_yapisi(self):
+        ct = importlib.import_module("ctypes")
+        if getattr(self, "_OsdInfo", None) is not None:
+            return ct, self._OsdInfo
+
+        class POINTEx_t(ct.Structure):
+            _fields_ = [("x", ct.c_long), ("y", ct.c_long)]
+
+        class OsdInfo_t(ct.Structure):
+            _fields_ = [
+                ("channel", ct.c_int), ("fontSize", ct.c_int),
+                ("channelName", (ct.c_char * 256) * 8),
+                ("namePos", ct.c_int), ("namePosCoord", POINTEx_t), ("channelNameAlign", ct.c_int),
+                ("timeFormat", ct.c_int), ("timeMode", ct.c_int), ("displayWeek", ct.c_bool),
+                ("timePos", ct.c_int), ("timePosCoord", POINTEx_t), ("timeAlign", ct.c_int),
+                ("osdPtzPos", ct.c_int), ("osdPtzCoord", POINTEx_t), ("ptzAlign", ct.c_int),
+                ("displayPtz", ct.c_bool), ("displayFocalPos", ct.c_bool), ("displayFov", ct.c_bool),
+                ("displayZoomTimes", ct.c_bool), ("showMilliSec", ct.c_bool), ("snapshotOsd", ct.c_bool),
+                ("cpuInfo", ct.c_bool), ("displayFocalMax", ct.c_bool), ("showCtrlStatus", ct.c_bool),
+                ("displayPtzState", ct.c_bool), ("displayLensSelf", ct.c_bool), ("displayTrackState", ct.c_bool),
+                ("displayPtzAngDir", ct.c_bool), ("multiLine", ct.c_bool), ("colorInvert", ct.c_bool),
+                ("horCoord", ct.c_bool), ("dirCoord", POINTEx_t),
+                ("ptzMode", ct.c_int), ("ptzAngleDecCount", ct.c_int), ("zoomDisMode", ct.c_int),
+                ("regionWidthCoef", ct.c_int), ("regionHeightCoef", ct.c_int),
+                ("osdCompassPos", ct.c_int), ("osdCompassPosAuto", POINTEx_t), ("compassAlign", ct.c_int),
+                ("cross", ct.c_bool), ("crossPosType", ct.c_int), ("crossCoord", POINTEx_t),
+                ("crossType", ct.c_int), ("crossColor", ct.c_char * 16), ("fontColor", ct.c_char * 16),
+                ("rulerType", ct.c_int), ("showGrid", ct.c_bool), ("crossAlpha", ct.c_int),
+                ("crossRuler", ct.c_bool), ("showCompass", ct.c_bool), ("showGPS", ct.c_bool),
+                ("displaySelfDefine", ct.c_bool), ("radarInfo", ct.c_char * 128),
+                ("osdOtherRegionType", ct.c_int), ("osdOtherRegion", POINTEx_t),
+                ("dpyLaserRange", ct.c_bool), ("dpyCoolIrUnuserTime", ct.c_bool),
+                ("dpyBurglaAlarm", ct.c_bool), ("dpySelfDefineLaserRange", ct.c_bool),
+                ("selfDefineSetOsd", ct.c_char * 128), ("reserved", ct.c_char * 1024),
+            ]
+        self._POINTEx = POINTEx_t
+        self._OsdInfo = OsdInfo_t
+        return ct, OsdInfo_t
+
+    def _osd_fonksiyon(self, ad: str):
+        ct, OsdInfo_t = self._osd_yapisi()
+        dat = self._dat
+        fn = getattr(dat.sdk, ad)
+        fn.restype = ct.c_bool
+        if ad == "HVS_SetOsdInfo":
+            fn.argtypes = [ct.c_int, ct.POINTER(OsdInfo_t)]
+        else:
+            fn.argtypes = [ct.c_int, ct.c_int, ct.POINTER(OsdInfo_t)]
+        return fn
+
+    @staticmethod
+    def _osd_kanal_no(kanal: Any) -> int:
+        ad = str(kanal or "gorunur").strip().lower()
+        if ad in ("gorunur", "0"):
+            return 0
+        if ad in ("termal", "1"):
+            return 1
+        raise M50Hata("M50 OSD kanalı 'gorunur' veya 'termal' olmalıdır")
+
+    def _osd_sozluk(self, o) -> Dict[str, Any]:
+        def metin(b):
+            try:
+                return bytes(b).split(b"\x00", 1)[0].decode("utf-8", "replace")
+            except Exception:
+                return ""
+        d: Dict[str, Any] = {"channel": int(o.channel)}
+        for a in self._OSD_INT_ALANLARI:
+            d[a] = int(getattr(o, a))
+        for a in self._OSD_BOOL_ALANLARI:
+            d[a] = bool(getattr(o, a))
+        for a in self._OSD_KONUM_ALANLARI:
+            d[a] = int(getattr(o, a))
+        for a in self._OSD_METIN_ALANLARI:
+            d[a] = metin(getattr(o, a))
+        d["channelName"] = [metin(o.channelName[i]) for i in range(8)]
+        for a in ("namePosCoord", "timePosCoord", "osdPtzCoord", "osdCompassPosAuto", "crossCoord", "dirCoord", "osdOtherRegion"):
+            p = getattr(o, a)
+            d[a] = {"x": int(p.x), "y": int(p.y)}
+        return d
+
+    def _osd_getir(self, kanal_no: int):
+        ct, OsdInfo_t = self._osd_yapisi()
+        cihaz = self._bagli_cihaz()
+        o = OsdInfo_t()
+        fn = self._osd_fonksiyon("HVS_GetOsdInfo")
+        try:
+            ok = bool(fn(int(cihaz.__handle__), int(kanal_no), ct.byref(o)))
+        except Exception as exc:
+            raise M50Hata("M50 OSD okunamadı: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 OSD bilgisi cihazdan alınamadı (kanal %d)" % kanal_no)
+        return ct, o
+
+    def osd_oku(self, kanal: Any) -> Dict[str, Any]:
+        kn = self._osd_kanal_no(kanal)
+        _ct, o = self._osd_getir(kn)
+        return self._osd_sozluk(o)
+
+    def osd_yaz(self, kanal: Any, alanlar: Any) -> Dict[str, Any]:
+        """Get → yalnız verilen alanları değiştir → Set (belge örneği)."""
+        if not isinstance(alanlar, dict):
+            raise M50Hata("OSD alanları sözlük olmalıdır")
+        kn = self._osd_kanal_no(kanal)
+        ct, o = self._osd_getir(kn)
+        o.channel = kn
+        for a, (alt, ust) in self._OSD_INT_ALANLARI.items():
+            if a in alanlar:
+                try:
+                    v = int(alanlar[a])
+                except (TypeError, ValueError):
+                    raise M50Hata("OSD alanı sayı olmalı: %s" % a)
+                if a == "fontSize":
+                    v = max(16, min(64, int(round(v / 8.0)) * 8))
+                setattr(o, a, max(alt, min(ust, v)))
+        for a in self._OSD_KONUM_ALANLARI:
+            if a in alanlar:
+                try:
+                    setattr(o, a, max(0, min(5, int(alanlar[a]))))
+                except (TypeError, ValueError):
+                    raise M50Hata("OSD konumu sayı olmalı: %s" % a)
+        for a in self._OSD_BOOL_ALANLARI:
+            if a in alanlar:
+                setattr(o, a, bool(alanlar[a]))
+        for a, uz in self._OSD_METIN_ALANLARI.items():
+            if a in alanlar:
+                b = str(alanlar[a] or "").encode("utf-8")[:uz - 1]
+                setattr(o, a, b)
+        adlar = alanlar.get("channelName")
+        if isinstance(adlar, str):
+            adlar = [adlar]
+        if isinstance(adlar, list):
+            for i, ad in enumerate(adlar[:8]):
+                b = str(ad or "").encode("utf-8")[:255]
+                tampon = (ct.c_char * 256)()
+                tampon.value = b
+                o.channelName[i] = tampon
+        for a in ("namePosCoord", "timePosCoord", "osdPtzCoord", "osdCompassPosAuto", "crossCoord"):
+            p = alanlar.get(a)
+            if isinstance(p, dict):
+                try:
+                    getattr(o, a).x = max(0, min(100, int(p.get("x", 0))))
+                    getattr(o, a).y = max(0, min(100, int(p.get("y", 0))))
+                except (TypeError, ValueError):
+                    pass
+        fn = self._osd_fonksiyon("HVS_SetOsdInfo")
+        cihaz = self._bagli_cihaz()
+        try:
+            ok = bool(fn(int(cihaz.__handle__), ct.byref(o)))
+        except Exception as exc:
+            raise M50Hata("M50 OSD yazılamadı: %s" % exc) from exc
+        if not ok:
+            raise M50Hata("M50 OSD ayarı cihaz tarafından kabul edilmedi")
+        self._durum_yaz(son_islem="osd_yaz:%d" % kn)
+        _ct2, o2 = self._osd_getir(kn)
+        return self._osd_sozluk(o2)
+
     def rtsp_url(self, kanal: Any) -> Optional[str]:
         """Cihazın kendi yayınladığı RTSP adresini SDK'dan okur.
 

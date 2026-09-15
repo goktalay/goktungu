@@ -46,6 +46,7 @@ class M50YerelServisi:
         self._ayar_anahtari = (_AYAR_ANAHTARI if self.eo_id == 1
                                else "%s_%d" % (_AYAR_ANAHTARI, self.eo_id))
         self._konum_ts = 0.0
+        self._osd_son = {}   # v2.4.215: kanal -> cihaz OSD sozlugu
         self._ayar_kilidi = threading.RLock()
         self._kullanilabilir_onbellek = None
         self._kullanilabilir_ts = 0.0
@@ -267,6 +268,13 @@ class M50YerelServisi:
                                 veri.get("yol", 0))
         elif eylem == "takip_yetenek":
             self.istemci.takip_yetenek(veri.get("kanal"), veri.get("etkin", True))
+        # --- v2.4.215: cihaz OSD'si (kareye basılan yazı) ---
+        elif eylem == "osd_oku":
+            kanal = str(veri.get("kanal") or "gorunur")
+            self._osd_son[kanal] = self.istemci.osd_oku(kanal)
+        elif eylem == "osd_yaz":
+            kanal = str(veri.get("kanal") or "gorunur")
+            self._osd_son[kanal] = self.istemci.osd_yaz(kanal, veri.get("alanlar") or {})
         else:
             raise M50Hata("bilinmeyen M50 eylemi: %s" % eylem)
         return self._durum_paketi()
@@ -354,4 +362,5 @@ class M50YerelServisi:
             "m50_ayarlar": etkin,
             "m50_video": video,
             "m50_takip": dict(durum.get("takip") or {}),
+            "m50_osd": dict(getattr(self, "_osd_son", {}) or {}),   # v2.4.215
         }

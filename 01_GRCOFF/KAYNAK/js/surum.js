@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.214";
+const GCS_SURUM = "2.4.215";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.215",
+    tarih: "2026-09-15",
+    baslik: "M50 CİHAZ OSD'Sİ: SDK üzerinden kareye basılan yazı ayarları (paket 2.5.85)",
+    maddeler: [
+      "CİHAZ OSD'Sİ (kullanıcı isteği: 'SDK ile görüntünün üzerine basılan OSD'): üreticinin datdefs.h dosyasındaki OsdInfo_t yapısı sürücüye aktarıldı; HVS_GetOsdInfo / HVS_SetOsdInfo çağrıları eklendi (Get → değiştir → Set deseni). M50 penceresinde 'Cihaz OSD'si' bölümü: kanal adı (metin, konum, hizalama), tarih/saat (konum, biçim, 24/12, haftanın günü, 1/10 sn), PTZ bilgisi (konum, azimut, açı-yön, odak, görüş açısı, zoom, takip/PTZ durumu, ondalık), pusula/GPS (konum, pusula, GPS, özel metin), genel (yazı boyu 16–64, yazı rengi, çok satır, renk tersleme, artı, ızgara, lazer mesafe). 'Cihazdan oku' / 'Cihaza yaz'; seçili ana kanal (görünür/termal) için çalışır, değerler cihazda kalıcıdır.",
+      "Sunucu komutları m50_osd_oku / m50_osd_yaz (köprüsüz mod); telemetride eo_cihazlar[].m50_osd[kanal]. Köprü üzerinden bağlı cihazlarda Köprü 1.7.21 gerekir.",
+      "Merkez'in kendi bilgi katmanı bölümü 'Merkez bilgi katmanı' olarak yeniden adlandırıldı (cihaz OSD'siyle karışmasın)."
+    ]
+  },
   {
     surum: "2.4.214",
     tarih: "2026-09-15",

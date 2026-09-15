@@ -1363,6 +1363,8 @@
   .m50-pc-sol .m50-pc-ayar-satir input[type=checkbox] { margin: 0; }
   .m50-pc-sol .m50-pc-ayar-satir input[type=range] { flex: 1 1 auto; padding: 0; margin: 0; accent-color: #f0a830; }
   .m50-pc-sol .m50-pc-ayar-satir select { margin-left: auto; }
+  .m50-pc-sol .m50-pc-ayar-satir input[type=text].m50-pc-sb { margin-left: auto; width: 55%; height: 24px; padding: 0 6px; font: 11px Consolas, monospace; }
+  .m50-pc-osdc-baslik { margin-top: 6px; font: 700 9px/1.6 Consolas, monospace; letter-spacing: .12em; color: #f0a830; border-bottom: 1px solid var(--cizgi); }
   .m50-pc-video { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; background: #000; overflow: hidden; }
   .m50-pc-video img.kam-video { width: 100%; height: 100%; object-fit: contain; display: block; }
   .m50-pc-alt { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
