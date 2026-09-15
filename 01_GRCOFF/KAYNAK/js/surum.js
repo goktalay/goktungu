@@ -2,11 +2,25 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.206";
+const GCS_SURUM = "2.4.207";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.207",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: etkileşimli durum çubuğu (kanal/çözünürlük/takip), tekerlekle zoom, harita tıklamasıyla açılış; düğme stili ve kullanıcı adı kök nedenleri (paket 2.5.77)",
+    maddeler: [
+      "KÖK NEDEN — DÜĞME STİLLERİ (kullanıcı bildirimi): dugme_birlik.css genel kuralı <span> taşımayan ikonlu düğmeleri 'yalnız ikon' sayıp 26 px kareye zorluyordu (ölçüldü: genişlik 26 px, iç boşluk 0). M50 penceresinin düğmeleri metni <span> içinde taşır; sorun giderildi.",
+      "KÖK NEDEN — KULLANICI ADI BOŞ (kullanıcı bildirimi): M50 vekilinin sır süzgeci 'kullanici' anahtarını sır sayıp atıyordu; kullanıcı ADI sır değildir (parola hiç taşınmaz). Artık düzenleme formuna ön-dolu gelir.",
+      "DURUM ÇUBUĞU ETKİLEŞİMLİ (kullanıcı isteği): Kanal değeri düğmedir — basınca Görünür/Termal arasında geçer (ayrı kanal düğmeleri kaldırıldı). Takip değeri düğmedir — 'Hedef seç' HEDEF işini yapar, takip sürerken 'Durdur' olur (HEDEF düğmesi kaldırıldı). Çözünürlük açılır seçimdir (320…1920 genişlik); değiştirince akış yeni çözünürlükte yeniden kurulur. IP, Durum, Konum ve Akış alanları gösterilmez.",
+      "ÇÖZÜNÜRLÜK ALTYAPISI: kamera kaydına 'genislik' alanı (vekil çıktı genişliği, varsayılan 960 = önceki sabit); ffmpeg scale ve OpenCV yeniden boyutlandırma bu değeri kullanır; değişince yayın yeniden kurulur.",
+      "TEKERLEK ZOOM (kullanıcı isteği): M50 görüntüsü üzerinde tekerlek ileri = yakınlaştır, geri = uzaklaştır (kontrol paneli ve M50 penceresi). Lens komutu basılı kipiyle gönderilir, tekerlek durunca bırakılır.",
+      "HARİTA (kullanıcı isteği): kamera ikonuna / canlı önizlemeye tıklayınca M50 canlı görüntü penceresi doğrudan açılır.",
+      "KAMERALAR MODÜLÜ (kullanıcı bildirimi: 'M50 neden kameralar modülünde de görünüyor'): M50 görüntü kayıtları Kameralar panelinde listelenmez; M50 ayrı sistemdir."
+    ]
+  },
   {
     surum: "2.4.206",
     tarih: "2026-09-15",

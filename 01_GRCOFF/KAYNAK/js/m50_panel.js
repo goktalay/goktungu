@@ -730,6 +730,41 @@ m50AlanlariEtkinlestir();
     s.sonYon = yon; s.sonHiz = hiz; s.sonGonderMs = simdi;
   }
 
+  // v2.4.207 (kullanici istegi): M50 goruntusu uzerinde fare tekerlegi —
+  // ileri = yakinlastir, geri = uzaklastir. Lens komutu "basili" kipiyle
+  // calisir: ilk adimda basili:true gonderilir, tekerlek durunca (200 ms)
+  // basili:false ile birakilir; yon degisirse once eski komut birakilir.
+  var tekerlek = { eylem: "", zaman: null, eoId: 0, kanal: "" };
+  function tekerlekBirak() {
+    if (!tekerlek.eylem) return;
+    var paket = { tip: "m50_lens", eylem: tekerlek.eylem, kanal: tekerlek.kanal, basili: false };
+    if (tekerlek.eoId) paket.eo_id = tekerlek.eoId;
+    try { m50Gonder(paket); } catch (e) {}
+    tekerlek.eylem = ""; tekerlek.zaman = null;
+  }
+  document.addEventListener("wheel", function (ev) {
+    var img = ev.target && ev.target.closest &&
+      ev.target.closest("img.kam-video[data-kamera-id]");
+    if (!img) return;
+    var id = Number(img.dataset.kameraId);
+    if (!kamM50Mi(id)) return;
+    ev.preventDefault();
+    var kam = (window._kameralarSon || []).find(function (k) { return Number(k.id) === id; }) || {};
+    var p = String(kam.url || "").split(":");
+    var eoId = p.length >= 3 ? (parseInt(p[1], 10) || 0) : 0;
+    var kanal = p[p.length - 1] === "termal" ? "termal" : "gorunur";
+    var eylem = ev.deltaY < 0 ? "zoom_artir" : "zoom_azalt";
+    if (tekerlek.eylem && tekerlek.eylem !== eylem) tekerlekBirak();
+    if (!tekerlek.eylem) {
+      tekerlek.eylem = eylem; tekerlek.eoId = eoId; tekerlek.kanal = kanal;
+      var paket = { tip: "m50_lens", eylem: eylem, kanal: kanal, basili: true };
+      if (eoId) paket.eo_id = eoId;
+      try { m50Gonder(paket); } catch (e) { tekerlek.eylem = ""; return; }
+    }
+    if (tekerlek.zaman) clearTimeout(tekerlek.zaman);
+    tekerlek.zaman = setTimeout(tekerlekBirak, 200);
+  }, { passive: false, capture: true });
+
   document.addEventListener("mousedown", function (ev) {
     if (ev.button !== 0) return;
     var img = ev.target && ev.target.closest &&

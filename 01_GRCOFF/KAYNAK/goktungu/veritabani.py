@@ -2149,6 +2149,9 @@ def _sema_guncelle():
             # varsayilani verilir; eski davranis (kodda sabit 15) birebir
             # korunur ve mevcut kayitlar davranis degistirmez.
             ("fps", "INTEGER NOT NULL DEFAULT 15"),
+            # v2.4.207 (kullanici istegi: M50 penceresinde cozunurluk secimi):
+            # vekil ciktisinin en buyuk genisligi (px). 960 = onceki sabit.
+            ("genislik", "INTEGER NOT NULL DEFAULT 960"),
             ("lokasyon_id", "INTEGER"),
             ("lat", "REAL"),
             ("lon", "REAL"),

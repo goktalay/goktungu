@@ -128,9 +128,15 @@ class M50Vekili:
                         self.ayarlar[alan] = str(temiz_ayarlar.get(alan) or "")
                 # v2.4.187: sır olmayan kimlik özeti — arayüz "IP/port
                 # kayıtlı, tekrar girmene gerek yok" gösterebilsin.
-                for alan in ("ip", "port", "kimlik_kayitli", "kullanici"):
+                for alan in ("ip", "port", "kimlik_kayitli"):
                     if alan in temiz_ayarlar:
                         self.ayarlar[alan] = temiz_ayarlar.get(alan)
+                # v2.4.207 (kullanici: "duzenlemede kullanici adi bos
+                # geliyor"): `_arindir` "kullanici" anahtarini sir sayip
+                # atar; kullanici ADI sir degildir (parola hic gelmez),
+                # duzenleme formunun on-dolumu icin ayrica tasinir.
+                ku = ham_ayarlar.get("kullanici")
+                self.ayarlar["kullanici"] = str(ku)[:64] if isinstance(ku, str) else ""
             if isinstance(ham_video, dict):
                 self.video.update(_arindir(ham_video))
             if isinstance(ham_takip, dict):
@@ -162,7 +168,8 @@ class M50Vekili:
         with self.kilit:
             return {
                 "m50_durum": _arindir(dict(self.durum)),
-                "m50_ayarlar": _arindir(dict(self.ayarlar)),
+                "m50_ayarlar": dict(_arindir(dict(self.ayarlar)),
+                                    kullanici=str(self.ayarlar.get("kullanici") or "")),
                 "m50_video": _arindir(dict(self.video)),
                 "m50_takip": _arindir(dict(self.takip)),
             }

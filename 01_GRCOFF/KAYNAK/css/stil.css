@@ -1336,9 +1336,24 @@
   .m50-pc-kanal.aktif { background: #f0a830; border-color: #f0a830; color: #14181e; }
   .m50-pc-hedef { border-color: #ffc94d; color: #ffe2a3; }
   .m50-pc-durdur { background: #b45309; border-color: #f59e0b; color: #fff; }
-  .m50-pc-durum { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 2px 14px; padding: 4px 10px 5px;
+  /* v2.4.207: ETKILESIMLI durum cubugu — kanal dugmesi, cozunurluk secimi, takip dugmesi */
+  .m50-pc-durum { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 5px 10px 6px;
     border-top: 1px solid var(--cizgi); background: rgba(0,0,0,.28); font: 11px/1.5 Consolas, monospace; color: var(--soluk); }
   .m50-pc-durum b { color: var(--metin); font-weight: 600; }
+  .m50-pc-alan { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .m50-pc-alan em { font-style: normal; color: var(--soluk); }
+  .m50-pc-olcu { color: var(--soluk); font-size: 10px; }
+  .m50-pc-ipucu { color: #ffe2a3; flex-basis: 100%; }
+  .m50-pc-durum button.m50-pc-sb { height: 22px; min-height: 0; padding: 0 9px; display: inline-flex; align-items: center; gap: 6px;
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; color: var(--metin); cursor: pointer;
+    font: 700 11px Consolas, monospace; letter-spacing: .04em; white-space: nowrap; line-height: 1; }
+  .m50-pc-durum button.m50-pc-sb:hover { border-color: #f0a830; color: #fff; }
+  .m50-pc-durum button.m50-pc-sb:disabled { opacity: .45; cursor: default; }
+  .m50-pc-durum button.m50-pc-sb-kanal { border-color: #f0a830; color: #ffd28a; }
+  .m50-pc-durum button.m50-pc-sb-takip { border-color: #ffc94d; color: #ffe2a3; }
+  .m50-pc-durum button.m50-pc-sb-takip.takipte { background: #b45309; border-color: #f59e0b; color: #fff; }
+  .m50-pc-durum select.m50-pc-sb { width: auto; height: 22px; padding: 0 6px; font: 700 11px Consolas, monospace; color: var(--metin);
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; cursor: pointer; }
   .m50-pc-durum .m50-pc-uyari { color: #fca5a5; }
   .m50-hedef-ortu { position: absolute; inset: 0; z-index: 5; cursor: crosshair; background: rgba(0,0,0,.08); }
   .m50-hedef-secim { position: absolute; display: none; border: 2px dashed #ffc94d; background: rgba(255,201,77,.12); pointer-events: none; }

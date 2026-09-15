@@ -52,6 +52,19 @@ class KameraYoneticisi:
               f"({len(liste)} kayit).")
 
     # ------------------------------------------------------------------
+    GENISLIKLER = (320, 480, 640, 800, 960, 1280, 1600, 1920)
+
+    @classmethod
+    def _genislik(cls, deger, varsayilan=960):
+        """v2.4.207: vekil cikti genisligi; izinli degerlerden en yakini."""
+        try:
+            g = int(deger)
+        except (TypeError, ValueError):
+            return varsayilan
+        if g <= 0:
+            return varsayilan
+        return min(cls.GENISLIKLER, key=lambda x: abs(x - g))
+
     @staticmethod
     def _fps(deger, varsayilan=15):
         """Kare hizi tavani: 1-30 arasina kelepcelenir.
@@ -184,7 +197,7 @@ class KameraYoneticisi:
 
     def ekle(self, isim, protokol, url, lokasyon_id=None,
              ai_gorevler="", firma_id=None, kopru_ornek_id=None,
-             ai_hassasiyet="", fps=None):
+             ai_hassasiyet="", fps=None, genislik=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None, None
@@ -199,16 +212,16 @@ class KameraYoneticisi:
                 cur = con.execute(
                     "INSERT INTO kameralar (isim, protokol, url, "
                     "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id, "
-                    "ai_hassasiyet, fps) VALUES (?,?,?,?,?,?,?,?,?)",
+                    "ai_hassasiyet, fps, genislik) VALUES (?,?,?,?,?,?,?,?,?,?)",
                     (isim, protokol, url, lok, gorevler, fid, kopru, hassas,
-                     self._fps(fps)),
+                     self._fps(fps), self._genislik(genislik)),
                 )
                 yeni_id = cur.lastrowid
         return yeni_id, self.listele(firma_id)
 
     def guncelle(self, kamera_id, isim, protokol, url, lokasyon_id=None,
                  ai_gorevler="", firma_id=None, kopru_ornek_id=None,
-                 ai_hassasiyet=None, fps=None):
+                 ai_hassasiyet=None, fps=None, genislik=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None
@@ -248,6 +261,10 @@ class KameraYoneticisi:
                 if fps is not None:
                     con.execute("UPDATE kameralar SET fps=? WHERE id=?",
                                 (self._fps(fps), int(kamera_id)))
+                # v2.4.207: genislik de fps gibi KISMI — None iken yazilmaz.
+                if genislik is not None:
+                    con.execute("UPDATE kameralar SET genislik=? WHERE id=?",
+                                (self._genislik(genislik), int(kamera_id)))
         return self.listele(firma_id)
 
     def sil(self, kamera_id, firma_id=None):

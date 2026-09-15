@@ -86,6 +86,13 @@
     if (!kap || typeof viewer === "undefined" || !viewer || !viewer.scene){ setTimeout(kur, 500); return; }
     kap.addEventListener("mousemove", isle, {passive: true});
     kap.addEventListener("mouseleave", kapat, {passive: true});
+    // v2.4.207 (kullanici istegi): haritadaki canli onizlemeye/kamera
+    // ikonuna tiklayinca M50 canli goruntu penceresi dogrudan acilir.
+    kap.addEventListener("click", ev => {
+      if (!(acik && eoMu(acik))) return;
+      const eid = parseInt(String(acik.id).slice(3), 10);
+      if (eid && typeof window.m50PencereAc === "function"){ ev.stopPropagation(); window.m50PencereAc(eid); }
+    }, true);
   }
   kur();
 })();

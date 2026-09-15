@@ -172,8 +172,14 @@ class _Yayin:
     """Tek kaynak icin FFmpeg sureci (veya OpenCV yakalama) + fan-out."""
 
     def __init__(self, kamera_id, url, protokol, konsol=None,
-                 anotasyon=None, fps=15):
+                 anotasyon=None, fps=15, genislik=960):
         self.kamera_id = kamera_id
+        # v2.4.207: cikti genisligi tavani (kamera kaydi `genislik`);
+        # ffmpeg scale ve OpenCV yeniden boyutlandirma bunu kullanir.
+        try:
+            self.genislik = max(160, min(3840, int(genislik or 960)))
+        except (TypeError, ValueError):
+            self.genislik = 960
         self.url = url
         self.protokol = protokol
         # v2.4.193 (Faz D): kare hizi tavani kamera kaydindan gelir.
@@ -266,7 +272,7 @@ class _Yayin:
             cmd += ["-fflags", "nobuffer", "-flags", "low_delay"]
         cmd += ["-i", girdi,
                 "-an",                       # ses yok
-                "-vf", "scale='min(960,iw)':-2",  # bant genisligi icin sinirla
+                "-vf", "scale='min(%d,iw)':-2" % self.genislik,  # bant genisligi icin sinirla
                 "-q:v", "7",
                 "-r", str(self.fps),
                 "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"]
@@ -458,9 +464,9 @@ class _Yayin:
                 onceki_yayin = simdi
                 try:
                     h, w = kare.shape[:2]
-                    if w > 960:
-                        olcek = 960.0 / w
-                        kare = cv2.resize(kare, (960, int(h * olcek)))
+                    if w > self.genislik:
+                        olcek = float(self.genislik) / w
+                        kare = cv2.resize(kare, (self.genislik, int(h * olcek)))
                     okk, jpg = cv2.imencode(".jpg", kare,
                                             [cv2.IMWRITE_JPEG_QUALITY, 80])
                     if okk:
@@ -674,16 +680,21 @@ class VideoProxy:
             istenen_fps = max(1, min(30, int(kam.get("fps") or 15)))
         except (TypeError, ValueError):
             istenen_fps = 15
+        try:
+            istenen_gen = max(160, min(3840, int(kam.get("genislik") or 960)))
+        except (TypeError, ValueError):
+            istenen_gen = 960
         with self._kilit:
             y = self.yayinlar.get(kamera_id)
             if y and (not y.calisiyor or y.url != url
-                      or getattr(y, "fps", 15) != istenen_fps):
+                      or getattr(y, "fps", 15) != istenen_fps
+                      or getattr(y, "genislik", 960) != istenen_gen):
                 y.durdur()
                 y = None
             if y is None:
                 y = _Yayin(kamera_id, url, fiili_protokol,
                            self.konsol, anotasyon=self.anotasyon,
-                           fps=istenen_fps)
+                           fps=istenen_fps, genislik=istenen_gen)
                 if not y.baslat():
                     self._son_hatalar[int(kamera_id)] = (
                         y.hata or "kaynak baslatilamadi")

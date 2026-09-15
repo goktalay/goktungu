@@ -3234,6 +3234,7 @@ class WSSunucusu:
             # video vekili ayni alani okur). Eksik gonderilirse saha
             # yayini hep 15'te kalir ve ayar yalniz yerel kipte islerdi.
             "fps": kayit.get("fps") or 15,
+            "genislik": kayit.get("genislik") or 960,   # v2.4.207
         }
         _s, hata = await _db_is_parcasi(
             self._saha_komut_eszamanli, "video_kamera_yaz",
@@ -9404,7 +9405,7 @@ class WSSunucusu:
                     k.get("lokasyon_id"), k.get("ai_gorevler", ""),
                     firma_id=_fid, kopru_ornek_id=_kopru,
                     ai_hassasiyet=k.get("ai_hassasiyet", ""),
-                    fps=k.get("fps"))
+                    fps=k.get("fps"), genislik=k.get("genislik"))
                 if yeni_id is not None:
                     _dron_uid = str(k.get("dron_uid") or "").strip()[:80]
                     if _dron_uid:
@@ -9452,13 +9453,14 @@ class WSSunucusu:
                 _eski_url = str(_eski_kam.get("url") or "")
                 _eski_prot = str(_eski_kam.get("protokol") or "")
                 _eski_fps = _eski_kam.get("fps")
+                _eski_gen = _eski_kam.get("genislik")
                 liste = self.kameralar.guncelle(
                     kam_id, k.get("isim"), k.get("protokol"),
                     k.get("url"), k.get("lokasyon_id"),
                     k.get("ai_gorevler", ""),
                     firma_id=_fid, kopru_ornek_id=_kopru,
                     ai_hassasiyet=k.get("ai_hassasiyet", None),
-                    fps=k.get("fps"))
+                    fps=k.get("fps"), genislik=k.get("genislik"))
                 if liste is not None:
                     # v2.4.193: FPS tavani da "kaynak degisti" sayilir;
                     # yeni hiz ancak yayin yeniden kurulunca uygulanir.
@@ -9469,6 +9471,13 @@ class WSSunucusu:
                                             int(_eski_fps or 15))
                         except (TypeError, ValueError):
                             _fps_degisti = False
+                    # v2.4.207: cikti genisligi de yayini yeniden kurar
+                    if k.get("genislik") is not None:
+                        try:
+                            if int(k.get("genislik")) != int(_eski_gen or 960):
+                                _fps_degisti = True
+                        except (TypeError, ValueError):
+                            pass
                     _kaynak_degisti = (str(k.get("url") or "") != _eski_url or
                                        str(k.get("protokol") or "") != _eski_prot or
                                        _fps_degisti)

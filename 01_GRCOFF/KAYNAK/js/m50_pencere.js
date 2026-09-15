@@ -118,14 +118,14 @@
       // edildikten sonra başlat.
       setTimeout(() => gonder({ tip: "m50_takip_baslat", eo_id: k.eoId, kanal, mod }), 400);
       k.bekleniyor = Date.now();
-      k.btnHedef.style.display = "none"; k.btnDurdur.style.display = "";
+      durumYaz(k);
     });
   }
 
   function takipDurdur(k){
     gonder({ tip: "m50_takip_durdur", eo_id: k.eoId, kanal: kanalOku(kameraBul(k.eoId) || k.kamera) });
     k.cerceve = null; k.bekleniyor = 0; cerceveCiz(k);
-    k.btnDurdur.style.display = "none"; k.btnHedef.style.display = "";
+    durumYaz(k);
   }
 
   // ---- görüntü bağlama ----
@@ -156,56 +156,67 @@
     if (k.kutuEl) k.video.appendChild(k.kutuEl);   // çerçeve en üstte kalsın
   }
 
-  // ---- durum çubuğu ----
+  // ---- durum çubuğu (v2.4.207: ETKİLEŞİMLİ, kullanıcı isteği) ----
+  // Kanal: düğme (Görünür <-> Termal) · Çözünürlük: açılır seçim ·
+  // FPS · Az/Eğ · Takip: düğme (yok -> hedef seç, etkin -> durdur).
+  // IP / Durum / Konum / Akış gösterilmez. Düğmeler <span> taşır:
+  // dugme_birlik.css yalnız-ikonlu düğmeleri 26 px kareye zorlar.
+  const GENISLIKLER = [320, 480, 640, 800, 960, 1280, 1600, 1920];
   function durumYaz(k){
     const t = T();
     const c = eoKaydi(k.eoId);
     const d = (c && c.m50_durum) || {};
-    const a = (c && c.m50_ayarlar) || {};
     const takip = (c && (c.m50_takip || d.takip)) || {};
     const kam = kameraBul(k.eoId) || k.kamera;
     const kanal = kanalOku(kam);
     const img = k.video.querySelector("img.kam-video");
     const w = img ? img.naturalWidth : 0, h = img ? img.naturalHeight : 0;
     const isim = (c && c.isim) || (kam && kam.isim) || ("M50 " + k.eoId);
-    const ip = (c && (c.kayit_ip || a.ip)) || "";
-    const akis = !kam ? "—" : k.video.classList.contains("kam-hata") ? (t.m50PcAkisHata || "yayın alınamıyor") :
-                 (k.video.classList.contains("kam-baglaniyor") || !w) ? (t.m50PcAkisBagl || "bağlanıyor") : (t.m50PcAkisCanli || "canlı");
     const aci = (Number.isFinite(Number(d.azimut)) && Number.isFinite(Number(d.egim)))
       ? Number(d.azimut).toFixed(1) + "° / " + Number(d.egim).toFixed(1) + "°" : "—";
-    const konum = c && c.konum && typeof c.konum === "object" ? c.konum : null;
-    const konumM = konum ? ((konum.kaynak === "rtk" ? "RTK " : "") + Number(konum.lat).toFixed(5) + ", " + Number(konum.lon).toFixed(5)) : "—";
-    const parca = [];
-    const ekle = (etiket, deger, sinif) => { const s = document.createElement("span"); if (sinif) s.className = sinif;
-      s.innerHTML = etiket + ": <b></b>"; s.querySelector("b").textContent = deger; parca.push(s); };
-    ekle(t.m50PcDurum || "Durum", d.bagli ? (t.m50Bagli || "Bağlı") : (t.m50Kapali || "Bağlı değil") + (d.hata ? " · " + d.hata : ""), d.bagli ? "" : "m50-pc-uyari");
-    ekle("IP", ip || "—");
-    ekle(t.m50PcKanal || "Kanal", kanal === "termal" ? (t.m50Termal || "Termal") : (t.m50Gorunur || "Görünür"));
-    ekle(t.m50PcCozunurluk || "Çözünürlük", (w && h) ? (w + "×" + h) : "—");
-    ekle(t.kamFpsKisa || "FPS", "≤ " + ((kam && kam.fps) || 15));
-    ekle(t.m50PcAci || "Az/Eğ", aci);
-    ekle(t.m50PcTakip || "Takip", takip.etkin ? (t.m50PcTakipVar || "etkin") : (t.m50PcTakipYok || "yok"));
-    ekle(t.m50PcKonum || "Konum", konumM);
-    ekle("Akış", akis, akis === (t.m50PcAkisHata || "yayın alınamıyor") ? "m50-pc-uyari" : "");
-    k.durum.innerHTML = "";
-    if (k.durumMetni){ const s = document.createElement("span"); s.className = "m50-pc-uyari"; s.textContent = k.durumMetni; k.durum.appendChild(s); }
-    for (const p of parca) k.durum.appendChild(p);
-    // başlık rozetleri
-    k.ad.textContent = isim;
-    k.rozetKanal.textContent = kanal === "termal" ? "TERMAL" : "GÖRÜNÜR";
-    k.rozetBag.textContent = d.bagli ? "BAĞLI" : "KAPALI";
-    k.rozetBag.classList.toggle("bagli", !!d.bagli);
-    k.rozetTakip.style.display = takip.etkin ? "" : "none";
-    // düğmeler
-    for (const b of k.kanalDgm) b.classList.toggle("aktif", b.dataset.kanal === kanal);
     const etkin = !!takip.etkin;
     if (etkin) k.bekleniyor = 0;
     const bekliyor = k.bekleniyor && Date.now() - k.bekleniyor < 6000;
     if (!etkin && !bekliyor && k.cerceve && k.bekleniyor){ k.cerceve = null; k.bekleniyor = 0; cerceveCiz(k); }
-    k.btnHedef.style.display = (etkin || bekliyor) ? "none" : "";
-    k.btnDurdur.style.display = (etkin || bekliyor) ? "" : "none";
-    k.btnHedef.disabled = !d.bagli || !kam;
-    for (const b of k.kanalDgm) b.disabled = !kam;
+    // --- kanal düğmesi ---
+    k.sbKanal.querySelector("span").textContent = kanal === "termal" ? (t.m50Termal || "Termal") : (t.m50Gorunur || "Görünür");
+    k.sbKanal.querySelector("i").className = "fa-solid " + (kanal === "termal" ? "fa-fire" : "fa-sun");
+    k.sbKanal.title = kanal === "termal" ? (t.m50PcKanalGorunurGec || "Görünür kanala geç") : (t.m50PcKanalTermalGec || "Termal kanala geç");
+    k.sbKanal.disabled = !kam;
+    // --- çözünürlük seçimi ---
+    const gen = Number((kam && kam.genislik) || 960);
+    if (document.activeElement !== k.sbGen){
+      k.sbGen.innerHTML = "";
+      for (const g of GENISLIKLER){
+        const o = document.createElement("option"); o.value = String(g);
+        const yh = (w && h) ? Math.round(g * h / w) : Math.round(g * 9 / 16);
+        o.textContent = g + "×" + yh + (g === gen && w && h ? "" : "");
+        if (g === gen) o.selected = true;
+        k.sbGen.appendChild(o);
+      }
+      k.sbGen.disabled = !kam;
+    }
+    k.sbGenOlcu.textContent = (w && h) ? "(" + w + "×" + h + ")" : "";
+    // --- fps / açı ---
+    k.sbFps.textContent = "≤ " + ((kam && kam.fps) || 15);
+    k.sbAci.textContent = aci;
+    // --- takip düğmesi ---
+    const takipDurumu = etkin || bekliyor;
+    k.sbTakip.querySelector("span").textContent = takipDurumu ? (t.m50PcDurdur || "Durdur") : (t.m50PcHedefSec || "Hedef seç");
+    k.sbTakip.querySelector("i").className = "fa-solid " + (takipDurumu ? "fa-ban" : "fa-crosshairs");
+    k.sbTakip.classList.toggle("takipte", takipDurumu);
+    k.sbTakip.disabled = !kam || (!d.bagli && !takipDurumu);
+    k.sbTakip.title = takipDurumu ? (t.m50PencereDurdur || "TAKİBİ DURDUR") : (t.m50HedefIpucu || "Hedefin üzerine bir dikdörtgen çizin");
+    k.takipte = takipDurumu;
+    // --- ipucu satırı (çizim sırasında) ---
+    k.sbIpucu.textContent = k.durumMetni || "";
+    k.sbIpucu.style.display = k.durumMetni ? "" : "none";
+    // --- başlık rozetleri ---
+    k.ad.textContent = isim;
+    k.rozetKanal.textContent = kanal === "termal" ? "TERMAL" : "GÖRÜNÜR";
+    k.rozetBag.textContent = d.bagli ? "BAĞLI" : "KAPALI";
+    k.rozetBag.classList.toggle("bagli", !!d.bagli);
+    k.rozetTakip.style.display = etkin ? "" : "none";
   }
 
   // ---- pencere ----
@@ -226,36 +237,48 @@
     baslik.append(ikon, ad, rozetKanal, rozetBag, rozetTakip, kapat);
     // görüntü
     const video = document.createElement("div"); video.className = "m50-pc-video";
-    // araç çubuğu
-    const alt = document.createElement("div"); alt.className = "m50-pc-alt";
-    const solGrup = document.createElement("div"); solGrup.className = "m50-pc-grup";
-    const kanalDgm = [];
-    for (const [kanal, ik, etiket] of [["gorunur", "fa-sun", t.m50Gorunur || "Görünür"], ["termal", "fa-fire", t.m50Termal || "Termal"]]){
-      const b = document.createElement("button"); b.type = "button"; b.className = "m50-pc-btn m50-pc-kanal"; b.dataset.kanal = kanal;
-      b.innerHTML = "<i class='fa-solid " + ik + "'></i>" + etiket;
-      b.addEventListener("click", ev => {
-        ev.stopPropagation();
-        const kam = kameraBul(k.eoId);
-        if (!kam || kanalOku(kam) === kanal || typeof window.m50KanalDegistir !== "function") return;
-        window.m50KanalDegistir(kam, kanal);
-        k.cerceve = null; cerceveCiz(k);
-        setTimeout(() => videoBagla(k), 600);   // kayıt yenilendikten sonra yeni kanaldan bağlan
-      });
-      solGrup.appendChild(b); kanalDgm.push(b);
-    }
-    const sagGrup = document.createElement("div"); sagGrup.className = "m50-pc-grup";
-    const btnHedef = document.createElement("button"); btnHedef.type = "button"; btnHedef.className = "m50-pc-btn m50-pc-hedef";
-    btnHedef.innerHTML = "<i class='fa-solid fa-crosshairs'></i>" + (t.m50PencereHedef || "HEDEF");
-    btnHedef.addEventListener("click", ev => { ev.stopPropagation(); hedefSec(k); });
-    const btnDurdur = document.createElement("button"); btnDurdur.type = "button"; btnDurdur.className = "m50-pc-btn m50-pc-durdur";
-    btnDurdur.innerHTML = "<i class='fa-solid fa-ban'></i>" + (t.m50PencereDurdur || "TAKİBİ DURDUR"); btnDurdur.style.display = "none";
-    btnDurdur.addEventListener("click", ev => { ev.stopPropagation(); takipDurdur(k); });
-    sagGrup.append(btnHedef, btnDurdur);
-    alt.append(solGrup, sagGrup);
-    // durum çubuğu
+    // durum çubuğu (etkileşimli)
     const durum = document.createElement("div"); durum.className = "m50-pc-durum";
-    p.append(baslik, video, alt, durum);
-    Object.assign(k, { pencere: p, baslik, video, alt, durum, ad, rozetKanal, rozetBag, rozetTakip, kanalDgm, btnHedef, btnDurdur });
+    const alan = (etiket) => { const sp = document.createElement("span"); sp.className = "m50-pc-alan";
+      const e = document.createElement("em"); e.textContent = etiket + ":"; sp.appendChild(e); durum.appendChild(sp); return sp; };
+    const dugme = (sinif, ikon) => { const b = document.createElement("button"); b.type = "button"; b.className = "m50-pc-sb " + sinif;
+      b.innerHTML = "<i class='fa-solid " + ikon + "'></i><span></span>"; return b; };
+    const aKanal = alan(t.m50PcKanal || "Kanal");
+    const sbKanal = dugme("m50-pc-sb-kanal", "fa-sun");
+    sbKanal.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const kam = kameraBul(k.eoId);
+      if (!kam || typeof window.m50KanalDegistir !== "function") return;
+      const yeni = kanalOku(kam) === "termal" ? "gorunur" : "termal";
+      window.m50KanalDegistir(kam, yeni);
+      k.cerceve = null; cerceveCiz(k);
+      setTimeout(() => videoBagla(k), 600);
+    });
+    aKanal.appendChild(sbKanal);
+    const aGen = alan(t.m50PcCozunurluk || "Çözünürlük");
+    const sbGen = document.createElement("select"); sbGen.className = "m50-pc-sb m50-pc-sb-gen";
+    sbGen.title = t.m50PcGenIpucu || "Vekil çıktı genişliği; değiştirince akış yeniden kurulur";
+    sbGen.addEventListener("change", ev => {
+      ev.stopPropagation();
+      const kam = kameraBul(k.eoId);
+      if (!kam || typeof window.m50KameraAlanGuncelle !== "function") return;
+      window.m50KameraAlanGuncelle(kam, { genislik: parseInt(sbGen.value, 10) || 960 });
+      setTimeout(() => videoBagla(k), 800);
+    });
+    sbGen.addEventListener("mousedown", ev => ev.stopPropagation());
+    const sbGenOlcu = document.createElement("small"); sbGenOlcu.className = "m50-pc-olcu";
+    aGen.append(sbGen, sbGenOlcu);
+    const aFps = alan(t.kamFpsKisa || "FPS"); const sbFps = document.createElement("b"); aFps.appendChild(sbFps);
+    const aAci = alan(t.m50PcAci || "Az/Eğ"); const sbAci = document.createElement("b"); aAci.appendChild(sbAci);
+    const aTakip = alan(t.m50PcTakip || "Takip");
+    const sbTakip = dugme("m50-pc-sb-takip", "fa-crosshairs");
+    sbTakip.addEventListener("click", ev => { ev.stopPropagation(); if (k.takipte) takipDurdur(k); else hedefSec(k); });
+    aTakip.appendChild(sbTakip);
+    const sbIpucu = document.createElement("span"); sbIpucu.className = "m50-pc-ipucu"; sbIpucu.style.display = "none";
+    durum.appendChild(sbIpucu);
+    p.append(baslik, video, durum);
+    Object.assign(k, { pencere: p, baslik, video, durum, ad, rozetKanal, rozetBag, rozetTakip,
+                       sbKanal, sbGen, sbGenOlcu, sbFps, sbAci, sbTakip, sbIpucu, takipte: false });
     document.body.appendChild(p);
     // konum/boyut
     const kayitVar = typeof window.pencereKonumUygula === "function" && window.pencereKonumUygula("m50pc_" + eoId, p, true);

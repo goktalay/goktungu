@@ -582,19 +582,28 @@
     return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50" &&
                                (!hedef || m50EoIdOku(k) === hedef)) || null;
   };
-  window.m50KanalDegistir = function (kamera, yeniKanal) {
+  // v2.4.207: M50 kamera kaydinin TEK alanini degistiren ortak yardimci
+  // (kanal, genislik...). fps/genislik korunur; kamera_tipi/kalibrasyon
+  // KASITLI atlanir: sunucu "kamera_tipi" yoksa kalibrasyonu SILMEZ.
+  window.m50KameraAlanGuncelle = function (kamera, ekstra) {
     const eoId = m50EoIdOku(kamera);
-    wsGonder({
+    const kanal = (ekstra && ekstra.m50_kanal) || (String(kamera.url || "").split(":").pop() === "termal" ? "termal" : "gorunur");
+    const paket = {
       tip: "kamera_kaydet", id: kamera.id, isim: kamera.isim,
-      protokol: "m50", url: "m50:" + eoId + ":" + yeniKanal, m50_kanal: yeniKanal, eo_id: eoId,
+      protokol: "m50", url: "m50:" + eoId + ":" + kanal, m50_kanal: kanal, eo_id: eoId,
       kopru_ornek_id: kamera.kopru_ornek_id || null,
       ai_gorevler: kamera.ai_gorevler || "",
       ai_hassasiyet: kamera.ai_hassasiyet || "",
       lokasyon_id: kamera.lokasyon_id || null,
-      dron_uid: kamera.dron_uid || ""
-      // kamera_tipi/kalibrasyon KASITLI atlanir: sunucu "kamera_tipi"
-      // yoksa mevcut angajman kalibrasyonunu SILMEZ (bkz. sunucu.py).
-    });
+      dron_uid: kamera.dron_uid || "",
+      fps: kamera.fps || 15,
+      genislik: kamera.genislik || 960
+    };
+    if (ekstra) for (const k of Object.keys(ekstra)) if (k !== "m50_kanal") paket[k] = ekstra[k];
+    wsGonder(paket);
+  };
+  window.m50KanalDegistir = function (kamera, yeniKanal) {
+    window.m50KameraAlanGuncelle(kamera, { m50_kanal: yeniKanal });
   };
   window.m50KameraOlustur = function (eoId, isim) {
     const eid = Number(eoId) > 0 ? Number(eoId) : 1;
@@ -1174,7 +1183,12 @@
     // gorunmesine ve panelde olu bir satir kalmasina yol aciyordu.
     // Pencere kapatilinca ayrikKapat() -> listeCiz() cagrildigi icin
     // satir kendiliginden geri doner.
-    const panelKameralari = kameralar.filter((k) => !ayrikler[k.id]);
+    // v2.4.207 (kullanici: "M50 neden kameralar modulunde de gorunuyor,
+    // M50 ayri bir sistem"): M50 gorunutu kayitlari (m50:<eo>:<kanal>)
+    // yalniz vekil akisi icin tutulur; Kameralar panelinde LISTELENMEZ.
+    // Elektro-optik cihazlar kendi listesinde ve kendi penceresindedir.
+    const modulKameralari = kameralar.filter((k) => String(k.protokol || "").toLowerCase() !== "m50");
+    const panelKameralari = modulKameralari.filter((k) => !ayrikler[k.id]);
     // v2.4.56: KOPRU BAZLI GRUPLAMA
     // Merkezde kameralar saha makinelerine baglidir. Duz liste hangi
     // kameranin hangi sahada oldugunu gizler. Yerel kurulumda gruplama
@@ -1191,7 +1205,7 @@
     // v2.4.33: ayrik pencere sayisini gosteren bilgi satiri. Panel bos
     // gorunurken kullanicinin "kameralarim nereye gitti" sorusunu
     // onlemek icin gerekli.
-    const ayrikSayi = kameralar.length - panelKameralari.length;
+    const ayrikSayi = modulKameralari.length - panelKameralari.length;
     if (ayrikSayi > 0) {
       const not = document.createElement("div");
       not.className = "kam-ayrik-not";
@@ -1204,7 +1218,7 @@
     const bosKutu = document.getElementById("kameraYokKutu");
     // Bos durum yalnizca HIC kamera kaydi yoksa gosterilir; tum
     // kameralar ayrik penceredeyse yukaridaki bilgi satiri devrede.
-    if (bosKutu) bosKutu.classList.toggle("gizli", kameralar.length > 0);
+    if (bosKutu) bosKutu.classList.toggle("gizli", modulKameralari.length > 0);
   }
 
   // ----------------------------------------------------------------
