@@ -583,7 +583,23 @@
     const govde = document.createElement("div"); govde.className = "m50-pc-govde";
     const sol = document.createElement("div"); sol.className = "m50-pc-sol";
     const video = document.createElement("div"); video.className = "m50-pc-video";
-    govde.append(sol, video);
+    // v2.4.213 (kullanıcı isteği): sol panel genişliği AYRAÇ ile değiştirilir, hatırlanır
+    const ayrac = document.createElement("div"); ayrac.className = "m50-pc-ayrac"; ayrac.title = "Sürükle: sol panel genişliği";
+    const solGen = Number(yerel.oku("m50sol_" + eoId, 300)) || 300;
+    sol.style.flexBasis = sol.style.width = Math.max(220, Math.min(700, solGen)) + "px";
+    let ayr = null;
+    ayrac.addEventListener("pointerdown", ev => { ayr = { x: ev.clientX, w: sol.getBoundingClientRect().width }; ayrac.setPointerCapture(ev.pointerId); ev.preventDefault(); ev.stopPropagation(); });
+    ayrac.addEventListener("pointermove", ev => {
+      if (!ayr) return;
+      const enCok = Math.max(220, p.getBoundingClientRect().width - 260);
+      const w = Math.max(220, Math.min(enCok, ayr.w + (ev.clientX - ayr.x)));
+      sol.style.flexBasis = sol.style.width = w + "px";
+      cerceveCiz(k);
+    });
+    const ayrBitir = () => { if (!ayr) return; ayr = null; yerel.yaz("m50sol_" + eoId, Math.round(sol.getBoundingClientRect().width)); };
+    ayrac.addEventListener("pointerup", ayrBitir); ayrac.addEventListener("pointercancel", ayrBitir);
+    ayrac.addEventListener("dblclick", ev => { ev.stopPropagation(); sol.style.flexBasis = sol.style.width = "300px"; yerel.yaz("m50sol_" + eoId, 300); });
+    govde.append(sol, ayrac, video);
     k.anaKanal = yerel.oku("m50kanal_" + eoId, "gorunur") === "termal" ? "termal" : "gorunur";
     k.pipAcik = !!yerel.oku("m50pip_" + eoId, false);
     const bolum = (baslikMetin, ikon, acik) => {

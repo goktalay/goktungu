@@ -1326,7 +1326,9 @@
   /* v2.4.211 (kullanici istegi): pencere ikiye bolundu — sol 300px kontrol paneli, sag goruntu */
   .m50-pc { width: 940px; height: 520px; min-width: 620px; min-height: 360px; }
   .m50-pc-govde { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: row; }
-  .m50-pc-sol { flex: 0 0 300px; width: 300px; min-height: 0; overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--cizgi);
+  .m50-pc-ayrac { flex: 0 0 6px; cursor: col-resize; background: rgba(255,255,255,.04); border-left: 1px solid var(--cizgi); border-right: 1px solid var(--cizgi); touch-action: none; }
+  .m50-pc-ayrac:hover { background: #f0a830; }
+  .m50-pc-sol { flex: 0 0 300px; width: 300px; min-width: 220px; min-height: 0; overflow-y: auto; overflow-x: hidden;
     background: rgba(0,0,0,.22); padding: 6px 8px 10px; display: flex; flex-direction: column; gap: 6px; font: 11px/1.5 Consolas, monospace; color: var(--soluk); }
   .m50-pc-bolum { border: 1px solid var(--cizgi); border-radius: 5px; background: rgba(255,255,255,.02); }
   .m50-pc-bolum > summary { list-style: none; cursor: pointer; user-select: none; padding: 6px 8px; font: 700 10px/1.4 Consolas, monospace; letter-spacing: .1em; color: #f0a830; display: flex; align-items: center; gap: 6px; }

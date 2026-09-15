@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.212";
+const GCS_SURUM = "2.4.213";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.213",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresinde sol panel genişliği ayraçla değiştirilir; tüm paneller son boyut ve konumda açılır (paket 2.5.83)",
+    maddeler: [
+      "M50 PENCERESİ (kullanıcı isteği): sol kontrol paneli ile görüntü arasına sürüklenebilir ayraç eklendi (220 px … pencere−260 px); genişlik pencere başına hatırlanır, ayraca çift tık 300 px'e döndürür.",
+      "KÖK NEDEN — PANEL BOYUTU (kullanıcı isteği: 'tüm panellerde son bıraktığım boyut ve konumda açılsın'): yüzen paneller (Radarlar, EO cihazları, Hedefler, Kayıt…) boyutu kaydediyordu ama açılışta YALNIZ konum uygulanıyordu; taşıma kaydı da boyutu siliyordu. Artık açılışta kayıtlı genişlik/yükseklik geri yüklenir, taşıma boyutu korur. Program popup'larında da kayıtlı boyut bayrak sırasından bağımsız uygulanır."
+    ]
+  },
   {
     surum: "2.4.212",
     tarih: "2026-09-15",
