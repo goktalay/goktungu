@@ -582,6 +582,14 @@
     return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50" &&
                                (!hedef || m50EoIdOku(k) === hedef)) || null;
   };
+  // v2.4.210: kanal bazli kayit (gunduz/gece ayni anda: ana + kucuk goruntu)
+  window.m50KameraBulKanal = function (eoId, kanal) {
+    const hedef = Number(eoId) > 0 ? Number(eoId) : 0;
+    const kn = kanal === "termal" ? "termal" : "gorunur";
+    return kameralar.find(k => String(k.protokol || "").toLowerCase() === "m50" &&
+                               (!hedef || m50EoIdOku(k) === hedef) &&
+                               String(k.url || "").split(":").pop() === kn) || null;
+  };
   // v2.4.207: M50 kamera kaydinin TEK alanini degistiren ortak yardimci
   // (kanal, genislik...). fps/genislik korunur; kamera_tipi/kalibrasyon
   // KASITLI atlanir: sunucu "kamera_tipi" yoksa kalibrasyonu SILMEZ.
@@ -605,12 +613,13 @@
   window.m50KanalDegistir = function (kamera, yeniKanal) {
     window.m50KameraAlanGuncelle(kamera, { m50_kanal: yeniKanal });
   };
-  window.m50KameraOlustur = function (eoId, isim) {
+  window.m50KameraOlustur = function (eoId, isim, kanal) {
     const eid = Number(eoId) > 0 ? Number(eoId) : 1;
+    const kn = kanal === "termal" ? "termal" : "gorunur";
     // v2.4.209: hava araci tanima gorevi kayitla birlikte gelir (AI izlemesi
     // gorevsiz baslatilamaz — ai_yonetici.izleme_baslat).
-    wsGonder({ tip: "kamera_kaydet", isim: isim || ("M50 " + eid), protokol: "m50",
-               url: "m50:" + eid + ":gorunur", m50_kanal: "gorunur", eo_id: eid,
+    wsGonder({ tip: "kamera_kaydet", isim: isim || ("M50 " + eid + (kn === "termal" ? " Termal" : "")), protokol: "m50",
+               url: "m50:" + eid + ":" + kn, m50_kanal: kn, eo_id: eid,
                ai_gorevler: "hava_araci" });
   };
   window.kamVideoOlustur = function (kamera) { return videoOlustur(kamera); };

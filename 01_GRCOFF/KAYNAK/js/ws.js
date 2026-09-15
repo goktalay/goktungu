@@ -733,6 +733,10 @@ function wsBaglan(){
     } else if (m.tip === "ai_tespit_islem_sonuc"){
       if (typeof window.aiIslemSonucIsle === "function")
         window.aiIslemSonucIsle(m);
+    } else if (m.tip === "video_kayit_durum"){
+      // v2.4.210: M50 penceresi video kaydi durumu
+      if (typeof window.videoKayitDurumIsle === "function")
+        window.videoKayitDurumIsle(m);
     } else if (m.tip === "ai_kutular"){
       // v2.4.164: canli AI kutulari (videoda cift tikla takip icin)
       if (typeof window.kameraAiKutularIsle === "function")

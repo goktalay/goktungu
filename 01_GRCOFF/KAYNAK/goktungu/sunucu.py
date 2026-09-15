@@ -337,6 +337,21 @@ class WSSunucusu:
         self.gorev = gorev
         self.kameralar = kameralar
         self.video_proxy = video_proxy
+        # v2.4.210 (kullanici istegi: video kayit): vekil akisindan dosyaya
+        # kayit. Veri koku sabitlerden; vekil portu video_proxy ile ayni.
+        try:
+            from . import sabitler as _sb
+            from .video_kayit import VideoKaydedici as _VK
+            from .video_proxy import VIDEO_PROXY_PORT as _VPP
+            self.video_kaydedici = _VK(konsol=self.konsol,
+                                       veri_koku=getattr(_sb, "VERI_KOKU", "."),
+                                       port=_VPP)
+        except Exception as _vk_e:
+            self.video_kaydedici = None
+            try:
+                self.konsol("KAYIT", "Video kaydedici kurulamadi: %s" % _vk_e, "uyari")
+            except Exception:
+                pass
         self.baglantilar = baglantilar
         self.dron = dron
         self.radar = radar
@@ -4993,6 +5008,10 @@ class WSSunucusu:
         "eo_kaydet":        ("radar", "parametre", "m50"),
         "eo_sil":           ("radar", "parametre", "m50"),
         "kamera_kaydet":    ("kamera", "kayit_yonetimi", "kamera"),
+        # v2.4.210: video kaydi (M50 penceresi) — kamera izleme yetkisi yeter
+        "video_kayit_baslat": ("kamera", "kayit_yonetimi", "kamera"),
+        "video_kayit_durdur": ("kamera", "kayit_yonetimi", "kamera"),
+        "video_kayit_durum":  ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_sil":       ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_konsol_temizle": ("kamera", "kayit_yonetimi", "kamera"),
         "kamera_dron_bagla": ("kamera", "kayit_yonetimi", "kamera"),
@@ -6817,6 +6836,35 @@ class WSSunucusu:
                 "yon": k.get("yon"), "hiz": k.get("hiz"),
                 "basili": bool(k.get("basili", True)),
             }, k)
+        # ---- v2.4.210: VIDEO KAYDI (vekil akisindan dosyaya) ----
+        elif komut in ("video_kayit_baslat", "video_kayit_durdur", "video_kayit_durum"):
+            _vk = getattr(self, "video_kaydedici", None)
+            if _vk is None:
+                await self._uyari_gonder(websocket, "KAYIT", "Video kaydedici kullanilamiyor", "hata")
+                return
+            if komut == "video_kayit_baslat":
+                _kam = self.kameralar.bul(k.get("kamera_id")) if self.kameralar else None
+                if not _kam:
+                    await self._uyari_gonder(websocket, "KAYIT", "Kamera bulunamadi", "hata")
+                    return
+                _s = await _db_is_parcasi(_vk.baslat, _kam["id"],
+                                          str(k.get("etiket") or _kam.get("isim") or ""),
+                                          _kam.get("fps") or 15)
+                if not _s.get("tamam"):
+                    await self._uyari_gonder(websocket, "KAYIT",
+                                             "Kayit baslatilamadi: %s" % _s.get("hata", ""), "hata")
+                else:
+                    self._pilot_log(websocket, "kamera", "video_kayit_baslat",
+                                    "kamera #%s" % _kam["id"])
+            elif komut == "video_kayit_durdur":
+                _s = await _db_is_parcasi(_vk.durdur, k.get("kamera_id"))
+                if not _s.get("tamam"):
+                    await self._uyari_gonder(websocket, "KAYIT",
+                                             "Kayit durdurulamadi: %s" % _s.get("hata", ""), "uyari")
+                else:
+                    self._pilot_log(websocket, "kamera", "video_kayit_durdur",
+                                    "kamera #%s" % k.get("kamera_id"))
+            await self._duyur({"tip": "video_kayit_durum", "kayitlar": _vk.durumlar()})
         elif komut == "m50_lens":
             await self._m50_kopruye(websocket, "lens", {
                 "eylem": k.get("eylem"), "kanal": k.get("kanal"),

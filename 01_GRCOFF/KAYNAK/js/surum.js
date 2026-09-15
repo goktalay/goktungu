@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.209";
+const GCS_SURUM = "2.4.210";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.210",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: ekran bilgileri ayar paneli, video kaydı, gündüz/gece küçük görüntü, tanıma hassasiyeti; FPS ve Az/Eğ kaldırıldı (paket 2.5.80)",
+    maddeler: [
+      "EKRAN BİLGİLERİ (kullanıcı isteği): durum çubuğundaki 'Ekran' düğmesi ayar panelini açar — cihaz adı, tarih/saat, azimut/eğim, kanal, çözünürlük·FPS, konum, takip ve kayıt durumu alanları tek tek açılıp kapanır; köşe ve yazı boyu seçilir; ayar pencere başına hatırlanır. NOT: cihazın kendi kareye bastığı yazılar (P/T açı, saat, Channel) elimizdeki SDK arayüzünde değiştirilemez; bu katman Merkez'in çizdiği bilgilerdir.",
+      "VİDEO KAYDI (kullanıcı isteği): 'Kaydet' düğmesi vekil akışını (AI çizimleri dahil) dosyaya yazar; ffmpeg gerekmez (OpenCV MJPG .avi). Dosyalar veri kökünde kayitlar/video altına düşer; düğme kayıt süresini gösterir, 'Durdur' bitirir. Sunucu komutları: video_kayit_baslat/durdur/durum.",
+      "KÜÇÜK GÖRÜNTÜ (kullanıcı isteği): 'Küçük görüntü' düğmesi pencere içinde ikinci bir görüntü açar — ana görüntü gündüzse gece, geceyse gündüz kanalı. Sürüklenir, genişliği ayarlanır, X ile kapanır; çift tık kanalları yer değiştirir. Kanal başına ayrı görüntü kaydı (m50:<eo>:gorunur / termal) gerekir; yoksa kendiliğinden oluşturulur. Kanal düğmesi artık sunucuya yazmadan ana/küçük görüntüyü değiştirir.",
+      "TANIMA HASSASİYETİ (kullanıcı isteği): Tanıma açıkken yanında 10–90 kaydırıcı; hava aracı sınıfının hassasiyeti kamera kaydına yazılır, çalışan AI izlemesi anında güncellenir.",
+      "DURUM ÇUBUĞU (kullanıcı isteği): FPS ve Az/Eğ alanları kaldırıldı (istenirse ekran bilgileri katmanında gösterilir)."
+    ]
+  },
   {
     surum: "2.4.209",
     tarih: "2026-09-15",
