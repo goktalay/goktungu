@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.216";
+const GCS_SURUM = "2.4.217";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.217",
+    tarih: "2026-09-15",
+    baslik: "Ubuntu ARM64 M50: 'undefined symbol: vaInitialize' düzeltmesi; ayar günlüğünde parola maskeleme (paket 2.5.87)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı günlüğü: 'libHVideoSDK.so: undefined symbol: vaInitialize'): üreticinin ARM64 kütüphanesi içine gömülü ffmpeg VA-API (libva, libva-drm, libva-x11), sndio, XShm (libXext) ve Xv simgelerini çözümsüz bırakmış ama bu kütüphaneleri bağımlılık listesine yazmamış; Python dlopen'i tüm simgeleri hemen çözmek istediği için yükleme duruyordu. Sağlayıcı kütüphaneler artık önce RTLD_GLOBAL ile yüklenir; eksikse hata iletisi kurulacak paketleri söyler (sudo apt install libva2 libva-drm2 libva-x11-2 libsndio7.0 libxext6 libxv1 libasound2 libx11-6 libtiff5). Paket Recommends listesi genişletildi.",
+      "GÜVENLİK: ayar kaydı günlüğü ('[AYAR] Kaydedildi') parola/jeton alanlarını açık yazıyordu; artık '***' ile maskelenir. Bu günlüğü paylaştıysanız M50 parolasını değiştirmeniz önerilir."
+    ]
+  },
   {
     surum: "2.4.216",
     tarih: "2026-09-15",

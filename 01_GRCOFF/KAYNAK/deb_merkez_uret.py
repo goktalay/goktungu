@@ -478,7 +478,8 @@ Depends: python3 (>= 3.10), python3-venv, python3-pip, adduser, xdg-utils,
  python3-psycopg2, python3-numpy, python3-opencv, python3-serial
 Recommends: postgresql, postgresql-contrib, ffmpeg,
  libx11-6, libxcb1, libxcb-shm0, libxcb-render0, libxcb-shape0, libxcb-xfixes0,
- libasound2t64 | libasound2, libtiff6 | libtiff5, libfreetype6, libbz2-1.0, liblzma5, libatomic1
+ libasound2t64 | libasound2, libtiff5 | libtiff6, libfreetype6, libbz2-1.0, liblzma5, libatomic1,
+ libva2, libva-drm2, libva-x11-2, libsndio7.0, libxext6, libxv1
 Suggests: postgis
 Maintainer: {BAKIMCI}
 Installed-Size: {kurulu_boyut}

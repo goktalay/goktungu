@@ -27,10 +27,32 @@ else:
     # ortam degiskeni ya da m50_sdk/lib.
     from ctypes import RTLD_GLOBAL as _RG
     dir = os.environ.get("GOKTUNGU_M50_SDK_LIB") or os.path.join(_kok, 'lib')
+    # v2.4.217 OLCULEN KUSUR (kullanici Ubuntu gunlugu): "libHVideoSDK.so:
+    # undefined symbol: vaInitialize". Kutuphane icine gomulu ffmpeg,
+    # VA-API (libva/libva-drm/libva-x11), sndio, XShm (libXext) ve Xv
+    # simgelerini NOTYPE UND olarak birakmis ama bu kutuphaneleri NEEDED
+    # listesine yazmamis; ctypes dlopen'i RTLD_NOW ile cagirdigi icin
+    # cozulemeyen simge yuklemeyi durduruyor. Cozum: saglayici
+    # kutuphaneler once RTLD_GLOBAL ile yuklenir (kuruluysa).
+    _ON_YUKLE = ("libva.so.2", "libva-drm.so.2", "libva-x11.so.2",
+                 "libsndio.so.7.0", "libsndio.so.7", "libsndio.so",
+                 "libXext.so.6", "libXv.so.1", "libX11.so.6", "libasound.so.2")
+    _on_yuklenen = []
+    for _ad in _ON_YUKLE:
+        try:
+            CDLL(_ad, mode=_RG)
+            _on_yuklenen.append(_ad)
+        except OSError:
+            pass
     _yardimci = os.path.join(dir, 'libHVideoUtility.so')
     if os.path.isfile(_yardimci):
         CDLL(_yardimci, mode=_RG)
-    sdk = CDLL(os.path.join(dir, 'libHVideoSDK.so'), mode=_RG)
+    try:
+        sdk = CDLL(os.path.join(dir, 'libHVideoSDK.so'), mode=_RG)
+    except OSError as _e:
+        raise OSError("%s | on yuklenen: %s | eksik paketler icin: sudo apt install "
+                      "libva2 libva-drm2 libva-x11-2 libsndio7.0 libxext6 libxv1 "
+                      "libasound2 libx11-6 libtiff5" % (_e, ",".join(_on_yuklenen) or "yok"))
 
 prefix = "sdk.HVS_"
 

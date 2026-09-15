@@ -17,6 +17,28 @@ from .sabitler import AYAR_DOSYASI, SYSID_TABLOSU
 from . import veritabani
 
 
+
+_SIR_ANAHTARLARI = ("parola", "password", "sifre", "secret", "token", "jeton", "api_key", "anahtar")
+
+
+def _sirlari_maskele(deger, derinlik=0):
+    """Gunluk icin: sir tasiyan anahtarlarin degerini '***' yapar (iç içe)."""
+    if derinlik > 6:
+        return "..."
+    if isinstance(deger, dict):
+        cikti = {}
+        for k, v in deger.items():
+            ad = str(k).lower()
+            if any(s in ad for s in _SIR_ANAHTARLARI) and v not in (None, ""):
+                cikti[k] = "***"
+            else:
+                cikti[k] = _sirlari_maskele(v, derinlik + 1)
+        return cikti
+    if isinstance(deger, list):
+        return [_sirlari_maskele(v, derinlik + 1) for v in deger[:50]]
+    return deger
+
+
 class AyarYoneticisi:
     """Program ayarlari (gcs.db 'ayarlar' tablosu) okuma/yazma."""
 
@@ -261,13 +283,16 @@ class AyarYoneticisi:
         return ayarlar
 
     def kaydet(self, yeni):
+        """Ayarlari yazar; gunluge SIRLAR MASKELENEREK dusulur."""
         with veritabani.baglanti() as con:
             for k, v in (yeni or {}).items():
                 con.execute(
                     "INSERT OR REPLACE INTO ayarlar (anahtar, deger)"
                     " VALUES (?,?)",
                     (str(k), json.dumps(v, ensure_ascii=False)))
-        self.konsol("AYAR", f"Kaydedildi: {yeni}")
+        # v2.4.217 GUVENLIK: sir tasiyan alanlar (parola, jeton...) gunluge
+        # ASLA acik yazilmaz (Ubuntu gunlugunde M50 parolasi acik gorulmustu).
+        self.konsol("AYAR", f"Kaydedildi: {_sirlari_maskele(yeni)}")
         return self.yukle()
 
     def sysid_tipi(self, sysid):
