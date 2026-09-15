@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.207";
+const GCS_SURUM = "2.4.208";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.208",
+    tarih: "2026-09-15",
+    baslik: "Haritadaki M50 önizlemesine çift tık artık M50 penceresini açar (paket 2.5.78)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi: haritadaki önizlemeye çift tıklayınca eski pencere açılıyor): harita üzerindeki M50 canlı önizleme kutusunun çift tık işleyicisi kamera modülünün yüzen penceresini açıyordu; artık M50 canlı görüntü penceresi açılır.",
+      "KALICI KORUMA: kamera modülünün yüzen pencere açıcısı M50 kaydı için hiçbir yoldan çalışmaz (görüntü hedefi 'yüzen', eski çağrılar dahil); her yol M50 penceresine yönlenir."
+    ]
+  },
   {
     surum: "2.4.207",
     tarih: "2026-09-15",

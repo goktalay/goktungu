@@ -794,18 +794,20 @@ function eoKameraOnizlemeTazele(liste){
         el = document.createElement("button");
         el.type = "button";
         el.className = "dron-kamera-onizleme eo-kamera-onizleme";
-        el.title = "Çift tıklayın: yüzen panelde aç";
+        el.title = "Çift tıklayın: M50 canlı görüntü penceresi";
         const img = document.createElement("img");
         img.alt = "M50 canlı görüntü"; img.decoding = "async";
         const etiket = document.createElement("span");
         el.append(img, etiket);
         el.addEventListener("click", ev => { ev.preventDefault(); ev.stopPropagation(); });
+        // v2.4.208 (kullanici bildirimi): haritadaki M50 onizlemesine cift
+        // tik ESKI kamera penceresini aciyordu; M50 ayri sistemdir —
+        // kendi penceresi (m50_pencere.js) acilir.
         el.addEventListener("dblclick", ev => {
           ev.preventDefault(); ev.stopPropagation();
+          if (typeof window.m50PencereAc === "function") { window.m50PencereAc(eid); return; }
           const kid = Number(el.dataset.kameraId);
-          if (!Number.isFinite(kid)) return;
-          if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kid, "yuzen");
-          else if (typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kid);
+          if (Number.isFinite(kid) && typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kid);
         });
         alan.appendChild(el);
         eoKameraOnizlemeler[eid] = el;

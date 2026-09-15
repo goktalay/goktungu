@@ -28,7 +28,7 @@ Giris noktasi: main.py (proje kokunde)
 import os as _os
 import re as _re
 
-_SON_BILINEN = "2.4.207"
+_SON_BILINEN = "2.4.208"
 
 
 def _surum_oku():

@@ -1236,6 +1236,14 @@
     }
     const kamera = kameralar.find((k) => k.id === id);
     if (!kamera) return false;
+    // v2.4.208: M50 ayri sistemdir; hangi yoldan gelirse gelsin (harita
+    // onizlemesi, goruntu hedefi "yuzen", eski cagrilar) kamera modulunun
+    // penceresi DEGIL, M50 penceresi acilir.
+    if (String(kamera.protokol || "").toLowerCase() === "m50" &&
+        typeof window.m50PencereAc === "function") {
+      window.m50PencereAc(m50EoIdOku(kamera), kamera.id);
+      return true;
+    }
     const t = T();
     const pencere = document.createElement("div");
     pencere.className = "kam-pencere";
