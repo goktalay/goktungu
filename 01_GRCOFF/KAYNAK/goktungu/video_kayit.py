@@ -3,14 +3,19 @@
 
 Kullanıcı isteği: M50 canlı görüntü penceresinde "Video kayıt seçeneği".
 
-Kaynak, Merkez'in kendi MJPEG vekili (`/kamera/<id>`, port 8801)'dir:
-böylece kayıt, operatörün gördüğü kareyle (AI anotasyonları dahil)
+Kaynak, Merkez'in kendi MJPEG vekilidir (`VideoProxy.yayin_al`): kayıt
+SÜREÇ İÇİ kare aboneliğiyle yapılır (mjpeg_yaz ile aynı `kosul`/`son_kare`
+deseni). Böylece kayıt, operatörün gördüğü kareyle (AI anotasyonları dahil)
 birebir aynıdır ve cihaza ikinci bir RTSP oturumu açılmaz.
 
+v2.4.211 ÖLÇÜLEN KUSUR: ilk sürüm `http://127.0.0.1:8801/kamera/<id>`
+adresine bağlanıyordu; vekil bu kurulumda AYRI 8801 dinleyicisi
+açmıyor (canlı yayın aynı-origin HTTP yolunda), sonuç
+"[WinError 10061] bağlantı reddedildi" idi. Ağ hiç kullanılmaz artık.
+
 ffmpeg'e BAĞIMLI DEĞİLDİR (Windows kurulumlarında ffmpeg bulunmayabilir;
-bkz. video_proxy.py v2.4.167). Kare akışı Python'da ayrıştırılır (JPEG
-SOI/EOI), OpenCV `VideoWriter` (MJPG, .avi) ile yazılır. OpenCV yoksa
-kayıt başlatılamaz ve anlamlı hata döner.
+bkz. video_proxy.py v2.4.167). Kareler OpenCV `VideoWriter` (MJPG, .avi)
+ile yazılır. OpenCV yoksa kayıt başlatılamaz ve anlamlı hata döner.
 
 Dosyalar veri kökünde `kayitlar/video/` altına düşer:
     <etiket>_<YYYYmmdd_HHMMSS>.avi
@@ -21,7 +26,6 @@ import os
 import re
 import threading
 import time
-import urllib.request
 from typing import Any, Dict, Optional
 
 try:
@@ -33,10 +37,10 @@ except Exception:  # pragma: no cover - ortama bagli
 
 
 class _Kayit:
-    def __init__(self, kamera_id: int, url: str, dosya: str, fps: float,
+    def __init__(self, kamera_id: int, yayin, dosya: str, fps: float,
                  etiket: str, konsol):
         self.kamera_id = int(kamera_id)
-        self.url = url
+        self.yayin = yayin
         self.dosya = dosya
         self.fps = max(1.0, min(30.0, float(fps or 15)))
         self.etiket = etiket
@@ -45,68 +49,83 @@ class _Kayit:
         self.kare = 0
         self.hata = ""
         self.calisiyor = True
+        self._dur = False      # durdurma istegi; `calisiyor` yalniz dosya kapaninca duser
         self._is = threading.Thread(target=self._dongu, daemon=True,
                                     name="video-kayit-%d" % self.kamera_id)
         self._is.start()
 
     def durdur(self) -> None:
-        self.calisiyor = False
+        self._dur = True
+        with self.yayin.kosul:
+            self.yayin.kosul.notify_all()
+        # Dosya kapanana kadar (en fazla 4 sn) bekle: donen durum kesindir.
+        try:
+            self._is.join(4.0)
+        except Exception:
+            pass
 
     def _dongu(self) -> None:
         yazici = None
+        y = self.yayin
         try:
-            istek = urllib.request.Request(self.url, headers={"User-Agent": "goktungu-kayit"})
-            with urllib.request.urlopen(istek, timeout=15) as akis:
-                tampon = b""
-                son_yazim = 0.0
-                while self.calisiyor:
-                    parca = akis.read(65536)
-                    if not parca:
+            y.izleyici_ekle()
+        except Exception:
+            pass
+        try:
+            if not y.ilk_kare_bekle(12.0):
+                self.hata = y.hata or "kaynak kare uretmedi (zaman asimi)"
+                return
+            son_no = 0
+            son_yazim = 0.0
+            bos_sayac = 0
+            while not self._dur and (y.calisiyor or y.son_kare):
+                with y.kosul:
+                    if y.kare_no == son_no:
+                        y.kosul.wait(timeout=2.0)
+                    jpg = y.son_kare
+                    no = y.kare_no
+                if jpg is None or no == son_no:
+                    bos_sayac += 1
+                    if not y.calisiyor or bos_sayac > 30:   # ~60 sn kare yok
+                        self.hata = self.hata or "kaynak kare uretmiyor"
                         break
-                    tampon += parca
-                    while True:
-                        bas = tampon.find(b"\xff\xd8")
-                        if bas < 0:
-                            tampon = tampon[-2:]
-                            break
-                        son = tampon.find(b"\xff\xd9", bas + 2)
-                        if son < 0:
-                            tampon = tampon[bas:]
-                            break
-                        jpg = tampon[bas:son + 2]
-                        tampon = tampon[son + 2:]
-                        simdi = time.time()
-                        # Vekil zaten fps tavanina gore yayinlar; yine de
-                        # yaziciya verilen hizi asmamak icin seyrelt.
-                        if simdi - son_yazim < 1.0 / self.fps * 0.9:
-                            continue
-                        kare = cv2.imdecode(_np.frombuffer(jpg, dtype=_np.uint8), cv2.IMREAD_COLOR)
-                        if kare is None:
-                            continue
-                        if yazici is None:
-                            h, w = kare.shape[:2]
-                            yazici = cv2.VideoWriter(self.dosya, cv2.VideoWriter_fourcc(*"MJPG"),
-                                                     self.fps, (w, h))
-                            if not yazici.isOpened():
-                                self.hata = "kayit dosyasi acilamadi"
-                                self.calisiyor = False
-                                break
-                            self._boyut = (w, h)
-                        else:
-                            if kare.shape[1] != self._boyut[0] or kare.shape[0] != self._boyut[1]:
-                                kare = cv2.resize(kare, self._boyut)
-                        yazici.write(kare)
-                        self.kare += 1
-                        son_yazim = simdi
+                    continue
+                bos_sayac = 0
+                son_no = no
+                simdi = time.time()
+                if simdi - son_yazim < 1.0 / self.fps * 0.9:
+                    continue
+                kare = cv2.imdecode(_np.frombuffer(jpg, dtype=_np.uint8), cv2.IMREAD_COLOR)
+                if kare is None:
+                    continue
+                if yazici is None:
+                    h, w = kare.shape[:2]
+                    yazici = cv2.VideoWriter(self.dosya, cv2.VideoWriter_fourcc(*"MJPG"),
+                                             self.fps, (w, h))
+                    if not yazici.isOpened():
+                        self.hata = "kayit dosyasi acilamadi (VideoWriter MJPG)"
+                        break
+                    self._boyut = (w, h)
+                elif kare.shape[1] != self._boyut[0] or kare.shape[0] != self._boyut[1]:
+                    kare = cv2.resize(kare, self._boyut)
+                yazici.write(kare)
+                self.kare += 1
+                son_yazim = simdi
         except Exception as exc:
             self.hata = "%s: %s" % (type(exc).__name__, exc)
         finally:
-            self.calisiyor = False
+            # Once dosya kapatilir (baslik/indeks yazilir), SONRA durum
+            # "bitti"ye ceker: durum() calisiyor=False gordugunde dosya hazirdir.
             try:
                 if yazici is not None:
                     yazici.release()
             except Exception:
                 pass
+            try:
+                y.izleyici_cikar()
+            except Exception:
+                pass
+            self.calisiyor = False
             if self.konsol:
                 self.konsol("KAYIT", "Video kaydi bitti: %s (%d kare%s)"
                             % (os.path.basename(self.dosya), self.kare,
@@ -127,10 +146,10 @@ class _Kayit:
 class VideoKaydedici:
     """Kamera başına tek kayıt; vekil akışından dosyaya yazar."""
 
-    def __init__(self, konsol=None, veri_koku: str = ".", port: int = 8801):
+    def __init__(self, konsol=None, veri_koku: str = ".", proxy=None):
         self.konsol = konsol
         self.dizin = os.path.join(str(veri_koku or "."), "kayitlar", "video")
-        self.port = int(port or 8801)
+        self.proxy = proxy          # VideoProxy (surec ici kare kaynagi)
         self._kayitlar: Dict[int, _Kayit] = {}
         self._kilit = threading.Lock()
 
@@ -157,8 +176,26 @@ class VideoKaydedici:
             ad = "%s_%s.avi" % (self._temiz_etiket(etiket or ("kamera_%d" % kid)),
                                 time.strftime("%Y%m%d_%H%M%S"))
             dosya = os.path.join(self.dizin, ad)
-            url = "http://127.0.0.1:%d/kamera/%d?kayit=1" % (self.port, kid)
-            k = _Kayit(kid, url, dosya, fps, etiket, self.konsol)
+        if self.proxy is None:
+            return {"tamam": False, "hata": "video vekili yok"}
+        try:
+            y = self.proxy.yayin_al(kid)     # kilit disinda: kaynak acmak surebilir
+        except Exception as exc:
+            y = None
+            hata = "%s: %s" % (type(exc).__name__, exc)
+        else:
+            hata = ""
+        if y is None:
+            try:
+                hata = hata or self.proxy.son_hata(kid) or "kaynak acilamadi"
+            except Exception:
+                hata = hata or "kaynak acilamadi"
+            return {"tamam": False, "hata": hata}
+        with self._kilit:
+            mevcut = self._kayitlar.get(kid)
+            if mevcut and mevcut.calisiyor:
+                return {"tamam": True, "zaten": True, "kayit": mevcut.durum()}
+            k = _Kayit(kid, y, dosya, fps, etiket, self.konsol)
             self._kayitlar[kid] = k
         if self.konsol:
             self.konsol("KAYIT", "Video kaydi basladi: %s" % ad, "basari")

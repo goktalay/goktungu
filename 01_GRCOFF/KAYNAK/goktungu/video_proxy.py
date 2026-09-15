@@ -245,7 +245,9 @@ class _Yayin:
             return True
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if self.protokol == "rtsp":
-            cmd += ["-rtsp_transport", "tcp"]
+            cmd += ["-rtsp_transport", "tcp",
+                    # v2.4.211: cihaz yanit vermezse sonsuz beklemesin (us)
+                    "-rw_timeout", "8000000"]
         # v2.4.33: UZAK MJPEG KAYNAKLARINDA ILK KARE GECIKMESI
         # ------------------------------------------------------------
         # Olculen kusur: 1920x1080 bir Axis MJPEG kaynaginda ffmpeg'in
@@ -415,10 +417,25 @@ class _Yayin:
         CIKTI_FPS = float(self.fps)
         while self.calisiyor:
             cap = None
+            # v2.4.211: RTSP el sikismasi/okumasi icin zaman asimi. Onceden
+            # cihaz yanit vermeyince open() SONSUZ bekliyordu; kanal
+            # gecisinde iki oturum ust uste acilirken hizmet "kilitli"
+            # gorunuyordu. OpenCV >= 4.5.2 parametreleri; eski surumde
+            # eski cagriya dusulur.
             try:
-                cap = cv2.VideoCapture(girdi)
+                _oa = getattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC", None)
+                _ra = getattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC", None)
+                if (_oa is not None and _ra is not None and not dongulu
+                        and str(girdi).lower().startswith(("rtsp://", "rtsps://", "http://", "https://"))):
+                    cap = cv2.VideoCapture(girdi, cv2.CAP_FFMPEG,
+                                           [int(_oa), 8000, int(_ra), 8000])
+                else:
+                    cap = cv2.VideoCapture(girdi)
             except Exception:
-                cap = None
+                try:
+                    cap = cv2.VideoCapture(girdi)
+                except Exception:
+                    cap = None
             if cap is None or not cap.isOpened():
                 self.hata = "kaynak acilamadi (OpenCV): baglanti kurulamadi"
                 try:
@@ -568,6 +585,14 @@ class VideoProxy:
         self.port = port
         self.yayinlar = {}          # kamera_id -> _Yayin
         self._kilit = threading.Lock()
+        # v2.4.211 OLCULEN KUSUR (kullanici: "kanal gecisinde siyah ekran,
+        # hizmet kilitleniyor"): `yayin_al` GLOBAL kilidi kaynak durdurma
+        # (terminate+3 sn) ve acma (RTSP/OpenCV, saniyelerce; cihaz mesgulse
+        # sonsuz) boyunca tutuyordu; bu sirada TUM /kamera/<id> istekleri
+        # ve son_hata() bekliyor, her goruntu kararıyordu. Artik kaynak
+        # acma/kapama kamera basina kilitle yapilir; global kilit yalniz
+        # sozluk erisimini korur.
+        self._kam_kilitleri = {}
         self.dji_kopru = None       # v2.1.8: main.py baglar
         self.m50_vekil = None       # v2.4.181: main.py baglar (M50Vekili)
         self.anotasyon = AnotasyonDeposu()  # v2.4.7: AI tespit kutulari
@@ -685,22 +710,30 @@ class VideoProxy:
         except (TypeError, ValueError):
             istenen_gen = 960
         with self._kilit:
-            y = self.yayinlar.get(kamera_id)
+            kam_kilit = self._kam_kilitleri.setdefault(int(kamera_id), threading.Lock())
+        with kam_kilit:
+            with self._kilit:
+                y = self.yayinlar.get(kamera_id)
             if y and (not y.calisiyor or y.url != url
                       or getattr(y, "fps", 15) != istenen_fps
                       or getattr(y, "genislik", 960) != istenen_gen):
-                y.durdur()
+                with self._kilit:
+                    if self.yayinlar.get(kamera_id) is y:
+                        self.yayinlar.pop(kamera_id, None)
+                y.durdur()          # global kilit DISINDA (3 sn surebilir)
                 y = None
             if y is None:
                 y = _Yayin(kamera_id, url, fiili_protokol,
                            self.konsol, anotasyon=self.anotasyon,
                            fps=istenen_fps, genislik=istenen_gen)
-                if not y.baslat():
-                    self._son_hatalar[int(kamera_id)] = (
-                        y.hata or "kaynak baslatilamadi")
+                if not y.baslat():  # global kilit DISINDA
+                    with self._kilit:
+                        self._son_hatalar[int(kamera_id)] = (
+                            y.hata or "kaynak baslatilamadi")
                     return None
-                self._son_hatalar.pop(int(kamera_id), None)
-                self.yayinlar[kamera_id] = y
+                with self._kilit:
+                    self._son_hatalar.pop(int(kamera_id), None)
+                    self.yayinlar[kamera_id] = y
                 # v2.4.204: adreste kimlik varsa gunluge MASKELI yazilir.
                 import re as _re
                 self.konsol("[VIDEO] Kaynak acildi (kamera %s): %s"

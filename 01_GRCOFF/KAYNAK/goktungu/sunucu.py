@@ -342,10 +342,9 @@ class WSSunucusu:
         try:
             from . import sabitler as _sb
             from .video_kayit import VideoKaydedici as _VK
-            from .video_proxy import VIDEO_PROXY_PORT as _VPP
             self.video_kaydedici = _VK(konsol=self.konsol,
                                        veri_koku=getattr(_sb, "VERI_KOKU", "."),
-                                       port=_VPP)
+                                       proxy=self.video_proxy)
         except Exception as _vk_e:
             self.video_kaydedici = None
             try:

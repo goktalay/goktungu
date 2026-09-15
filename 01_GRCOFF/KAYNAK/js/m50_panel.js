@@ -482,9 +482,16 @@ let _m50OnayarImza = "";     // liste degismediyse <select> yeniden cizilmez
 function m50T(){ return (typeof D === "function" ? D() : {}) || {}; }
 
 // --- Canlı görüntü: mevcut M50 kamera kaydını panele gömer -----------
+let _m50KanalTercih = "";   // v2.4.211: panelde gosterilen kanal (kayit yeniden yazilmaz)
 function m50VideoKur(){
   if (!m50VideoSar) return;
-  const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
+  // v2.4.211 OLCULEN KUSUR: kanal dugmeleri TEK kaydin url'sini gorunur<->termal
+  // yeniden yaziyordu; kanal basina ayri kayit modeliyle (M50 penceresi,
+  // kucuk goruntu) iki kayit ayni kanala dusuyor, akis her gecişte
+  // yeniden kuruluyordu. Artik kanal icin kayit VARSA o gosterilir.
+  const kam = (typeof window.m50KameraBulKanal === "function" && _m50KanalTercih
+                 ? window.m50KameraBulKanal(_eoSecili, _m50KanalTercih) : null)
+              || (typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null);
   const kanal = kam ? (String(kam.url || "").split(":").pop() === "termal" ? "termal" : "gorunur") : "";
   if (!kam){
     if (_m50VideoKamId !== null){
@@ -513,9 +520,15 @@ if (m50VideoSar){
   for (const b of m50VideoSar.querySelectorAll(".m50-kanal")){
     b.addEventListener("click", ev => {
       ev.stopPropagation();
-      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
-      if (kam && typeof window.m50KanalDegistir === "function" && b.dataset.kanal !== _m50VideoKanal)
-        window.m50KanalDegistir(kam, b.dataset.kanal);
+      if (b.dataset.kanal === _m50VideoKanal) return;
+      _m50KanalTercih = b.dataset.kanal;
+      const varolan = typeof window.m50KameraBulKanal === "function" ? window.m50KameraBulKanal(_eoSecili, b.dataset.kanal) : null;
+      if (varolan){ m50VideoKur(); return; }
+      // Bu kanal icin kayit yok: ikinci bir kayit olustur (url yeniden yazilmaz)
+      if (typeof window.m50KameraOlustur === "function"){
+        const c = eoListesi.find(x => Number(x.eo_id) === _eoSecili);
+        window.m50KameraOlustur(_eoSecili, ((c && c.isim) || ("M50 " + _eoSecili)) + (b.dataset.kanal === "termal" ? " Termal" : ""), b.dataset.kanal);
+      }
     });
   }
 }

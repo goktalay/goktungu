@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.210";
+const GCS_SURUM = "2.4.211";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.211",
+    tarih: "2026-09-15",
+    baslik: "Kanal geçişinde siyah ekran / hizmet kilitlenmesi ve video kaydı kök nedenleri; M50 penceresi sol kontrol paneli + sağ görüntü (paket 2.5.81)",
+    maddeler: [
+      "KÖK NEDEN — HİZMET KİLİTLENMESİ (kullanıcı bildirimi, günlükle doğrulandı): video vekili GLOBAL kilidi kaynak durdurma (terminate + 3 sn) ve açma (RTSP/OpenCV, saniyeler; cihaz meşgulse sonsuz) boyunca tutuyordu; bu sırada tüm /kamera/<id> istekleri bekliyor, her görüntü kararıyordu. Kilit kamera başına bölündü; global kilit yalnız sözlük erişimini korur. OpenCV RTSP açma/okuma zaman aşımı 8 sn (ffmpeg yolunda -rw_timeout).",
+      "KÖK NEDEN — KANAL GEÇİŞİ (günlük: kamera 1 ch0/ch1 arasında gidip geliyor, kamera 2 de ch1): kontrol panelindeki kanal düğmeleri TEK kaydın adresini yeniden yazıyordu; kanal başına ayrı kayıt modeliyle iki kayıt aynı kanala düşüyor, akış her geçişte yeniden kuruluyordu. Artık kanal için kayıt varsa o gösterilir, yoksa ikinci kayıt açılır; M50 penceresi aynı kanalda çift kaydı yeniden amaçlar.",
+      "KÖK NEDEN — KAYDET HATASI (günlük: 'WinError 10061 bağlantı reddedildi'): kaydedici 127.0.0.1:8801'e bağlanıyordu; vekil bu kurulumda ayrı 8801 dinleyicisi açmıyor (canlı yayın aynı-origin HTTP yolunda). Kayıt artık SÜREÇ İÇİ kare aboneliğiyle yapılır (ağ yok); dosya kapanmadan 'bitti' denmez. Sahte akışla birim testi: 20 kare, dosya okunabilir.",
+      "YERLEŞİM (kullanıcı isteği): M50 penceresi ikiye bölündü — sol 300 px kontrol paneli (Kanal, Çözünürlük, Tanıma + Hassasiyet, Takip, Kayıt, Küçük görüntü, Ekran bilgileri; bölümler açılır/kapanır), sağda görüntü. Durum çubuğu kaldırıldı; ekran bilgileri ayarları popover yerine panelde satır içi (OSD 'çalışmıyor' bildirimi için)."
+    ]
+  },
   {
     surum: "2.4.210",
     tarih: "2026-09-15",

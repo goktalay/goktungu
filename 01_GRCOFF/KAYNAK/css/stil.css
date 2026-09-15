@@ -1323,7 +1323,42 @@
   .m50-pc-kapat { width: 24px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
     background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 3px; color: var(--soluk); cursor: pointer; padding: 0; }
   .m50-pc-kapat:hover { color: #fff; border-color: #ef4444; }
-  .m50-pc-video { position: relative; flex: 1 1 auto; min-height: 0; background: #000; overflow: hidden; }
+  /* v2.4.211 (kullanici istegi): pencere ikiye bolundu — sol 300px kontrol paneli, sag goruntu */
+  .m50-pc { width: 940px; height: 520px; min-width: 620px; min-height: 360px; }
+  .m50-pc-govde { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: row; }
+  .m50-pc-sol { flex: 0 0 300px; width: 300px; min-height: 0; overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--cizgi);
+    background: rgba(0,0,0,.22); padding: 6px 8px 10px; display: flex; flex-direction: column; gap: 6px; font: 11px/1.5 Consolas, monospace; color: var(--soluk); }
+  .m50-pc-bolum { border: 1px solid var(--cizgi); border-radius: 5px; background: rgba(255,255,255,.02); }
+  .m50-pc-bolum > summary { list-style: none; cursor: pointer; user-select: none; padding: 6px 8px; font: 700 10px/1.4 Consolas, monospace; letter-spacing: .1em; color: #f0a830; display: flex; align-items: center; gap: 6px; }
+  .m50-pc-bolum > summary::-webkit-details-marker { display: none; }
+  .m50-pc-bolum > summary::before { content: "\25B8"; display: inline-block; transition: transform .15s; color: var(--soluk); }
+  .m50-pc-bolum[open] > summary::before { transform: rotate(90deg); }
+  .m50-pc-bolum-ic { padding: 4px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+  .m50-pc-satir { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .m50-pc-satir > button.m50-pc-sb { flex: 1 1 auto; justify-content: center; height: 28px !important; }
+  .m50-pc-satir > select.m50-pc-sb { flex: 1 1 auto; height: 26px; }
+  .m50-pc-sol button.m50-pc-sb { height: 28px; min-height: 0; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px;
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; color: var(--metin); cursor: pointer;
+    font: 700 11px Consolas, monospace; letter-spacing: .04em; white-space: nowrap; line-height: 1; }
+  .m50-pc-sol button.m50-pc-sb:hover { border-color: #f0a830; color: #fff; }
+  .m50-pc-sol button.m50-pc-sb:disabled { opacity: .45; cursor: default; }
+  .m50-pc-sol button.m50-pc-sb-kanal.aktif { background: #f0a830; border-color: #f0a830; color: #14181e; }
+  .m50-pc-sol button.m50-pc-sb-tanima.acik, .m50-pc-sol button.m50-pc-sb-pip.acik { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
+  .m50-pc-sol button.m50-pc-sb-takip { border-color: #ffc94d; color: #ffe2a3; }
+  .m50-pc-sol button.m50-pc-sb-takip.takipte { background: #b45309; border-color: #f59e0b; color: #fff; }
+  .m50-pc-sol button.m50-pc-sb-kayit i { color: #ef4444; }
+  .m50-pc-sol button.m50-pc-sb-kayit.kayitta { background: #7f1d1d; border-color: #ef4444; color: #fff; }
+  .m50-pc-sol select.m50-pc-sb { width: auto; padding: 0 6px; font: 700 11px Consolas, monospace; color: var(--metin);
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; cursor: pointer; }
+  .m50-pc-sol .m50-pc-hassas { display: flex; align-items: center; gap: 8px; }
+  .m50-pc-sol .m50-pc-hassas input[type=range] { flex: 1 1 auto; width: auto; padding: 0; margin: 0; accent-color: #3b82f6; }
+  .m50-pc-sol .m50-pc-ipucu { margin: 0; color: #ffe2a3; }
+  .m50-pc-sol .m50-pc-ayar-not { margin: 0; font-size: 10px; color: var(--soluk); line-height: 1.4; word-break: break-all; }
+  .m50-pc-sol .m50-pc-ayar-satir { display: flex; align-items: center; gap: 8px; padding: 1px 0; cursor: pointer; color: var(--metin); }
+  .m50-pc-sol .m50-pc-ayar-satir input[type=checkbox] { margin: 0; }
+  .m50-pc-sol .m50-pc-ayar-satir input[type=range] { flex: 1 1 auto; padding: 0; margin: 0; accent-color: #f0a830; }
+  .m50-pc-sol .m50-pc-ayar-satir select { margin-left: auto; }
+  .m50-pc-video { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; background: #000; overflow: hidden; }
   .m50-pc-video img.kam-video { width: 100%; height: 100%; object-fit: contain; display: block; }
   .m50-pc-alt { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 6px 10px; border-top: 1px solid var(--cizgi); }
