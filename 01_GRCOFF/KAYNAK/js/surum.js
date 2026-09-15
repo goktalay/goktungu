@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.213";
+const GCS_SURUM = "2.4.214";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.214",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: ekran bilgileri ayarı depodan okunur, ayraç belirginleştirildi, başlıkta arayüz sürümü (paket 2.5.84)",
+    maddeler: [
+      "EKRAN BİLGİLERİ (kullanıcı bildirimi: katman var, ayarlar etkilemiyor): 2.4.211 düzeltmesi yayınlı kodda doğrulandı; sahada yine etkisiz raporlandığı için ayar artık her çizimde doğrudan depodan okunur, bellekteki nesne kimliğine bağlı hiçbir yol kalmadı. Her değişiklikte 'Ekran bilgileri güncellendi' bildirimi çıkar.",
+      "SOL PANEL AYRACI (kullanıcı bildirimi: resize olmamış): ayraç 10 px'e çıkarıldı, üzerinde tutamaç simgesi var, üzerine gelince turuncu yanar. Sürükle: genişlik; çift tık: 300 px.",
+      "TANI: M50 penceresi başlığında çalışan arayüz sürümü rozeti (örn. v2.4.214). Sahada görülen sürüm kataloğun gerisindeyse tarayıcı/güncelleme sorunudur, kod sorunu değil."
+    ]
+  },
   {
     surum: "2.4.213",
     tarih: "2026-09-15",

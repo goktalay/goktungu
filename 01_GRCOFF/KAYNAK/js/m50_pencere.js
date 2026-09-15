@@ -411,7 +411,11 @@
   const OSD_VARSAYILAN = { acik: true, kose: "sol_ust", boy: 12, alanlar: { cihaz: true, saat: true, aci: true, kanal: true, cozunurluk: false, konum: false, takip: true, kayit: true } };
   function osdOku(k){ const v = yerel.oku("m50osd_" + k.eoId, null); return Object.assign({}, OSD_VARSAYILAN, v || {}, { alanlar: Object.assign({}, OSD_VARSAYILAN.alanlar, (v && v.alanlar) || {}) }); }
   function osdCiz(k){
-    const a = k.osd || (k.osd = osdOku(k));
+    // v2.4.214 (kullanici: "katman var, ayarlar etkilemiyor"): ayar her
+    // cizimde DEPODAN okunur; bellekteki nesne kimligine bagli hicbir yol
+    // kalmadi. (2.4.211 duzeltmesi yayinli kodda dogrulandi; yine de
+    // sahada etkisiz raporlandigi icin en dayanikli bicime cevrildi.)
+    const a = osdOku(k); k.osd = a;
     let el = k.video.querySelector(".m50-pc-osd");
     if (!a.acik){ if (el) el.remove(); return; }
     if (!el){ el = document.createElement("div"); el.className = "m50-pc-osd"; k.video.appendChild(el); }
@@ -439,7 +443,7 @@
     // KOK NEDEN (OSD ayari calismiyor): pencere kurulumu sonradan k.osd'yi
     // sifirliyordu; panelin duzenledigi nesne ile cizimin okudugu nesne
     // ayrisiyordu. Her kayitta ayni nesne yeniden baglanir.
-    const kaydet = () => { k.osd = a; yerel.yaz("m50osd_" + k.eoId, a); osdCiz(k); };
+    const kaydet = () => { k.osd = a; yerel.yaz("m50osd_" + k.eoId, a); osdCiz(k); if (typeof window.uyariGoster === "function") window.uyariGoster("M50", (T().m50OsdKaydedildi || "Ekran bilgileri güncellendi"), "bilgi"); };
     const satir = (etiket, el) => { const l = document.createElement("label"); l.className = "m50-pc-ayar-satir"; const s2 = document.createElement("span"); s2.textContent = etiket; l.append(el, s2); kap.appendChild(l); return l; };
     const cAcik = document.createElement("input"); cAcik.type = "checkbox"; cAcik.checked = !!a.acik;
     cAcik.addEventListener("change", () => { a.acik = cAcik.checked; kaydet(); });
@@ -574,17 +578,22 @@
     const rozetKanal = document.createElement("span"); rozetKanal.className = "m50-pc-rozet";
     const rozetBag = document.createElement("span"); rozetBag.className = "m50-pc-rozet";
     const rozetTakip = document.createElement("span"); rozetTakip.className = "m50-pc-rozet takip"; rozetTakip.textContent = "TAKİP";
+    // v2.4.214: calisan arayuz surumu basligta — saha "eski kod mu?" sorusunu aninda yanitlar
+    const rozetSurum = document.createElement("span"); rozetSurum.className = "m50-pc-rozet surum";
+    rozetSurum.textContent = "v" + ((typeof GCS_SURUM === "string" && GCS_SURUM) || (window.GCS_SURUM || "?"));
+    rozetSurum.title = "Arayüz sürümü (js/m50_pencere.js)";
     const kapat = document.createElement("button"); kapat.type = "button"; kapat.className = "m50-pc-kapat";
     kapat.title = t.m50PcKapat || "Pencereyi kapat"; kapat.innerHTML = "<i class='fa-solid fa-xmark'></i>";
     kapat.addEventListener("click", ev => { ev.stopPropagation(); window.m50PencereKapat(eoId); });
-    baslik.append(ikon, ad, rozetKanal, rozetBag, rozetTakip, kapat);
+    baslik.append(ikon, ad, rozetSurum, rozetKanal, rozetBag, rozetTakip, kapat);
     // v2.4.211 (kullanıcı isteği): pencere İKİYE bölündü — SOL 300 px kontrol
     // paneli (tüm özellikler alt alta), SAĞ görüntü. Durum çubuğu kaldırıldı.
     const govde = document.createElement("div"); govde.className = "m50-pc-govde";
     const sol = document.createElement("div"); sol.className = "m50-pc-sol";
     const video = document.createElement("div"); video.className = "m50-pc-video";
     // v2.4.213 (kullanıcı isteği): sol panel genişliği AYRAÇ ile değiştirilir, hatırlanır
-    const ayrac = document.createElement("div"); ayrac.className = "m50-pc-ayrac"; ayrac.title = "Sürükle: sol panel genişliği";
+    const ayrac = document.createElement("div"); ayrac.className = "m50-pc-ayrac"; ayrac.title = t.m50AyracIpucu || "Sürükle: sol panel genişliği (çift tık: 300 px)";
+    ayrac.innerHTML = "<i class='fa-solid fa-grip-lines-vertical'></i>";
     const solGen = Number(yerel.oku("m50sol_" + eoId, 300)) || 300;
     sol.style.flexBasis = sol.style.width = Math.max(220, Math.min(700, solGen)) + "px";
     let ayr = null;
@@ -706,7 +715,7 @@
     if (k.pipAcik){ k.pipAcik = false; pipAcKapa(k, true); }
     durumYaz(k);
     wsGonder({ tip: "video_kayit_durum" });
-    k.osdSaat = setInterval(() => { if (!p.isConnected){ clearInterval(k.osdSaat); return; } if (k.osd && k.osd.acik && k.osd.alanlar.saat) osdCiz(k); }, 1000);
+    k.osdSaat = setInterval(() => { if (!p.isConnected){ clearInterval(k.osdSaat); return; } const o = osdOku(k); if (o.acik && o.alanlar.saat) osdCiz(k); }, 1000);
     return k;
   }
 
