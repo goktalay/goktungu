@@ -216,7 +216,7 @@ class AyarYoneticisi:
             # birebir korunur.
             return {"lisansli": False, "kaynak": "merkez",
                     "sinirsiz": False, "ai": False,
-                    "radar": False, "gccdual": False,
+                    "radar": False, "gccdual": False, "m50": False,
                     "firma_unvan": "", "lisans_uid": "", "hata": ""}
         return {
             "lisansli": bool(o.get("lisansli")),
@@ -225,6 +225,13 @@ class AyarYoneticisi:
             "ai": bool(o.get("ai")),
             "radar": bool(o.get("radar")),
             "gccdual": bool(o.get("gccdual")),
+            # v2.4.203 OLCULEN KUSUR: bu ozet `m50` alanini TASIMIYORDU.
+            # "Lisansi Yenile" yaniti tam ozeti gonderdigi icin menu
+            # aciliyor, sayfa yenilenince (F5) buradaki eksik ozet gelip
+            # `lisansUstSinir("m50")` tanimsiz -> false oldugundan
+            # Elektro-Optik menusu yeniden gizleniyordu. Belge dogruydu;
+            # eksik olan bu satirdi.
+            "m50": bool(o.get("m50", False)),
             "firma_unvan": str(o.get("firma_unvan") or ""),
             "lisans_uid": str(o.get("lisans_uid") or ""),
             # Hata metni arayuze TASINIR: 5.000 $ odemis musteri

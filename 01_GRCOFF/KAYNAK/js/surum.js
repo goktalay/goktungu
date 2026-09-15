@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.202";
+const GCS_SURUM = "2.4.203";
 const GCS_SURUM_TARIH = "2026-09-14";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.203",
+    tarih: "2026-09-15",
+    baslik: "Lisans yenilendikten sonra F5'te eski yetkiye dönme (paket 2.5.73)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): 'Lisansı Yenile' sonrası Elektro-Optik menüsü açılıyor, sayfa yenilenince kayboluyordu. Neden: açılışta gönderilen ayarlar paketindeki lisans özeti 'm50' alanını hiç taşımıyordu (ai/radar/gccdual vardı); yenileme yanıtı tam özeti gönderdiği için fark ancak F5'te görünüyordu. Belge doğruydu; özete 'm50' eklendi."
+    ]
+  },
   {
     surum: "2.4.202",
     tarih: "2026-09-14",
