@@ -305,7 +305,11 @@ class M50YerelServisi:
             return
         self._konum_ts = simdi
         try:
-            self.istemci.konum_oku()
+            d = self.istemci.konum_oku()
+            tani = d.get("konum_tani") if isinstance(d, dict) else None
+            if tani and not getattr(self, "_konum_tani_yazildi", False):
+                self._konum_tani_yazildi = True
+                self._yaz("M50 %s" % tani, "bilgi")
         except Exception:
             pass
 

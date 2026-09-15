@@ -1261,33 +1261,33 @@
       araclar.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
     altBar.appendChild(araclar);
     pencere.append(baslik, kutu, altBar);
+    // v2.4.206 (kullanici istegi): en altta DURUM CUBUGU — kameranin
+    // temel bilgileri (ad, protokol, cozunurluk, FPS tavani, akis durumu).
+    const durumBar = document.createElement("div");
+    durumBar.className = "kam-pencere-durum";
+    pencere.append(durumBar);
     document.body.appendChild(pencere);
-    // v2.4.205: M50 kamerasi -> footer bilgileri, kanal gecisi, hedef/takip
-    if (String(kamera.protokol || "").toLowerCase() === "m50" &&
-        typeof window.m50PencereDonat === "function")
-      window.m50PencereDonat(kamera, pencere, kutu, altBar);
+    // v2.4.206 (kullanici istegi): yeniden boyutlandirma PENCERENIN
+    // BUTUNUNE uygulanir (CSS .kam-pencere resize:both); goruntu kutusu
+    // kalan alani doldurur. Konum + boyut tek anahtarla saklanir.
     const kayitVar = typeof window.pencereKonumUygula === "function" &&
-                     window.pencereKonumUygula("kam_" + id, pencere);
+                     window.pencereKonumUygula("kam_" + id, pencere, true);
     if (!kayitVar) {
       pencere.style.left = Math.max(8, (window.innerWidth - 500) / 2 +
         (Object.keys(ayrikler).length * 30)) + "px";
       pencere.style.top = Math.max(8, 90 +
         (Object.keys(ayrikler).length * 30)) + "px";
     }
-    if (typeof window.pencereKonumUygula === "function") {
-      window.pencereKonumUygula("kam_" + id + "_video", kutu, true);
-      kutu.style.left = ""; kutu.style.top = ""; kutu.style.right = "";
-    }
-    ayrikler[id] = { pencere: pencere, kutu: kutu, altBar: altBar };
+    ayrikler[id] = { pencere: pencere, kutu: kutu, altBar: altBar, durumBar: durumBar };
     pencereSurukleKur(pencere, baslik, id);
     if (typeof ResizeObserver !== "undefined" &&
         typeof window.pencereKonumKaydet === "function") {
       let ilk = true;
       const ro = new ResizeObserver(() => {
         if (ilk) { ilk = false; return; }
-        window.pencereKonumKaydet("kam_" + id + "_video", kutu, true);
+        window.pencereKonumKaydet("kam_" + id, pencere, true);
       });
-      ro.observe(kutu);
+      ro.observe(pencere);
     }
     if (!oynayanlar.has(id)) oynayanlar.add(id);
     ayrikVideoTazele(id);
@@ -1426,9 +1426,43 @@
     // v2.4.164: takip dugmeleri ("Hedef Seç" / "Görüntüye Angaje Ol")
     if (typeof window.kameraTakipAracAlani === "function")
       kayit.altBar.prepend(window.kameraTakipAracAlani(id));
-    // v2.4.173: ipucu + teknik bilgi ALT DURUM ÇUBUĞUNDA (ayrı satır)
-    if (typeof window.kameraTakipDurumCubugu === "function")
-      kayit.altBar.appendChild(window.kameraTakipDurumCubugu(id));
+    // v2.4.206: en alttaki durum cubugu = temel kamera bilgileri + takip
+    // ipucu/teknik bilgi (v2.4.173 cubugu buraya tasindi).
+    if (kayit.durumBar) {
+      kayit.durumBar.innerHTML = "";
+      kayit.durumBar.appendChild(temelBilgiSatiri(kamera, kayit.kutu));
+      if (typeof window.kameraTakipDurumCubugu === "function")
+        kayit.durumBar.appendChild(window.kameraTakipDurumCubugu(id));
+    }
+  }
+
+  // v2.4.206: durum cubugu ust satiri — ad · protokol · cozunurluk · FPS
+  // tavani · akis durumu. Cozunurluk ilk kare gelince (img load) yazilir.
+  function temelBilgiSatiri(kamera, kutu) {
+    const t = T();
+    const el = document.createElement("div");
+    el.className = "kam-temel-bilgi";
+    const yaz = () => {
+      const img = kutu.querySelector("img.kam-video, video.kam-video");
+      const w = img ? (img.naturalWidth || img.videoWidth || 0) : 0;
+      const h = img ? (img.naturalHeight || img.videoHeight || 0) : 0;
+      const hata = kutu.classList.contains("kam-hata");
+      const bagl = kutu.classList.contains("kam-baglaniyor");
+      const durum = !oynayanlar.has(kamera.id) ? (t.kamDurumDurdu || "durduruldu") :
+                    hata ? (t.kamDurumHata || "yayın alınamıyor") :
+                    (bagl || !w) ? (t.kamDurumBaglaniyor || "bağlanıyor") : (t.kamDurumCanli || "canlı");
+      const p = [kamera.isim || ("#" + kamera.id), String(kamera.protokol || "").toUpperCase()];
+      if (w && h) p.push(w + "×" + h);
+      p.push((t.kamFpsKisa || "FPS") + " ≤ " + (kamera.fps || 15));
+      p.push(durum);
+      el.textContent = p.join("  ·  ");
+    };
+    yaz();
+    const img = kutu.querySelector("img.kam-video, video.kam-video");
+    if (img) { img.addEventListener("load", yaz); img.addEventListener("loadedmetadata", yaz); }
+    if (typeof MutationObserver !== "undefined")
+      new MutationObserver(yaz).observe(kutu, { attributes: true, attributeFilter: ["class"] });
+    return el;
   }
 
   function ayrikKapat(id) {
@@ -1436,7 +1470,6 @@
     if (!kayit) return;
     kayit.pencere.remove();
     delete ayrikler[id];
-    if (typeof window.m50PencereKapandi === "function") window.m50PencereKapandi(id);
   }
 
   function pencereSurukleKur(pencere, baslik, kamId) {
@@ -1476,6 +1509,8 @@
   window.kameraListesiIsle = function (m) {
     kameralar = m.kameralar || [];
     window._kameralarSon = kameralar;
+    // v2.4.206: M50 canli goruntu penceresi (ayri sistem) kayit/kanal degisimini izler
+    if (typeof window.m50PencereKameraDegisti === "function") { try { window.m50PencereKameraDegisti(); } catch (e) {} }
     // v2.4.0: haritadaki kamera ikonlarini tazele
     if (typeof window.kameraHaritaTazele === "function")
       window.kameraHaritaTazele(kameralar);

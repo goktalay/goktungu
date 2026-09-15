@@ -2,11 +2,25 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.205";
+const GCS_SURUM = "2.4.206";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.206",
+    tarih: "2026-09-15",
+    baslik: "M50 canlı görüntü penceresi AYRI SİSTEM olarak yeniden tasarlandı; kamera penceresinde bütün-pencere boyutlandırma ve alt durum çubuğu (paket 2.5.76)",
+    maddeler: [
+      "M50 (kullanıcı bildirimi: 'M50 ayrı bir sistem … kameranın ayrılabilir panelini kopyalayıp gelmişsin'): kamera modülünden bağımsız yeni pencere (js/m50_pencere.js). Başlıkta cihaz adı + kanal/bağlantı/takip rozetleri; araç çubuğunda Görünür/Termal ve HEDEF / TAKİBİ DURDUR; en altta durum çubuğu: bağlantı, IP, kanal, çözünürlük, FPS tavanı, azimut/eğim, takip, konum (RTK), akış. Kamera düzenleme, AI, görüntü konumu ve dron piksel takibi düğmeleri bu pencerede YOK. Her cihaz için ayrı pencere açılır; konum/boyut hatırlanır.",
+      "KÖK NEDEN (2.4.205'te M50 düğmeleri görünmüyordu): kamera modülü her tazelemede alt çubuğu boşaltıyordu; M50 eklemeleri siliniyordu. Ayrı sistemle bu bağımlılık kalktı.",
+      "KAMERA PENCERESİ (kullanıcı bildirimi): yeniden boyutlandırma artık pencerenin BÜTÜNÜNE uygulanır, görüntü kalan alanı doldurur (önceden yalnız görüntü kutusu boyutlanıyordu). Boyut ve konum birlikte hatırlanır.",
+      "KAMERA PENCERESİ: en altta durum çubuğu — ad · protokol · çözünürlük · FPS tavanı · akış durumu; takip ipucu/teknik bilgi bu çubuğa taşındı.",
+      "KAMERA PENCERESİ: mavi görüntü-konumu düğmesine yanal boşluk (6 px) ve iç dolgu eklendi; bitişik görünüm giderildi.",
+      "KONUM AL 0.00000 / HARİTA İKONU YOK (kullanıcı bildirimi): SDK GPS geri çağrısından okunan değer sıfıra yakın çöp olduğunda eski denetim bunu geçerli RTK konumu sayıyordu; ikon Null Island'a düşüyor, form 0 doluyordu. Artık makul olmayan değer reddedilir (bayat RTK temizlenir), ilk geri çağrının ham baytları tanı için günlüğe yazılır. RTK ve kayıtlı konum yoksa ikon MERKEZ konumunda 'konum yok · merkezde' etiketiyle gösterilir; 'Konum al' sıfıra yakın RTK değerini atlayıp bilgisayar konumuna düşer.",
+      "CİHAZ DÜZENLEME (kullanıcı bildirimi: her seferinde kullanıcı adı/şifre istiyor): kayıtlı kullanıcı adı forma önceden yazılır; parola alanı 'kayıtlı — değiştirmek için yazın' ipucu taşır ve boş bırakılırsa değişmez."
+    ]
+  },
   {
     surum: "2.4.205",
     tarih: "2026-09-15",

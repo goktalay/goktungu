@@ -686,7 +686,8 @@ window.eoIkonlariGuncelle = function(liste){
     const pos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
     const uc = noktada(lat, lon, EO_GORUS_M, az * Math.PI / 180);
     const cizgi = Cesium.Cartesian3.fromDegreesArray([lon, lat, uc[0], uc[1]]);
-    const etiket = (c.isim || ("M50 " + eid)) + (konum.kaynak === "rtk" ? " · RTK" : "");
+    const etiket = (c.isim || ("M50 " + eid)) + (konum.kaynak === "rtk" ? " · RTK" :
+                   konum.kaynak === "merkez" ? " · " + ((typeof D === "function" && D().eoKonumMerkez) || "konum yok · merkezde") : "");
     if (!v){
       v = { sonKey: "", ikon: null, gorus: null, az: 0 };
       v.ikon = viewer.entities.add({

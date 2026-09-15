@@ -53,6 +53,8 @@ function m50Gonder(paket){
 // =================================================================
 let eoListesi = [];
 let _eoSecili = 0;
+// v2.4.206: M50 canli goruntu penceresi (js/m50_pencere.js) cihaz kaydini buradan okur
+window.eoListesiOku = function(){ return eoListesi; };
 let _eoFormuDoldu = 0;
 const eoListeEl = document.getElementById("eoListe");
 const eoIsimEl = document.getElementById("eoIsim");
@@ -525,8 +527,9 @@ if (m50VideoSar){
     ev.stopPropagation();
     const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
     if (!kam) return;
-    if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kam.id, "yuzen");
-    else if (typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kam.id);
+    // v2.4.206: M50 AYRI bir sistemdir — kamera modulunun yuzen penceresi
+    // DEGIL, kendi penceresi (js/m50_pencere.js) acilir.
+    if (typeof window.m50PencereAc === "function") window.m50PencereAc(_eoSecili, kam.id);
   });
 })();
 if (btnM50KameraOlustur) btnM50KameraOlustur.addEventListener("click", () => {
@@ -629,6 +632,8 @@ if (_btn("btnM50TakipYetenekKapat")) _btn("btnM50TakipYetenekKapat").addEventLis
   const asil = window.m50PaneliGuncelle;
   window.m50PaneliGuncelle = function(paket){
     if (typeof asil === "function") asil(paket);
+    // v2.4.206: acik M50 canli goruntu pencerelerinin durum cubugu/dugmeleri
+    if (typeof window.m50PencereleriTazele === "function") { try { window.m50PencereleriTazele(); } catch (e) {} }
     const p = paket && paket.m50_durum ? paket : {m50_durum: paket || {}};
     const r = (p.m50_durum && typeof p.m50_durum === "object") ? p.m50_durum : {};
     const bagli = m50BagliMi();
@@ -798,9 +803,13 @@ m50AlanlariEtkinlestir();
     efIsim.value = c ? (c.isim || "") : ("M50 " + (eoListesi.length + 1));
     efIp.value = c ? (c.kayit_ip || a.ip || "") : "";
     efPort.value = c ? String(c.kayit_port || a.port || 39020) : "39020";
-    efKullanici.value = ""; efParola.value = "";
-    efKullanici.placeholder = (c && a.kimlik_kayitli) ? (t.m50KullaniciKayitli || "kayıtlı — boş bırakın") : "";
-    efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "kayıtlı — boş bırakın") : "";
+    // v2.4.206 (kullanici: "duzenlemeye girince her seferinde kullanici adi
+    // ve sifre istiyor"): kullanici adi sir degildir, kayitli deger forma
+    // yazilir; parola alani "kayitli" ipucu tasir ve BOS birakilirsa
+    // degismez (sunucu bos degeri korur).
+    efKullanici.value = (c && a.kullanici) ? String(a.kullanici) : ""; efParola.value = "";
+    efKullanici.placeholder = "";
+    efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "•••••••• kayıtlı — değiştirmek için yazın") : "";
     // v2.4.205: kayitli konum + RTK rozeti
     konumYaz(c ? c.kayit_lat : null, c ? c.kayit_lon : null);
     const rtk = !!(c && c.konum && c.konum.kaynak === "rtk");
@@ -884,7 +893,8 @@ m50AlanlariEtkinlestir();
     const eid = parseInt(efId.value, 10) || 0;
     const c = eid ? eoListesi.find(x => Number(x.eo_id) === eid) : null;
     const k = c && c.konum && typeof c.konum === "object" ? c.konum : null;
-    if (k && k.kaynak === "rtk" && typeof k.lat === "number" && typeof k.lon === "number"){
+    if (k && k.kaynak === "rtk" && typeof k.lat === "number" && typeof k.lon === "number" &&
+        (Math.abs(k.lat) >= 1e-3 || Math.abs(k.lon) >= 1e-3)){
       konumYaz(k.lat, k.lon);
       if (efKonumRozet) efKonumRozet.textContent = "RTK";
       uyar(t.efKonumRtkAlindi || "Konum cihazın RTK/GPS alıcısından alındı.", "basari");
@@ -908,162 +918,3 @@ m50AlanlariEtkinlestir();
   window.eoCihazListeCiz();
 })();
 
-
-// =================================================================
-// v2.4.205 — M50 YUZEN CANLI GORUNTU PENCERESI (kullanici istegi)
-// Kameralar modulu (kameralar.js ayrikAc) M50 kamerasi icin pencereyi
-// kurduktan sonra `m50PencereDonat` cagirir. Footer: temel bilgiler
-// (cihaz, kanal, azimut/egim, durum), gunduz/termal gecisi, HEDEF ->
-// goruntu uzerinde cerceve cizimi -> takip_sec + takip_baslat;
-// TAKIBI DURDUR -> takip_durdur, cerceve silinir. Dugmeler telemetriden
-// (takip.etkin) esitlenir. Pencere zaten yeniden boyutlanabilir
-// (.kam-pencere-video resize:both).
-// =================================================================
-const _m50Pencereler = {};   // kamId -> kayit
-function m50KamEoId(kamera){
-  const p = String((kamera && kamera.url) || "").split(":");
-  return p.length >= 3 ? (parseInt(p[1], 10) || 1) : 1;
-}
-function m50KamKanal(kamera){
-  return String((kamera && kamera.url) || "").split(":").pop() === "termal" ? "termal" : "gorunur";
-}
-function m50EoDurum(eoId){
-  const c = eoListesi.find(x => Number(x.eo_id) === Number(eoId));
-  if (c) return { durum: c.m50_durum || {}, takip: c.m50_takip || (c.m50_durum && c.m50_durum.takip) || {}, isim: c.isim || ("M50 " + eoId) };
-  return { durum: sonM50 || {}, takip: (sonM50 && sonM50.takip) || {}, isim: "M50 " + eoId };
-}
-function m50GoruntuKutusu(img){
-  // object-fit: contain -> gercek goruntu alani (harf kutusu haric)
-  const r = img.getBoundingClientRect();
-  const nw = img.naturalWidth || r.width, nh = img.naturalHeight || r.height;
-  if (!nw || !nh || !r.width || !r.height) return { x: r.left, y: r.top, w: r.width, h: r.height, nw: nw || 1, nh: nh || 1 };
-  const olcek = Math.min(r.width / nw, r.height / nh);
-  const w = nw * olcek, h = nh * olcek;
-  return { x: r.left + (r.width - w) / 2, y: r.top + (r.height - h) / 2, w, h, nw, nh };
-}
-function m50PencereCerceveCiz(k){
-  if (!k.cerceve) { if (k.kutuEl) k.kutuEl.remove(); k.kutuEl = null; return; }
-  const img = k.kutu.querySelector("img.kam-video");
-  if (!img) return;
-  const g = m50GoruntuKutusu(img), kr = k.kutu.getBoundingClientRect();
-  if (!k.kutuEl){ k.kutuEl = document.createElement("div"); k.kutuEl.className = "m50-hedef-kutu"; k.kutu.appendChild(k.kutuEl); }
-  const sx = g.w / g.nw, sy = g.h / g.nh;
-  k.kutuEl.style.left = (g.x - kr.left + k.cerceve.sol * sx) + "px";
-  k.kutuEl.style.top = (g.y - kr.top + k.cerceve.ust * sy) + "px";
-  k.kutuEl.style.width = ((k.cerceve.sag - k.cerceve.sol) * sx) + "px";
-  k.kutuEl.style.height = ((k.cerceve.alt - k.cerceve.ust) * sy) + "px";
-}
-function m50PencereHedefSec(k){
-  const img = k.kutu.querySelector("img.kam-video");
-  if (!img || k.ortu) return;
-  const t = m50T();
-  const ortu = document.createElement("div");
-  ortu.className = "m50-hedef-ortu";
-  ortu.title = t.m50HedefIpucu || "Hedefin üzerine bir dikdörtgen çizin";
-  const secim = document.createElement("div"); secim.className = "m50-hedef-secim"; ortu.appendChild(secim);
-  k.kutu.appendChild(ortu); k.ortu = ortu;
-  let bas = null;
-  const bitir = () => { ortu.remove(); k.ortu = null; };
-  ortu.addEventListener("mousedown", ev => {
-    if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation();
-    const g = m50GoruntuKutusu(img);
-    bas = { x: Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y: Math.min(Math.max(ev.clientY, g.y), g.y + g.h), g };
-    secim.style.display = "block";
-  });
-  ortu.addEventListener("mousemove", ev => {
-    if (!bas) return;
-    const g = bas.g, kr = k.kutu.getBoundingClientRect();
-    const x2 = Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y2 = Math.min(Math.max(ev.clientY, g.y), g.y + g.h);
-    secim.style.left = (Math.min(bas.x, x2) - kr.left) + "px"; secim.style.top = (Math.min(bas.y, y2) - kr.top) + "px";
-    secim.style.width = Math.abs(x2 - bas.x) + "px"; secim.style.height = Math.abs(y2 - bas.y) + "px";
-  });
-  ortu.addEventListener("mouseup", ev => {
-    if (!bas) return; ev.preventDefault(); ev.stopPropagation();
-    const g = bas.g;
-    const x2 = Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y2 = Math.min(Math.max(ev.clientY, g.y), g.y + g.h);
-    const sx = g.nw / g.w, sy = g.nh / g.h;
-    const cer = { sol: Math.round((Math.min(bas.x, x2) - g.x) * sx), ust: Math.round((Math.min(bas.y, y2) - g.y) * sy),
-                  sag: Math.round((Math.max(bas.x, x2) - g.x) * sx), alt: Math.round((Math.max(bas.y, y2) - g.y) * sy) };
-    bas = null; bitir();
-    if (cer.sag - cer.sol < 4 || cer.alt - cer.ust < 4) return;   // tik = iptal
-    k.cerceve = cer; m50PencereCerceveCiz(k);
-    const kanal = m50KamKanal(k.kamera);
-    const mod = String(m50TakipMod && m50TakipMod.value || "hava_yari_otomatik");
-    const video_dikdortgen = { sol: 0, ust: 0, sag: Math.round(g.nw), alt: Math.round(g.nh) };
-    m50Gonder({ tip: "m50_takip_sec", eo_id: k.eoId, kanal, video_dikdortgen, secim: cer });
-    // Yerel kipte komutlar sirayla islenir; secim kabul edildikten sonra baslat.
-    setTimeout(() => m50Gonder({ tip: "m50_takip_baslat", eo_id: k.eoId, kanal, mod }), 400);
-    k.bekleniyor = Date.now();
-  });
-  document.addEventListener("keydown", function esc(ev){ if (ev.key === "Escape"){ bitir(); document.removeEventListener("keydown", esc); } });
-}
-function m50PencereTazele(){
-  for (const id of Object.keys(_m50Pencereler)){
-    const k = _m50Pencereler[id];
-    if (!document.body.contains(k.pencere)){ delete _m50Pencereler[id]; continue; }
-    const t = m50T();
-    const kam = (typeof window.m50KameraBul === "function" ? window.m50KameraBul(k.eoId) : null) || k.kamera;
-    k.kamera = kam;
-    const kanal = m50KamKanal(kam);
-    const { durum, takip, isim } = m50EoDurum(k.eoId);
-    const aci = (Number.isFinite(Number(durum.azimut)) && Number.isFinite(Number(durum.egim)))
-      ? Number(durum.azimut).toFixed(1) + "° / " + Number(durum.egim).toFixed(1) + "°" : "—";
-    const d = durum.bagli ? (t.m50Bagli || "Bağlı") : (t.m50Kapali || "Bağlı değil");
-    k.bilgi.textContent = isim + "  ·  " + (kanal === "termal" ? (t.m50Termal || "Termal") : (t.m50Gorunur || "Görünür")) +
-      "  ·  " + aci + "  ·  " + d + (takip.etkin ? "  ·  " + (t.m50TakipEtkin || "Takip etkin") : "");
-    for (const b of k.kanalDgm) b.classList.toggle("aktif", b.dataset.kanal === kanal);
-    const etkin = !!takip.etkin;
-    k.btnHedef.style.display = etkin ? "none" : "";
-    k.btnDurdur.style.display = etkin ? "" : "none";
-    k.btnHedef.disabled = !durum.bagli;
-    if (!etkin && k.cerceve && k.bekleniyor && Date.now() - k.bekleniyor > 6000){ k.cerceve = null; k.bekleniyor = 0; }
-    if (etkin) k.bekleniyor = 0;
-    m50PencereCerceveCiz(k);
-  }
-}
-window.m50PencereDonat = function(kamera, pencere, kutu, altBar){
-  if (!kamera || String(kamera.protokol || "").toLowerCase() !== "m50") return;
-  const t = m50T();
-  const k = { kamera, pencere, kutu, altBar, eoId: m50KamEoId(kamera), cerceve: null, kutuEl: null, ortu: null, bekleniyor: 0 };
-  kutu.classList.add("m50-pc-kutu");
-  altBar.classList.add("m50-pc-alt");
-  const bilgi = document.createElement("div"); bilgi.className = "m50-pc-bilgi"; k.bilgi = bilgi;
-  const dgm = document.createElement("div"); dgm.className = "m50-pc-dugmeler";
-  k.kanalDgm = [];
-  for (const [kanal, ikon, etiket] of [["gorunur", "fa-sun", t.m50Gorunur || "Görünür"], ["termal", "fa-fire", t.m50Termal || "Termal"]]){
-    const b = document.createElement("button"); b.type = "button"; b.className = "kam-btn m50-pc-kanal"; b.dataset.kanal = kanal;
-    b.innerHTML = "<i class='fa-solid " + ikon + "'></i> " + etiket; b.title = etiket;
-    b.addEventListener("click", ev => {
-      ev.stopPropagation();
-      const kam = (typeof window.m50KameraBul === "function" ? window.m50KameraBul(k.eoId) : null) || k.kamera;
-      if (kam && typeof window.m50KanalDegistir === "function" && m50KamKanal(kam) !== kanal) window.m50KanalDegistir(kam, kanal);
-    });
-    dgm.appendChild(b); k.kanalDgm.push(b);
-  }
-  const btnHedef = document.createElement("button"); btnHedef.type = "button"; btnHedef.className = "kam-btn m50-pc-hedef";
-  btnHedef.innerHTML = "<i class='fa-solid fa-crosshairs'></i> " + (t.m50PencereHedef || "HEDEF");
-  btnHedef.addEventListener("click", ev => { ev.stopPropagation(); m50PencereHedefSec(k); });
-  const btnDurdur = document.createElement("button"); btnDurdur.type = "button"; btnDurdur.className = "kam-btn m50-pc-durdur";
-  btnDurdur.innerHTML = "<i class='fa-solid fa-ban'></i> " + (t.m50PencereDurdur || "TAKİBİ DURDUR");
-  btnDurdur.style.display = "none";
-  btnDurdur.addEventListener("click", ev => {
-    ev.stopPropagation();
-    m50Gonder({ tip: "m50_takip_durdur", eo_id: k.eoId, kanal: m50KamKanal(k.kamera) });
-    k.cerceve = null; m50PencereCerceveCiz(k);
-    btnDurdur.style.display = "none"; btnHedef.style.display = "";
-  });
-  dgm.append(btnHedef, btnDurdur);
-  k.btnHedef = btnHedef; k.btnDurdur = btnDurdur;
-  altBar.prepend(bilgi, dgm);
-  _m50Pencereler[String(kamera.id)] = k;
-  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => m50PencereCerceveCiz(k)).observe(kutu);
-  m50PencereTazele();
-};
-window.m50PencereKapandi = function(id){ delete _m50Pencereler[String(id)]; };
-(function(){
-  const asil = window.m50PaneliGuncelle;
-  window.m50PaneliGuncelle = function(paket){
-    if (typeof asil === "function") asil(paket);
-    try { m50PencereTazele(); } catch (e) {}
-  };
-})();

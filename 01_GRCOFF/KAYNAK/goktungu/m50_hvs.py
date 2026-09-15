@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import importlib
 import ipaddress
+import math
 import os
 import platform
 import sys
@@ -564,13 +565,33 @@ class M50Istemcisi:
         if getattr(self, "_dis_cb", None) is None:
             def _cb(user, tur, veri, boyut):
                 try:
+                    if tur == 1:
+                        # v2.4.206 TANI (kullanici: "Konum al 0.00000 atiyor",
+                        # "harita ikonu yok"): SDK yapisi (lon,lat,alt double)
+                        # ile gercek veri uyusmazsa okunan degerler sifira
+                        # yakin cop (denormal) olur; eski (lat or lon) denetimi
+                        # bunu GECERLI sayip RTK konumu 0,0'a yaziyordu — ikon
+                        # Null Island'a dusuyor, form 0.0000000 doluyordu.
+                        # Ilk geri cagrinin ham baytlari gunluge alinir.
+                        if "konum_tani" not in self._durum:
+                            n = max(0, min(int(boyut or 0), 64))
+                            ham = ct.string_at(veri, n).hex() if (veri and n) else ""
+                            self._durum_yaz(konum_tani="GPS cb boyut=%s beklenen=%s ham=%s"
+                                            % (boyut, ct.sizeof(dev.GPSData_t), ham))
                     if tur == 1 and boyut >= ct.sizeof(dev.GPSData_t):
                         g = ct.cast(veri, ct.POINTER(dev.GPSData_t)).contents
                         lat, lon, alt = float(g.lat), float(g.lon), float(g.alt)
-                        if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0 and (lat or lon):
+                        makul = (math.isfinite(lat) and math.isfinite(lon) and math.isfinite(alt)
+                                 and -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0
+                                 and (abs(lat) >= 1e-3 or abs(lon) >= 1e-3)
+                                 and abs(alt) < 50000.0)
+                        if makul:
                             self._durum_yaz(konum={"lat": round(lat, 7), "lon": round(lon, 7),
                                                    "alt": round(alt, 1), "ts": time.time(),
                                                    "kaynak": "rtk"})
+                        elif isinstance(self._durum.get("konum"), dict) and \
+                                self._durum["konum"].get("kaynak") == "rtk":
+                            self._durum_yaz(konum=None)   # bayat/gecersiz RTK temizlenir
                     elif tur == 0 and boyut >= ct.sizeof(dev.CompassData_t):
                         c = ct.cast(veri, ct.POINTER(dev.CompassData_t)).contents
                         self._durum_yaz(pusula={"yon": round(float(c.angleX), 2) % 360.0,

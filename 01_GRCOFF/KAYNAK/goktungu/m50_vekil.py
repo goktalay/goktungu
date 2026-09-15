@@ -128,7 +128,7 @@ class M50Vekili:
                         self.ayarlar[alan] = str(temiz_ayarlar.get(alan) or "")
                 # v2.4.187: sır olmayan kimlik özeti — arayüz "IP/port
                 # kayıtlı, tekrar girmene gerek yok" gösterebilsin.
-                for alan in ("ip", "port", "kimlik_kayitli"):
+                for alan in ("ip", "port", "kimlik_kayitli", "kullanici"):
                     if alan in temiz_ayarlar:
                         self.ayarlar[alan] = temiz_ayarlar.get(alan)
             if isinstance(ham_video, dict):

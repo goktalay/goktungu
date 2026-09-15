@@ -1289,22 +1289,62 @@
   .eo-onizleme-ad { font: bold 10px/1.4 Consolas, monospace; color: #f0a830; padding: 4px 8px; letter-spacing: .06em; }
   .eo-onizleme img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: contain; background: #000; }
   .eo-onizleme-yok { padding: 12px 8px; font-size: 11px; color: var(--soluk); text-align: center; }
-  /* v2.4.205: M50 yuzen goruntu penceresi — footer, hedef cercevesi, hiz slider */
-  .m50-pc-kutu { position: relative; }
-  .kam-pencere-alt.m50-pc-alt { justify-content: space-between; align-items: center; gap: 8px; }
-  .m50-pc-bilgi { flex: 1 1 auto; min-width: 0; font: 11px/1.3 Consolas, monospace; color: var(--soluk);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .m50-pc-dugmeler { display: flex; gap: 4px; flex: 0 0 auto; }
-  .m50-pc-dugmeler .kam-btn { width: auto; padding: 0 8px; font-size: 11px; letter-spacing: .04em; }
-  .m50-pc-kanal.aktif { border-color: var(--vurgu, #35a7ff); color: var(--vurgu, #35a7ff); }
-  .m50-pc-hedef { border-color: #ffc94d !important; color: #ffe2a3 !important; }
-  .m50-pc-durdur { border-color: #e05555 !important; color: #ffb3b3 !important; }
-  .m50-hedef-ortu { position: absolute; inset: 0; z-index: 5; cursor: crosshair; background: rgba(0,0,0,.08); }
-  .m50-hedef-secim { position: absolute; display: none; border: 2px dashed #ffc94d; background: rgba(255,201,77,.12); pointer-events: none; }
-  .m50-hedef-kutu { position: absolute; z-index: 4; border: 2px solid #ffc94d; box-shadow: 0 0 0 1px rgba(0,0,0,.6); pointer-events: none; }
+  /* v2.4.205: PTZ hiz kaydiricisi */
   .m50-hiz-satir { display: flex; align-items: center; gap: 8px; }
   .m50-hiz-satir input[type=range] { flex: 1 1 auto; width: auto; padding: 0; accent-color: #3b82f6; }
   .m50-hiz-deger { font-family: Consolas, monospace; min-width: 2.2em; text-align: right; color: var(--metin); }
+  /* v2.4.206 (kullanici istegi): KAMERA yuzen penceresi — pencerenin
+     butunu yeniden boyutlanir, goruntu kalan alani doldurur; en altta
+     durum cubugu; mavi konum dugmesine yanal bosluk. */
+  .kam-pencere { resize: both; min-width: 340px; min-height: 260px; max-height: 92vh; height: 400px; }
+  .kam-pencere-video { resize: none; flex: 1 1 auto; min-height: 0; min-width: 0; max-width: none; max-height: none; aspect-ratio: auto; }
+  .kam-pencere-alt { flex-wrap: nowrap; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .kam-pencere-alt .kam-takip-arac { margin-right: auto; }
+  .kam-pencere-araclar .kam-hedef-secici { margin: 0 6px; }
+  .kam-hedef-btn { padding: 3px 8px; }
+  .kam-pencere-durum { flex: 0 0 auto; display: flex; flex-direction: column; gap: 3px; padding: 4px 10px 5px;
+    border-top: 1px solid var(--cizgi); background: rgba(0,0,0,.25); }
+  .kam-temel-bilgi { font: 11px/1.4 Consolas, monospace; color: var(--soluk); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kam-pencere-durum .kam-takip-durumcubuk { padding: 2px 0 !important; background: transparent !important; }
+  /* v2.4.206 (kullanici istegi: "M50 ayri bir sistem"): M50 CANLI GORUNTU
+     PENCERESI — kamera modulunden bagimsiz; baslik / goruntu / arac
+     cubugu (kanal + hedef) / durum cubugu. Pencerenin butunu resize. */
+  .m50-pc { position: fixed; z-index: 2450; width: 560px; height: 440px; min-width: 360px; min-height: 280px;
+    max-width: 96vw; max-height: 92vh; resize: both; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--panel-arka, #10151c); border: 1px solid #f0a830; border-radius: 6px; box-shadow: 0 10px 34px rgba(0,0,0,.6); }
+  .m50-pc-baslik { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: move; user-select: none;
+    background: var(--dugme-arka); border-bottom: 1px solid var(--cizgi); font-size: 12px; color: var(--beyaz); letter-spacing: .05em; }
+  .m50-pc-baslik i.m50-pc-ikon { color: #f0a830; }
+  .m50-pc-baslik .m50-pc-ad { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m50-pc-rozet { font: 700 9px/1 Consolas, monospace; letter-spacing: .08em; padding: 3px 6px; border-radius: 3px;
+    border: 1px solid var(--cizgi); color: var(--soluk); }
+  .m50-pc-rozet.bagli { color: #22c55e; border-color: #22c55e; }
+  .m50-pc-rozet.takip { color: #ffc94d; border-color: #ffc94d; }
+  .m50-pc-kapat { width: 24px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 3px; color: var(--soluk); cursor: pointer; padding: 0; }
+  .m50-pc-kapat:hover { color: #fff; border-color: #ef4444; }
+  .m50-pc-video { position: relative; flex: 1 1 auto; min-height: 0; background: #000; overflow: hidden; }
+  .m50-pc-video img.kam-video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .m50-pc-alt { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 10px; border-top: 1px solid var(--cizgi); }
+  .m50-pc-grup { display: flex; align-items: center; gap: 4px; }
+  .m50-pc-btn { height: 26px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; color: var(--soluk);
+    font: 700 11px Segoe UI, system-ui, sans-serif; letter-spacing: .04em; white-space: nowrap; transition: all .15s; }
+  .m50-pc-btn:hover { color: #fff; border-color: #f0a830; }
+  .m50-pc-btn:disabled { opacity: .45; cursor: default; }
+  .m50-pc-kanal.aktif { background: #f0a830; border-color: #f0a830; color: #14181e; }
+  .m50-pc-hedef { border-color: #ffc94d; color: #ffe2a3; }
+  .m50-pc-durdur { background: #b45309; border-color: #f59e0b; color: #fff; }
+  .m50-pc-durum { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 2px 14px; padding: 4px 10px 5px;
+    border-top: 1px solid var(--cizgi); background: rgba(0,0,0,.28); font: 11px/1.5 Consolas, monospace; color: var(--soluk); }
+  .m50-pc-durum b { color: var(--metin); font-weight: 600; }
+  .m50-pc-durum .m50-pc-uyari { color: #fca5a5; }
+  .m50-hedef-ortu { position: absolute; inset: 0; z-index: 5; cursor: crosshair; background: rgba(0,0,0,.08); }
+  .m50-hedef-secim { position: absolute; display: none; border: 2px dashed #ffc94d; background: rgba(255,201,77,.12); pointer-events: none; }
+  .m50-hedef-kutu { position: absolute; z-index: 4; border: 2px solid #ffc94d; box-shadow: 0 0 0 1px rgba(0,0,0,.6); pointer-events: none; }
+  .m50-pc-video.kam-hata::after { content: "\26a0 YAYIN ALINAMIYOR"; position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; color: #ef4444; font-size: 11px; letter-spacing: .08em; background: rgba(0,0,0,.65); }
   /* v2.4.202: dron duzenleme penceresinde renk secici */
   .dk-renk-sec { width: 64px; height: 30px; padding: 2px; cursor: pointer; }
   /* v2.4.192: Program Ayarlari acilir-kapanir bolumleri */

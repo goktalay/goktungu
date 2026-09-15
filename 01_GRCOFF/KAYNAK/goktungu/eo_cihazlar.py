@@ -292,6 +292,16 @@ class EOYoneticisi:
             if not konum and k.get("lat") is not None and k.get("lon") is not None:
                 konum = {"lat": float(k["lat"]), "lon": float(k["lon"]),
                          "alt": None, "kaynak": "kayit"}
+            # v2.4.206 (kullanici: "m50 harita ikonu yok"): RTK de kayit da
+            # yoksa ikon MERKEZ konumunda gosterilir ("konum yok" etiketiyle);
+            # operator formdaki KONUM bolumunden gercek konumu girer.
+            if not konum:
+                try:
+                    a = self.ayarlar.yukle()
+                    konum = {"lat": float(a["merkez_lat"]), "lon": float(a["merkez_lon"]),
+                             "alt": None, "kaynak": "merkez"}
+                except Exception:
+                    konum = None
             p.update({"eo_id": eid, "isim": k.get("isim") or ("M50 %d" % eid),
                       "tur": k.get("tur") or "m50",
                       "kayit_ip": k.get("ip") or "", "kayit_port": k.get("port") or 39020,
