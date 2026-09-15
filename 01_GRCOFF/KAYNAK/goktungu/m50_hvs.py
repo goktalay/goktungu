@@ -20,6 +20,7 @@ from __future__ import annotations
 import importlib
 import ipaddress
 import math
+import re
 import os
 import platform
 import sys
@@ -581,6 +582,43 @@ class M50Istemcisi:
                     if tur == 1 and boyut >= ct.sizeof(dev.GPSData_t):
                         g = ct.cast(veri, ct.POINTER(dev.GPSData_t)).contents
                         lat, lon, alt = float(g.lat), float(g.lon), float(g.alt)
+                        # v2.4.212 OLCUM (kullanici gunlugu): ham 24 bayt uc adet
+                        # x64 ISARETCI (…fc7f0000) — veri gomulu double DEGIL,
+                        # double*/char* dizisi. Isaretciler cozulur: once double,
+                        # sonra metin (or. "39.97"); makul olan alinir.
+                        try:
+                            ptrs = ct.cast(veri, ct.POINTER(ct.c_void_p * 3)).contents
+                            cozum = []
+                            for pi in range(3):
+                                pv = ptrs[pi]
+                                if not pv or pv < 0x10000:
+                                    cozum.append(None); continue
+                                d = None
+                                try:
+                                    dv = ct.cast(pv, ct.POINTER(ct.c_double)).contents.value
+                                    if math.isfinite(dv) and abs(dv) < 1e7:
+                                        d = dv
+                                except Exception:
+                                    d = None
+                                if d is None or abs(d) < 1e-6:
+                                    try:
+                                        sv = ct.string_at(pv, 32).split(b"\x00", 1)[0].decode("ascii", "ignore").strip()
+                                        m = re.search(r"-?\d+(?:\.\d+)?", sv)
+                                        if m:
+                                            d = float(m.group(0))
+                                    except Exception:
+                                        pass
+                                cozum.append(d)
+                            if "konum_tani2" not in self._durum:
+                                self._durum_yaz(konum_tani2="GPS ptr cozum lon/lat/alt=%r" % (cozum,))
+                            c_lon, c_lat, c_alt = cozum
+                            if (c_lat is not None and c_lon is not None and
+                                    -90.0 <= c_lat <= 90.0 and -180.0 <= c_lon <= 180.0 and
+                                    (abs(c_lat) >= 1e-3 or abs(c_lon) >= 1e-3)):
+                                lat, lon = c_lat, c_lon
+                                alt = c_alt if (c_alt is not None and abs(c_alt) < 50000) else 0.0
+                        except Exception:
+                            pass
                         makul = (math.isfinite(lat) and math.isfinite(lon) and math.isfinite(alt)
                                  and -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0
                                  and (abs(lat) >= 1e-3 or abs(lon) >= 1e-3)

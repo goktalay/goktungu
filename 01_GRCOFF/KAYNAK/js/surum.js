@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.211";
+const GCS_SURUM = "2.4.212";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.212",
+    tarih: "2026-09-15",
+    baslik: "Yayın alınamıyor (VLC alıyor) geri alma; GPS işaretçi çözümü; düzenleme formunda parola 'kayıtlı' görünümü (paket 2.5.82)",
+    maddeler: [
+      "YAYIN ALINAMIYOR (kullanıcı bildirimi: cihaz bağlı, VLC kimlikle yayını alıyor): 2.4.211'de OpenCV açılışına eklenen OPEN/READ zaman aşımı parametreleri GERİ ALINDI — OpenCV'nin FFmpeg'e geçirdiği 'timeout' seçeneği bazı FFmpeg sürümlerinde RTSP açmayı hemen başarısız kılıyor (bilinen uyumsuzluk). Zaman aşımı artık açmayı ayrı iş parçacığında yaparak sağlanır (15 sn); ffmpeg yolundaki -rw_timeout da kaldırıldı. Vekil kilidi kamera başına kaldığı için kilitlenme koruması korunur.",
+      "GPS (günlükle ölçüldü: boyut=24, ham=…fc7f0000 ×3): SDK geri çağrısı gömülü double değil ÜÇ x64 İŞARETÇİ döndürüyor. İşaretçiler çözülür (önce double, sonra metin); makul enlem/boylam bulunursa RTK konumu olarak kullanılır. Çözüm sonucu bir kez günlüğe yazılır ('GPS ptr cozum').",
+      "DÜZENLEME FORMU (kullanıcı bildirimi: şifre boş görünüyor): parola sunucudan asla gelmez; kayıtlıysa alanda maskeli nöbetçi değer (••••••••••••) görünür, değiştirilmedikçe gönderilmez ve mevcut parola korunur."
+    ]
+  },
   {
     surum: "2.4.211",
     tarih: "2026-09-15",

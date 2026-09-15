@@ -830,6 +830,8 @@ m50AlanlariEtkinlestir();
   const efLat = document.getElementById("efLat"), efLon = document.getElementById("efLon");
   const efKonumRozet = document.getElementById("efKonumRozet"), efKonumBolum = document.getElementById("efKonumBolum");
   const baslik = document.getElementById("eoFormBaslik");
+  const EF_PAROLA_NOBETCI = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+  if (efParola) efParola.addEventListener("focus", () => { if (efParola.value === EF_PAROLA_NOBETCI) efParola.select(); });
   const konumYaz = (lat, lon) => {
     if (efLat) efLat.value = (lat === null || lat === undefined || lat === "") ? "" : Number(lat).toFixed(7);
     if (efLon) efLon.value = (lon === null || lon === undefined || lon === "") ? "" : Number(lon).toFixed(7);
@@ -855,9 +857,13 @@ m50AlanlariEtkinlestir();
     // ve sifre istiyor"): kullanici adi sir degildir, kayitli deger forma
     // yazilir; parola alani "kayitli" ipucu tasir ve BOS birakilirsa
     // degismez (sunucu bos degeri korur).
-    efKullanici.value = (c && a.kullanici) ? String(a.kullanici) : ""; efParola.value = "";
+    efKullanici.value = (c && a.kullanici) ? String(a.kullanici) : "";
     efKullanici.placeholder = "";
-    efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "•••••••• kayıtlı — değiştirmek için yazın") : "";
+    // v2.4.212 (kullanici: "sifre yine bos gorunuyor"): parola sunucudan
+    // ASLA gelmez; kayitliysa alanda maskeli NOBETCI deger gosterilir ve
+    // degistirilmedikce gonderilmez (sunucu mevcut parolayi korur).
+    efParola.value = (c && a.kimlik_kayitli) ? EF_PAROLA_NOBETCI : "";
+    efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "kayıtlı — değiştirmek için yazın") : "";
     // v2.4.205: kayitli konum + RTK rozeti
     konumYaz(c ? c.kayit_lat : null, c ? c.kayit_lon : null);
     const rtk = !!(c && c.konum && c.konum.kaynak === "rtk");
@@ -918,7 +924,7 @@ m50AlanlariEtkinlestir();
                    port: parseInt(efPort.value, 10) || 39020};
     const ku = efKullanici.value.trim(), pa = efParola.value;
     if (ku) paket.kullanici = ku;
-    if (pa) paket.parola = pa;
+    if (pa && pa !== EF_PAROLA_NOBETCI) paket.parola = pa;
     if (!paket.isim){ efIsim.focus(); return; }
     // v2.4.205: konum (bos = kayitli konumu sil; gecersiz = kaydetme)
     const kn = konumOku();

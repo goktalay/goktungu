@@ -310,6 +310,10 @@ class M50YerelServisi:
             if tani and not getattr(self, "_konum_tani_yazildi", False):
                 self._konum_tani_yazildi = True
                 self._yaz("M50 %s" % tani, "bilgi")
+            tani2 = d.get("konum_tani2") if isinstance(d, dict) else None
+            if tani2 and not getattr(self, "_konum_tani2_yazildi", False):
+                self._konum_tani2_yazildi = True
+                self._yaz("M50 %s" % tani2, "bilgi")
         except Exception:
             pass
 

@@ -245,9 +245,7 @@ class _Yayin:
             return True
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if self.protokol == "rtsp":
-            cmd += ["-rtsp_transport", "tcp",
-                    # v2.4.211: cihaz yanit vermezse sonsuz beklemesin (us)
-                    "-rw_timeout", "8000000"]
+            cmd += ["-rtsp_transport", "tcp"]
         # v2.4.33: UZAK MJPEG KAYNAKLARINDA ILK KARE GECIKMESI
         # ------------------------------------------------------------
         # Olculen kusur: 1920x1080 bir Axis MJPEG kaynaginda ffmpeg'in
@@ -417,25 +415,38 @@ class _Yayin:
         CIKTI_FPS = float(self.fps)
         while self.calisiyor:
             cap = None
-            # v2.4.211: RTSP el sikismasi/okumasi icin zaman asimi. Onceden
-            # cihaz yanit vermeyince open() SONSUZ bekliyordu; kanal
-            # gecisinde iki oturum ust uste acilirken hizmet "kilitli"
-            # gorunuyordu. OpenCV >= 4.5.2 parametreleri; eski surumde
-            # eski cagriya dusulur.
-            try:
-                _oa = getattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC", None)
-                _ra = getattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC", None)
-                if (_oa is not None and _ra is not None and not dongulu
-                        and str(girdi).lower().startswith(("rtsp://", "rtsps://", "http://", "https://"))):
-                    cap = cv2.VideoCapture(girdi, cv2.CAP_FFMPEG,
-                                           [int(_oa), 8000, int(_ra), 8000])
-                else:
-                    cap = cv2.VideoCapture(girdi)
-            except Exception:
+            # v2.4.212 (kullanici: "cihaza bagli ama yayin alinamiyor, VLC
+            # aliyor"): 2.4.211'deki CAP_PROP_OPEN/READ_TIMEOUT parametreli
+            # acma GERI ALINDI — OpenCV'nin FFmpeg'e gecirdigi 'timeout'
+            # secenegi bazi FFmpeg surumlerinde RTSP acmayi hemen
+            # basarisiz kilar (bilinen uyumsuzluk). Zaman asimi artik
+            # acmayi ayri is parcaciginda yaparak saglanir: 15 sn icinde
+            # donmezse bu deneme birakilir, gecikmis nesne kendi
+            # parcaciginda serbest birakilir. Vekil kilidi kamera basina
+            # oldugundan diger yayinlar etkilenmez.
+            _tut = {}
+            def _ac():
                 try:
-                    cap = cv2.VideoCapture(girdi)
+                    _tut["cap"] = cv2.VideoCapture(girdi)
                 except Exception:
-                    cap = None
+                    _tut["cap"] = None
+            _th = threading.Thread(target=_ac, daemon=True)
+            _th.start()
+            _th.join(15.0 if not dongulu else 60.0)
+            if _th.is_alive():
+                self.hata = "kaynak acilamadi (OpenCV): 15 sn icinde yanit yok"
+                def _temizle():
+                    _th.join()
+                    c = _tut.get("cap")
+                    try:
+                        if c is not None:
+                            c.release()
+                    except Exception:
+                        pass
+                threading.Thread(target=_temizle, daemon=True).start()
+                cap = None
+            else:
+                cap = _tut.get("cap")
             if cap is None or not cap.isOpened():
                 self.hata = "kaynak acilamadi (OpenCV): baglanti kurulamadi"
                 try:
