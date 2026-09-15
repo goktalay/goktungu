@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.204";
-const GCS_SURUM_TARIH = "2026-09-14";
+const GCS_SURUM = "2.4.205";
+const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.205",
+    tarih: "2026-09-15",
+    baslik: "M50: PTZ hız kaydırıcısı (1–60), ayrılabilir canlı görüntü penceresi ve hedef takibi, cihaz konumu (RTK / Konum al) (paket 2.5.75)",
+    maddeler: [
+      "PTZ HIZI (kullanıcı isteği): üst sınır 10'dan 60'a çıkarıldı; sayı kutusu yerine kaydırıcı, değer yanında gösterilir ve tarayıcıda hatırlanır. Görüntü üzerinde sürükleyerek PTZ de aynı 1–60 aralığını kullanır. Sunucu sınırı (M50_HIZ_MAX) 60.",
+      "AYRILABİLİR CANLI GÖRÜNTÜ (kullanıcı isteği): M50 kontrol panelindeki 'Ayır' düğmesi görüntüyü yeniden boyutlanabilir yüzen pencereye alır. Pencerenin altında footer: cihaz adı · kanal · azimut/eğim · bağlantı durumu · takip; Görünür/Termal geçişi footer'da (görüntü üzerinde değil). HEDEF düğmesi görüntü üzerine dikdörtgen çizdirir, çizim bitince takip seçimi + takip başlatma gönderilir; takip sürerken HEDEF gizlenir, TAKİBİ DURDUR görünür; durdurunca çerçeve silinir, takip durur, düğmeler geri döner. Durum telemetriden (takip.etkin) eşitlenir; Esc çizimi iptal eder.",
+      "M50 PANELİ (kullanıcı isteği): üstteki çoklu cihaz sekme şeridi kaldırıldı. Cihaz 'Elektro Optik Cihazları' listesinden seçilir; başlıkta seçili cihazın adı görünür. (Not: her cihaz için ayrı bağımsız pencere sonraki adımdır.)",
+      "CİHAZ KONUMU (kullanıcı isteği): SDK cihazın RTK/GPS konumunu zaten okuyordu (5 sn'de bir); harita ikonu bu konumu kullanır ve etikete '· RTK' ekler. Cihaz düzenleme formuna açılır 'KONUM' bölümü (enlem/boylam) eklendi; kayıt veritabanına (eo_cihazlar.lat/lon) yazılır ve RTK yoksa harita bu konuma düşer. 'Konum al' düğmesi: cihazın RTK konumu varsa onu, yoksa bu bilgisayarın konum servisini kullanır ve alanlara yazar (kaynak rozetle gösterilir).",
+      "HARİTA ÖNİZLEME (kullanıcı isteği): kamera ikonunun üzerine gelince küçük canlı görüntü önizlemesi açılır (kamera kaydı yoksa bilgi metni).",
+      "DÜZELTME: görüntü çalışırken başlık özetinde 'Yerel akış yapılandırılmadı' yazıyordu; kamera kaydı/RTSP adresi varsa akış kaynağı gösterilir."
+    ]
+  },
   {
     surum: "2.4.204",
     tarih: "2026-09-15",

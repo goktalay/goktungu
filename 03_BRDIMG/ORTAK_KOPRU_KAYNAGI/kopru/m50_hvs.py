@@ -32,7 +32,7 @@ M50_SDK_SURUM = "3.0.10.869"
 M50_VARSAYILAN_PORT = 8000
 M50_AZIMUT_MIN, M50_AZIMUT_MAX = -360.0, 360.0
 M50_EGIM_MIN, M50_EGIM_MAX = -90.0, 90.0
-M50_HIZ_MIN, M50_HIZ_MAX = 1, 10
+M50_HIZ_MIN, M50_HIZ_MAX = 1, 60   # 1.7.21: Merkez 2.4.205 ile ayni ust sinir
 M50_MAX_PIKSEL = 8192
 
 
@@ -613,9 +613,9 @@ class M50Istemcisi:
             return None
         if ayrik.scheme.lower() not in ("rtsp", "rtsps") or not ayrik.hostname:
             return None
-        # İkinci savunma hattı: cihaz sürümü/donanımı URI'ye kullanıcı
-        # bilgisi gömse dahi bu asla telemetriye/duruma taşınmaz.
-        if (ayrik.username is not None or ayrik.password is not None or
-                ayrik.query or ayrik.fragment):
-            return None
-        return str(ham).strip()
+        # 1.7.21 (Merkez 2.4.204 ile ayni duzeltme): cihaz URI'ye kimlik
+        # gomdugunde None donup akisi tamamen kapatmak yerine adres
+        # ARINDIRILARAK doner; kimlik telemetriye/duruma tasinmaz.
+        port = (":%d" % ayrik.port) if ayrik.port else ""
+        return "%s://%s%s%s" % (ayrik.scheme.lower(), ayrik.hostname, port,
+                                ayrik.path or "/")

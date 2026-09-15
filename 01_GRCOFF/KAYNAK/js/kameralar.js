@@ -1262,6 +1262,10 @@
     altBar.appendChild(araclar);
     pencere.append(baslik, kutu, altBar);
     document.body.appendChild(pencere);
+    // v2.4.205: M50 kamerasi -> footer bilgileri, kanal gecisi, hedef/takip
+    if (String(kamera.protokol || "").toLowerCase() === "m50" &&
+        typeof window.m50PencereDonat === "function")
+      window.m50PencereDonat(kamera, pencere, kutu, altBar);
     const kayitVar = typeof window.pencereKonumUygula === "function" &&
                      window.pencereKonumUygula("kam_" + id, pencere);
     if (!kayitVar) {
@@ -1432,6 +1436,7 @@
     if (!kayit) return;
     kayit.pencere.remove();
     delete ayrikler[id];
+    if (typeof window.m50PencereKapandi === "function") window.m50PencereKapandi(id);
   }
 
   function pencereSurukleKur(pencere, baslik, kamId) {

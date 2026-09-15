@@ -1283,6 +1283,28 @@
   .eo-kamera-onizleme { width: 132px; height: 86px; border-color: #ffb454; }
   .eo-kamera-onizleme:hover { border-color: #ffd28a; box-shadow: 0 0 0 2px rgba(255,180,84,.28); }
   .eo-kamera-onizleme span { background: rgba(48,26,4,.82); color: #ffe6c2; }
+  /* v2.4.205: harita EO ikonu uzerinde mini canli onizleme */
+  .eo-onizleme { position: fixed; z-index: 9000; width: 220px; background: rgba(10,14,20,.94);
+    border: 1px solid #f0a830; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.6); pointer-events: none; overflow: hidden; }
+  .eo-onizleme-ad { font: bold 10px/1.4 Consolas, monospace; color: #f0a830; padding: 4px 8px; letter-spacing: .06em; }
+  .eo-onizleme img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: contain; background: #000; }
+  .eo-onizleme-yok { padding: 12px 8px; font-size: 11px; color: var(--soluk); text-align: center; }
+  /* v2.4.205: M50 yuzen goruntu penceresi — footer, hedef cercevesi, hiz slider */
+  .m50-pc-kutu { position: relative; }
+  .kam-pencere-alt.m50-pc-alt { justify-content: space-between; align-items: center; gap: 8px; }
+  .m50-pc-bilgi { flex: 1 1 auto; min-width: 0; font: 11px/1.3 Consolas, monospace; color: var(--soluk);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m50-pc-dugmeler { display: flex; gap: 4px; flex: 0 0 auto; }
+  .m50-pc-dugmeler .kam-btn { width: auto; padding: 0 8px; font-size: 11px; letter-spacing: .04em; }
+  .m50-pc-kanal.aktif { border-color: var(--vurgu, #35a7ff); color: var(--vurgu, #35a7ff); }
+  .m50-pc-hedef { border-color: #ffc94d !important; color: #ffe2a3 !important; }
+  .m50-pc-durdur { border-color: #e05555 !important; color: #ffb3b3 !important; }
+  .m50-hedef-ortu { position: absolute; inset: 0; z-index: 5; cursor: crosshair; background: rgba(0,0,0,.08); }
+  .m50-hedef-secim { position: absolute; display: none; border: 2px dashed #ffc94d; background: rgba(255,201,77,.12); pointer-events: none; }
+  .m50-hedef-kutu { position: absolute; z-index: 4; border: 2px solid #ffc94d; box-shadow: 0 0 0 1px rgba(0,0,0,.6); pointer-events: none; }
+  .m50-hiz-satir { display: flex; align-items: center; gap: 8px; }
+  .m50-hiz-satir input[type=range] { flex: 1 1 auto; width: auto; padding: 0; accent-color: #3b82f6; }
+  .m50-hiz-deger { font-family: Consolas, monospace; min-width: 2.2em; text-align: right; color: var(--metin); }
   /* v2.4.202: dron duzenleme penceresinde renk secici */
   .dk-renk-sec { width: 64px; height: 30px; padding: 2px; cursor: pointer; }
   /* v2.4.192: Program Ayarlari acilir-kapanir bolumleri */

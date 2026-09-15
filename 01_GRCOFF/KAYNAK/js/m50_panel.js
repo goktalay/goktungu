@@ -293,6 +293,19 @@ window.m50PaneliGuncelle = function(paket){
     const aci = (Number.isFinite(Number(r.azimut)) && Number.isFinite(Number(r.egim))) ?
       ` · ${Number(r.azimut).toFixed(1)}° / ${Number(r.egim).toFixed(1)}°` : "";
     const takipMetin = takip && takip.etkin ? " · " + ((typeof D === "function" && D().m50TakipEtkin) || "Manuel takip etkin") : "";
+    // v2.4.205: yerel kipte kanal bayraklari SDK ham video icin bos kalir;
+    // RTSP adresi varsa kanal "var" sayilir (goruntu zaten o adresten gelir).
+    if (!kanallar.length){
+      const a2 = (p.m50_ayarlar && typeof p.m50_ayarlar === "object") ? p.m50_ayarlar : (sonM50Ayar || {});
+      if (a2.rtsp_gorunur || video.rtsp_gorunur) kanallar.push((typeof D === "function" && D().m50Gorunur) || "Görünür");
+      if (a2.rtsp_termal || video.rtsp_termal) kanallar.push((typeof D === "function" && D().m50Termal) || "Termal");
+    }
+    // Kamera kaydi varsa (m50:<eo>:<kanal>) akis SDK'nin bildirdigi RTSP
+    // adresinden gelir; "yapilandirilmadi" yazmak yanlis olur.
+    if (!kanallar.length && typeof window.m50KameraBul === "function"){
+      const kam = window.m50KameraBul(_eoSecili);
+      if (kam) kanallar.push(((typeof D === "function" && D().m50SdkAkis) || "Akış: cihaz RTSP (SDK)"));
+    }
     m50Ozet.textContent = (kanallar.length ? kanallar.join(" + ") :
       ((typeof D === "function" && D().m50YerelAkisYok) || "Yerel akış yapılandırılmadı")) + aci + takipMetin;
   }
@@ -338,10 +351,19 @@ function m50KanalOku(el, alan){
 }
 function m50PtzHizOku(){
   const hiz = Number(m50PtzHiz && m50PtzHiz.value);
-  if (!Number.isInteger(hiz) || hiz < 1 || hiz > 10)
-    throw new Error((typeof D === "function" && D().m50PtzHizGecersiz) || "PTZ hızı 1–10 arasında tam sayı olmalıdır.");
+  if (!Number.isInteger(hiz) || hiz < 1 || hiz > 60)
+    throw new Error((typeof D === "function" && D().m50PtzHizGecersiz) || "PTZ hızı 1–60 arasında tam sayı olmalıdır.");
   return hiz;
 }
+// v2.4.205: slider degeri yaninda gosterilir, tercih tarayicida hatirlanir
+(function m50HizSlider(){
+  const deger = document.getElementById("m50PtzHizDeger");
+  if (!m50PtzHiz) return;
+  try { const k = localStorage.getItem("m50PtzHiz"); if (k && Number(k) >= 1 && Number(k) <= 60) m50PtzHiz.value = k; } catch (e) {}
+  const yaz = () => { if (deger) deger.textContent = String(m50PtzHiz.value); };
+  m50PtzHiz.addEventListener("input", () => { yaz(); try { localStorage.setItem("m50PtzHiz", m50PtzHiz.value); } catch (e) {} });
+  yaz();
+})();
 function m50DikdortgenOku(el, baslik){
   const parcalar = String(el && el.value || "").split(",").map(x => x.trim());
   if (parcalar.length !== 4 || parcalar.some(x => !/^\d+$/.test(x)))
@@ -495,6 +517,18 @@ if (m50VideoSar){
     });
   }
 }
+// v2.4.205: canli goruntuyu yuzen pencereye ayir
+(function(){
+  const b = document.getElementById("btnM50VideoAyir");
+  if (!b) return;
+  b.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(_eoSecili) : null;
+    if (!kam) return;
+    if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kam.id, "yuzen");
+    else if (typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kam.id);
+  });
+})();
 if (btnM50KameraOlustur) btnM50KameraOlustur.addEventListener("click", () => {
   const c = eoSecili();
   if (typeof window.m50KameraOlustur === "function") window.m50KameraOlustur(_eoSecili, c ? c.isim : "");
@@ -668,7 +702,7 @@ m50AlanlariEtkinlestir();
       ? (dx > 0 ? "sag" : "sol")
       : (dy > 0 ? "asagi" : "yukari");
     var oran = Math.min(1, (mesafe - OLU_BOLGE_PX) / MAKS_SURUKLEME_PX);
-    var hiz = Math.max(1, Math.min(10, Math.round(1 + oran * 9)));
+    var hiz = Math.max(1, Math.min(60, Math.round(1 + oran * 59)));  // v2.4.205: ust sinir 60
     return { yon: yon, hiz: hiz };
   }
 
@@ -740,7 +774,19 @@ m50AlanlariEtkinlestir();
   const efId = document.getElementById("efId"), efIsim = document.getElementById("efIsim");
   const efIp = document.getElementById("efIp"), efPort = document.getElementById("efPort");
   const efKullanici = document.getElementById("efKullanici"), efParola = document.getElementById("efParola");
+  const efLat = document.getElementById("efLat"), efLon = document.getElementById("efLon");
+  const efKonumRozet = document.getElementById("efKonumRozet"), efKonumBolum = document.getElementById("efKonumBolum");
   const baslik = document.getElementById("eoFormBaslik");
+  const konumYaz = (lat, lon) => {
+    if (efLat) efLat.value = (lat === null || lat === undefined || lat === "") ? "" : Number(lat).toFixed(7);
+    if (efLon) efLon.value = (lon === null || lon === undefined || lon === "") ? "" : Number(lon).toFixed(7);
+  };
+  const konumOku = () => {
+    const la = parseFloat(String(efLat && efLat.value || "").replace(",", ".")), lo = parseFloat(String(efLon && efLon.value || "").replace(",", "."));
+    if (!Number.isFinite(la) && !Number.isFinite(lo)) return { lat: null, lon: null, bos: true };
+    if (!Number.isFinite(la) || !Number.isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180) return null;
+    return { lat: la, lon: lo, bos: false };
+  };
   const ac = id => { if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc(id); };
   const kapat = id => { const p = document.getElementById(id); if (p) p.classList.add("yuzen-gizli"); };
 
@@ -755,6 +801,11 @@ m50AlanlariEtkinlestir();
     efKullanici.value = ""; efParola.value = "";
     efKullanici.placeholder = (c && a.kimlik_kayitli) ? (t.m50KullaniciKayitli || "kayıtlı — boş bırakın") : "";
     efParola.placeholder = (c && a.kimlik_kayitli) ? (t.m50ParolaKayitli || "kayıtlı — boş bırakın") : "";
+    // v2.4.205: kayitli konum + RTK rozeti
+    konumYaz(c ? c.kayit_lat : null, c ? c.kayit_lon : null);
+    const rtk = !!(c && c.konum && c.konum.kaynak === "rtk");
+    if (efKonumRozet) efKonumRozet.textContent = rtk ? "RTK" : ((c && c.kayit_lat != null) ? (t.efKonumKayitli || "kayıtlı") : (t.efKonumYok || "konum yok"));
+    if (efKonumBolum && !c) efKonumBolum.open = true;
     if (baslik) baslik.textContent = c ? (t.panelEoFormDuzenle || "CİHAZI DÜZENLE") : (t.panelEoFormYeni || "YENİ ELEKTRO OPTİK");
     ac("yzEoForm");
     setTimeout(() => efIsim.focus(), 50);
@@ -812,9 +863,207 @@ m50AlanlariEtkinlestir();
     if (ku) paket.kullanici = ku;
     if (pa) paket.parola = pa;
     if (!paket.isim){ efIsim.focus(); return; }
+    // v2.4.205: konum (bos = kayitli konumu sil; gecersiz = kaydetme)
+    const kn = konumOku();
+    if (kn === null){
+      const t = m50T();
+      if (typeof window.uyariGoster === "function") window.uyariGoster("M50", t.efKonumGecersiz || "Enlem/boylam geçersiz.", "uyari");
+      if (efKonumBolum) efKonumBolum.open = true; if (efLat) efLat.focus(); return;
+    }
+    paket.lat = kn.lat; paket.lon = kn.lon;
     if (m50Gonder(paket)){ efParola.value = ""; kapat("yzEoForm"); }
   });
   const iptal = document.getElementById("btnEoFormIptal");
   if (iptal) iptal.addEventListener("click", () => { efParola.value = ""; kapat("yzEoForm"); });
+  // v2.4.205: KONUM AL — once cihazin RTK/GPS'i (telemetri konum.kaynak
+  // == "rtk"), yoksa tarayicinin konum servisi (navigator.geolocation).
+  const konumAl = document.getElementById("btnEfKonumAl");
+  if (konumAl) konumAl.addEventListener("click", () => {
+    const t = m50T();
+    const uyar = (m, s) => { if (typeof window.uyariGoster === "function") window.uyariGoster("M50", m, s || "bilgi"); };
+    const eid = parseInt(efId.value, 10) || 0;
+    const c = eid ? eoListesi.find(x => Number(x.eo_id) === eid) : null;
+    const k = c && c.konum && typeof c.konum === "object" ? c.konum : null;
+    if (k && k.kaynak === "rtk" && typeof k.lat === "number" && typeof k.lon === "number"){
+      konumYaz(k.lat, k.lon);
+      if (efKonumRozet) efKonumRozet.textContent = "RTK";
+      uyar(t.efKonumRtkAlindi || "Konum cihazın RTK/GPS alıcısından alındı.", "basari");
+      return;
+    }
+    if (!(navigator.geolocation && typeof navigator.geolocation.getCurrentPosition === "function")){
+      uyar(t.efKonumYok2 || "Cihazda RTK konumu yok ve tarayıcı konum servisi kullanılamıyor; konumu elle girin.", "uyari");
+      return;
+    }
+    konumAl.disabled = true;
+    navigator.geolocation.getCurrentPosition(p => {
+      konumAl.disabled = false;
+      konumYaz(p.coords.latitude, p.coords.longitude);
+      if (efKonumRozet) efKonumRozet.textContent = t.efKonumTarayici || "bilgisayar";
+      uyar((t.efKonumTarayiciAlindi || "Cihazda RTK konumu yok; bu bilgisayarın konumu kullanıldı (±{m} m).").replace("{m}", Math.round(p.coords.accuracy || 0)), "bilgi");
+    }, e => {
+      konumAl.disabled = false;
+      uyar((t.efKonumTarayiciHata || "Konum alınamadı: {h}. Konumu elle girin.").replace("{h}", e && e.message || e), "uyari");
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  });
   window.eoCihazListeCiz();
+})();
+
+
+// =================================================================
+// v2.4.205 — M50 YUZEN CANLI GORUNTU PENCERESI (kullanici istegi)
+// Kameralar modulu (kameralar.js ayrikAc) M50 kamerasi icin pencereyi
+// kurduktan sonra `m50PencereDonat` cagirir. Footer: temel bilgiler
+// (cihaz, kanal, azimut/egim, durum), gunduz/termal gecisi, HEDEF ->
+// goruntu uzerinde cerceve cizimi -> takip_sec + takip_baslat;
+// TAKIBI DURDUR -> takip_durdur, cerceve silinir. Dugmeler telemetriden
+// (takip.etkin) esitlenir. Pencere zaten yeniden boyutlanabilir
+// (.kam-pencere-video resize:both).
+// =================================================================
+const _m50Pencereler = {};   // kamId -> kayit
+function m50KamEoId(kamera){
+  const p = String((kamera && kamera.url) || "").split(":");
+  return p.length >= 3 ? (parseInt(p[1], 10) || 1) : 1;
+}
+function m50KamKanal(kamera){
+  return String((kamera && kamera.url) || "").split(":").pop() === "termal" ? "termal" : "gorunur";
+}
+function m50EoDurum(eoId){
+  const c = eoListesi.find(x => Number(x.eo_id) === Number(eoId));
+  if (c) return { durum: c.m50_durum || {}, takip: c.m50_takip || (c.m50_durum && c.m50_durum.takip) || {}, isim: c.isim || ("M50 " + eoId) };
+  return { durum: sonM50 || {}, takip: (sonM50 && sonM50.takip) || {}, isim: "M50 " + eoId };
+}
+function m50GoruntuKutusu(img){
+  // object-fit: contain -> gercek goruntu alani (harf kutusu haric)
+  const r = img.getBoundingClientRect();
+  const nw = img.naturalWidth || r.width, nh = img.naturalHeight || r.height;
+  if (!nw || !nh || !r.width || !r.height) return { x: r.left, y: r.top, w: r.width, h: r.height, nw: nw || 1, nh: nh || 1 };
+  const olcek = Math.min(r.width / nw, r.height / nh);
+  const w = nw * olcek, h = nh * olcek;
+  return { x: r.left + (r.width - w) / 2, y: r.top + (r.height - h) / 2, w, h, nw, nh };
+}
+function m50PencereCerceveCiz(k){
+  if (!k.cerceve) { if (k.kutuEl) k.kutuEl.remove(); k.kutuEl = null; return; }
+  const img = k.kutu.querySelector("img.kam-video");
+  if (!img) return;
+  const g = m50GoruntuKutusu(img), kr = k.kutu.getBoundingClientRect();
+  if (!k.kutuEl){ k.kutuEl = document.createElement("div"); k.kutuEl.className = "m50-hedef-kutu"; k.kutu.appendChild(k.kutuEl); }
+  const sx = g.w / g.nw, sy = g.h / g.nh;
+  k.kutuEl.style.left = (g.x - kr.left + k.cerceve.sol * sx) + "px";
+  k.kutuEl.style.top = (g.y - kr.top + k.cerceve.ust * sy) + "px";
+  k.kutuEl.style.width = ((k.cerceve.sag - k.cerceve.sol) * sx) + "px";
+  k.kutuEl.style.height = ((k.cerceve.alt - k.cerceve.ust) * sy) + "px";
+}
+function m50PencereHedefSec(k){
+  const img = k.kutu.querySelector("img.kam-video");
+  if (!img || k.ortu) return;
+  const t = m50T();
+  const ortu = document.createElement("div");
+  ortu.className = "m50-hedef-ortu";
+  ortu.title = t.m50HedefIpucu || "Hedefin üzerine bir dikdörtgen çizin";
+  const secim = document.createElement("div"); secim.className = "m50-hedef-secim"; ortu.appendChild(secim);
+  k.kutu.appendChild(ortu); k.ortu = ortu;
+  let bas = null;
+  const bitir = () => { ortu.remove(); k.ortu = null; };
+  ortu.addEventListener("mousedown", ev => {
+    if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation();
+    const g = m50GoruntuKutusu(img);
+    bas = { x: Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y: Math.min(Math.max(ev.clientY, g.y), g.y + g.h), g };
+    secim.style.display = "block";
+  });
+  ortu.addEventListener("mousemove", ev => {
+    if (!bas) return;
+    const g = bas.g, kr = k.kutu.getBoundingClientRect();
+    const x2 = Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y2 = Math.min(Math.max(ev.clientY, g.y), g.y + g.h);
+    secim.style.left = (Math.min(bas.x, x2) - kr.left) + "px"; secim.style.top = (Math.min(bas.y, y2) - kr.top) + "px";
+    secim.style.width = Math.abs(x2 - bas.x) + "px"; secim.style.height = Math.abs(y2 - bas.y) + "px";
+  });
+  ortu.addEventListener("mouseup", ev => {
+    if (!bas) return; ev.preventDefault(); ev.stopPropagation();
+    const g = bas.g;
+    const x2 = Math.min(Math.max(ev.clientX, g.x), g.x + g.w), y2 = Math.min(Math.max(ev.clientY, g.y), g.y + g.h);
+    const sx = g.nw / g.w, sy = g.nh / g.h;
+    const cer = { sol: Math.round((Math.min(bas.x, x2) - g.x) * sx), ust: Math.round((Math.min(bas.y, y2) - g.y) * sy),
+                  sag: Math.round((Math.max(bas.x, x2) - g.x) * sx), alt: Math.round((Math.max(bas.y, y2) - g.y) * sy) };
+    bas = null; bitir();
+    if (cer.sag - cer.sol < 4 || cer.alt - cer.ust < 4) return;   // tik = iptal
+    k.cerceve = cer; m50PencereCerceveCiz(k);
+    const kanal = m50KamKanal(k.kamera);
+    const mod = String(m50TakipMod && m50TakipMod.value || "hava_yari_otomatik");
+    const video_dikdortgen = { sol: 0, ust: 0, sag: Math.round(g.nw), alt: Math.round(g.nh) };
+    m50Gonder({ tip: "m50_takip_sec", eo_id: k.eoId, kanal, video_dikdortgen, secim: cer });
+    // Yerel kipte komutlar sirayla islenir; secim kabul edildikten sonra baslat.
+    setTimeout(() => m50Gonder({ tip: "m50_takip_baslat", eo_id: k.eoId, kanal, mod }), 400);
+    k.bekleniyor = Date.now();
+  });
+  document.addEventListener("keydown", function esc(ev){ if (ev.key === "Escape"){ bitir(); document.removeEventListener("keydown", esc); } });
+}
+function m50PencereTazele(){
+  for (const id of Object.keys(_m50Pencereler)){
+    const k = _m50Pencereler[id];
+    if (!document.body.contains(k.pencere)){ delete _m50Pencereler[id]; continue; }
+    const t = m50T();
+    const kam = (typeof window.m50KameraBul === "function" ? window.m50KameraBul(k.eoId) : null) || k.kamera;
+    k.kamera = kam;
+    const kanal = m50KamKanal(kam);
+    const { durum, takip, isim } = m50EoDurum(k.eoId);
+    const aci = (Number.isFinite(Number(durum.azimut)) && Number.isFinite(Number(durum.egim)))
+      ? Number(durum.azimut).toFixed(1) + "° / " + Number(durum.egim).toFixed(1) + "°" : "—";
+    const d = durum.bagli ? (t.m50Bagli || "Bağlı") : (t.m50Kapali || "Bağlı değil");
+    k.bilgi.textContent = isim + "  ·  " + (kanal === "termal" ? (t.m50Termal || "Termal") : (t.m50Gorunur || "Görünür")) +
+      "  ·  " + aci + "  ·  " + d + (takip.etkin ? "  ·  " + (t.m50TakipEtkin || "Takip etkin") : "");
+    for (const b of k.kanalDgm) b.classList.toggle("aktif", b.dataset.kanal === kanal);
+    const etkin = !!takip.etkin;
+    k.btnHedef.style.display = etkin ? "none" : "";
+    k.btnDurdur.style.display = etkin ? "" : "none";
+    k.btnHedef.disabled = !durum.bagli;
+    if (!etkin && k.cerceve && k.bekleniyor && Date.now() - k.bekleniyor > 6000){ k.cerceve = null; k.bekleniyor = 0; }
+    if (etkin) k.bekleniyor = 0;
+    m50PencereCerceveCiz(k);
+  }
+}
+window.m50PencereDonat = function(kamera, pencere, kutu, altBar){
+  if (!kamera || String(kamera.protokol || "").toLowerCase() !== "m50") return;
+  const t = m50T();
+  const k = { kamera, pencere, kutu, altBar, eoId: m50KamEoId(kamera), cerceve: null, kutuEl: null, ortu: null, bekleniyor: 0 };
+  kutu.classList.add("m50-pc-kutu");
+  altBar.classList.add("m50-pc-alt");
+  const bilgi = document.createElement("div"); bilgi.className = "m50-pc-bilgi"; k.bilgi = bilgi;
+  const dgm = document.createElement("div"); dgm.className = "m50-pc-dugmeler";
+  k.kanalDgm = [];
+  for (const [kanal, ikon, etiket] of [["gorunur", "fa-sun", t.m50Gorunur || "Görünür"], ["termal", "fa-fire", t.m50Termal || "Termal"]]){
+    const b = document.createElement("button"); b.type = "button"; b.className = "kam-btn m50-pc-kanal"; b.dataset.kanal = kanal;
+    b.innerHTML = "<i class='fa-solid " + ikon + "'></i> " + etiket; b.title = etiket;
+    b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const kam = (typeof window.m50KameraBul === "function" ? window.m50KameraBul(k.eoId) : null) || k.kamera;
+      if (kam && typeof window.m50KanalDegistir === "function" && m50KamKanal(kam) !== kanal) window.m50KanalDegistir(kam, kanal);
+    });
+    dgm.appendChild(b); k.kanalDgm.push(b);
+  }
+  const btnHedef = document.createElement("button"); btnHedef.type = "button"; btnHedef.className = "kam-btn m50-pc-hedef";
+  btnHedef.innerHTML = "<i class='fa-solid fa-crosshairs'></i> " + (t.m50PencereHedef || "HEDEF");
+  btnHedef.addEventListener("click", ev => { ev.stopPropagation(); m50PencereHedefSec(k); });
+  const btnDurdur = document.createElement("button"); btnDurdur.type = "button"; btnDurdur.className = "kam-btn m50-pc-durdur";
+  btnDurdur.innerHTML = "<i class='fa-solid fa-ban'></i> " + (t.m50PencereDurdur || "TAKİBİ DURDUR");
+  btnDurdur.style.display = "none";
+  btnDurdur.addEventListener("click", ev => {
+    ev.stopPropagation();
+    m50Gonder({ tip: "m50_takip_durdur", eo_id: k.eoId, kanal: m50KamKanal(k.kamera) });
+    k.cerceve = null; m50PencereCerceveCiz(k);
+    btnDurdur.style.display = "none"; btnHedef.style.display = "";
+  });
+  dgm.append(btnHedef, btnDurdur);
+  k.btnHedef = btnHedef; k.btnDurdur = btnDurdur;
+  altBar.prepend(bilgi, dgm);
+  _m50Pencereler[String(kamera.id)] = k;
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => m50PencereCerceveCiz(k)).observe(kutu);
+  m50PencereTazele();
+};
+window.m50PencereKapandi = function(id){ delete _m50Pencereler[String(id)]; };
+(function(){
+  const asil = window.m50PaneliGuncelle;
+  window.m50PaneliGuncelle = function(paket){
+    if (typeof asil === "function") asil(paket);
+    try { m50PencereTazele(); } catch (e) {}
+  };
 })();
