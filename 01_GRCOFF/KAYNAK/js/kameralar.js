@@ -607,8 +607,11 @@
   };
   window.m50KameraOlustur = function (eoId, isim) {
     const eid = Number(eoId) > 0 ? Number(eoId) : 1;
+    // v2.4.209: hava araci tanima gorevi kayitla birlikte gelir (AI izlemesi
+    // gorevsiz baslatilamaz — ai_yonetici.izleme_baslat).
     wsGonder({ tip: "kamera_kaydet", isim: isim || ("M50 " + eid), protokol: "m50",
-               url: "m50:" + eid + ":gorunur", m50_kanal: "gorunur", eo_id: eid });
+               url: "m50:" + eid + ":gorunur", m50_kanal: "gorunur", eo_id: eid,
+               ai_gorevler: "hava_araci" });
   };
   window.kamVideoOlustur = function (kamera) { return videoOlustur(kamera); };
 

@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.208";
+const GCS_SURUM = "2.4.209";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.209",
+    tarih: "2026-09-15",
+    baslik: "M50: hava aracı tanıma entegrasyonu — tespit kutusuna çift tık, görüntü işleme verisiyle PTZ takibi (paket 2.5.79)",
+    maddeler: [
+      "TANIMA (kullanıcı isteği): M50 penceresinin durum çubuğuna 'Tanıma' düğmesi eklendi; AI izlemesi (hava_araci görevi) bu kameranın vekil akışında başlatılır/durdurulur. Görev kayıtta yoksa önce kayda eklenir. Tespit kutuları sunucuda kareye çizilir.",
+      "ÇİFT TIK = TAKİP (kullanıcı isteği): görüntüde tespit kutusuna çift tıklayınca takip başlar. Takip SDK izleyicisine değil GÖRÜNTÜ İŞLEME VERİSİNE dayanır: her 300 ms en yakın tespit kutusu eşlenir, kutu merkezinin kare merkezinden sapması PTZ yön + hızına (1–60, ölü bölge %5) çevrilir. Kutu 4 sn gelmezse hedef kayıp sayılır, PTZ durdurulur. Takipteyken çift tık veya 'Durdur' bırakır; çerçeve tespit kutusunu izler.",
+      "M50 kamera kaydı 'hava_araci' AI göreviyle oluşturulur (AI izlemesi görevsiz başlatılamaz)."
+    ]
+  },
   {
     surum: "2.4.208",
     tarih: "2026-09-15",

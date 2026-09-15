@@ -48,6 +48,12 @@
   }
 
   // ---- sunucu mesajları ----------------------------------------------
+  // v2.4.209: M50 penceresi (m50_pencere.js) AI kutularini buradan okur.
+  window.kameraTespitKutulari = function (id) {
+    var k = kutular[Number(id)];
+    if (!k || Date.now() - k.ts > KUTU_GECERLI_MS) return null;
+    return k;
+  };
   window.kameraAiKutularIsle = function (m) {
     var id = Number(m && m.kamera_id);
     if (!isFinite(id)) return;

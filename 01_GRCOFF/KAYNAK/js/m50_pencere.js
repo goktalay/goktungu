@@ -123,9 +123,151 @@
   }
 
   function takipDurdur(k){
+    if (k.aiTakip){ aiTakipDurdur(k); return; }
     gonder({ tip: "m50_takip_durdur", eo_id: k.eoId, kanal: kanalOku(kameraBul(k.eoId) || k.kamera) });
     k.cerceve = null; k.bekleniyor = 0; cerceveCiz(k);
     durumYaz(k);
+  }
+
+  // =================================================================
+  // v2.4.209 — HAVA ARACI TANIMA + GÖRÜNTÜ İŞLEME VERİSİYLE TAKİP
+  // Kullanıcı isteği: "m50 için hava araçları tanıma modülünü entegre
+  // edelim; objeye çift tıklarsak kamera track etmeye başlasın, track
+  // için görüntü işleme verisini kullansın".
+  //
+  // TANIMA: durum çubuğundaki düğme AI izlemesini (hava_araci görevi)
+  // bu kameranın vekil akışı üzerinde başlatır/durdurur; tespit kutuları
+  // sunucuda kareye çizilir (anotasyon) ve `ai_kutular` ile istemciye
+  // gelir (kamera_takip.js → kameraTespitKutulari).
+  //
+  // ÇİFT TIK: tıklanan noktadaki tespit kutusu hedef olur. Takip, SDK'nın
+  // kendi izleyicisine DEĞİL görüntü işleme verisine dayanır: her 300 ms
+  // en yakın tespit kutusu bulunur, kutunun merkezi ile kare merkezi
+  // arasındaki sapma PTZ komutuna (yön + hız, ölü bölge %5) çevrilir.
+  // Kutu 4 sn gelmezse hedef kayıp sayılır, PTZ durdurulur.
+  // =================================================================
+  const AI_ARALIK_MS = 300, AI_KAYIP_MS = 4000, AI_OLU_BOLGE = 0.05, AI_ESLEME_ORAN = 0.35;
+  const AI_TUR_AD = { hava_araci: "HAVA ARACI" };
+  function aiAktifMi(kam){ return !!(kam && typeof window.aiIzlemeAktifMi === "function" && window.aiIzlemeAktifMi(kam.id)); }
+  function aiTanimaAcKapa(k){
+    const kam = kameraBul(k.eoId);
+    if (!kam) return;
+    if (aiAktifMi(kam)){
+      if (typeof window.aiIzlemeDurdur === "function") window.aiIzlemeDurdur(kam.id);
+      if (k.aiTakip) aiTakipDurdur(k);
+      return;
+    }
+    const gorevler = String(kam.ai_gorevler || "");
+    if (!/\bhava_araci\b/.test(gorevler) && typeof window.m50KameraAlanGuncelle === "function"){
+      // Görev kayıtta yoksa önce kayıt (sunucu komutları bağlantı başına sırayla işler).
+      window.m50KameraAlanGuncelle(kam, { ai_gorevler: gorevler ? gorevler + ",hava_araci" : "hava_araci" });
+    }
+    if (typeof window.aiIzlemeBaslat === "function") setTimeout(() => window.aiIzlemeBaslat(kam.id), 300);
+  }
+  function kutuNoktasi(img, ev, kw, kh){
+    const g = goruntuKutusu(img);
+    const px = (ev.clientX - g.x) * g.nw / g.w, py = (ev.clientY - g.y) * g.nh / g.h;
+    if (px < 0 || py < 0 || px > g.nw || py > g.nh) return null;
+    return { x: px * (kw || g.nw) / g.nw, y: py * (kh || g.nh) / g.nh };
+  }
+  function aiHedefSec(k, ev){
+    const kam = kameraBul(k.eoId);
+    const img = k.video.querySelector("img.kam-video");
+    if (!kam || !img) return false;
+    const t = T();
+    const kt = typeof window.kameraTespitKutulari === "function" ? window.kameraTespitKutulari(kam.id) : null;
+    if (!kt || !kt.liste.length){
+      k.durumMetni = aiAktifMi(kam) ? (t.m50AiHedefYok || "Tespit edilmiş hedef yok") : (t.m50AiKapali || "Tanıma kapalı — durum çubuğundan açın");
+      durumYaz(k); setTimeout(() => { if (!k.ortu){ k.durumMetni = ""; durumYaz(k); } }, 2500);
+      return false;
+    }
+    let aday = null;
+    for (const b of kt.liste){
+      if (!AI_TUR_AD[b.tur]) continue;
+      const n = kutuNoktasi(img, ev, b.kaynak_w, b.kaynak_h);
+      if (!n) continue;
+      const tol = 12;
+      if (n.x < b.x - tol || n.y < b.y - tol || n.x > b.x + b.w + tol || n.y > b.y + b.h + tol) continue;
+      const alan = b.w * b.h;
+      if (!aday || alan < aday.alan) aday = { b, alan };
+    }
+    if (!aday){
+      k.durumMetni = t.m50AiKutuDisi || "Tıklanan yerde hedef yok — tespit kutusuna çift tıklayın";
+      durumYaz(k); setTimeout(() => { if (!k.ortu){ k.durumMetni = ""; durumYaz(k); } }, 2500);
+      return false;
+    }
+    aiTakipBaslat(k, kam, aday.b);
+    return true;
+  }
+  function aiTakipBaslat(k, kam, b){
+    if (k.aiTakip) aiTakipDurdur(k, true);
+    if (k.bekleniyor || k.cerceve){ gonder({ tip: "m50_takip_durdur", eo_id: k.eoId, kanal: kanalOku(kam) }); k.bekleniyor = 0; }
+    k.aiTakip = { tur: b.tur, cx: b.x + b.w / 2, cy: b.y + b.h / 2, kw: b.kaynak_w || 0, kh: b.kaynak_h || 0,
+                  sonTs: Date.now(), yon: "", hiz: 0, kamId: kam.id, kutu: b };
+    aiCerceve(k, b);
+    k.aiZaman = setInterval(() => aiTakipAdim(k), AI_ARALIK_MS);
+    durumYaz(k);
+  }
+  function aiCerceve(k, b){
+    const img = k.video.querySelector("img.kam-video");
+    if (!img || !img.naturalWidth) return;
+    const kw = b.kaynak_w || img.naturalWidth, kh = b.kaynak_h || img.naturalHeight;
+    const sx = img.naturalWidth / kw, sy = img.naturalHeight / kh;
+    k.cerceve = { sol: Math.round(b.x * sx), ust: Math.round(b.y * sy), sag: Math.round((b.x + b.w) * sx), alt: Math.round((b.y + b.h) * sy) };
+    cerceveCiz(k);
+  }
+  function aiPtz(k, yon, hiz){
+    const a = k.aiTakip; if (!a) return;
+    if (yon === a.yon && hiz === a.hiz) return;
+    if (a.yon && yon !== a.yon) gonder({ tip: "m50_ptz", eo_id: k.eoId, yon: a.yon, hiz: a.hiz || 1, basili: false });
+    if (yon) gonder({ tip: "m50_ptz", eo_id: k.eoId, yon, hiz, basili: true });
+    a.yon = yon; a.hiz = hiz;
+  }
+  function aiTakipAdim(k){
+    const a = k.aiTakip; if (!a) return;
+    const kam = kameraBul(k.eoId);
+    const kt = (kam && typeof window.kameraTespitKutulari === "function") ? window.kameraTespitKutulari(kam.id) : null;
+    const simdi = Date.now();
+    let enIyi = null;
+    if (kt && kt.ts > (a.kutuTs || 0) && kt.liste.length){
+      const kw = a.kw || (kt.liste[0].kaynak_w || 1), kh = a.kh || (kt.liste[0].kaynak_h || 1);
+      const esik = AI_ESLEME_ORAN * Math.hypot(kw, kh);
+      for (const b of kt.liste){
+        if (b.tur !== a.tur) continue;
+        const d = Math.hypot(b.x + b.w / 2 - a.cx, b.y + b.h / 2 - a.cy);
+        if (d <= esik && (!enIyi || d < enIyi.d)) enIyi = { b, d };
+      }
+      a.kutuTs = kt.ts;
+    }
+    if (enIyi){
+      const b = enIyi.b;
+      a.cx = b.x + b.w / 2; a.cy = b.y + b.h / 2; a.kw = b.kaynak_w || a.kw; a.kh = b.kaynak_h || a.kh;
+      a.sonTs = simdi; a.kutu = b;
+      aiCerceve(k, b);
+    } else if (simdi - a.sonTs > AI_KAYIP_MS){
+      const t = T();
+      aiTakipDurdur(k);
+      k.durumMetni = t.m50AiKayip || "Hedef kaybedildi — takip durduruldu";
+      durumYaz(k); setTimeout(() => { if (!k.ortu){ k.durumMetni = ""; durumYaz(k); } }, 3000);
+      return;
+    }
+    // Sapma -> PTZ (kare merkezine göre, -0.5..0.5)
+    const kw = a.kw || 1, kh = a.kh || 1;
+    const dx = a.cx / kw - 0.5, dy = a.cy / kh - 0.5;
+    const yx = Math.abs(dx) > AI_OLU_BOLGE ? (dx > 0 ? "sag" : "sol") : "";
+    const yy = Math.abs(dy) > AI_OLU_BOLGE ? (dy > 0 ? "asagi" : "yukari") : "";
+    const yon = yx && yy ? yx + "_" + yy : (yx || yy);
+    const sapma = Math.max(Math.abs(dx), Math.abs(dy));
+    // Hız: sapma 0.05 -> ~4, 0.5 -> 60 (doğrusal); küçük sapmada yavaş yaklaşır.
+    const hiz = Math.max(2, Math.min(60, Math.round((sapma - AI_OLU_BOLGE) / (0.5 - AI_OLU_BOLGE) * 58 + 2)));
+    aiPtz(k, yon, yon ? hiz : 0);
+  }
+  function aiTakipDurdur(k, sessiz){
+    const a = k.aiTakip; if (!a) return;
+    clearInterval(k.aiZaman); k.aiZaman = null;
+    if (a.yon) gonder({ tip: "m50_ptz", eo_id: k.eoId, yon: a.yon, hiz: a.hiz || 1, basili: false });
+    k.aiTakip = null; k.cerceve = null; cerceveCiz(k);
+    if (!sessiz) durumYaz(k);
   }
 
   // ---- görüntü bağlama ----
@@ -201,8 +343,16 @@
     k.sbFps.textContent = "≤ " + ((kam && kam.fps) || 15);
     k.sbAci.textContent = aci;
     // --- takip düğmesi ---
-    const takipDurumu = etkin || bekliyor;
-    k.sbTakip.querySelector("span").textContent = takipDurumu ? (t.m50PcDurdur || "Durdur") : (t.m50PcHedefSec || "Hedef seç");
+    const takipDurumu = etkin || bekliyor || !!k.aiTakip;
+    k.sbTakip.querySelector("span").textContent = k.aiTakip
+      ? (t.m50PcDurdur || "Durdur") + " · AI " + (AI_TUR_AD[k.aiTakip.tur] || "")
+      : takipDurumu ? (t.m50PcDurdur || "Durdur") : (t.m50PcHedefSec || "Hedef seç");
+    // --- tanıma düğmesi ---
+    const aiAcik = aiAktifMi(kam);
+    k.sbTanima.querySelector("span").textContent = aiAcik ? (t.m50AiAcik || "Açık") : (t.m50AiKapaliKisa || "Kapalı");
+    k.sbTanima.classList.toggle("acik", aiAcik);
+    k.sbTanima.disabled = !kam;
+    k.sbTanima.title = aiAcik ? (t.m50AiKapatIpucu || "Hava aracı tanımayı kapat") : (t.m50AiAcIpucu || "Hava aracı tanımayı aç (tespit kutusuna çift tık: takip)");
     k.sbTakip.querySelector("i").className = "fa-solid " + (takipDurumu ? "fa-ban" : "fa-crosshairs");
     k.sbTakip.classList.toggle("takipte", takipDurumu);
     k.sbTakip.disabled = !kam || (!d.bagli && !takipDurumu);
@@ -216,7 +366,8 @@
     k.rozetKanal.textContent = kanal === "termal" ? "TERMAL" : "GÖRÜNÜR";
     k.rozetBag.textContent = d.bagli ? "BAĞLI" : "KAPALI";
     k.rozetBag.classList.toggle("bagli", !!d.bagli);
-    k.rozetTakip.style.display = etkin ? "" : "none";
+    k.rozetTakip.style.display = (etkin || k.aiTakip) ? "" : "none";
+    k.rozetTakip.textContent = k.aiTakip ? "AI TAKİP" : "TAKİP";
   }
 
   // ---- pencere ----
@@ -270,6 +421,10 @@
     aGen.append(sbGen, sbGenOlcu);
     const aFps = alan(t.kamFpsKisa || "FPS"); const sbFps = document.createElement("b"); aFps.appendChild(sbFps);
     const aAci = alan(t.m50PcAci || "Az/Eğ"); const sbAci = document.createElement("b"); aAci.appendChild(sbAci);
+    const aTanima = alan(t.m50AiTanima || "Tanıma");
+    const sbTanima = dugme("m50-pc-sb-tanima", "fa-plane");
+    sbTanima.addEventListener("click", ev => { ev.stopPropagation(); aiTanimaAcKapa(k); });
+    aTanima.appendChild(sbTanima);
     const aTakip = alan(t.m50PcTakip || "Takip");
     const sbTakip = dugme("m50-pc-sb-takip", "fa-crosshairs");
     sbTakip.addEventListener("click", ev => { ev.stopPropagation(); if (k.takipte) takipDurdur(k); else hedefSec(k); });
@@ -278,7 +433,15 @@
     durum.appendChild(sbIpucu);
     p.append(baslik, video, durum);
     Object.assign(k, { pencere: p, baslik, video, durum, ad, rozetKanal, rozetBag, rozetTakip,
-                       sbKanal, sbGen, sbGenOlcu, sbFps, sbAci, sbTakip, sbIpucu, takipte: false });
+                       sbKanal, sbGen, sbGenOlcu, sbFps, sbAci, sbTanima, sbTakip, sbIpucu, takipte: false, aiTakip: null, aiZaman: null });
+    // Çift tık: tespit kutusundaki hava aracını görüntü işleme verisiyle takip et
+    video.addEventListener("dblclick", ev => {
+      const img = ev.target && ev.target.closest && ev.target.closest("img.kam-video");
+      if (!img) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (k.aiTakip){ aiTakipDurdur(k); return; }   // takipteyken çift tık: bırak
+      aiHedefSec(k, ev);
+    }, true);
     document.body.appendChild(p);
     // konum/boyut
     const kayitVar = typeof window.pencereKonumUygula === "function" && window.pencereKonumUygula("m50pc_" + eoId, p, true);
@@ -344,6 +507,7 @@
   window.m50PencereKapat = function(eoId){
     const k = pencereler[Number(eoId)];
     if (!k) return;
+    if (k.aiTakip) aiTakipDurdur(k, true);
     const img = k.video.querySelector("img.kam-video"); if (img) img.src = "";
     k.pencere.remove();
     delete pencereler[Number(eoId)];
