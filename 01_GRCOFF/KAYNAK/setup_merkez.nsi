@@ -169,6 +169,12 @@ Section "GOKTUNGU Merkez" AnaBolum
   ; v2.4.216: Linux SDK (.so, aarch64) Windows kurulumuna GIRMEZ (30 MB)
   File /r /x "*.so" "dagitim\agac\assets\*.*"
 
+  ; v2.4.218: AI modelleri (hava_araci.onnx ~100 MB + yuz/plaka) kurulumla
+  ; gelir; onceden yalniz guncelleyici indiriyordu, ilk kurulumda YOKTU.
+  DetailPrint "AI modelleri yaziliyor (~140 MB)..."
+  SetOutPath "$INSTDIR\ai_modeller"
+  File /r "dagitim\agac\ai_modeller\*.*"
+
   SetOutPath "$INSTDIR\varliklar"
   File "varliklar\goktungu.ico"
 
@@ -382,6 +388,7 @@ Section "Uninstall"
   Delete "$INSTDIR\servis_merkez_win.py"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR\assets"
+  RMDir /r "$INSTDIR\ai_modeller"
   RMDir /r "$INSTDIR\varliklar"
   RMDir /r "$INSTDIR\python"
   RMDir /r "$INSTDIR\__pycache__"

@@ -105,7 +105,8 @@ WEB_DOSYA = (
 )
 
 # Kok dizinde kalanlar.
-KOK_DOSYA = ("main.py", "requirements.txt", "goktungu_guncelleyici.py")
+KOK_DOSYA = ("main.py", "requirements.txt", "goktungu_guncelleyici.py",
+             "jetson_ai_kur.sh")   # v2.4.218: Jetson GPU kurulum betigi (Linux)
 
 # AI modelleri: `--ai-dahil` ile eklenir (38,7 MB).
 AI_MODEL_DIZIN = "ai_modeller"

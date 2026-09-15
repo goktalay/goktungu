@@ -95,6 +95,22 @@ def _kod_ozeti():
 
 KOD_OZETI = _kod_ozeti()
 
+# v2.4.218 (kullanici: Jetson Orin'de tanima acilinca sistem kilitleniyor):
+# isci, Merkez ve tarayiciyla AYNI makinede kosar. Cikarim tum cekirdekleri
+# doyurunca arayuz/M50 komutlari ac kalir. Isci dusuk oncelikle calisir,
+# OpenCV ve ORT iplikleri cekirdek sayisinin yarisiyla sinirlanir (en az 1).
+try:
+    if hasattr(os, "nice"):
+        os.nice(int(os.environ.get("GOKTUNGU_AI_NICE", "8")))
+except Exception:
+    pass
+_CEKIRDEK = max(1, (os.cpu_count() or 2))
+AI_IPLIK = max(1, min(_CEKIRDEK - 1, int(os.environ.get("GOKTUNGU_AI_IPLIK", str(max(1, _CEKIRDEK // 2))))))
+try:
+    cv2.setNumThreads(AI_IPLIK)
+except Exception:
+    pass
+
 MODEL_KLASORU = _ai_yolu("ai_modeller")
 KAYIT_KLASORU = _ai_yolu("ai_kayitlar")
 
@@ -755,11 +771,18 @@ class AIIsci:
             if _ort is not None:
                 try:
                     mevcut = _ort.get_available_providers()
+                    # v2.4.218: Jetson (onnxruntime-gpu, JetPack) CUDA EP;
+                    # TensorRT EP motor derlemesi uzun surdugu icin CUDA
+                    # sonrasinda (yalniz CUDA yoksa). CPU son care.
                     sira = [s for s in ("CUDAExecutionProvider",
+                                        "TensorrtExecutionProvider",
                                         "DmlExecutionProvider",
                                         "CPUExecutionProvider")
                             if s in mevcut]
-                    self.ort = _ort.InferenceSession(YOLO_HAVA,
+                    _so = _ort.SessionOptions()
+                    _so.intra_op_num_threads = AI_IPLIK
+                    _so.inter_op_num_threads = 1
+                    self.ort = _ort.InferenceSession(YOLO_HAVA, sess_options=_so,
                                                      providers=sira)
                     self.ort_girdi = self.ort.get_inputs()[0].name
                     self.ort_saglayici = (self.ort.get_providers()
@@ -1237,6 +1260,14 @@ class AIIsci:
             akis.arka_plan = cv2.createBackgroundSubtractorMOG2(
                 history=200, varThreshold=32, detectShadows=False)
             return   # ilk kare: model isiniyor
+        # v2.4.218: MOG2 en cok 640 px genislikte calisir (kutu koordinatlari
+        # asagida kaynak olcegine geri cevrilir) — Jetson/CPU yukunu dusurur.
+        _ow = kare.shape[1]
+        _geri = 1.0      # kutu koordinatlarini kaynak olcegine ceviren carpan
+        if _ow > 640:
+            _olcek = 640.0 / _ow
+            kare = cv2.resize(kare, (640, int(kare.shape[0] * _olcek)))
+            _geri = 1.0 / _olcek
         h, w = kare.shape[:2]
         maske = akis.arka_plan.apply(kare)
         maske = cv2.medianBlur(maske, 5)
@@ -1284,7 +1315,10 @@ class AIIsci:
             pencere = gri[py0:py1, px0:px1]
             if pencere.size and float(pencere.std()) > 26.0:
                 continue
-            self._canli_kutu_ekle(akis, x, y, gw, gh, "hava_araci")
+            # Kutu, cagiranin bildirdigi KAYNAK kare olcegine cevrilir
+            # (kare_analiz `_kutulari_bildir`e orijinal w/h verir).
+            self._canli_kutu_ekle(akis, int(x * _geri), int(y * _geri),
+                                  int(gw * _geri), int(gh * _geri), "hava_araci")
             anahtar = f"hava_araci_{x // 120}_{y // 120}"
             if not akis.sogutma_gecti(anahtar, saniye=6.0):
                 continue

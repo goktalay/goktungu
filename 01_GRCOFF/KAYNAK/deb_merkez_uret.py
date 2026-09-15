@@ -377,7 +377,8 @@ RestartSec=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths={VERI}
+# v2.4.218: uygulama ici guncelleme kurulum dizinine yazar (bkz. postinst chown)
+ReadWritePaths={VERI} {HEDEF}
 PrivateTmp=true
 
 [Install]
@@ -659,6 +660,18 @@ case "$1" in
     chmod -R go-w "$HEDEF"
     # .venv servis kullanicisinin okumasi icin erisilebilir kalmali.
     chmod -R a+rX "$HEDEF"
+    # v2.4.218 (kullanici bildirimi: "uygulama icinden guncelleme yetki
+    # hatasi veriyor"): uygulama ici guncelleyici imzali (Ed25519) manifest
+    # dosyalarini KURULUM dizinine yazar. Yonetilen kokler (assets/,
+    # ai_modeller/) ve kok dosyalari servis kullanicisina devredilir; .venv
+    # ve gomulu araclar root'ta kalir. Dizinin kendisi de yazilabilir olur
+    # (yeni kok dosyasi / gecici dosya + os.replace icin).
+    KULLANICI="{SERVIS_KULLANICI}"
+    for y in assets ai_modeller main.py goktungu_guncelleyici.py requirements.txt jetson_ai_kur.sh; do
+      [ -e "$HEDEF/$y" ] && chown -R "$KULLANICI:$KULLANICI" "$HEDEF/$y" && chmod -R u+w "$HEDEF/$y"
+    done
+    chown "$KULLANICI:$KULLANICI" "$HEDEF"
+    chmod u+w "$HEDEF"
 
     # --- 4) Ikon onbellegi ve masaustu veritabani ---
     if command -v gtk-update-icon-cache >/dev/null 2>&1; then

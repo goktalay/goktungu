@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.217";
+const GCS_SURUM = "2.4.218";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.218",
+    tarih: "2026-09-15",
+    baslik: "Hava aracı YOLO modeli paketle gelir; Jetson GPU kurulum betiği; AI işçisi CPU koruması (paket 2.5.88)",
+    maddeler: [
+      "KÖK NEDEN (Jetson günlüğü: 'YOLO modeli yok … MOG2 hareket tespiti kullanılacak'): hava aracı tanıma modeli (hava_araci.onnx, 5 sınıf) hiçbir pakette ve güncelleme ağacında yoktu; tüm kurulumlar hareket tabanlı MOG2'ye düşüyordu. Model artık Merkez paketiyle (ai_modeller/) gelir ve güncelleme ağacında yönetilir (bir kez ~100 MB indirilir).",
+      "JETSON GPU (kullanıcı sorusu: 'Jetson'un gücünü neden kullanamıyoruz'): PyPI onnxruntime yalnız CPU'dur; Jetson'da CUDA/TensorRT için NVIDIA'nın JetPack tekerleği gerekir. Paketle gelen jetson_ai_kur.sh betiği L4T sürümünü okur, onnxruntime-gpu'yu NVIDIA Jetson dizininden venv'e kurar ve sağlayıcıları doğrular: sudo bash /opt/goktungu/merkez/jetson_ai_kur.sh. İşçi CUDA > TensorRT > DirectML > CPU sırasıyla seçer.",
+      "AI İŞÇİSİ CPU KORUMASI (kullanıcı bildirimi: tanıma açılınca görüntü/M50 komutları gecikiyor): işçi düşük öncelikle (nice 8) çalışır, OpenCV ve ORT iplikleri çekirdek sayısının yarısıyla sınırlanır (GOKTUNGU_AI_IPLIK / GOKTUNGU_AI_NICE ile ayarlanır); MOG2 en çok 640 px genişlikte çalışır, kutular kaynak ölçeğine çevrilir. Arayüz ve M50 komutları tanıma sırasında aç kalmaz.",
+      "LINUX UYGULAMA İÇİ GÜNCELLEME (kullanıcı bildirimi: deb sudo ile kuruluyor, içeriden güncelleme yetki hatası veriyor): kurulum sonrası yönetilen kökler (assets/, ai_modeller/) ve kök dosyaları servis kullanıcısına devredilir, kurulum dizini yazılabilir olur; systemd biriminde ReadWritePaths kurulum dizinini de kapsar. .venv ve gömülü araçlar root'ta kalır. Güncelleyici imzalı manifest doğrulaması değişmedi.",
+      "WINDOWS KURULUMU: AI modelleri (ai_modeller/) artık kurulum dosyasıyla gelir; önceden ilk kurulumda yoktu, yalnız güncelleyici indiriyordu."
+    ]
+  },
   {
     surum: "2.4.217",
     tarih: "2026-09-15",
