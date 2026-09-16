@@ -25,7 +25,13 @@
     const ad = document.createElement("div"); ad.className = "eo-onizleme-ad";
     ad.textContent = (ent.label && ent.label.text && ent.label.text.getValue) ? ent.label.text.getValue() : ("EO " + eid);
     kutu.appendChild(ad);
-    if (kam && typeof window.kameraOnizlemeUrl === "function"){
+    const sabitAcik = typeof window.eoHaritaOnizlemeAcikMi === "function" && window.eoHaritaOnizlemeAcikMi(eid);
+    if (sabitAcik){
+      // v2.4.225: haritada sabit cerceve zaten akista; ikinci akis acilmaz
+      const n = document.createElement("div"); n.className = "eo-onizleme-yok";
+      n.textContent = (typeof D === "function" && D().eoOnizlemeHaritada) || "Canlı görüntü haritada açık (çift tık: kapat)";
+      kutu.appendChild(n);
+    } else if (kam && typeof window.kameraOnizlemeUrl === "function"){
       const img = document.createElement("img");
       img.src = window.kameraOnizlemeUrl(kam.id) + (window.kameraOnizlemeUrl(kam.id).includes("?") ? "&" : "?") + "hover=" + Date.now();
       img.alt = "";
@@ -88,10 +94,30 @@
     kap.addEventListener("mouseleave", kapat, {passive: true});
     // v2.4.207 (kullanici istegi): haritadaki canli onizlemeye/kamera
     // ikonuna tiklayinca M50 canli goruntu penceresi dogrudan acilir.
+    // v2.4.225 (kullanici istegi): ikona CIFT TIK haritadaki canli cerceveyi
+    // acar, tekrar cift tik kapatir. Tek tik pencereyi acmaya devam eder;
+    // cift tikin ilk tiklari pencereyi acmasin diye tek tik 300 ms bekler.
+    let tekTikZaman = null;
     kap.addEventListener("click", ev => {
       if (!(acik && eoMu(acik))) return;
       const eid = parseInt(String(acik.id).slice(3), 10);
-      if (eid && typeof window.m50PencereAc === "function"){ ev.stopPropagation(); window.m50PencereAc(eid); }
+      if (!eid) return;
+      ev.stopPropagation();
+      clearTimeout(tekTikZaman);
+      tekTikZaman = setTimeout(() => { if (typeof window.m50PencereAc === "function") window.m50PencereAc(eid); }, 300);
+    }, true);
+    kap.addEventListener("dblclick", ev => {
+      if (!(acik && eoMu(acik))) return;
+      const eid = parseInt(String(acik.id).slice(3), 10);
+      if (!eid) return;
+      ev.preventDefault(); ev.stopPropagation();
+      clearTimeout(tekTikZaman); tekTikZaman = null;
+      if (typeof window.eoHaritaOnizlemeAcKapa === "function"){
+        const acildi = window.eoHaritaOnizlemeAcKapa(eid);
+        if (typeof window.uyariToastGoster === "function")
+          try { window.uyariToastGoster({ kategori: "M50", seviye: "bilgi", mesaj: acildi ? ((typeof D === "function" && D().eoOnizlemeAcildi) || "Harita önizlemesi açıldı")
+                                               : ((typeof D === "function" && D().eoOnizlemeKapandi) || "Harita önizlemesi kapatıldı") }); } catch (e) {}
+      }
     }, true);
   }
   kur();

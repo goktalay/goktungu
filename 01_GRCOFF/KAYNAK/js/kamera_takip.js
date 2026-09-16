@@ -33,7 +33,7 @@
   // v2.4.223 (kullanici istegi): dugme islemi beklerken tekrar basilamaz,
   // dugme uzerinde donen simge gosterilir. kamera_id -> {islem, ts}
   var bekleyen = {};
-  var BEKLEME_MS = 6000;
+  var BEKLEME_MS = 20000;   // v2.4.225: akis acilisi 15 sn surebilir
   function bekleyenAl(id) {
     var b = bekleyen[Number(id)];
     if (!b) return null;

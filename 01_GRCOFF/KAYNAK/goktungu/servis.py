@@ -84,6 +84,17 @@ _EYLEMLER = {
 _ZAMAN_ASIMI = 15
 
 
+def _root_mu():
+    """v2.4.225 (kullanici bildirimi: Program Ayarlari'nda 'module os has no
+    attribute geteuid'): Windows'ta os.geteuid yoktur; orada yonetici
+    denetimi bu yolla yapilmaz (False)."""
+    f = getattr(os, "geteuid", None)
+    try:
+        return bool(f) and f() == 0
+    except Exception:
+        return False
+
+
 class ServisYoneticisi:
     """systemd birimini ve makine gucunu yonetir."""
 
@@ -325,7 +336,7 @@ class ServisYoneticisi:
             # Kullanici servisi kendi oturumundadir; polkit istemez.
             return True, ""
         # Sistem servisi: root degilsek yetki gerekir.
-        if os.geteuid() == 0:
+        if _root_mu():
             return True, ""
         yol = shutil.which("systemctl") or "/bin/systemctl"
         if self._sudo_izni_var(yol):
@@ -444,7 +455,7 @@ class ServisYoneticisi:
 
         Ayrica surec root ise yetki zaten vardir.
         """
-        if os.geteuid() == 0:
+        if _root_mu():
             return True, ""
 
         systemctl_yolu = shutil.which("systemctl")

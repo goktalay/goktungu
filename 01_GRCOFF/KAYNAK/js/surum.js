@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.224";
+const GCS_SURUM = "2.4.225";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.225",
+    tarih: "2026-09-16",
+    baslik: "Tespit ile takip ayrıldı; Hedef Seç bekleme süresi; M50 penceresinde AI + takip ayarları; harita önizlemesi çift tıkla; Program Ayarları geteuid hatası (paket 2.5.95)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: Hava Aracı AI'yı kapatınca takip de durdu): sunucu, sınıflar kapatılınca kameranın AI akışını tümüyle kapatıyordu; pasif takip o akışta yaşadığı için ölüyordu. Artık aktif takip varsa akış 'yalnız takip' göreviyle sürer (tespit modeli kapanır, izleyici devam eder); takip aktifken 'Uygula' da akışı yeniden başlatmaz, ayarları yerinde günceller.",
+      "KÖK NEDEN (kullanıcı bildirimi: Hedef Seç ile seçince Angaje Ol / Takip Et / Bırak düğmeleri gelmiyor): tanıma kapalıyken seçim, akışı o anda açar; webcam/RTSP ilk kareyi 5 sn'den geç verince sunucu 'akışta kare yok' ile vazgeçiyordu (çift tık zaten açık akışta çalıştığı için görünmüyordu). Bekleme ~15 sn'ye çıkarıldı, düğme kilidi 20 sn.",
+      "HARİTA M50 ÖNİZLEMESİ (kullanıcı bildirimi: M50 penceresi açıkken haritadaki görüntü kesiliyor): her çerçeve ayrı MJPEG akışı açtığı için (pencere + PiP + hover + harita) tarayıcı bağlantı sınırı aşılıyordu. Haritadaki sabit canlı çerçeve artık varsayılan kapalı; EO ikonuna ÇİFT TIK açar, tekrar çift tık kapatır (tercih hatırlanır). Tek tık pencereyi açmaya devam eder; çerçeve açıkken hover önizlemesi ikinci akış açmaz.",
+      "PROGRAM AYARLARI (kullanıcı bildirimi: 'module os has no attribute geteuid'): Windows'ta servis durumu sorgusu os.geteuid ile çöküyordu; yönetici denetimi platforma göre yapılır.",
+      "M50 PENCERESİ (kullanıcı isteği): Tanıma bölümüne Hassasiyet + Tespit FPS, Takip bölümüne İzleme Yöntemi (CSRT/KCF/MIL), Kayıp Toleransı ve Takip FPS eklendi; kamera AI paneliyle aynı ayar anahtarları. Değişiklikler 'Uygula' ile tek seferde gönderilir; ayarlar tanıma kapalıyken de görünür."
+    ]
+  },
   {
     surum: "2.4.224",
     tarih: "2026-09-16",

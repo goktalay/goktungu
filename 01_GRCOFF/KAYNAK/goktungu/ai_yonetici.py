@@ -1009,7 +1009,11 @@ class AIYonetici:
         if not kayit:
             return {"tamam": False, "hata": "isci sunucu bulunamadi"}
         sonuc = {}
-        for deneme in range(8):
+        # v2.4.225 (kullanici: "Hedef Sec ile secince takip dugmeleri
+        # gelmiyor"): AI izlemesi kapaliyken secim yapilinca akis o an
+        # acilir; webcam/RTSP ilk kareyi 5 sn'den gec verebiliyordu ve 8
+        # deneme (~5 sn) "akista kare yok" ile bitiyordu. Simdi ~15 sn.
+        for deneme in range(25):
             try:
                 sonuc = self._http(kayit, "/takip_baslat",
                                    {"kamera_id": kamera_id, "tur": tur,

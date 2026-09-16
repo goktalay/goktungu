@@ -598,13 +598,44 @@
     if (!h || typeof h !== "object") h = {};
     const v = Number(h.hava_araci); return { h, deger: (isFinite(v) && v >= 10 && v <= 90) ? v : 50 };
   }
-  function hassasiyetYaz(k, deger){
-    const kam = anaKamera(k); if (!kam || typeof window.m50KameraAlanGuncelle !== "function") return;
-    const { h } = hassasiyetOku(kam); h.hava_araci = Math.max(10, Math.min(90, Math.round(deger)));
+  // v2.4.225 (kullanici istegi: "kameradaki AI ve takip ayarlarini M50
+  // icindeki kendi yerlerine ekle"): Tanima bolumu = ac/kapa + hassasiyet +
+  // tespit FPS; Takip bolumu = izleme yontemi + kayip toleransi + takip FPS.
+  // Kamera panelindeki gibi degisiklikler BEKLETILIR, 'Uygula' tek seferde
+  // gonderir (ai_hassasiyet JSON anahtarlari kamera_ai_panel.js ile ayni).
+  function ayarOku(kam){
+    const { h, deger } = hassasiyetOku(kam);
+    const n = (v, a, b, d) => { v = Number(v); return (isFinite(v) && v >= a && v <= b) ? v : d; };
+    return { hava_araci: deger,
+             takip_yontem: ["kcf", "mil", "csrt"].includes(String(h.takip_yontem || "")) ? String(h.takip_yontem) : "",
+             takip_tolerans: n(h.takip_tolerans, 1, 30, 5),
+             tespit_fps: n(h.tespit_fps, 1, 15, 5),
+             takip_fps: n(h.takip_fps, 1, 30, 10) };
+  }
+  function ayarDegisti(k, ad, deger){
+    const kam = anaKamera(k); if (!kam) return;
+    if (!k.taslak) k.taslak = ayarOku(kam);
+    k.taslak[ad] = deger;
+    uygulaTazele(k);
+  }
+  function uygulaTazele(k){
+    const t = T();
+    (k.sbUygulaListe || []).forEach(b => { b.disabled = !k.taslak; b.classList.toggle("kai-uygula-bekliyor", !!k.taslak); });
+    if (k.sbUygulaNot) k.sbUygulaNot.textContent = k.taslak ? (t.kaiUygulanmadi || "Uygulanmamış değişiklik var — 'Uygula'ya basın.") : "";
+  }
+  function ayarUygula(k){
+    const kam = anaKamera(k); if (!kam || !k.taslak || typeof window.m50KameraAlanGuncelle !== "function") return;
+    const { h } = hassasiyetOku(kam);
+    Object.assign(h, k.taslak);
     const json = JSON.stringify(h);
     kam.ai_hassasiyet = json;
-    window.m50KameraAlanGuncelle(kam, { ai_hassasiyet: json });
+    window.m50KameraAlanGuncelle(kam, { ai_hassasiyet: json, ai_yeniden_baslat: true });
+    k.taslak = null;
+    uygulaTazele(k);
+    const t = T();
+    if (k.sbUygulaNot) k.sbUygulaNot.textContent = t.kaiUygulandi || "Uygulandı.";
   }
+  function hassasiyetYaz(k, deger){ ayarDegisti(k, "hava_araci", Math.max(10, Math.min(90, Math.round(deger)))); }
 
   // ---- durum çubuğu (v2.4.207: ETKİLEŞİMLİ, kullanıcı isteği) ----
   // Kanal: düğme (Görünür <-> Termal) · Çözünürlük: açılır seçim ·
@@ -653,8 +684,18 @@
     k.sbPip.querySelector("span").textContent = k.pipAcik ? (t.m50AiAcik || "Açık") : (t.m50AiKapaliKisa || "Kapalı");
     k.sbPip.classList.toggle("acik", !!k.pipAcik);
     // --- hassasiyet ---
-    if (document.activeElement !== k.sbHassas){ const hs = hassasiyetOku(kam); k.sbHassas.value = String(hs.deger); k.sbHassasDeger.textContent = String(hs.deger); }
-    k.sbHassasKap.style.display = aiAktifMi(kam) ? "" : "none";
+    if (!k.taslak){
+      const ay = ayarOku(kam);
+      const ayarla = (el, deger, degEl) => { if (!el || document.activeElement === el) return; el.value = String(deger); if (degEl) degEl.textContent = String(deger); };
+      ayarla(k.sbHassas, ay.hava_araci, k.sbHassasDeger);
+      ayarla(k.sbTespitFps, ay.tespit_fps, k.sbTespitFpsDeger);
+      ayarla(k.sbYontem, ay.takip_yontem, null);
+      ayarla(k.sbTolerans, ay.takip_tolerans, k.sbToleransDeger);
+      ayarla(k.sbTakipFps, ay.takip_fps, k.sbTakipFpsDeger);
+    }
+    // v2.4.225: ayarlar her zaman gorunur (kullanici: kendi yerlerinde olsun)
+    k.sbHassasKap.style.display = "";
+    (k.sbUygulaListe || []).forEach(b => { b.disabled = !kam || !k.taslak; });
     osdCiz(k);
     if (k.pip) pipBagla(k);
     osdCihazDoldur(k);
@@ -775,8 +816,32 @@
     sbHassas.title = t.m50HassasIpucu || "Tanıma hassasiyeti (10 düşük … 90 yüksek)";
     const sbHassasDeger = document.createElement("b"); sbHassasDeger.textContent = "50";
     let hzaman = null;
-    sbHassas.addEventListener("input", () => { sbHassasDeger.textContent = sbHassas.value; clearTimeout(hzaman); hzaman = setTimeout(() => hassasiyetYaz(k, parseInt(sbHassas.value, 10)), 400); });
+    sbHassas.addEventListener("input", () => { sbHassasDeger.textContent = sbHassas.value; });
+    sbHassas.addEventListener("change", () => hassasiyetYaz(k, parseInt(sbHassas.value, 10)));
     sbHassasKap.append(hEt, sbHassas, sbHassasDeger); bTanima.appendChild(sbHassasKap);
+    // v2.4.225: kaydirici/secim satiri ureticileri (kamera AI paneliyle ayni anahtarlar)
+    const sbUygulaListe = [];
+    function kaydiriciSatir(etiket, ad, alt, ust, adim){
+      const kap = document.createElement("div"); kap.className = "m50-pc-hassas m50-pc-satir";
+      const et = document.createElement("span"); et.textContent = etiket;
+      const sl = document.createElement("input"); sl.type = "range"; sl.min = String(alt); sl.max = String(ust); sl.step = String(adim); sl.value = String(alt);
+      const dg = document.createElement("b"); dg.textContent = sl.value;
+      sl.addEventListener("input", () => { dg.textContent = sl.value; });
+      sl.addEventListener("change", () => ayarDegisti(k, ad, Number(sl.value)));
+      kap.append(et, sl, dg);
+      return { kap, sl, dg };
+    }
+    function uygulaSatir(){
+      const kap = document.createElement("div"); kap.className = "m50-pc-satir m50-pc-uygula";
+      const b = document.createElement("button"); b.type = "button"; b.className = "kai-uygula-dgm"; b.disabled = true;
+      b.innerHTML = "<i class='fa-solid fa-check'></i><span>" + (t.kaiUygula || "Uygula") + "</span>";
+      b.addEventListener("click", ev => { ev.stopPropagation(); ayarUygula(k); });
+      sbUygulaListe.push(b); kap.appendChild(b);
+      return kap;
+    }
+    const tespitFps = kaydiriciSatir(t.kaiTespitFps || "Tespit FPS (AI)", "tespit_fps", 1, 15, 1);
+    bTanima.appendChild(tespitFps.kap);
+    bTanima.appendChild(uygulaSatir());
     const tanNot = document.createElement("p"); tanNot.className = "m50-pc-ayar-not"; tanNot.textContent = t.m50AiAcIpucu || "Tespit kutusuna çift tık: takip"; bTanima.appendChild(tanNot);
     // TAKİP
     const bTakip = bolum(t.m50PcTakip || "Takip", "fa-crosshairs");
@@ -784,6 +849,20 @@
     sbTakip.addEventListener("click", ev => { ev.stopPropagation(); if (k.takipte) takipDurdur(k); else hedefSec(k); });
     const takSatir = document.createElement("div"); takSatir.className = "m50-pc-satir"; takSatir.appendChild(sbTakip); bTakip.appendChild(takSatir);
     const sbIpucu = document.createElement("p"); sbIpucu.className = "m50-pc-ipucu"; sbIpucu.style.display = "none"; bTakip.appendChild(sbIpucu);
+    // v2.4.225: takip ayarlari (izleme yontemi, kayip toleransi, takip FPS)
+    const yontemKap = document.createElement("div"); yontemKap.className = "m50-pc-hassas m50-pc-satir";
+    const yontemEt = document.createElement("span"); yontemEt.textContent = t.kaiTakipYontem || "İzleme Yöntemi";
+    const sbYontem = document.createElement("select"); sbYontem.className = "m50-pc-sb m50-pc-sb-yontem";
+    [["", t.kaiTakipYontemVarsayilan || "Otomatik (CSRT — hassas)"], ["kcf", t.kaiTakipYontemKcf || "Hızlı (KCF)"], ["mil", t.kaiTakipYontemMil || "Basit (MIL)"]].forEach(o => {
+      const op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sbYontem.appendChild(op); });
+    sbYontem.addEventListener("change", () => ayarDegisti(k, "takip_yontem", sbYontem.value));
+    yontemKap.append(yontemEt, sbYontem); bTakip.appendChild(yontemKap);
+    const tolerans = kaydiriciSatir(t.kaiTakipTolerans || "Kayıp Toleransı (sn)", "takip_tolerans", 1, 30, 1);
+    const takipFps = kaydiriciSatir(t.kaiTakipFps || "Takip FPS", "takip_fps", 1, 30, 1);
+    bTakip.append(tolerans.kap, takipFps.kap);
+    bTakip.appendChild(uygulaSatir());
+    const sbUygulaNot = document.createElement("p"); sbUygulaNot.className = "m50-pc-ayar-not"; bTakip.appendChild(sbUygulaNot);
+    const takNot = document.createElement("p"); takNot.className = "m50-pc-ayar-not"; takNot.textContent = t.kaiTakipYardim || "CSRT en hassas ama en yavaştır; KCF hızlı CPU'larda daha akıcıdır. Kayıp toleransı: hedef bu süre görünmezse takip bırakılır."; bTakip.appendChild(takNot);
     // KAYIT
     const bKayit = bolum(t.m50Kayit || "Kayıt", "fa-circle");
     const sbKayit = dugme("m50-pc-sb-kayit", "fa-circle");
@@ -805,6 +884,8 @@
     p.append(baslik, govde);
     Object.assign(k, { pencere: p, baslik, video, sol, ad, rozetKanal, rozetBag, rozetTakip,
                        kanalDgm, sbGen, sbGenOlcu, sbTanima, sbHassasKap, sbHassas, sbHassasDeger, sbKayit, sbKayitBilgi, sbPip, sbTakip, sbIpucu,
+                       sbTespitFps: tespitFps.sl, sbTespitFpsDeger: tespitFps.dg, sbYontem, sbTolerans: tolerans.sl, sbToleransDeger: tolerans.dg,
+                       sbTakipFps: takipFps.sl, sbTakipFpsDeger: takipFps.dg, sbUygulaListe, sbUygulaNot, taslak: null,
                        takipte: false, aiTakip: null, aiZaman: null, pip: null, pipEtiket: null });
     // Çift tık: tespit kutusundaki hava aracını görüntü işleme verisiyle takip et
     video.addEventListener("dblclick", ev => {

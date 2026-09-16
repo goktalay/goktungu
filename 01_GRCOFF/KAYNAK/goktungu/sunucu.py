@@ -1275,10 +1275,21 @@ class WSSunucusu:
             # "acik" yazan bir gorevin gercekten calismasi beklenir.
             if kamera_id not in aktif and not gorevler:
                 return
+            # v2.4.225 (kullanici: "Hava Araci AI'yi kapattigimda takip de
+            # durdu"): TESPIT ve TAKIP ayri seylerdir. Kamerada manuel/pasif
+            # takip surerken tum siniflar kapatilirsa akis KAPATILMAZ; isci
+            # yalniz 'takip' goreviyle (tespit modeli calismadan) surer.
+            # Ayni sebeple takip aktifken "temiz yeniden baslatma" yapilmaz;
+            # isci ayarlari yerinde gunceller (takip kaybolmaz).
+            takipte = kamera_id in (getattr(self.ai_yonetici, "takipler", None) or {})
+            if not gorevler and takipte:
+                gorevler = "takip"
+                self.konsol("AI", f"Kamera #{kamera_id}: tespit kapatildi, "
+                            "aktif takip surdurulur", "bilgi")
             # v2.4.224 (kullanici istegi: "Uygula"): panelden uygulanan ayar
             # aktif izlemeyi once DURDURUR, sonra temiz baslatir — isci canli
             # akista yeniden atanirken tespit bozulmasin.
-            if gorevler and kamera_id in aktif and getattr(self, "_ai_yeniden_baslat_iste", False):
+            if gorevler and kamera_id in aktif and not takipte and getattr(self, "_ai_yeniden_baslat_iste", False):
                 await _db_is_parcasi(self.ai_yonetici.izleme_durdur, kamera_id)
             if gorevler:
                 await _db_is_parcasi(

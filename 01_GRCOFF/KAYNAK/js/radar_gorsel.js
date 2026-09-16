@@ -754,6 +754,25 @@ window.eoIkonlariGuncelle = function(liste){
 const eoKameraOnizlemeler = {};   // eo_id -> DOM
 const eoKameraOlusturuldu = {};   // eo_id -> true (oturumda bir kez)
 let eoKameraOnizlemeKuruldu = false;
+// v2.4.225 (kullanici bildirimi: M50 penceresi acikken haritadaki goruntu
+// kesiliyor; istegi: ikona cift tik ac / tekrar cift tik kapat): haritadaki
+// sabit canli cerceve VARSAYILAN KAPALIDIR; her cerceve ayri bir MJPEG akisi
+// actigi icin (pencere + PiP + hover + harita) tarayici baglanti siniri
+// asiliyor ve akislardan biri karariyordu. Acik olanlar localStorage'da.
+const EO_ONIZLEME_ANAHTAR = "m50_harita_onizleme";
+let eoSonListe = [];
+function eoOnizlemeAcikSet(){
+  try { const v = JSON.parse(localStorage.getItem(EO_ONIZLEME_ANAHTAR) || "[]"); return new Set(Array.isArray(v) ? v.map(Number) : []); } catch (e) { return new Set(); }
+}
+window.eoHaritaOnizlemeAcikMi = function (eid){ return eoOnizlemeAcikSet().has(Number(eid)); };
+window.eoHaritaOnizlemeAcKapa = function (eid){
+  eid = Number(eid); const set = eoOnizlemeAcikSet();
+  const acildi = !set.has(eid);
+  if (acildi) set.add(eid); else set.delete(eid);
+  try { localStorage.setItem(EO_ONIZLEME_ANAHTAR, JSON.stringify([...set])); } catch (e) {}
+  eoKameraOnizlemeTazele(eoSonListe);
+  return acildi;
+};
 function eoKameraOnizlemeKonumla(){
   if (typeof viewer === "undefined" || !viewer || !viewer.scene) return;
   for (const [eid, el] of Object.entries(eoKameraOnizlemeler)){
@@ -776,13 +795,16 @@ function eoKameraOnizlemeSil(eid){
   delete eoKameraOnizlemeler[eid];
 }
 function eoKameraOnizlemeTazele(liste){
+  eoSonListe = liste || [];
   const alan = document.getElementById("haritaAlan");
   const gorulen = {};
+  const acikSet = eoOnizlemeAcikSet();
   if (alan && typeof window.kameraOnizlemeUrl === "function"){
     for (const c of liste){
       const eid = Number(c.eo_id);
       const d = c.m50_durum || {};
       if (!eoIkonVarliklar[eid] || d.durum !== "bagli") continue;
+      if (!acikSet.has(eid)) continue;   // v2.4.225: yalniz cift tikla acilanlar
       const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(eid) : null;
       if (!kam){
         if (!eoKameraOlusturuldu[eid] && typeof window.m50KameraOlustur === "function"){
@@ -797,7 +819,7 @@ function eoKameraOnizlemeTazele(liste){
         el = document.createElement("button");
         el.type = "button";
         el.className = "dron-kamera-onizleme eo-kamera-onizleme";
-        el.title = "Çift tıklayın: M50 canlı görüntü penceresi";
+        el.title = (typeof D === "function" && D().eoOnizlemeCerceveIpucu) || "Çift tık: M50 penceresi · ikona çift tık: bu çerçeveyi kapat";
         const img = document.createElement("img");
         img.alt = "M50 canlı görüntü"; img.decoding = "async";
         const etiket = document.createElement("span");

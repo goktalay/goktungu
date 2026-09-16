@@ -1391,6 +1391,11 @@
     background: var(--dugme-arka); border: 1px solid var(--cizgi); border-radius: 4px; cursor: pointer; }
   .m50-pc-sol .m50-pc-hassas { display: flex; align-items: center; gap: 8px; }
   .m50-pc-sol .m50-pc-hassas input[type=range] { flex: 1 1 auto; width: auto; padding: 0; margin: 0; accent-color: #3b82f6; }
+  /* v2.4.225: M50 Tanima/Takip bolumlerinde AI + takip ayarlari ve Uygula */
+  .m50-pc-sol .m50-pc-hassas > span { flex: 0 0 auto; font-size: 11px; color: var(--soluk); min-width: 8em; }
+  .m50-pc-sol .m50-pc-hassas select.m50-pc-sb { flex: 1 1 auto; min-width: 0; }
+  .m50-pc-sol .m50-pc-uygula { margin-top: 6px; }
+  .m50-pc-sol .m50-pc-uygula .kai-uygula-dgm { width: 100%; justify-content: center; }
   .m50-pc-sol .m50-pc-ipucu { margin: 0; color: #ffe2a3; }
   .m50-pc-sol .m50-pc-ayar-not { margin: 0; font-size: 10px; color: var(--soluk); line-height: 1.4; word-break: break-all; }
   .m50-pc-sol .m50-pc-ayar-satir { display: flex; align-items: center; gap: 8px; padding: 1px 0; cursor: pointer; color: var(--metin); }
