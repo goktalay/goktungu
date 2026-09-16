@@ -1,6 +1,6 @@
 # GÖKTUNGU DJI Köprüsü — Google Play mağaza künyesi
 
-Paket adı: `com.gokkubbetech.goktungu`
+Paket adı: `com.turkbey.goktungu`
 Sürüm: 1.0.0 (versionCode 1)
 Yayıncı: Türkbey Teknoloji Anonim Şirketi
 
@@ -199,7 +199,7 @@ gerçek görüntüler ilk cihaz denemesinde alınıp değiştirilmelidir.
 
 ## Yayın öncesi gereken kullanıcı işlemleri
 
-1. **DJI API anahtarı** — `developer.dji.com` üzerinden `com.gokkubbetech.goktungu`
+1. **DJI API anahtarı** — `developer.dji.com` üzerinden `com.turkbey.goktungu`
    paket adı için üretilip `yerel.properties` dosyasına yazılmalı.
 2. **Gizlilik politikası bağlantısı** — genel erişime açık bir URL
    zorunlu. Öneri: `https://goktungu.com/yasal/gizlilik/`

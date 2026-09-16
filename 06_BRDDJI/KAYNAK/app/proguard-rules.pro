@@ -21,4 +21,4 @@
 -dontwarn androidx.room.**
 
 # GDP protokol veri siniflari -- alan adlari JSON'a birebir yansir.
--keep class com.gokkubbetech.goktungu.veri.** { *; }
+-keep class com.turkbey.goktungu.veri.** { *; }

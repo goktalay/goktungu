@@ -4,18 +4,18 @@ plugins {
 }
 
 android {
-    namespace 'com.gokkubbetech.goktungumav'
+    namespace 'com.turkbey.goktungumav'
     compileSdk rootProject.ext.derleme_sdk
 
     defaultConfig {
         // AYRI PAKET ADI (bilincli karar).
         //
-        // DJI koprusu `com.gokkubbetech.goktungu` kullaniyor.  Play
+        // DJI koprusu `com.turkbey.goktungu` kullaniyor.  Play
         // Store paket adini benzersiz kimlik olarak alir; ayni adla
         // ikinci uygulama YAYIMLANAMAZ ve mevcut DJI koprusunun
         // uzerine yazardi.  Bu yuzden MAVLink koprusu ayri uygulama
         // olarak yayimlanir.
-        applicationId 'com.gokkubbetech.goktungumav'
+        applicationId 'com.turkbey.goktungumav'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         versionCode 1

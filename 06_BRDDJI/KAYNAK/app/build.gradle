@@ -22,11 +22,11 @@ if (djiAnahtar?.isEmpty()) {
 }
 
 android {
-    namespace 'com.gokkubbetech.goktungu'
+    namespace 'com.turkbey.goktungu'
     compileSdk rootProject.ext.derleme_sdk
 
     defaultConfig {
-        applicationId 'com.gokkubbetech.goktungu'
+        applicationId 'com.turkbey.goktungu'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         versionCode 1
@@ -73,8 +73,12 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            // 1.0.0 (2026-09-16): `-PkucultmeKapali` ile R8 kapatilabilir. Merkez
+            // derleme kutusunda (OpenVZ, 8 GB) R8 DJI MSDK'yi kuculturken bellek
+            // yetersizliginden dusuyor; kucultmesiz APK islevsel olarak aynidir,
+            // yalnizca buyuktur (MSDK zaten proguard kurallariyla dagitilir).
+            minifyEnabled !project.hasProperty('kucultmeKapali')
+            shrinkResources !project.hasProperty('kucultmeKapali')
             proguardFiles getDefaultProguardFile(
                 'proguard-android-optimize.txt'), 'proguard-rules.pro'
             def imzaDosya = rootProject.file("imza.properties")

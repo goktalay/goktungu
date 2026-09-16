@@ -1,6 +1,6 @@
 # GÖKTUNGU MAVLink Köprüsü — Google Play mağaza künyesi
 
-Paket adı: `com.gokkubbetech.goktungumav`
+Paket adı: `com.turkbey.goktungumav`
 Sürüm: 1.0.0 (versionCode 1)
 Yayıncı: Türkbey Teknoloji Anonim Şirketi
 
