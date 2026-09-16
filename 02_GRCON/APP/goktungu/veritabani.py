@@ -361,6 +361,35 @@ def tablolari_olustur():
                 url         TEXT NOT NULL
             );
 
+            -- v2.4.191: coklu elektro-optik (eo_cihazlar.py).
+            CREATE TABLE IF NOT EXISTS eo_cihazlar (
+                id              INTEGER PRIMARY KEY,
+                isim            TEXT NOT NULL DEFAULT 'M50',
+                tur             TEXT NOT NULL DEFAULT 'm50',
+                ip              TEXT NOT NULL DEFAULT '',
+                port            INTEGER NOT NULL DEFAULT 39020,
+                lat             REAL,
+                lon             REAL,
+                kopru_ornek_id  INTEGER,
+                otomatik_baglan INTEGER NOT NULL DEFAULT 1,
+                firma_id        INTEGER
+            );
+
+            -- v2.4.190: coklu radar (radarlar.py). Eski tek radar ayari
+            -- ilk acilista 'Radar 1' olarak tasinir.
+            CREATE TABLE IF NOT EXISTS radarlar (
+                id              INTEGER PRIMARY KEY,
+                isim            TEXT NOT NULL DEFAULT 'Radar',
+                ip              TEXT NOT NULL DEFAULT '',
+                port            INTEGER NOT NULL DEFAULT 5001,
+                lat             REAL,
+                lon             REAL,
+                merkez_yonu     REAL NOT NULL DEFAULT 0.0,
+                kopru_ornek_id  INTEGER,
+                otomatik_baglan INTEGER NOT NULL DEFAULT 0,
+                firma_id        INTEGER
+            );
+
             CREATE TABLE IF NOT EXISTS lokasyonlar (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad          TEXT NOT NULL,
@@ -2115,6 +2144,14 @@ def _sema_guncelle():
             ("firma_id", "INTEGER"),
         ],
         "kameralar": [
+            # v2.4.193 (Faz D, kullanici istegi "kamera ayarlarinda FPS
+            # siniri verebileyim"): kare hizi tavani. 0/NULL degil 15
+            # varsayilani verilir; eski davranis (kodda sabit 15) birebir
+            # korunur ve mevcut kayitlar davranis degistirmez.
+            ("fps", "INTEGER NOT NULL DEFAULT 15"),
+            # v2.4.207 (kullanici istegi: M50 penceresinde cozunurluk secimi):
+            # vekil ciktisinin en buyuk genisligi (px). 960 = onceki sabit.
+            ("genislik", "INTEGER NOT NULL DEFAULT 960"),
             ("lokasyon_id", "INTEGER"),
             ("lat", "REAL"),
             ("lon", "REAL"),
@@ -2123,6 +2160,37 @@ def _sema_guncelle():
             # v2.4.2: kamera basina AI gorevleri (CSV):
             # yuz,plaka,hava_araci,insan,kara_araci
             ("ai_gorevler", "TEXT NOT NULL DEFAULT ''"),
+            # v2.5.21 / Yerel AI angajman altyapisi: kamera iki tipten
+            # biridir ve tip, yerel hedefin cografi konumunun HANGI
+            # yolla cozulecegini belirler:
+            #   'sabit' -> kamera sabit bir noktada; hedef konumu
+            #             kalibrasyondan cozulur (lat/lon/kam_yukseklik/
+            #             yon/tilt/fov) ve AYRI bir interceptor dron
+            #             angaje olur. Cozum: hedef_deposu.konum_coz.
+            #   'dron'  -> kamera bir dronun govdesine sabittir ve onunla
+            #             hareket eder; konum dronun canli MAVLink pozundan
+            #             cozulur. Cozum: hedef_deposu.hareketli_konum_coz.
+            # Bos/eski kayitlar 'sabit' sayilir ama 'kalibre'=0 oldugu
+            # icin angajmana ALINAMAZ (sessiz yanlis konum yerine acik
+            # ret). dron_uid alani (yukarida) tip='dron' icin kaynak
+            # dronu tasir.
+            ("kamera_tipi", "TEXT NOT NULL DEFAULT 'sabit'"),
+            # Sabit kamera kalibrasyonu (tip='sabit' icin anlamli):
+            ("kam_yukseklik", "REAL"),   # kamera merceginin yer ustu yuksekligi (m)
+            ("yon", "REAL"),             # kamera boresight azimutu (derece, 0=kuzey, saat yonu)
+            ("tilt", "REAL"),            # boresight ufuk alti egim acisi (derece, +asagi)
+            ("fov_yatay", "REAL"),       # yatay gorus acisi (derece)
+            ("fov_dikey", "REAL"),       # dikey gorus acisi (derece)
+            # Kamera montaj acilari (tip='dron' icin; hareketli_konum_coz):
+            ("montaj_pan", "REAL"),
+            ("montaj_tilt", "REAL"),
+            ("montaj_roll", "REAL"),
+            # 0/1: kalibrasyon eksiksiz mi? Eksikse angajman reddedilir.
+            ("kalibre", "INTEGER NOT NULL DEFAULT 0"),
+            # v2.5.24: sınıf başına yerel AI hassasiyeti (JSON).
+            # {"insan":50,"kara_araci":50,"hava_araci":50}; 10-90.
+            # Boş/eksik => 50 (işçide mevcut davranışa eşit; regresyon yok).
+            ("ai_hassasiyet", "TEXT NOT NULL DEFAULT ''"),
         ],
         "ai_tespitler": [
             # v2.4.2: tespit -> ucus kaydi bagi (ucuslar.id TEXT)
@@ -2510,14 +2578,11 @@ def _varsayilan_ai_sunuculari():
     except Exception:
         pass
 
-    kayitlar = [
-        ("ASUS Ascent GX10", "nvidia", "192.168.1.100", 8900, 8,
-         "NVIDIA GB10 Grace Blackwell tabanli AI islem sunucusu. "
-         "Host adresini agdaki gercek IP ile guncelleyin."),
-        ("CPU AI Sunucusu (Yerel)", "cpu", "127.0.0.1", 8900, 4,
-         "Ana sunucu ile ayni makinede calisan CPU tabanli isci "
-         "(Windows/Linux). GCS acilisinda otomatik baslatilir."),
-    ]
+    # v2.4.153: ORNEK KAYITLAR ARTIK TOHUMLANMAZ. GRCOFF yerel isciyi
+    # main.py::_yerel_ai_kaydet gercek portuyla kendisi kaydeder; ornek
+    # adresli (192.168.1.100) ve eski portlu (127.0.0.1:8900) kayitlar
+    # arayuzde hayalet "yanit vermiyor" sunucular olarak kaliyordu.
+    kayitlar = []
     with baglanti() as con:
         for ad, tip, host, port, kapasite, notlar in kayitlar:
             var = con.execute(

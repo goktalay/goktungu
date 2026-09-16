@@ -81,6 +81,215 @@ function tipRengi(tip){
       || (aktifTema === "koyu" ? "#9aa7b4" : "#5c6b7a");  // bilinmeyen tip
 }
 const varliklar = {};
+// GRCOFF: dron UID ile bağlı ve aktif olan yerel kamera için yalnız görsel
+// önizleme. Bu katman komut üretmez; tıklama ortak kamera izleme penceresini açar.
+const dronKameraOnizlemeler = {}; // sysid -> DOM kapsayıcısı
+let dronKameraOnizlemeKuruldu = false;
+function dronKameraOnizlemeSil(sysid){
+  const sid = String(sysid);
+  const el = dronKameraOnizlemeler[sid];
+  if (el) el.remove();
+  delete dronKameraOnizlemeler[sid];
+}
+function dronKameraOnizlemeKonumla(){
+  if (typeof viewer === "undefined" || !viewer || !viewer.scene) return;
+  for (const [sid, el] of Object.entries(dronKameraOnizlemeler)){
+    const ent = varliklar[sid];
+    let pos = ent && ent.position;
+    if (pos && typeof pos.getValue === "function") pos = pos.getValue(Cesium.JulianDate.now());
+    if (!pos){ el.style.display = "none"; continue; }
+    const p = Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, pos);
+    const c = viewer.scene.canvas;
+    if (!p || p.x < -120 || p.y < -100 || p.x > c.clientWidth + 120 ||
+        p.y > c.clientHeight + 100){
+      el.style.display = "none";
+      continue;
+    }
+    el.style.display = "block";
+    el.style.transform = "translate(" + Math.round(p.x + 24) + "px," +
+      Math.round(p.y - 32) + "px)";
+  }
+}
+function dronKameraOnizlemeKur(){
+  if (dronKameraOnizlemeKuruldu || typeof viewer === "undefined" || !viewer || !viewer.scene) return;
+  dronKameraOnizlemeKuruldu = true;
+  viewer.scene.postRender.addEventListener(dronKameraOnizlemeKonumla);
+}
+function dronKameraOnizlemeTazele(d){
+  const sid = String(d && d.sysid);
+  const uid = String((d && (d.uid || d.dron_uid)) || "").trim();
+  const kam = uid ? (window._kameralarSon || []).find((k) =>
+    String((k && k.dron_uid) || "").trim() === uid) : null;
+  const aktif = kam && typeof window.kameraIzlemeAktifMi === "function" &&
+    window.kameraIzlemeAktifMi(kam.id);
+  // v2.5.24: Harita küçük önizlemesi yalnız görüntü hedefi 'harita' iken
+  // (tek konumda gösterim; yüzen/panel/tam ekran seçiliyse haritada çizilmez).
+  // v2.4.222: goruntu konumu secenegi kalkti; oynayan kamera haritada DA gosterilir
+  const haritaHedef = !!kam;
+  if (!sid || !d || !d.baglanti || !kam || !aktif || !haritaHedef || !varliklar[sid]){
+    dronKameraOnizlemeSil(sid);
+    return;
+  }
+  const alan = document.getElementById("haritaAlan");
+  if (!alan || typeof window.kameraOnizlemeUrl !== "function") return;
+  let el = dronKameraOnizlemeler[sid];
+  if (!el){
+    el = document.createElement("button");
+    el.type = "button";
+    el.className = "dron-kamera-onizleme";
+    el.title = "Canlı kamera görüntüsünü aç";
+    const img = document.createElement("img");
+    img.alt = "Dron kamerası canlı önizleme";
+    img.decoding = "async";
+    const etiket = document.createElement("span");
+    etiket.textContent = "CANLI";
+    el.append(img, etiket);
+    el.title = "Çift tıklayın: yüzen panelde aç";
+    el.addEventListener("click", (ev) => {
+      // Tek tık haritayı kaydırmasın/seçmesin; açma çift tıkla yapılır.
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+    // v2.4.164: Kullanıcı isteği — haritadaki videoya ÇİFT TIK -> yüzen panel.
+    el.addEventListener("dblclick", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const kameraId = Number(el.dataset.kameraId);
+      if (!Number.isFinite(kameraId)) return;
+      if (typeof window.kameraGoruntuHedefiAyarla === "function")
+        window.kameraGoruntuHedefiAyarla(kameraId, "yuzen");
+      else if (typeof window.kameraIzlemeAc === "function")
+        window.kameraIzlemeAc(kameraId);
+    });
+    alan.appendChild(el);
+    dronKameraOnizlemeler[sid] = el;
+  }
+  const kameraId = Number(kam.id);
+  if (Number(el.dataset.kameraId) !== kameraId){
+    el.dataset.kameraId = String(kameraId);
+    // URL yalnız uygulamanın kendi /kamera/<id> vekilidir.
+    const im = el.querySelector("img");
+    im.onerror = () => { el.classList.add("kam-hata"); el.setAttribute("data-kam-hata", (typeof D === "function" && D().kamBaglantiYok) || "BAĞLANTI YOK"); };
+    im.onload = () => { el.classList.remove("kam-hata"); el.removeAttribute("data-kam-hata"); };
+    im.src = window.kameraOnizlemeUrl(kameraId);
+  }
+  dronKameraOnizlemeKur();
+  dronKameraOnizlemeKonumla();
+}
+window.dronKameraHaritaOnizlemeTazele = function(){
+  Object.values(sonVeri).forEach((veri) => dronKameraOnizlemeTazele(veri));
+  dronKameraOnizlemeKonumla();
+};
+
+// v2.5.24: Dron kartındaki kamera kontrol satırı. Drona bağlı (dron_uid)
+// yerel kamera varsa: Kamera Başlat/Durdur + görüntü hedefi + Yapay Zeka
+// Ayarları düğmeleri. Komut üretmez; yalnız yerel görüntü/AI arayüzüdür.
+function dronBagliKamera(d){
+  const uid = String((d && (d.uid || d.dron_uid)) || "").trim();
+  if (!uid) return null;
+  return (window._kameralarSon || []).find((k) =>
+    String((k && k.dron_uid) || "").trim() === uid) || null;
+}
+function dronKartKameraSatirTazele(kart, d){
+  const satir = kart && kart.kok && kart.kok._kameraSatir;
+  if (!satir) return;
+  const kam = dronBagliKamera(d);
+  if (!kam){
+    satir.classList.add("gizli");
+    satir.innerHTML = "";
+    kart._kamId = null;
+    return;
+  }
+  satir.classList.remove("gizli");
+  // Bağlı kamera değiştiyse satırı yeniden kur (odak sıçramasın diye
+  // yalnız değişimde).
+  if (kart._kamId !== kam.id){
+    kart._kamId = kam.id;
+    satir.innerHTML = "";
+    const ad = document.createElement("span");
+    ad.className = "dk-kam-ad";
+    ad.innerHTML = "<i class='fa-solid fa-video'></i> " +
+      String(kam.isim || ("#" + kam.id)).replace(/[<>&]/g, "");
+    const play = document.createElement("button");
+    play.type = "button";
+    play.className = "dk-kam-play";
+    play.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const oyn = typeof window.kameraIzlemeAktifMi === "function" &&
+        window.kameraIzlemeAktifMi(kam.id);
+      if (oyn && typeof window.kameraIzlemeDurdur === "function")
+        window.kameraIzlemeDurdur(kam.id);
+      else if (typeof window.kameraIzlemeAc === "function")
+        window.kameraIzlemeAc(kam.id);
+      setTimeout(() => dronKartKameraSatirDurum(kart, kam.id), 150);
+    });
+    // v2.4.158: Kontroller taşmasın diye görüntü hedefi + AI ayarları bir
+    // "⋯" açılır menüsüne konur. Ad + Başlat görünür kalır.
+    const menuBtn = document.createElement("button");
+    menuBtn.type = "button";
+    menuBtn.className = "dk-kam-menu-btn";
+    menuBtn.title = "Kamera seçenekleri";
+    menuBtn.innerHTML = "<i class='fa-solid fa-ellipsis-vertical'></i>";
+    const menu = document.createElement("div");
+    menu.className = "dk-kam-menu gizli";
+    if (typeof window.kameraGoruntuHedefSecici === "function"){
+      const gh = document.createElement("div");
+      gh.className = "dk-kam-menu-satir";
+      const et = document.createElement("span");
+      et.className = "dk-kam-menu-etiket";
+      et.textContent = "Görüntü konumu";
+      gh.append(et, window.kameraGoruntuHedefSecici(kam.id));
+      menu.appendChild(gh);
+    }
+    if (typeof window.kameraAiAyarButonu === "function"){
+      const ai = document.createElement("div");
+      ai.className = "dk-kam-menu-satir";
+      const aiBtn = window.kameraAiAyarButonu(kam.id, "dk-kam-ai");
+      // metinli göster
+      aiBtn.innerHTML = "<i class='fa-solid fa-robot'></i><span>Yapay Zeka Ayarları</span>";
+      aiBtn.classList.add("dk-kam-menu-ai");
+      ai.appendChild(aiBtn);
+      menu.appendChild(ai);
+    }
+    menuBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const acik = !menu.classList.contains("gizli");
+      // diğer açık menüleri kapat
+      document.querySelectorAll(".dk-kam-menu").forEach((m) => m.classList.add("gizli"));
+      menu.classList.toggle("gizli", acik);
+    });
+    // dışarı tıklayınca kapan
+    if (!kart._kamMenuKapat){
+      kart._kamMenuKapat = (ev) => {
+        if (!satir.contains(ev.target)) menu.classList.add("gizli");
+      };
+      document.addEventListener("click", kart._kamMenuKapat);
+    }
+    const sarmal = document.createElement("div");
+    sarmal.className = "dk-kam-menu-sarmal";
+    sarmal.append(menuBtn, menu);
+    satir.append(ad, play, sarmal);
+    kart._kamPlay = play;
+  }
+  dronKartKameraSatirDurum(kart, kam.id);
+}
+function dronKartKameraSatirDurum(kart, kamId){
+  const play = kart && kart._kamPlay;
+  if (!play) return;
+  const oyn = typeof window.kameraIzlemeAktifMi === "function" &&
+    window.kameraIzlemeAktifMi(kamId);
+  play.classList.toggle("aktif", !!oyn);
+  play.innerHTML = oyn
+    ? "<i class='fa-solid fa-stop'></i><span>Durdur</span>"
+    : "<i class='fa-solid fa-play'></i><span>Başlat</span>";
+}
+// Kamera listesi/oynatma değişince tüm kartların satırını tazele.
+window.dronKartKameraTazeleTum = function(){
+  Object.entries(dronKartlar || {}).forEach(([sid, kart]) => {
+    const d = sonVeri[sid];
+    if (d) dronKartKameraSatirTazele(kart, d);
+  });
+};
 let ilkOdak = false;
 const sonVeri = {};
 
@@ -607,7 +816,10 @@ function varlikGuncelle(d){
     window.dronHomeGuncelle(d);
 
   // Harita varligi icin gecerli konum sart
-  if (!window.gecerliKonumMu(d.lat, d.lon)) return; /* FAZ18-IS29C */
+  if (!window.gecerliKonumMu(d.lat, d.lon)) {
+    dronKameraOnizlemeSil(d.sysid);
+    return;
+  } /* FAZ18-IS29C */
   // v2.4.29: Yukseklik ZEMINE GORE (alt_rel) verilir ve konumlandirma
   // `heightReference: RELATIVE_TO_GROUND` ile yapilir. Onceki surumlerde
   // `fromDegrees(lon, lat, alt_rel)` ELIPSOID referansina yerlestiriyordu;
@@ -657,6 +869,9 @@ function varlikGuncelle(d){
       id: "dron_" + d.sysid,
       position: pos,
       label: {
+        // v2.4.202 (kullanici istegi): bilgi etiketi VARSAYILAN GIZLI;
+        // fare ikonun uzerine gelince harita_hover.js acar.
+        show: false,
         text: etiket,
         font: "bold 12px Consolas, monospace",
         fillColor: Cesium.Color.fromCssColorString(renk),
@@ -814,6 +1029,7 @@ function varlikGuncelle(d){
     }
     e.label.fillColor = Cesium.Color.fromCssColorString(renk).withAlpha(alfa);
   }
+  dronKameraOnizlemeTazele(d);
 }
 
 function dronSil(sysid) {
@@ -827,9 +1043,10 @@ function dronSil(sysid) {
     viewer.entities.remove(varliklar[sysid]);
     delete varliklar[sysid];
   }
-  // Hareket izini ve drona bağlı küçük görüntü önizlemesini de sil.
+  // Hareket izini ve drona bağlı küçük görüntü önizlemelerini de sil.
   dronIzSil(sysid);
   dronGoruntuSil(sysid);
+  dronKameraOnizlemeSil(sysid);
   // v2.4.42: HOME ikonunu da kaldir (aksi halde dron listeden dustukten
   // sonra haritada sahipsiz bir ev bayragi kalirdi)
   if (typeof window.dronHomeSil === "function") window.dronHomeSil(sysid);
@@ -924,9 +1141,30 @@ function dronKartGuncelle(d) {
     btnAyir.className = "dk-ayir-btn";
     btnAyir.title = D().dkAyir;
     // FAZ18-IS27-28-30: panel icindeyken ikon BUYULT (ayri pencereye al)
-    btnAyir.innerHTML = DK_BUYULT_IKON;
+    // v2.4.224 (kullanici istegi): panelde BUYULT dugmesi GORUNMEZ; karta
+    // tiklamak yuzen paneli acar. Yuzen panelde bu dugme KAPAT'tir (carpi):
+    // paneli kapatir, kart panele doner. Yaninda KUCULT: yalniz baslik kalir.
+    btnAyir.innerHTML = DK_KAPAT_IKON;
+    btnAyir.title = D().dkPencereKapat || "Pencereyi Kapat";
     btnAyir.addEventListener("click", (ev) => {
       ev.stopPropagation();
+      dronKartAyirToggle(d.sysid);
+    });
+    const btnKucult = document.createElement("button");
+    btnKucult.className = "dk-kucult-btn";
+    btnKucult.title = D().dkYalnizBaslik || "Küçült (yalnız başlık)";
+    btnKucult.innerHTML = DK_KUCULT_IKON;
+    btnKucult.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const kucuk = kok.classList.toggle("dk-yalniz-baslik");
+      btnKucult.innerHTML = kucuk ? DK_BUYULT_IKON : DK_KUCULT_IKON;
+      btnKucult.title = kucuk ? (D().dkGeriBuyut || "Geri büyüt") : (D().dkYalnizBaslik || "Küçült (yalnız başlık)");
+    });
+    // Panel icinde basliga tiklamak yuzen paneli acar; zaten acik ise
+    // (golge satir) pencere one alinir — bkz. dronKartAyirToggle.
+    baslik.addEventListener("click", (ev) => {
+      if (kok.classList.contains("ayrik")) return;
+      if (ev.target.closest("button")) return;
       dronKartAyirToggle(d.sysid);
     });
     // v2.4.23: baslikteki uc nokta menu dugmesi KALDIRILDI.
@@ -948,6 +1186,7 @@ function dronKartGuncelle(d) {
     baslik.appendChild(nokta);
     baslik.appendChild(adSpan);
     baslik.appendChild(ozetSpan);
+    baslik.appendChild(btnKucult);
     baslik.appendChild(btnAyir);
     baslik.appendChild(ok);
     // FAZ18-IS27-28-30: KART KAPALI DOGAR. Kullanici "dron panelde
@@ -990,6 +1229,7 @@ function dronKartGuncelle(d) {
     // Ayrik moddayken basliktan surukleme
     dronKartSurukleKur(kok, baslik);
     kok._btnAyir = btnAyir;
+    kok._btnKucult = btnKucult;
 
     // Govde = gostergeler + telemetri (dinamik) + aksiyon bari (SABIT)
     const govde = document.createElement("div");
@@ -1169,6 +1409,12 @@ function dronKartGuncelle(d) {
     // konsola yazma, onun yerine dronun panelinin altinda acilir kapanir
     // bir konsol olsun ve tum iletisimi ciplak olarak orada gostersin."
     const konsolBolum = dkKonsolBolumuKur(d.sysid);
+    // v2.5.24: Drona bağlı kamera kontrol satırı (kamera başlat/durdur +
+    // görüntü hedefi + Yapay Zeka Ayarları). Bağlı kamera yoksa gizli.
+    const kameraSatir = document.createElement("div");
+    kameraSatir.className = "dk-kamera-satir gizli";
+    govde.appendChild(kameraSatir);
+    kok._kameraSatir = kameraSatir;
     govde.appendChild(konsolBolum.kok);
     kok.appendChild(baslik);
     kok.appendChild(govde);
@@ -1195,6 +1441,7 @@ function dronKartGuncelle(d) {
                                     hazirRozet, islemBtn,
                                     paramSerit, paramSeritIc,
                                     konsol: konsolBolum,
+                                    kameraSatir: kameraSatir,
                                     gosDilTazele: gostergeler.dilTazele };
     // Gostergeler DOM'a eklendikten sonra baslatilir (jquery secici)
     gostergeler.baslat();
@@ -1208,6 +1455,7 @@ function dronKartGuncelle(d) {
   // v2.1.1: Ad tiklanabilirligi kaldirildi - ayrik moddayken basliktan
   // panel tasima ad linkine takiliyordu. Isim duzenleme dron menusune tasindi.
   kart.nokta.style.background = d.baglanti ? "var(--iyi)" : "var(--kotu)";
+  dronKartKameraSatirTazele(kart, d);
   // v2.4.41: dron bagli gorulur gorulmez tam parametre setini otomatik
   // yukle (istek tek kez gider; bkz. dkParamOtoYuklemeDene).
   if (d.baglanti) dkParamOtoYuklemeDene(d.sysid, d);
@@ -1233,6 +1481,8 @@ function dronKartGuncelle(d) {
   }
   // Renk karesi: haritadaki ikon/iz rengiyle ayni kalici renk
   if (kart.renkKare) kart.renkKare.style.background = dronRengi(d.sysid);
+  // v2.4.224: paneldeki golge satir basligi canli tutulur
+  if (kart.golgeBaslik) dkGolgeTazele(kart);
   // Kalibrasyon popup'i aciksa pusula ilerlemesini isle
   if (typeof kalibTelemetriIsle === "function") kalibTelemetriIsle(d);
   // v2.4.2: dron-kamera bagini tazele (uid teslimi)
@@ -1889,6 +2139,20 @@ function dkIsimDuzenlePopup(anka, sysid) {
   isimInput.placeholder = dronUid || "D" + sysid;
   isimAlan.append(isimEtiket, isimInput);
   govde.appendChild(isimAlan);
+  // v2.4.202 (kullanici istegi): dronun harita rengi secilebilir.
+  const renkAlan = document.createElement("label");
+  renkAlan.className = "dk-dron-duzenle-alan";
+  const renkEtiket = document.createElement("span");
+  renkEtiket.className = "dk-mp-etiket";
+  renkEtiket.textContent = t.dkRenkEtiket || "Harita rengi";
+  const renkInput = document.createElement("input");
+  renkInput.type = "color";
+  renkInput.className = "dk-mp-input dk-renk-sec";
+  const _ilkRenk = (typeof dronRengi === "function") ? dronRengi(sysid) : "#5cc8ff";
+  renkInput.value = /^#[0-9a-fA-F]{6}$/.test(_ilkRenk || "") ? _ilkRenk : "#5cc8ff";
+  renkInput.dataset.ilk = renkInput.value;
+  renkAlan.append(renkEtiket, renkInput);
+  govde.appendChild(renkAlan);
 
   const kaynakBolum = document.createElement("section");
   kaynakBolum.className = "dk-dron-duzenle-kaynak";
@@ -1960,6 +2224,12 @@ function dkIsimDuzenlePopup(anka, sysid) {
     if (yeniIsim && ws && ws.readyState === 1) {
       ws.send(JSON.stringify({tip: "dron_isim_kaydet", sysid: sysid, isim: yeniIsim}));
       if (d) d.kullanici_isim = yeniIsim;
+    }
+    const yeniRenk = String(renkInput.value || "").toLowerCase();
+    if (yeniRenk && yeniRenk !== renkInput.dataset.ilk && ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({tip: "dron_renk_kaydet", sysid: sysid, renk: yeniRenk}));
+      if (!window.dronRenkler) window.dronRenkler = {};
+      window.dronRenkler[String(sysid)] = yeniRenk;
     }
     const mevcut = pop._gkMevcut;
     const oid = Number(kopruSel.value || 0);
@@ -2436,13 +2706,16 @@ function dronKartAyirToggle(sysid) {
     // GERI YERLESTIR: panele geri don (kompakt gorunum de sifirlanir)
     kok.classList.remove("ayrik");
     kok.classList.remove("kompakt");
+    kok.classList.remove("dk-yalniz-baslik");
+    if (kok._btnKucult) kok._btnKucult.innerHTML = DK_KUCULT_IKON;
     kok.style.left = ""; kok.style.top = "";
-    // v2.4.33: kart artik Baglanti Yoneticisi'ndeki grubuna doner.
-    // Grup henuz cizilmemisse gizli yedek kaba dusulur; bir sonraki
-    // bagGruplariDoldur() kartı grubuna tasir.
-    if (!(typeof window.dronKartiGrubaYerlestir === "function" &&
+    // v2.4.224: panelde duran golge satirin yerine kart geri konur.
+    if (kart.golge && kart.golge.parentNode) {
+      kart.golge.replaceWith(kok);
+    } else if (!(typeof window.dronKartiGrubaYerlestir === "function" &&
           window.dronKartiGrubaYerlestir(sysid, kok)))
       dronKartListesi.appendChild(kok);
+    kart.golge = null; kart.golgeBaslik = null;
     // FAZ18-IS27-28-30: panele donen kart KAPALI duruma alinir.
     // Onceki surum yalniz `ayrik`/`kompakt` siniflarini kaldiriyordu,
     // kart panele ACIK donuyordu; bu, "panel icinde yalniz baslik
@@ -2450,15 +2723,32 @@ function dronKartAyirToggle(sysid) {
     kart.baslik.classList.add("kapali");
     kart.govde.classList.add("gizli");
     if (kok._btnAyir) {
-      // FAZ18-IS27-28-30: panel icinde ikon BUYULT olur.
-      kok._btnAyir.title = t.dkBuyult || t.dkAyir;
-      kok._btnAyir.innerHTML = DK_BUYULT_IKON;
+      // v2.4.224: ikon her iki durumda da KAPAT (carpi); panelde CSS gizler.
+      kok._btnAyir.title = t.dkPencereKapat || t.dkAyir;
+      kok._btnAyir.innerHTML = DK_KAPAT_IKON;
     }
     // v2.4.35: ok ipucusu (kart geri yerlesirken kapali/acik degismis olabilir)
     dkOkTazele(kart.baslik, kok.querySelector(".dk-ok"));
   } else {
     // AYIR: tasinabilir popup yap (mevcut ekran konumunda ac)
     const rect = kok.getBoundingClientRect();
+    // v2.4.224 (kullanici istegi): kart LISTEDEN CIKMAZ — yerine yalniz
+    // basligi tasiyan GOLGE satir konur; tiklaninca acik pencere one alinir.
+    if (kok.parentNode) {
+      const golge = document.createElement("div");
+      golge.className = "dron-kart dk-golge";
+      golge.dataset.sysid = String(sysid);
+      const gb = kart.baslik.cloneNode(true);
+      gb.querySelectorAll(".dk-ayir-btn, .dk-kucult-btn, .dk-ok").forEach((x) => x.remove());
+      gb.classList.add("kapali");
+      golge.appendChild(gb);
+      golge.addEventListener("click", () => {
+        if (typeof window.pencereEnUsteGetir === "function") window.pencereEnUsteGetir(kok);
+        kok.classList.add("dk-vurgu"); setTimeout(() => kok.classList.remove("dk-vurgu"), 600);
+      });
+      kok.parentNode.insertBefore(golge, kok);
+      kart.golge = golge; kart.golgeBaslik = gb;
+    }
     kok.classList.add("ayrik");
     // Govde kapali ise ac (popup'ta icerik gorunmeli)
     kart.baslik.classList.remove("kapali");
@@ -2475,10 +2765,9 @@ function dronKartAyirToggle(sysid) {
     if (typeof window.pencereEnUsteKur === "function") window.pencereEnUsteKur(kok);
     if (typeof window.pencereEnUsteGetir === "function") window.pencereEnUsteGetir(kok);
     if (kok._btnAyir) {
-      // FAZ18-IS27-28-30: ayrik (pencere) modda ikon KUCULT olur; basmak
-      // karti panele geri koyar (islev v2.4.39'dan beri ayni).
-      kok._btnAyir.title = t.dkKucult || t.dkPencereKapat || t.dkYerlestir;
-      kok._btnAyir.innerHTML = DK_KUCULT_IKON;
+      // v2.4.224: yuzen panelde KAPAT (carpi) — paneli kapatir, kart panele doner.
+      kok._btnAyir.title = t.dkPencereKapat || t.dkYerlestir;
+      kok._btnAyir.innerHTML = DK_KAPAT_IKON;
     }
     // v2.4.35: ayrilan kart acik gelir; ok ipucusu buna gore
     dkOkTazele(kart.baslik, kok.querySelector(".dk-ok"));
@@ -2495,6 +2784,23 @@ function dronKartAyirToggle(sysid) {
 // Burada ayrica fa-chevron-down -> fa-chevron-right degistirilseydi
 // iki etki ust uste binerdi: saga bakan ikon bir de -90 dondurulup
 // YUKARI bakardi. Yalniz baslik (ipucu) guncellenir.
+// v2.4.224: yuzen pencere acikken panelde kalan golge satirin basligini
+// gercek basliktan kopyalar (durum sinifi, LED, ad, ozet, renk karesi).
+function dkGolgeTazele(kart) {
+  const gb = kart.golgeBaslik;
+  if (!gb) return;
+  gb.className = kart.baslik.className.replace(/\bkapali\b/g, "").trim() + " kapali";
+  const kaynak = kart.baslik, hedef = gb;
+  const cift = [[".dk-nokta", "style"], [".dk-renk-kare", "style"], [".dk-ad", "text"], [".dk-baslik-ozet", "html"]];
+  for (const [sec, tur] of cift) {
+    const a = kaynak.querySelector(sec), b = hedef.querySelector(sec);
+    if (!a || !b) continue;
+    if (tur === "style") b.setAttribute("style", a.getAttribute("style") || "");
+    else if (tur === "text") { b.textContent = a.textContent; b.setAttribute("style", a.getAttribute("style") || ""); }
+    else if (b.innerHTML !== a.innerHTML) b.innerHTML = a.innerHTML;
+  }
+}
+
 function dkOkTazele(baslik, ok) {
   if (!ok) return;
   const kapali = baslik.classList.contains("kapali");
@@ -2812,7 +3118,7 @@ function dronKartSurukleKur(kok, baslik) {
     // v2.4.35: .dk-ok eklendi. Eklenmezse oka basildiginda surukleme
     // baslar, pointerdown preventDefault edildigi icin click olayi
     // hic olusmaz ve ok ile ac/kapa yine calismaz.
-    if (ev.target.closest(".dk-ayir-btn") || ev.target.closest(".dk-menu-btn") ||
+    if (ev.target.closest(".dk-ayir-btn") || ev.target.closest(".dk-kucult-btn") || ev.target.closest(".dk-menu-btn") ||
         ev.target.closest(".dk-joy-btn") || ev.target.closest(".dk-ok")) return;
     const rect = kok.getBoundingClientRect();
     surukle = { dx: ev.clientX - rect.left, dy: ev.clientY - rect.top };

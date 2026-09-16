@@ -18,8 +18,27 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.20"
+KOPRU_SURUM = "1.7.21"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.21",
+        "tarih": "2026-09-16",
+        "notlar": [
+            "RADAR (Merkez 2.4.227 radar yonetim penceresi): T serisi "
+            "tarama radari protokolunun kalan komutlari eklendi — SETSELECT/"
+            "GETSELECT (secili iz listesi), SETJSON/GETJSON (koordinat ve "
+            "sistem JSON yapilandirmasi) ve UPLOAD_TARGET_V3 nokta izi "
+            "sayaci. Yeni eylemler: secim_yaz, secim_oku, json_oku, "
+            "json_yaz; sonuclar durum paketindeki radar_ayarlar alaninda "
+            "(secili_izler, secim_sonuc, json_tip/json_metin/json_ts/"
+            "json_sonuc) ve radar_durum'da (nokta_sayisi, nokta_kare) "
+            "merkeze tasinir.",
+            "M50 (Merkez 2.4.204/2.4.205 ile ayni): PTZ hiz ust siniri "
+            "10 -> 60; cihazin RTSP adresine kimlik gomulu geldiginde akis "
+            "kapatilmak yerine adres arindirilarak verilir (kimlik "
+            "telemetriye asla cikmaz).",
+        ]
+    },
     {
         "surum": "1.7.20",
         "tarih": "2026-09-14",
@@ -846,8 +865,8 @@ SERVIS_SURUMLERI = {
     "ai": "2.1.0",
     "video": "2.0.1",
     "gcsdual": "1.1.0",
-    "radar": "2.2.0",
-    "m50": "1.1.0",
+    "radar": "2.3.0",
+    "m50": "1.2.0",
 }
 
 SERVIS_GECMIS = {
@@ -1050,6 +1069,15 @@ SERVIS_GECMIS = {
     ],
     "m50": [
         {
+            "surum": "1.2.0",
+            "tarih": "2026-09-16",
+            "notlar": [
+                "PTZ hiz araligi 1-60 (Merkez kaydiricisiyla ayni).",
+                "RTSP adresine gomulu kimlik: akis kapatilmaz, adres "
+                "arindirilir; kimlik duruma/telemetriye tasinmaz.",
+            ]
+        },
+        {
             "surum": "1.1.0",
             "tarih": "2026-09-14",
             "notlar": [
@@ -1066,6 +1094,18 @@ SERVIS_GECMIS = {
         },
     ],
     "radar": [
+        {
+            "surum": "2.3.0",
+            "tarih": "2026-09-16",
+            "notlar": [
+                "SETSELECT/GETSELECT: secili iz listesi yazma/okuma "
+                "(eylem secim_yaz/secim_oku).",
+                "SETJSON/GETJSON: koordinat (0) ve sistem (1) JSON "
+                "yapilandirmasi okuma/yazma (eylem json_oku/json_yaz).",
+                "UPLOAD_TARGET_V3 nokta izi cercevesi sayilir "
+                "(nokta_sayisi, nokta_kare).",
+            ]
+        },
         {
             "surum": "2.2.0",
             "tarih": "2026-09-14",

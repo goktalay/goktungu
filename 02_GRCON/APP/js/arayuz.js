@@ -47,8 +47,11 @@
     const panel = document.getElementById(panelId);
     if (!panel) return;
     // Kayitli konum varsa oradan ac; yoksa dugme hizasinda basla
+    // v2.4.213 KOK NEDEN (kullanici: "tum paneller son boyut ve konumda
+    // acilsin"): boyut kaydediliyor (popup_tasima resize tutamaci) ama
+    // acilista YALNIZ konum uygulaniyordu. Artik w/h de geri yuklenir.
     if (typeof window.pencereKonumUygula === "function" &&
-        window.pencereKonumUygula("yz_" + panelId, panel)) {
+        window.pencereKonumUygula("yz_" + panelId, panel, true)) {
       panel.dataset.tasindi = "1";
     } else {
       panel.dataset.tasindi = "";
@@ -60,6 +63,11 @@
     if (typeof window.pencereEnUsteGetir === "function") window.pencereEnUsteGetir(panel);
     if (btn) btn.classList.add("acik");
   }
+  // v2.4.181: diger modullerin (ornegin kameralar.js'in M50 dugmesi)
+  // dinamik olarak eklenen dugmelerden ayni yuzen panel ac/getir
+  // davranisini tetikleyebilmesi icin disari acilir.
+  window.yuzenPanelAc = function (panelId){ panelAc(panelId, null); };
+
   function panelKapat(panelId){
     const panel = document.getElementById(panelId);
     if (panel) panel.classList.add("yuzen-gizli");
@@ -206,7 +214,8 @@
       // Konumu kalici kaydet
       if (panel.dataset.tasindi === "1" &&
           typeof window.pencereKonumKaydet === "function") {
-        window.pencereKonumKaydet("yz_" + panel.id, panel);
+        // v2.4.213: tasima kaydi boyutu SILMESIN (w/h ile birlikte yazilir)
+        window.pencereKonumKaydet("yz_" + panel.id, panel, true);
       }
     }
     baslik.addEventListener("pointerup", birak);

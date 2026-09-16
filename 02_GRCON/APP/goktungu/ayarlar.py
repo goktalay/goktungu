@@ -17,6 +17,28 @@ from .sabitler import AYAR_DOSYASI, SYSID_TABLOSU
 from . import veritabani
 
 
+
+_SIR_ANAHTARLARI = ("parola", "password", "sifre", "secret", "token", "jeton", "api_key", "anahtar")
+
+
+def _sirlari_maskele(deger, derinlik=0):
+    """Gunluk icin: sir tasiyan anahtarlarin degerini '***' yapar (iç içe)."""
+    if derinlik > 6:
+        return "..."
+    if isinstance(deger, dict):
+        cikti = {}
+        for k, v in deger.items():
+            ad = str(k).lower()
+            if any(s in ad for s in _SIR_ANAHTARLARI) and v not in (None, ""):
+                cikti[k] = "***"
+            else:
+                cikti[k] = _sirlari_maskele(v, derinlik + 1)
+        return cikti
+    if isinstance(deger, list):
+        return [_sirlari_maskele(v, derinlik + 1) for v in deger[:50]]
+    return deger
+
+
 class AyarYoneticisi:
     """Program ayarlari (gcs.db 'ayarlar' tablosu) okuma/yazma."""
 
@@ -216,7 +238,7 @@ class AyarYoneticisi:
             # birebir korunur.
             return {"lisansli": False, "kaynak": "merkez",
                     "sinirsiz": False, "ai": False,
-                    "radar": False, "gccdual": False,
+                    "radar": False, "gccdual": False, "m50": False,
                     "firma_unvan": "", "lisans_uid": "", "hata": ""}
         return {
             "lisansli": bool(o.get("lisansli")),
@@ -225,6 +247,13 @@ class AyarYoneticisi:
             "ai": bool(o.get("ai")),
             "radar": bool(o.get("radar")),
             "gccdual": bool(o.get("gccdual")),
+            # v2.4.203 OLCULEN KUSUR: bu ozet `m50` alanini TASIMIYORDU.
+            # "Lisansi Yenile" yaniti tam ozeti gonderdigi icin menu
+            # aciliyor, sayfa yenilenince (F5) buradaki eksik ozet gelip
+            # `lisansUstSinir("m50")` tanimsiz -> false oldugundan
+            # Elektro-Optik menusu yeniden gizleniyordu. Belge dogruydu;
+            # eksik olan bu satirdi.
+            "m50": bool(o.get("m50", False)),
             "firma_unvan": str(o.get("firma_unvan") or ""),
             "lisans_uid": str(o.get("lisans_uid") or ""),
             # Hata metni arayuze TASINIR: 5.000 $ odemis musteri
@@ -254,13 +283,16 @@ class AyarYoneticisi:
         return ayarlar
 
     def kaydet(self, yeni):
+        """Ayarlari yazar; gunluge SIRLAR MASKELENEREK dusulur."""
         with veritabani.baglanti() as con:
             for k, v in (yeni or {}).items():
                 con.execute(
                     "INSERT OR REPLACE INTO ayarlar (anahtar, deger)"
                     " VALUES (?,?)",
                     (str(k), json.dumps(v, ensure_ascii=False)))
-        self.konsol("AYAR", f"Kaydedildi: {yeni}")
+        # v2.4.217 GUVENLIK: sir tasiyan alanlar (parola, jeton...) gunluge
+        # ASLA acik yazilmaz (Ubuntu gunlugunde M50 parolasi acik gorulmustu).
+        self.konsol("AYAR", f"Kaydedildi: {_sirlari_maskele(yeni)}")
         return self.yukle()
 
     def sysid_tipi(self, sysid):

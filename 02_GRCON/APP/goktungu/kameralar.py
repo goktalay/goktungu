@@ -4,6 +4,7 @@
 Mevcut gcs_kameralar.json varsa ilk calistirmada otomatik aktarilir.
 """
 import json
+import math
 import threading
 
 from .sabitler import PROJE_KOKU, _veri_yolu
@@ -13,7 +14,7 @@ import os
 DOSYA_ESKI = _veri_yolu("gcs_kameralar.json")
 
 GECERLI_PROTOKOLLER = ("rtsp", "rtp", "mjpeg", "hls", "http", "donanim",
-                       "dji")
+                       "dji", "dosya", "m50")
 PROXY_GEREKTIREN = ("rtsp", "rtp")
 
 
@@ -51,6 +52,35 @@ class KameraYoneticisi:
               f"({len(liste)} kayit).")
 
     # ------------------------------------------------------------------
+    GENISLIKLER = (320, 480, 640, 800, 960, 1280, 1600, 1920)
+
+    @classmethod
+    def _genislik(cls, deger, varsayilan=960):
+        """v2.4.207: vekil cikti genisligi; izinli degerlerden en yakini."""
+        try:
+            g = int(deger)
+        except (TypeError, ValueError):
+            return varsayilan
+        if g <= 0:
+            return varsayilan
+        return min(cls.GENISLIKLER, key=lambda x: abs(x - g))
+
+    @staticmethod
+    def _fps(deger, varsayilan=15):
+        """Kare hizi tavani: 1-30 arasina kelepcelenir.
+
+        UST SINIR NEDEN 30: yakalama hatti her kareyi JPEG'e kodlar ve
+        AI isçisi ayni akisi yeniden acar. 30'un uzeri saha makinesinde
+        islemciyi doyurur, goruntu gecikmesi ARTAR. Alt sinir 1'dir:
+        0 verilirse yayin hic kare uretmez ve kullanici bunu "kamera
+        bozuk" diye okur.
+        """
+        try:
+            n = int(deger)
+        except (TypeError, ValueError):
+            return int(varsayilan)
+        return max(1, min(30, n))
+
     @staticmethod
     def _dogrula(isim, protokol, url):
         isim = (isim or "").strip()[:60]
@@ -102,8 +132,10 @@ class KameraYoneticisi:
         return dict(row) if row else None
 
     # v2.4.2: kamera basina AI gorev anahtarlari
-    GECERLI_AI_GOREVLER = ("yuz", "plaka", "hava_araci", "insan",
-                           "kara_araci")
+    # v2.4.169: hava araci alt siniflari (cok sinifli YOLO modeliyle
+    # anlamli): her biri ayri ac/kapat gorevi + hassasiyet tasir.
+    GECERLI_AI_GOREVLER = ("hava_araci", "drone", "ucak", "helikopter",
+                           "kus")
 
     @classmethod
     def _ai_gorevler(cls, deger):
@@ -128,29 +160,68 @@ class KameraYoneticisi:
         except (TypeError, ValueError):
             return None
 
+    @staticmethod
+    def _ai_hassasiyet(deger):
+        """Sınıf başına hassasiyeti dogrulanmis JSON dizeye cevirir.
+
+        Yalniz insan/yuz/kara_araci/hava_araci anahtarlari, 10-90 araligi.
+        Gecersiz/eksik alan tamamen atlanir (isci varsayilani 50 uygular).
+        """
+        import json as _j
+        if isinstance(deger, str):
+            try:
+                deger = _j.loads(deger) if deger.strip() else {}
+            except (ValueError, TypeError):
+                return ""
+        if not isinstance(deger, dict):
+            return ""
+        temiz = {}
+        for k in ("hava_araci", "drone", "ucak", "helikopter", "kus"):
+            try:
+                v = int(round(float(deger[k])))
+            except (KeyError, TypeError, ValueError):
+                continue
+            if 10 <= v <= 90:
+                temiz[k] = v
+        # v2.4.173: takip ayarlari ayni JSON'da tasinir
+        y = str(deger.get("takip_yontem") or "").lower()
+        if y in ("csrt", "kcf", "mil"):
+            temiz["takip_yontem"] = y
+        try:
+            t = int(round(float(deger["takip_tolerans"])))
+            if 1 <= t <= 30:
+                temiz["takip_tolerans"] = t
+        except (KeyError, TypeError, ValueError):
+            pass
+        return _j.dumps(temiz, separators=(",", ":")) if temiz else ""
+
     def ekle(self, isim, protokol, url, lokasyon_id=None,
-             ai_gorevler="", firma_id=None, kopru_ornek_id=None):
+             ai_gorevler="", firma_id=None, kopru_ornek_id=None,
+             ai_hassasiyet="", fps=None, genislik=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None, None
         isim, protokol, url = d
         lok = self._lokasyon_id(lokasyon_id)
         gorevler = self._ai_gorevler(ai_gorevler)
+        hassas = self._ai_hassasiyet(ai_hassasiyet)
         fid = int(firma_id) if firma_id else None
         kopru = self._lokasyon_id(kopru_ornek_id)   # ayni dogrulama
         with self._kilit:
             with baglanti() as con:
                 cur = con.execute(
                     "INSERT INTO kameralar (isim, protokol, url, "
-                    "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id) "
-                    "VALUES (?,?,?,?,?,?,?)",
-                    (isim, protokol, url, lok, gorevler, fid, kopru),
+                    "lokasyon_id, ai_gorevler, firma_id, kopru_ornek_id, "
+                    "ai_hassasiyet, fps, genislik) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (isim, protokol, url, lok, gorevler, fid, kopru, hassas,
+                     self._fps(fps), self._genislik(genislik)),
                 )
                 yeni_id = cur.lastrowid
         return yeni_id, self.listele(firma_id)
 
     def guncelle(self, kamera_id, isim, protokol, url, lokasyon_id=None,
-                 ai_gorevler="", firma_id=None, kopru_ornek_id=None):
+                 ai_gorevler="", firma_id=None, kopru_ornek_id=None,
+                 ai_hassasiyet=None, fps=None, genislik=None):
         d = self._dogrula(isim, protokol, url)
         if d is None:
             return None
@@ -162,15 +233,38 @@ class KameraYoneticisi:
         kopru = self._lokasyon_id(kopru_ornek_id)
         with self._kilit:
             with baglanti() as con:
-                cur = con.execute(
-                    "UPDATE kameralar "
-                    "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
-                    "ai_gorevler=?, kopru_ornek_id=? WHERE id=?",
-                    (isim, protokol, url, lok, gorevler, kopru,
-                     int(kamera_id)),
-                )
+                if ai_hassasiyet is None:
+                    # Eski istemci alanı göndermez: mevcut değeri KORU.
+                    cur = con.execute(
+                        "UPDATE kameralar "
+                        "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
+                        "ai_gorevler=?, kopru_ornek_id=? WHERE id=?",
+                        (isim, protokol, url, lok, gorevler, kopru,
+                         int(kamera_id)),
+                    )
+                else:
+                    cur = con.execute(
+                        "UPDATE kameralar "
+                        "SET isim=?, protokol=?, url=?, lokasyon_id=?, "
+                        "ai_gorevler=?, kopru_ornek_id=?, ai_hassasiyet=? "
+                        "WHERE id=?",
+                        (isim, protokol, url, lok, gorevler, kopru,
+                         self._ai_hassasiyet(ai_hassasiyet), int(kamera_id)),
+                    )
                 if cur.rowcount == 0:
                     return None
+                # v2.4.193: `fps` AYRI yazilir ve None iken HIC yazilmaz.
+                # Gerekce `ai_hassasiyet` ile ayni: AI ayar paneli gibi
+                # KISMI kaydetme yapan istemciler bu alani gondermez;
+                # ortak UPDATE'e konsaydi her AI ayarinda FPS varsayilana
+                # doner ve operatorun verdigi sinir sessizce kaybolurdu.
+                if fps is not None:
+                    con.execute("UPDATE kameralar SET fps=? WHERE id=?",
+                                (self._fps(fps), int(kamera_id)))
+                # v2.4.207: genislik de fps gibi KISMI — None iken yazilmaz.
+                if genislik is not None:
+                    con.execute("UPDATE kameralar SET genislik=? WHERE id=?",
+                                (self._genislik(genislik), int(kamera_id)))
         return self.listele(firma_id)
 
     def sil(self, kamera_id, firma_id=None):
@@ -181,6 +275,94 @@ class KameraYoneticisi:
                 cur = con.execute(
                     "DELETE FROM kameralar WHERE id = ?", (int(kamera_id),)
                 )
+                if cur.rowcount == 0:
+                    return None
+        return self.listele(firma_id)
+
+    # ------------------------------------------------------------------
+    # v2.5.21: Yerel AI angajman kalibrasyonu (iki kamera tipi)
+    # ------------------------------------------------------------------
+    GECERLI_KAMERA_TIPLERI = ("sabit", "dron")
+
+    @staticmethod
+    def _f(deger):
+        """None/gecersizde None; aksi halde sonlu float."""
+        try:
+            v = float(deger)
+        except (TypeError, ValueError):
+            return None
+        return v if math.isfinite(v) else None
+
+    @classmethod
+    def _kalibrasyon_dogrula(cls, veri):
+        """Kamera kalibrasyon girisini dogrular ve alan sozlugu doner.
+
+        `kalibre` ancak SECILEN tip icin gerekli tum alanlar gecerliyse 1
+        olur. Eksik/gecersiz kalibrasyon = 0; boylece yerel hedef cozumu
+        (yerel_hedef.py) "sessiz yanlis konum" yerine acik ret uretir.
+
+        Iki tip:
+          'sabit' -> lat/lon/kam_yukseklik/yon/tilt/fov_yatay/fov_dikey
+          'dron'  -> dron_uid + fov + montaj_pan/tilt/roll
+        """
+        tip = str(veri.get("kamera_tipi") or "sabit").strip().lower()
+        if tip not in cls.GECERLI_KAMERA_TIPLERI:
+            tip = "sabit"
+        lat = cls._f(veri.get("lat"))
+        lon = cls._f(veri.get("lon"))
+        H = cls._f(veri.get("kam_yukseklik"))
+        yon = cls._f(veri.get("yon"))
+        tilt = cls._f(veri.get("tilt"))
+        fov_y = cls._f(veri.get("fov_yatay"))
+        fov_d = cls._f(veri.get("fov_dikey"))
+        mpan = cls._f(veri.get("montaj_pan"))
+        mtilt = cls._f(veri.get("montaj_tilt"))
+        mroll = cls._f(veri.get("montaj_roll"))
+
+        def _koord(la, lo):
+            return (la is not None and lo is not None and
+                    -90.0 <= la <= 90.0 and -180.0 <= lo <= 180.0)
+
+        def _fov(f):
+            return f is not None and 0.0 < f < 180.0
+
+        kalibre = 0
+        if tip == "sabit":
+            if (_koord(lat, lon) and H is not None and H >= 0 and
+                    yon is not None and tilt is not None and
+                    _fov(fov_y) and _fov(fov_d)):
+                kalibre = 1
+        else:  # dron
+            uid = str(veri.get("dron_uid") or "").strip()
+            if (uid and _fov(fov_y) and _fov(fov_d) and
+                    None not in (mpan, mtilt, mroll)):
+                kalibre = 1
+
+        return {
+            "kamera_tipi": tip,
+            "lat": lat, "lon": lon, "kam_yukseklik": H,
+            "yon": yon, "tilt": tilt,
+            "fov_yatay": fov_y, "fov_dikey": fov_d,
+            "montaj_pan": mpan, "montaj_tilt": mtilt, "montaj_roll": mroll,
+            "kalibre": kalibre,
+        }
+
+    def kalibrasyon_kaydet(self, kamera_id, veri, firma_id=None):
+        """Kamera kalibrasyon alanlarini gunceller. Guncel liste veya None."""
+        if not self.sahibi_mi(kamera_id, firma_id):
+            return None
+        a = self._kalibrasyon_dogrula(veri if isinstance(veri, dict) else {})
+        with self._kilit:
+            with baglanti() as con:
+                cur = con.execute(
+                    "UPDATE kameralar SET kamera_tipi=?, lat=?, lon=?, "
+                    "kam_yukseklik=?, yon=?, tilt=?, fov_yatay=?, "
+                    "fov_dikey=?, montaj_pan=?, montaj_tilt=?, "
+                    "montaj_roll=?, kalibre=? WHERE id=?",
+                    (a["kamera_tipi"], a["lat"], a["lon"], a["kam_yukseklik"],
+                     a["yon"], a["tilt"], a["fov_yatay"], a["fov_dikey"],
+                     a["montaj_pan"], a["montaj_tilt"], a["montaj_roll"],
+                     a["kalibre"], int(kamera_id)))
                 if cur.rowcount == 0:
                     return None
         return self.listele(firma_id)

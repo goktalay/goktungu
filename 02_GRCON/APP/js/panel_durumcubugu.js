@@ -152,6 +152,33 @@
       }
     },
 
+    /* v2.4.198) Radarlar — "Radar Sayısı : 0/0 (Toplam / Bağlı)" */
+    {
+      ad: "radarlar",
+      kap: "#yzRadarlar",
+      izle: "#radarlarListe",
+      ikon: "fa-solid fa-satellite-dish",
+      metin: function () {
+        var toplam = say("#radarlarListe", ".cl-satir");
+        var bagli = sayHam("#radarlarListe", ".ra-nokta.d-bagli");
+        return ciftDeger(S("sbRadar", "Radar Sayısı"), toplam, bagli,
+                         S("sbToplamBagli", "Toplam / Bağlı"));
+      }
+    },
+    /* v2.4.198) Elektro Optik Cihazları — "Elektro Optik Sayısı : 0/0" */
+    {
+      ad: "eo",
+      kap: "#yzEoCihazlar",
+      izle: "#eoCihazListe",
+      ikon: "fa-solid fa-binoculars",
+      metin: function () {
+        var toplam = say("#eoCihazListe", ".cl-satir");
+        var bagli = sayHam("#eoCihazListe", ".ra-nokta.d-bagli");
+        return ciftDeger(S("sbEo", "Elektro Optik Sayısı"), toplam, bagli,
+                         S("sbToplamBagli", "Toplam / Bağlı"));
+      }
+    },
+
     /* 3) Kameralar — "Kamera Sayısı : 0/0 (Toplam / Aktif)" */
     {
       ad: "kameralar",

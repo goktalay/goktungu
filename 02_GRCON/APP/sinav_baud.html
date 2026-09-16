@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>v2.4.37 baud listesi sinavi</title>
+<style>
+  body{background:#12161c;color:#dfe6ee;font:13px/1.5 system-ui,sans-serif;
+       padding:16px}
+  select{background:#1b2129;color:#dfe6ee;border:1px solid #38424f;
+         padding:4px 6px;border-radius:4px;min-width:140px}
+  pre{background:#0d1116;border:1px solid #232b35;border-radius:6px;
+      padding:10px;white-space:pre-wrap}
+  .g{color:#7ddc8a}.k{color:#ff8a8a}
+</style>
+</head>
+<body>
+
+<!-- index.html'deki bagBaud SECICISININ BIREBIR KOPYASI.
+     Kopya elle yazilmaz: sayfa yuklendiginde index.html'den cekilip
+     buraya gomulur, boylece sinav gercek kaynagi olcer. -->
+<div id="yuva">yukleniyor…</div>
+
+<pre id="cikti"></pre>
+
+<script>
+// index.html'den bagBaud seciciyi cek. Sinavin index.html ile
+// ayrisma riskini ortadan kaldirir: elle kopyalanan bir liste
+// index.html degistiginde sessizce eski kalirdi.
+const BEKLENEN = ["9600","19200","38400","57600","115200","230400",
+                  "250000","460800","500000","921600","1000000","1500000"];
+let gecti = 0, kaldi = 0;
+const satirlar = [];
+
+function den(ad, kosul, ayrinti){
+  if (kosul){ gecti++; satirlar.push(`[GECTI ] ${ad}` +
+              (ayrinti ? `  -> ${ayrinti}` : "")); }
+  else { kaldi++; satirlar.push(`[KALDI ] ${ad}` +
+         (ayrinti ? `  -> ${ayrinti}` : "")); }
+}
+
+// seri.js'deki gecici secenek mantiginin AYNISI. Kaynakta degisirse
+// bu sinav da guncellenmelidir; amac davranisi olcmek.
+function dialogAc(sel, kayitliBaud){
+  Array.from(sel.querySelectorAll("option[data-gecici]"))
+       .forEach(o => o.remove());
+  const s = String(kayitliBaud || 57600);
+  if (!Array.from(sel.options).some(o => o.value === s)){
+    const ek = document.createElement("option");
+    ek.value = s; ek.textContent = s; ek.dataset.gecici = "1";
+    sel.appendChild(ek);
+  }
+  sel.value = s;
+}
+
+fetch("index.html").then(r => r.text()).then(html => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const kaynak = doc.getElementById("bagBaud");
+  if (!kaynak){
+    document.getElementById("cikti").textContent =
+      "index.html icinde #bagBaud bulunamadi";
+    return;
+  }
+  document.getElementById("yuva").innerHTML = "";
+  const sel = kaynak.cloneNode(true);
+  document.getElementById("yuva").appendChild(sel);
+
+  const degerler = Array.from(sel.options).map(o => o.value.trim());
+
+  den("115200 listede duruyor", degerler.includes("115200"));
+  den("115200 artik son deger DEGIL",
+      degerler[degerler.length - 1] !== "115200",
+      "son deger: " + degerler[degerler.length - 1]);
+
+  const eksik = BEKLENEN.filter(v => !degerler.includes(v));
+  den("beklenen tum hizlar mevcut", eksik.length === 0,
+      eksik.length ? "eksik: " + eksik.join(", ")
+                   : degerler.length + " secenek");
+
+  // Sirali olmali: kullanici listeyi tararken atlama gormemeli.
+  const sayilar = degerler.map(Number);
+  const sirali = sayilar.every((v, i) => i === 0 || v > sayilar[i - 1]);
+  den("degerler artan sirada", sirali, degerler.join(" < "));
+
+  // Varsayilan 57600 kalmali (RFD900X fabrika ayari). Yeni secenekler
+  // eklenirken selected kayarsa kullanici farkinda olmadan yanlis
+  // hizla baglanmaya calisir.
+  const secili = Array.from(sel.options).filter(o => o.defaultSelected);
+  den("varsayilan tek ve 57600",
+      secili.length === 1 && secili[0].value.trim() === "57600",
+      secili.map(o => o.value).join(",") || "yok");
+  den("secicinin baslangic degeri 57600", sel.value.trim() === "57600",
+      sel.value);
+
+  // Yeni yuksek hizlar gercekten secilebiliyor mu?
+  for (const v of ["230400","921600","1000000","1500000"]){
+    sel.value = v;
+    den(`${v} secilebiliyor`, sel.value === v, sel.value);
+  }
+
+  // parseInt ile okundugunda tam sayi vermeli (seri.js:113 davranisi).
+  sel.value = "1000000";
+  den("parseInt dogru okuyor", parseInt(sel.value, 10) === 1000000,
+      String(parseInt(sel.value, 10)));
+
+  // ---- Duzenleme modu: listede OLMAYAN kayitli deger ----
+  // Bu, v2.4.37'de eklenen korumanin asil sinavi.
+  dialogAc(sel, 76800);   // standart disi ama gecerli bir hiz
+  den("listede olmayan kayitli baud korunuyor",
+      sel.value === "76800", sel.value);
+  den("korunan deger gecici olarak isaretli",
+      !!sel.querySelector('option[data-gecici][value="76800"]'));
+
+  // Ayni dialog tekrar acilirsa gecici secenek birikmemeli.
+  dialogAc(sel, 76800);
+  dialogAc(sel, 76800);
+  den("gecici secenek birikmiyor",
+      sel.querySelectorAll('option[data-gecici]').length === 1,
+      sel.querySelectorAll('option[data-gecici]').length + " gecici");
+
+  // Bilinen bir degere donuldugunde gecici secenek temizlenmeli.
+  dialogAc(sel, 57600);
+  den("bilinen degere donuste gecici temizlendi",
+      sel.querySelectorAll('option[data-gecici]').length === 0 &&
+      sel.value === "57600", sel.value);
+
+  // Kayit baud'u hic yoksa 57600'e dusmeli.
+  dialogAc(sel, null);
+  den("baud yoksa 57600 varsayilani", sel.value === "57600", sel.value);
+
+  const c = document.getElementById("cikti");
+  c.innerHTML = satirlar.map(s =>
+      `<span class="${s.startsWith("[GECTI") ? "g" : "k"}">${s}</span>`
+    ).join("\n") +
+    `\n\n<b>SONUC: ${gecti}/${gecti + kaldi} gecti</b>`;
+});
+</script>
+</body>
+</html>

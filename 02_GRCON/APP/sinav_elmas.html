@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Elmas Ikon Sinavi</title>
+<script src="lib/Cesium/Cesium.js"></script>
+<script src="js/prizma_ikon.js"></script>
+<link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
+<style>
+  html,body,#harita{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
+  #rapor{position:absolute;left:0;top:0;z-index:9999;background:#000;color:#0f0;
+         font:12px/1.5 monospace;padding:8px;max-width:640px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="harita"></div>
+<div id="rapor">baslatiliyor...</div>
+<script>
+// ---------------------------------------------------------------------------
+// Elmas (bipiramit) ikon sinav sayfasi.
+//
+// Amac: `prizma_ikon.js` icindeki elmas geometrisinin GERCEKTEN cizildigini,
+// Cesium'un cizim dongusunun DURMADIGINI ve renklerin korundugunu kanitlamak.
+//
+// Neden ayri sayfa: ana arayuz uzerinden yapilan konsol sinavlarinda tarayici
+// sekmesi arada `about:blank`e dusuyor ve `viewer` referansi kayboluyordu.
+// Bu sayfa kendi kendine olcup sonucu DOM'a yazdigi icin tek bir goruntuleme
+// ile sonuc okunabilir.
+// ---------------------------------------------------------------------------
+const yaz = (s) => { document.getElementById("rapor").textContent = s; };
+
+// `prizma_ikon.js` global `viewer` degiskenini bekler; bu yuzden `var`
+// ile global tanimlanir (let/const modul kapsamina takilir).
+try {
+  window.viewer = new Cesium.Viewer("harita", {
+    baseLayerPicker: false, geocoder: false, homeButton: false,
+    sceneModePicker: false, navigationHelpButton: false, animation: false,
+    timeline: false, fullscreenButton: false, infoBox: false,
+    selectionIndicator: false, requestRenderMode: false,
+    imageryProvider: new Cesium.SingleTileImageryProvider({
+      url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wnwEABBQBAg2WBEcAAAAASUVORK5CYII=",
+      rectangle: Cesium.Rectangle.MAX_VALUE, tileWidth: 1, tileHeight: 1
+    })
+  });
+} catch (e) {
+  yaz("VIEWER KURULAMADI: " + (e.message || e));
+  throw e;
+}
+
+// Cesium hata panelini yakala
+let cizimHatasi = null;
+viewer.scene.renderError.addEventListener(function(scene, err){
+  cizimHatasi = String(err && err.message ? err.message : err);
+});
+
+let kare = 0;
+viewer.scene.postRender.addEventListener(function(){ kare++; });
+
+const lat = 37.5990, lon = 33.4400, yuk = 500;
+// Ikonlar arasi mesafe: yandan bakildiginda ucu de kadraja girecek
+// kadar yakin olmali. 0.0016 derece (~178 m) cok genisti.
+const ARALIK_DER = 0.00055;
+const RENKLER = [
+  ["#35d0ff", "mavi"],
+  ["#ff5d5d", "kirmizi"],
+  ["#c07bff", "mor"],
+];
+
+const P = window.PrizmaIkon;
+let kurulumNotu = "";
+if (!P) {
+  kurulumNotu = "PrizmaIkon YUKLENMEDI";
+} else {
+  RENKLER.forEach(function(cift, i){
+    const la = lat + i * ARALIK_DER;
+    viewer.entities.add({
+      id: "SE" + i,
+      position:    P.elmasKonumu(la, lon, yuk, false, undefined),
+      orientation: P.elmasYonu(la, lon, yuk, 45 * i, false, undefined),
+      ellipsoid:   P.elmasTanimi({ lat: la, lon: lon, yuk: yuk, yon: 45*i, renk: cift[0] }),
+    });
+  });
+}
+
+// Kamerayi ortadaki elmasin karsisina, yandan bakacak sekilde kur ki
+// silueti (ustte ve altta daralan elmas) gorunur olsun.
+// Kamera: ortadaki elmasin karsisinda, yatay hizada, 150 m uzakta.
+// Boylece siluet (ustte ve altta daralan elmas) net gorunur.
+viewer.camera.setView({
+  destination: Cesium.Cartesian3.fromDegrees(lon, lat + ARALIK_DER - 0.00135, yuk),
+  orientation: { heading: 0, pitch: 0, roll: 0 }
+});
+
+function pikselSay(){
+  const c = viewer.scene.canvas;
+  const gl = c.getContext("webgl2") || c.getContext("webgl");
+  if (!gl) return null;
+  viewer.scene.render();
+  const w = c.width, h = c.height;
+  const pix = new Uint8Array(w * h * 4);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pix);
+  const say = { mavi: 0, kirmizi: 0, mor: 0, toplam: w*h };
+  for (let i = 0; i < pix.length; i += 4) {
+    const r = pix[i], g = pix[i+1], b = pix[i+2];
+    if (b > 120 && b - r > 40 && g > 90 && g - r > 20) say.mavi++;
+    else if (r > 120 && r - g > 40 && r - b > 40)       say.kirmizi++;
+    else if (b > 110 && r > 90 && b - g > 40 && r - g > 20) say.mor++;
+  }
+  return { say: say, w: w, h: h };
+}
+
+setTimeout(function(){
+  const kare1 = kare;
+  setTimeout(function(){
+    const kare2 = kare;
+    const p = pikselSay();
+    const t = viewer.clock.currentTime;
+    const satir = [];
+    satir.push("=== ELMAS IKON SINAVI ===");
+    satir.push("kurulum      : " + (kurulumNotu || "PrizmaIkon yuklendi"));
+    satir.push("kare 3sn/6sn : " + kare1 + " / " + kare2 +
+               "   (artis=" + (kare2 - kare1) + ")");
+    satir.push("cizim hatasi : " + (cizimHatasi || "YOK"));
+    satir.push("hata paneli  : " +
+      (document.querySelector(".cesium-widget-errorPanel") ? "VAR" : "yok"));
+    satir.push("varlik       : " + viewer.entities.values.length);
+    if (p) {
+      satir.push("kanvas       : " + p.w + "x" + p.h);
+      satir.push("piksel mavi  : " + p.say.mavi);
+      satir.push("piksel kirmz : " + p.say.kirmizi);
+      satir.push("piksel mor   : " + p.say.mor);
+      const toplamRenk = p.say.mavi + p.say.kirmizi + p.say.mor;
+      satir.push("SONUC        : " +
+        (cizimHatasi ? "BASARISIZ (cizim hatasi)" :
+         (kare2 <= kare1 ? "BASARISIZ (cizim durdu)" :
+          (toplamRenk > 200 ? "GECTI (3 elmas cizildi, renkler korundu)" :
+                              "KUSKULU (renk pikseli az: " + toplamRenk + ")"))));
+    }
+    for (let i = 0; i < 3; i++) {
+      const e = viewer.entities.getById("SE" + i);
+      if (!e) { satir.push("SE" + i + " : YOK"); continue; }
+      const el = e.ellipsoid;
+      const r = el.radii.getValue(t);
+      satir.push("SE" + i + " (" + RENKLER[i][1] + ") radii=" +
+        r.x + "," + r.y + "," + r.z +
+        " stack=" + el.stackPartitions.getValue(t) +
+        " slice=" + el.slicePartitions.getValue(t) +
+        " href="  + el.heightReference.getValue(t));
+    }
+    yaz(satir.join("\n"));
+  }, 3000);
+}, 3000);
+</script>
+</body>
+</html>

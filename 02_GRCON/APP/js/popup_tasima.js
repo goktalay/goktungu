@@ -199,7 +199,7 @@
       // dogrudan kaydedilir.
       if (anahtar &&
           typeof window.pencereKonumKaydet === "function") {
-        window.pencereKonumKaydet(anahtar, pop, !!pop._boyutluKayit);
+        window.pencereKonumKaydet(anahtar, pop, true);
       }
     };
     bas.addEventListener("pointerup", birak);
@@ -207,7 +207,9 @@
 
     // Kayitli konumu uygula (varsa)
     if (anahtar && typeof window.pencereKonumUygula === "function") {
-      if (window.pencereKonumUygula(anahtar, pop, !!pop._boyutluKayit)) {
+      // v2.4.213: kayitli w/h varsa HER popup'ta uygulanir (bayrak
+      // tasinabilirYap'tan sonra kuruluyorsa boyut geri yuklenmiyordu).
+      if (window.pencereKonumUygula(anahtar, pop, true)) {
         const cs2 = getComputedStyle(pop);
         if (cs2.position !== "fixed" && cs2.position !== "absolute") {
           pop.style.position = "fixed";

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!-- GOKTUNGU v2.4.40 - Koridor gorevi tarayici sinavi.
+     Uretim koridor.js dosyasi yuklenir (taklit degil); geometri
+     cekirdegi window.koridorRotaUret / window.koridorKenarUret
+     uzerinden gercek deger ile olculur. -->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Koridor Sinavi v2.4.40</title>
+<style>
+  body{font:13px Consolas,monospace;background:#0f172a;color:#e2e8f0;padding:14px;}
+  .ok{color:#4ade80;} .no{color:#f87171;} h2{font-size:15px;margin:10px 0 6px;}
+  #ozet{margin-top:12px;padding:8px;border:1px solid #334155;border-radius:6px;}
+</style>
+</head>
+<body>
+<h2>GOKTUNGU v2.4.40 — Koridor gorevi olcumu</h2>
+<div id="cikti"></div>
+<div id="ozet">calisiyor...</div>
+
+<!-- Uretim modulunun bagimliliklari: sahte kabuk -->
+<script>
+  // i18n: koridor.js t() icinde D() kullanir
+  window.D = function(){ return {}; };
+  window.konsolYaz = function(){};
+  // Cesium ve viewer YOK -> ciz() erken cikar, geometri etkilenmez
+  window.__rotaDuzenlemeAktif = function(){ return false; };
+</script>
+<script src="js/koridor.js"></script>
+
+<script>
+(function(){
+  const cikti = document.getElementById("cikti");
+  let gecen = 0, kalan = 0;
+  function bak(ad, kosul, ek){
+    const iyi = !!kosul;
+    if (iyi) gecen++; else kalan++;
+    const d = document.createElement("div");
+    d.className = iyi ? "ok" : "no";
+    d.textContent = (iyi ? "[GECTI] " : "[KALDI] ") + ad +
+                    (ek ? "  -> " + ek : "");
+    cikti.appendChild(d);
+  }
+
+  // Yerel duzlem yardimcilari (dogrulama icin bagimsiz hesap)
+  const R = 6371000, rad = Math.PI/180;
+  function mesafeM(a, b){
+    const x = (b.lon - a.lon) * rad * R * Math.cos(a.lat * rad);
+    const y = (b.lat - a.lat) * rad * R;
+    return Math.hypot(x, y);
+  }
+
+  // ---- 1) API varligi ----
+  bak("koridorRotaUret disa acildi",
+      typeof window.koridorRotaUret === "function");
+  bak("koridorKenarUret disa acildi",
+      typeof window.koridorKenarUret === "function");
+  bak("koridorAc disa acildi", typeof window.koridorAc === "function");
+  bak("koridorDuzenle disa acildi",
+      typeof window.koridorDuzenle === "function");
+
+  // ---- 2) Duz hat, 100 m genislik ----
+  // Ankara civari, dogu-bati 1 km duz hat
+  const duz = [
+    {lat: 39.9000, lon: 32.8000},
+    {lat: 39.9000, lon: 32.8117},   // ~1000 m dogu
+  ];
+  const GEN = 100;
+  const k1 = window.koridorKenarUret(duz, GEN);
+  bak("duz hat: sol kenar nokta sayisi = merkez",
+      k1.sol.length === 2, "sol=" + k1.sol.length);
+  bak("duz hat: sag kenar nokta sayisi = merkez",
+      k1.sag.length === 2, "sag=" + k1.sag.length);
+
+  // Kenarlar merkezden tam W/2 uzakta mi
+  const d0 = mesafeM(duz[0], k1.sol[0]);
+  const d1 = mesafeM(duz[0], k1.sag[0]);
+  bak("duz hat: sol kenar merkezden W/2 uzakta",
+      Math.abs(d0 - GEN/2) < 1.0, d0.toFixed(2) + " m (bekl 50)");
+  bak("duz hat: sag kenar merkezden W/2 uzakta",
+      Math.abs(d1 - GEN/2) < 1.0, d1.toFixed(2) + " m (bekl 50)");
+
+  // Iki kenar arasi mesafe tam W
+  const gerc = mesafeM(k1.sol[0], k1.sag[0]);
+  bak("duz hat: kenarlar arasi mesafe = W",
+      Math.abs(gerc - GEN) < 1.0, gerc.toFixed(2) + " m (bekl 100)");
+
+  // Kenarlar merkezin ZIT taraflarinda mi (lat isareti)
+  const solKuzey = k1.sol[0].lat > duz[0].lat;
+  const sagKuzey = k1.sag[0].lat > duz[0].lat;
+  bak("duz hat: kenarlar merkezin zit taraflarinda",
+      solKuzey !== sagKuzey,
+      "sol.lat=" + k1.sol[0].lat.toFixed(6) +
+      " sag.lat=" + k1.sag[0].lat.toFixed(6));
+
+  // ---- 3) Rota deseni: sol ileri + sag geri ----
+  const r1 = window.koridorRotaUret(duz, GEN, 1);
+  bak("1 tur: nokta sayisi = 2 x merkez",
+      r1.length === 4, "n=" + r1.length);
+  // Ilk nokta sol[0], son nokta sag[0] olmali (sag ters gezilir)
+  bak("1 tur: rota sol kenardan baslar",
+      Math.abs(r1[0].lat - k1.sol[0].lat) < 1e-9 &&
+      Math.abs(r1[0].lon - k1.sol[0].lon) < 1e-9);
+  bak("1 tur: rota sag kenarin BASINDA biter (ters gezis)",
+      Math.abs(r1[3].lat - k1.sag[0].lat) < 1e-9 &&
+      Math.abs(r1[3].lon - k1.sag[0].lon) < 1e-9);
+
+  // ---- 4) Tur tekrari ----
+  const r3 = window.koridorRotaUret(duz, GEN, 3);
+  bak("3 tur: nokta sayisi 3 katina cikar",
+      r3.length === 12, "n=" + r3.length);
+  // Desen gercekten tekrar ediyor mu
+  let desenAyni = true;
+  for (let i = 0; i < 4; i++){
+    if (Math.abs(r3[i].lat - r3[i+4].lat) > 1e-9 ||
+        Math.abs(r3[i].lon - r3[i+4].lon) > 1e-9) desenAyni = false;
+  }
+  bak("3 tur: her tur ayni desen", desenAyni);
+
+  // Tur sayisi 0 / negatif -> en az 1 tur
+  bak("tur=0 -> en az 1 tur uretilir",
+      window.koridorRotaUret(duz, GEN, 0).length === 4);
+  bak("tur=-5 -> en az 1 tur uretilir",
+      window.koridorRotaUret(duz, GEN, -5).length === 4);
+
+  // ---- 5) Ucus mesafesi tur ile dogrusal artar ----
+  function toplamMesafe(r){
+    let m = 0;
+    for (let i = 1; i < r.length; i++) m += mesafeM(r[i-1], r[i]);
+    return m;
+  }
+  const m1 = toplamMesafe(r1), m3 = toplamMesafe(r3);
+  bak("mesafe: 3 tur > 1 tur", m3 > m1 * 2.5,
+      "1tur=" + Math.round(m1) + " m, 3tur=" + Math.round(m3) + " m");
+
+  // ---- 6) L donusu (kose davranisi) ----
+  const L = [
+    {lat: 39.9000, lon: 32.8000},
+    {lat: 39.9000, lon: 32.8117},
+    {lat: 39.9090, lon: 32.8117},   // ~1000 m kuzey
+  ];
+  const kL = window.koridorKenarUret(L, GEN);
+  bak("L hat: kenar nokta sayisi = 3",
+      kL.sol.length === 3 && kL.sag.length === 3,
+      "sol=" + kL.sol.length + " sag=" + kL.sag.length);
+  // Kosede mitre carpani devreye girer: kose ofseti duz kisimdan buyuk
+  const koseOfset = mesafeM(L[1], kL.sol[1]);
+  bak("L hat: kose ofseti W/2'den buyuk (mitre)",
+      koseOfset > GEN/2 - 0.5,
+      koseOfset.toFixed(2) + " m (W/2 = 50)");
+  // Ama KOSE_SINIR=2.5 ile sinirli -> firlamiyor
+  bak("L hat: kose ofseti mitre siniri icinde",
+      koseOfset <= (GEN/2) * 2.5 + 1.0,
+      koseOfset.toFixed(2) + " m <= " + ((GEN/2)*2.5).toFixed(2));
+
+  // ---- 7) Genislik degisimi rotayi gercekten degistirir ----
+  const kGenis = window.koridorKenarUret(duz, 400);
+  const gGenis = mesafeM(kGenis.sol[0], kGenis.sag[0]);
+  bak("genislik 400 m -> kenarlar arasi 400 m",
+      Math.abs(gGenis - 400) < 2.0, gGenis.toFixed(2) + " m");
+  bak("genislik degisimi kenar konumunu degistirir",
+      Math.abs(gGenis - gerc) > 250);
+
+  // ---- 8) Sinir durumlari ----
+  bak("tek nokta -> rota uretilmez",
+      window.koridorRotaUret([duz[0]], GEN, 1).length === 0);
+  bak("bos dizi -> rota uretilmez",
+      window.koridorRotaUret([], GEN, 1).length === 0);
+  bak("null -> rota uretilmez",
+      window.koridorRotaUret(null, GEN, 1).length === 0);
+  // Cakisan noktalar (ayni konum) cokmeye yol acmamali
+  const cak = [{lat:39.9,lon:32.8},{lat:39.9,lon:32.8},{lat:39.9,lon:32.81}];
+  let cakOk = true;
+  try {
+    const rc = window.koridorRotaUret(cak, GEN, 1);
+    cakOk = Array.isArray(rc) && rc.length === 6 &&
+            rc.every(n => isFinite(n.lat) && isFinite(n.lon));
+  } catch(e){ cakOk = false; }
+  bak("cakisan noktalar cokmeye yol acmaz (NaN yok)", cakOk);
+  // Genislik 0 -> en az 1 m'e sabitlenir, NaN uretmez
+  const k0 = window.koridorKenarUret(duz, 0);
+  bak("genislik 0 -> NaN uretmez",
+      k0.sol.length === 2 && isFinite(k0.sol[0].lat));
+
+  // ---- 9) Kapali tur: son nokta baslangica yakin ----
+  // sol[0] -> ... -> sag[0]; bunlar W kadar uzak, tur kapali sayilir
+  const kapanma = mesafeM(r1[0], r1[r1.length-1]);
+  bak("tur kapali: baslangic-bitis mesafesi ~= W",
+      Math.abs(kapanma - GEN) < 2.0, kapanma.toFixed(2) + " m");
+
+  const ozet = document.getElementById("ozet");
+  ozet.textContent = "SONUC: " + gecen + "/" + (gecen + kalan) +
+                     (kalan === 0 ? "  TAMAMI GECTI" : "  " + kalan + " KALDI");
+  ozet.style.color = kalan === 0 ? "#4ade80" : "#f87171";
+  window.__sinavSonuc = { gecen: gecen, kalan: kalan };
+})();
+</script>
+</body>
+</html>

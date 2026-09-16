@@ -154,7 +154,24 @@ window.pgDurumGeldi = function (m) {
   }
 
   // Sihirbaz zaten acik ve bir islem suruyorsa durumu bozma.
-  if (_pgD.perde && _pgD.bekliyor) return;
+  // v2.4.196 OLCULEN KUSUR: kurulum (pg_kur) surerken WS koptu ve yeniden
+  // kuruldu; ws.onopen yeniden pg_durum sordu ama sihirbaz `bekliyor`
+  // oldugu icin yaniti YOK SAYDI ve dugme sonsuza kadar dondu. Sunucu
+  // kurulumu aslinda bitirmisti (F5 sonrasi sistem acildi). Beklerken
+  // gelen durum "yapilandirilmis + erisim var + goc yok" diyorsa
+  // kurulum TAMAMLANMIS sayilir ve sihirbaz sonuca gecer.
+  if (_pgD.perde && _pgD.bekliyor) {
+    const _tamam = !!m.yapilandirildi && m.erisim !== false && !m.goc_gerekli;
+    if (_tamam && (_pgD.gonderilen === "pg_kur" || _pgD.gonderilen === "pg_goc")) {
+      _pgD.bekliyor = false;
+      _pgD.bitti = true;
+      _pgD.hata = "";
+      _pgD.yuzde = 100;
+      if (_pgD.kip === "kurulum" && _pgD.adim < 4) _pgD.adim = 4;
+      pgCiz();
+    }
+    return;
+  }
 
   const yapilandirildi = !!m.yapilandirildi;
   const gocGerekli = !!m.goc_gerekli;
@@ -1145,6 +1162,22 @@ function pgIleriBas() {
   pgCiz();
   if (!pgGonder(Object.assign({ tip: "pg_dene" }, _pgD.bilgi)))
     pgBaglantiYok();
+  else pgKisaBekci("pg_dene");
+}
+// v2.4.197: dogrulama/olusturma 30 sn icinde yanitlanmazsa dugme sonsuza
+// kadar donmez: bekleme kaldirilir, neden yazilir, kullanici yeniden
+// deneyebilir. (Olculen kusur: "Baglanti dogrulaniyor..." asamasinda
+// kilitlenme.)
+function pgKisaBekci(komut) {
+  if (_pgD._kisaBekci) clearTimeout(_pgD._kisaBekci);
+  _pgD._kisaBekci = setTimeout(function () {
+    _pgD._kisaBekci = null;
+    if (!_pgD.bekliyor || _pgD.gonderilen !== komut) return;
+    _pgD.bekliyor = false;
+    _pgD.hata = (pgT().pgYanitYok ||
+      "Sunucu 30 saniye i\u00e7inde yan\u0131t vermedi. Sunucu g\u00fcnl\u00fc\u011f\u00fcn\u00fc (servis.log) kontrol edin ve yeniden deneyin.");
+    pgCiz();
+  }, 30000);
 }
 
 function pgVeritabaniOlustur() {
@@ -1155,8 +1188,25 @@ function pgVeritabaniOlustur() {
   pgCiz();
   if (!pgGonder(Object.assign({ tip: "pg_olustur" }, _pgD.bilgi)))
     pgBaglantiYok();
+  else pgKisaBekci("pg_olustur");
 }
 
+// v2.4.196: BEKCI — kur/goc gonderildikten sonra ne ilerleme ne sonuc
+// gelirse (baglanti kopmasi, yanit kaybi) 45 sn'de bir durum sorulur;
+// pgDurumGeldi kurulumun bitip bitmedigine karar verir. Sonsuz donen
+// dugme yerine en kotu durumda 45 sn gecikmeli sonuc gorulur.
+function pgBekciKur() {
+  if (_pgD._bekci) clearInterval(_pgD._bekci);
+  _pgD._bekciSon = Date.now();
+  _pgD._bekci = setInterval(function () {
+    if (!_pgD.bekliyor || !_pgD.perde) { clearInterval(_pgD._bekci); _pgD._bekci = null; return; }
+    if (Date.now() - _pgD._bekciSon < 45000) return;
+    _pgD._bekciSon = Date.now();
+    _pgD.ileti = (pgT().pgYanitBekleniyor || "Sunucudan yan\u0131t bekleniyor; durum yeniden sorgulan\u0131yor...");
+    pgCiz();
+    pgGonder({ tip: "pg_durum" });
+  }, 5000);
+}
 function pgKurBaslat() {
   if (_pgD.bekliyor) return;
   _pgD.hata = "";
@@ -1170,6 +1220,7 @@ function pgKurBaslat() {
   pgCiz();
   if (!pgGonder(Object.assign({ tip: "pg_kur" }, _pgD.bilgi)))
     pgBaglantiYok();
+  else pgBekciKur();
 }
 
 function pgGocBaslat() {
@@ -1183,6 +1234,7 @@ function pgGocBaslat() {
   _pgD.gonderilen = "pg_goc";
   pgCiz();
   if (!pgGonder({ tip: "pg_goc" })) pgBaglantiYok();
+  else pgBekciKur();
 }
 
 // v2.4.66: merkez kullanici esitlemesini baslat.
@@ -1229,6 +1281,7 @@ function pgBaglantiYok() {
 // SUNUCU YANITLARI
 // ---------------------------------------------------------------
 window.pgIlerlemeGeldi = function (m) {
+  _pgD._bekciSon = Date.now();
   if (!_pgD.perde) return;
   const y = Math.max(0, Math.min(100, parseInt(m.yuzde, 10) || 0));
   _pgD.yuzde = y;

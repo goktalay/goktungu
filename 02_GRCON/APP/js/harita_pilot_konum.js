@@ -127,9 +127,11 @@
       isaretEnt = v.entities.add({
         id: "gokkubbe_merkez",
         position: Cs.Cartesian3.fromDegrees(GOKKUBBE.lon, GOKKUBBE.lat, 0),
+        // v2.4.219 (kullanici istegi): merkez ikonu KUCUK simge, yazi etiketi
+        // yok — buyuk logo + etiket haritayi kapliyordu.
         billboard: {
           image: "logo.png",
-          width: 46, height: 46,
+          width: 22, height: 22,
           verticalOrigin: Cs.VerticalOrigin.BOTTOM,
           heightReference: Cs.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -137,7 +139,7 @@
           scaleByDistance: new Cs.NearFarScalar(2000, 1.0, 900000, 0.45),
         },
         ellipse: {
-          semiMinorAxis: 90, semiMajorAxis: 90,
+          semiMinorAxis: 35, semiMajorAxis: 35,
           material: Cs.Color.fromCssColorString("#5cc8ff").withAlpha(0.16),
           outline: true,
           outlineColor: Cs.Color.fromCssColorString("#5cc8ff").withAlpha(0.65),
@@ -145,6 +147,7 @@
           heightReference: Cs.HeightReference.CLAMP_TO_GROUND,
         },
         label: {
+          show: false,
           text: "GOKKUBBE TEKNOLOJI",
           font: "bold 11px 'Chakra Petch', sans-serif",
           fillColor: Cs.Color.fromCssColorString("#5cc8ff"),

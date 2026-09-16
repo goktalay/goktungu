@@ -2,11 +2,848 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.149";
-const GCS_SURUM_TARIH = "2026-09-11";
+const GCS_SURUM = "2.4.227";
+const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.227",
+    tarih: "2026-09-16",
+    baslik: "Radar yönetim penceresi (protokolün tüm yüzeyi); Hedef Filtresi / İz Ayarları / Sınıflandırma / Kayıt / Tüm Takibi Bırak / Tespit-Takip panelleri kaldırıldı (paket 2.5.97)",
+    maddeler: [
+      "RADARLAR MENÜSÜ (kullanıcı isteği): Hedef Filtresi, İz Ayarları, Hedef Sınıflandırma, Kayıt ve Tekrar Oynatma, Tüm Takibi Bırak, Tespit Edilen Hedefler Paneli ve Takip Edilen Hedefler Paneli menüden ve sistemden kaldırıldı (sol dock, ilgili yüzen paneller ve betikleri yüklenmez).",
+      "RADAR YÖNETİM PENCERESİ (kullanıcı isteği): Radarlar listesinde bir radara tıklanınca yalnız o radara özel, M50 penceresi gibi açılır-kapanır bölümlü pencere açılır; çoklu radar sekmeleri yok. Bölümler T serisi tarama radarı protokolü v3.0.0'ı kapsar: Bağlantı (LOGIN/HEARTBEAT, Bağlan/Kes), Çalışma (WORKING_MODE: Başlat/Durdur, tarama 1/2/4 sn), Tespit ayarları (USER_CFG0: frekans, tespit/hız/RCS eşiği, Uygula + Radardan oku), Konum ve yön (REQUEST_RTK/UPLOAD_RTK, merkez yönü), Seçili iz (SETSELECT/GETSELECT), JSON yapılandırma (SETJSON/GETJSON, koordinat/sistem dosyası), Hedefler (UPLOAD_TRACK_V3 canlı iz tablosu, UPLOAD_TARGET_V3 nokta sayısı, Seç ile iz seçimi, satıra tık haritada odak) ve Sağlık. IP/port yalnız kayıt (Düzenle) formundadır.",
+      "SUNUCU / KÖPRÜ: SETSELECT, GETSELECT, SETJSON, GETJSON komutları ve UPLOAD_TARGET_V3 nokta izi çözümü eklendi (yerel istemci ve saha köprüsü; köprü paketi 1.7.21 gerektirir). Yeni WS komutları: radar_secim_yaz / radar_secim_oku / radar_json_oku / radar_json_yaz (radar parametre izni).",
+      "HARİTA: radar tespit aşamasındaki yapı değişmedi — izler, iz geçmişi, kapsama halkaları ve radar ikonları aynen çalışır; sol liste kaldırıldığı için hedef kartları çizilmez, harita ve pencere tablosu kullanılır."
+    ]
+  },
+  {
+    surum: "2.4.226",
+    tarih: "2026-09-16",
+    baslik: "Angaje Ol / Takip Et / Bırak düğmeleri tıklanabilir (10 Hz yeniden çizim kaldırıldı) (paket 2.5.96)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: üç düğme de çalışmıyor): takip araç çubuğu her takip konumu iletisinde (takip FPS, 10 Hz) ve her telemetri karesinde sıfırdan kuruluyordu. Fare düğmeye basılıyken eleman silinip yenisi geldiği için mousedown ile mouseup aynı elemanda olmuyor, tarayıcı 'click' üretmiyordu; 'Bırak'ın 3-4 basışta çalışmasının asıl sebebi de buydu. Artık durum imzası (aktif/bekleyen/seçim/uçuş) değişmedikçe düğmelere dokunulmaz."
+    ]
+  },
+  {
+    surum: "2.4.225",
+    tarih: "2026-09-16",
+    baslik: "Tespit ile takip ayrıldı; Hedef Seç bekleme süresi; M50 penceresinde AI + takip ayarları; harita önizlemesi çift tıkla; Program Ayarları geteuid hatası (paket 2.5.95)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: Hava Aracı AI'yı kapatınca takip de durdu): sunucu, sınıflar kapatılınca kameranın AI akışını tümüyle kapatıyordu; pasif takip o akışta yaşadığı için ölüyordu. Artık aktif takip varsa akış 'yalnız takip' göreviyle sürer (tespit modeli kapanır, izleyici devam eder); takip aktifken 'Uygula' da akışı yeniden başlatmaz, ayarları yerinde günceller.",
+      "KÖK NEDEN (kullanıcı bildirimi: Hedef Seç ile seçince Angaje Ol / Takip Et / Bırak düğmeleri gelmiyor): tanıma kapalıyken seçim, akışı o anda açar; webcam/RTSP ilk kareyi 5 sn'den geç verince sunucu 'akışta kare yok' ile vazgeçiyordu (çift tık zaten açık akışta çalıştığı için görünmüyordu). Bekleme ~15 sn'ye çıkarıldı, düğme kilidi 20 sn.",
+      "HARİTA M50 ÖNİZLEMESİ (kullanıcı bildirimi: M50 penceresi açıkken haritadaki görüntü kesiliyor): her çerçeve ayrı MJPEG akışı açtığı için (pencere + PiP + hover + harita) tarayıcı bağlantı sınırı aşılıyordu. Haritadaki sabit canlı çerçeve artık varsayılan kapalı; EO ikonuna ÇİFT TIK açar, tekrar çift tık kapatır (tercih hatırlanır). Tek tık pencereyi açmaya devam eder; çerçeve açıkken hover önizlemesi ikinci akış açmaz.",
+      "PROGRAM AYARLARI (kullanıcı bildirimi: 'module os has no attribute geteuid'): Windows'ta servis durumu sorgusu os.geteuid ile çöküyordu; yönetici denetimi platforma göre yapılır.",
+      "M50 PENCERESİ (kullanıcı isteği): Tanıma bölümüne Hassasiyet + Tespit FPS, Takip bölümüne İzleme Yöntemi (CSRT/KCF/MIL), Kayıp Toleransı ve Takip FPS eklendi; kamera AI paneliyle aynı ayar anahtarları. Değişiklikler 'Uygula' ile tek seferde gönderilir; ayarlar tanıma kapalıyken de görünür."
+    ]
+  },
+  {
+    surum: "2.4.224",
+    tarih: "2026-09-16",
+    baslik: "AI ayarlarında 'Uygula'; kamera/dron listeleri yüzen pencerede de kalır; %80 tam ekran; dron paneli kapat/küçült; SITL uyarı tekrarı (paket 2.5.94)",
+    maddeler: [
+      "AI AYARLARI ARTIK ANINDA UYGULANMAZ (kullanıcı isteği: akış sırasında değişiklik yapılmasın): sınıf/hassasiyet/FPS değişiklikleri bekletilir, paneldeki 'Uygula' düğmesi tek seferde gönderir; sunucu izleme aktifse önce durdurur, sonra temiz başlatır. Uygulanmamış değişiklikte düğme nabız animasyonuyla uyarır; panel kapatılırsa değişiklik atılır.",
+      "KAMERALAR PANELİ (kullanıcı bildirimi): yüzen penceresi açılan kamera listeden ÇIKMAZ; satıra tekrar tıklanınca açık pencere öne alınır (odaklanır), ikinci akış açılmaz. Açık pencereli satırın ikonu mavi.",
+      "KAMERA YÜZEN PENCERE TAM EKRAN (kullanıcı isteği): ekranı kaplamaz; pencerenin %80 genişlik / %80 yükseklik, ortalı.",
+      "DRON KARTLARI (kullanıcı isteği, kameralarla aynı davranış): panelde 'ayrı pencerede büyüt' düğmesi yok; kart başlığına tıklamak yüzen paneli açar, kart listede GÖLGE satır olarak kalır (durum/irtifa canlı); gölgeye tıklamak açık pencereyi öne alır. Yüzen panelde 'panele küçült' yerine KAPAT (çarpı: paneli kapatır, kart panele döner) ve yanında KÜÇÜLT (yalnız başlık kalır; tekrar basınca geri gelir).",
+      "KÖK NEDEN (kullanıcı bildirimi: her yenilemede sağda SITL uyarıları): sunucu 200 satırlık konsol tamponunu her bağlantıda yeniden yollar ve açılıştaki uyarı satırları her seferinde bildirime dönüşüyordu. 30 sn'den eski satırlar konsola yazılır ama bildirim üretmez. Ayrıca SITL klasöründe ikililerden en az biri varsa (ör. yalnız ArduCopter) durum 'kısmen hazır' bilgi satırıdır, uyarı değil."
+    ]
+  },
+  {
+    surum: "2.4.223",
+    tarih: "2026-09-16",
+    baslik: "Kamera konsolu açılınca en az 300 px yükseklik; görüntü küçülmez (paket 2.5.93)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: pencere uzadı ama konsol değil, görüntü küçüldü): görüntü kutusu esnek (flex) olduğu için eklenen yükseklik görüntüye gidiyor, konsol gövdesi içerik kadar (tek satır) kalıyordu. Konsol gövdesi artık sabit en az 300 px (en çok ekranın %60'ı, kaydırılabilir); konsol açılınca pencere 340 px uzar, görüntü boyutu korunur.",
+      "BIRAK / HEDEF SEÇ DÜĞMELERİ (kullanıcı bildirimi: 3-4 basışta çalışıyor): sunucu 'Bırak' için arayüzü işçi HTTP çağrısını beklemeden hemen bilgilendirir (önceden saniyeler sürebiliyordu); işlem beklerken düğme kilitlenir ve dönen simgeyle 'Bırakılıyor…' / 'Takip başlatılıyor…' gösterilir; sunucu yanıtı gelince serbest kalır (en çok 6 sn)."
+    ]
+  },
+  {
+    surum: "2.4.222",
+    tarih: "2026-09-16",
+    baslik: "Kamera penceresi: konsol için otomatik yükseklik, görüntü-konumu seçeneği kalktı, tam ekran düğmesi; takip AI'dan bağımsız; AI/takip FPS ayarı; tek Hava Aracı sınıfı (paket 2.5.92)",
+    maddeler: [
+      "KONSOL (kullanıcı bildirimi: görünmüyordu): yüzen pencere sabit yükseklikliydi; konsol açılınca pencere 190 px uzar, kapanınca kısalır; konsol gövdesi en çok 150 px kayar.",
+      "GÖRÜNTÜ KONUMU (kullanıcı isteği): mavi görüntü-konumu düğmesi ve 'Panele yerleştir' kaldırıldı; oynayan kamera hem haritada (dron küçük önizlemesi) hem yüzen pencerede görünür.",
+      "TAKİP AI'DAN BAĞIMSIZ (kullanıcı bildirimi: 'AI açık olmasına rağmen izlemede değil' / 'track bir AI seçeneği değil'): 'Hedef Seç' ile çizim AI izlemesi gerektirmez — işçi akışı yalnız 'takip' göreviyle kendiliğinden açılır, ilk kare gelince takip kurulur. Ayrıca AI ayarlarında görev AÇIK ise izleme artık kendiliğinden başlar (önceden yalnız çalışan izleme güncelleniyordu).",
+      "İPUCU: 'Takip: tespit kutusuna çift tıklayın…' boşta metni kaldırıldı.",
+      "FPS (kullanıcı isteği): AI ayarlarında 'Tespit FPS (AI)' (1–15, varsayılan 5) ve 'Takip FPS' (1–30, varsayılan 10) kaydırıcıları; işçi tespit ve takip güncellemesini bu tavanlarla sınırlar.",
+      "AI SINIFLARI (kullanıcı isteği): Drone/Uçak/Helikopter/Kuş alt kırılımı kaldırıldı; tek 'Hava Aracı' anahtarı + hassasiyet ve 'Takip Ayarları' kaldı.",
+      "TAM EKRAN (kullanıcı isteği): yüzen pencere başlığında kapatma çarpısının yanında tam ekran düğmesi (pencere ekranı kaplar, tekrar basınca eski boyut/konum)."
+    ]
+  },
+  {
+    surum: "2.4.221",
+    tarih: "2026-09-16",
+    baslik: "DÜZELTME: Kameralar modülü yüklenmiyordu (Yeni Kamera çalışmıyordu) — önbellek etiketi (paket 2.5.91)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı konsolu: kameralar.js?v=v24210:559 'Cannot read properties of null (addEventListener)'): 2.4.219'da kameralar.js değişti ama index.html'deki önbellek etiketi (?v=) güncellenmemişti; tarayıcı bir yıl önbelleklenen ESKİ kameralar.js'yi kullandı, yeni index.html'de kaldırılan görünüm düğmesini bulamayıp modül yüklenirken çöktü — Yeni Kamera, liste ve yüzen pencere çalışmadı. Etiket yükseltildi (v24221); tarayıcı yeni dosyayı alır. F5 yeterlidir, önbellek temizlemek gerekmez."
+    ]
+  },
+  {
+    surum: "2.4.220",
+    tarih: "2026-09-16",
+    baslik: "Harita: çevrimdışı radar kırmızı ve kapsama gizli; M50 ikonu etiketsiz; sağda çevrimiçi cihaz listesi (paket 2.5.90)",
+    maddeler: [
+      "RADAR (kullanıcı isteği): radar bağlı değilken ikonu kırmızı; kapsama çizgileri (menzil halkaları, mesafe/azimut ızgarası, kubbe, iz dilimleri) yalnız radar çevrimiçiyken görünür.",
+      "M50 (kullanıcı isteği): harita ikonunun altındaki ad/RTK etiketi kaldırıldı; yalnız ikon (üzerine gelince canlı önizleme, tıklayınca pencere).",
+      "ÇEVRİMİÇİ LİSTE (kullanıcı isteği): haritanın sağ kenarında alt alta, yarı saydam etiketler — bağlı dronlar, bağlı M50'ler ve kare üreten kameralar (isim). Üzerine gelince belirginleşir, tıklayınca haritada o cihaza uçulur (dron/M50 varlığı, kamera koordinatı ya da bağlı lokasyon). Cihaz çevrimdışı olunca listeden düşer; telemetriye 'kamera_canli' alanı eklendi.",
+      "DÜZELTME (kullanıcı bildirimi: 'Kameralar panelini neden kaldırdın'): 2.4.219'da menüden yanlış öğe kaldırılmıştı. 'Kameralar Paneli' öğesi geri geldi; kaldırılması istenen 'Önizleme Görünümü' öğesi menüden çıkarıldı."
+    ]
+  },
+  {
+    surum: "2.4.219",
+    tarih: "2026-09-16",
+    baslik: "Kameralar paneli sadeleşti; 'BAĞLANTI YOK' mesajı; konsolda AI sekmesi; düğme boşluğu; merkez ikonu küçüldü (paket 2.5.89)",
+    maddeler: [
+      "BAĞLANTI YOK (kullanıcı isteği): kamera/M50 erişilemezken kırık resim simgesi yerine dile göre büyük 'BAĞLANTI YOK' metni (harita önizlemeleri, yüzen pencere, M50 penceresi, panel kutuları); sunucu gerekçesi gelirse onunla değişir.",
+      "KAMERALAR PANELİ (kullanıcı isteği): satırda yalnız Düzenle ve Sil; oynat/ayır/görüntü-konumu/menü ve satır altı önizleme ile konsol kaldırıldı. Satıra tıklamak yüzen pencereyi açar. Önizleme/izgara görünümü ve görünüm seçici kaldırıldı (tek liste görünümü); menüdeki 'Kameralar Paneli' öğesi kaldırıldı.",
+      "KAMERA KONSOLU: yalnız yüzen pencerede, iki sekmeli — Kamera ve AI. AI sekmesi yerel AI işçisinin günlüğünü (ai_isci.log) kamera bazında gösterir: kamera numarası taşıyan satırlar o kameraya, genel satırlar AI izlemesi açık kameralara düşer (sunucu günlük kuyruğu, 'AI' etiketi).",
+      "DÜĞMELER (kullanıcı bildirimi): mavi görüntü-konumu düğmesine yanal iç boşluk (10 px) ve kenar boşluğu (6 px) eklendi; bitişik görünüm giderildi.",
+      "HARİTA (kullanıcı isteği): merkez konumu ikonu küçük simge olarak gösterilir, yazı etiketi kaldırıldı (haritayı kaplıyordu)."
+    ]
+  },
+  {
+    surum: "2.4.218",
+    tarih: "2026-09-15",
+    baslik: "Hava aracı YOLO modeli paketle gelir; Jetson GPU kurulum betiği; AI işçisi CPU koruması (paket 2.5.88)",
+    maddeler: [
+      "KÖK NEDEN (Jetson günlüğü: 'YOLO modeli yok … MOG2 hareket tespiti kullanılacak'): hava aracı tanıma modeli (hava_araci.onnx, 5 sınıf) hiçbir pakette ve güncelleme ağacında yoktu; tüm kurulumlar hareket tabanlı MOG2'ye düşüyordu. Model artık Merkez paketiyle (ai_modeller/) gelir ve güncelleme ağacında yönetilir (bir kez ~100 MB indirilir).",
+      "JETSON GPU (kullanıcı sorusu: 'Jetson'un gücünü neden kullanamıyoruz'): PyPI onnxruntime yalnız CPU'dur; Jetson'da CUDA/TensorRT için NVIDIA'nın JetPack tekerleği gerekir. Paketle gelen jetson_ai_kur.sh betiği L4T sürümünü okur, onnxruntime-gpu'yu NVIDIA Jetson dizininden venv'e kurar ve sağlayıcıları doğrular: sudo bash /opt/goktungu/merkez/jetson_ai_kur.sh. İşçi CUDA > TensorRT > DirectML > CPU sırasıyla seçer.",
+      "AI İŞÇİSİ CPU KORUMASI (kullanıcı bildirimi: tanıma açılınca görüntü/M50 komutları gecikiyor): işçi düşük öncelikle (nice 8) çalışır, OpenCV ve ORT iplikleri çekirdek sayısının yarısıyla sınırlanır (GOKTUNGU_AI_IPLIK / GOKTUNGU_AI_NICE ile ayarlanır); MOG2 en çok 640 px genişlikte çalışır, kutular kaynak ölçeğine çevrilir. Arayüz ve M50 komutları tanıma sırasında aç kalmaz.",
+      "LINUX UYGULAMA İÇİ GÜNCELLEME (kullanıcı bildirimi: deb sudo ile kuruluyor, içeriden güncelleme yetki hatası veriyor): kurulum sonrası yönetilen kökler (assets/, ai_modeller/) ve kök dosyaları servis kullanıcısına devredilir, kurulum dizini yazılabilir olur; systemd biriminde ReadWritePaths kurulum dizinini de kapsar. .venv ve gömülü araçlar root'ta kalır. Güncelleyici imzalı manifest doğrulaması değişmedi.",
+      "WINDOWS KURULUMU: AI modelleri (ai_modeller/) artık kurulum dosyasıyla gelir; önceden ilk kurulumda yoktu, yalnız güncelleyici indiriyordu."
+    ]
+  },
+  {
+    surum: "2.4.217",
+    tarih: "2026-09-15",
+    baslik: "Ubuntu ARM64 M50: 'undefined symbol: vaInitialize' düzeltmesi; ayar günlüğünde parola maskeleme (paket 2.5.87)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı günlüğü: 'libHVideoSDK.so: undefined symbol: vaInitialize'): üreticinin ARM64 kütüphanesi içine gömülü ffmpeg VA-API (libva, libva-drm, libva-x11), sndio, XShm (libXext) ve Xv simgelerini çözümsüz bırakmış ama bu kütüphaneleri bağımlılık listesine yazmamış; Python dlopen'i tüm simgeleri hemen çözmek istediği için yükleme duruyordu. Sağlayıcı kütüphaneler artık önce RTLD_GLOBAL ile yüklenir; eksikse hata iletisi kurulacak paketleri söyler (sudo apt install libva2 libva-drm2 libva-x11-2 libsndio7.0 libxext6 libxv1 libasound2 libx11-6 libtiff5). Paket Recommends listesi genişletildi.",
+      "GÜVENLİK: ayar kaydı günlüğü ('[AYAR] Kaydedildi') parola/jeton alanlarını açık yazıyordu; artık '***' ile maskelenir. Bu günlüğü paylaştıysanız M50 parolasını değiştirmeniz önerilir."
+    ]
+  },
+  {
+    surum: "2.4.216",
+    tarih: "2026-09-15",
+    baslik: "Ubuntu (ARM64) M50: üreticinin Linux SDK'sı doğrudan; x86_64 için Wine köprüsü (paket 2.5.86)",
+    maddeler: [
+      "M50 LINUX YERLİ SDK (kullanıcı üreticiden Linux aarch64 paketini buldu): lib/libHVideoSDK.so + libHVideoUtility.so paketle gelir; sürücü Linux'ta .so'yu yükler (bağlayıcı platforma göre DLL/.so, geri çağrılar cdecl), mimari uyumu dosyadan denetlenir (aarch64 ↔ makine). PTZ, lens, açı, takip, ön ayar, tarama, RTK/GPS, RTSP adresi ve cihaz OSD'si aynı sürücüyle çalışır. Sistem kütüphaneleri: libX11, libxcb-*, libasound2, libtiff (5/6), libfreetype6, libbz2, liblzma, libatomic1 (paket Recommends). Ubuntu 24.04'te libtiff.so.5 yoksa: sudo apt install libtiff5 ya da libtiff6 için sembolik bağ.",
+      "M50 SDK LINUX (kullanıcı kararı: 'Wine köprü süreci'): üreticinin Windows x64 DLL'i Ubuntu'da wine64 altında ayrı bir yardımcı süreçte (goktungu/m50_sdk_servis.py, gömülü Windows Python) çalışır; Merkez'deki vekil (goktungu/m50_wine.py) aynı sürücü yüzünü sunar ve her komutu 127.0.0.1 üzerinde JSON satırıyla iletir. PTZ, lens, açı, takip, ön ayar, tarama, RTK/GPS, RTSP adresi ve cihaz OSD'si aynı yoldan geçer.",
+      "Gereksinim: Ubuntu'da 'sudo apt install wine64'. Gömülü Windows Python zip'i Merkez paketiyle gelir (/opt/goktungu/merkez/wine) ve veri kökündeki wine/python dizinine ilk bağlantıda açılır; WINEPREFIX veri kökündedir (ProtectSystem=strict ile uyumlu). Yardımcı süreç yalnız 'Bağlan' istendiğinde başlar, jetonla korunur, çökerse bir kez yeniden başlatılır.",
+      "DÜZELTME: Linux'ta doğrudan SDK 'kullanılabilir' sayılıp her komut 'yalnız Windows' hatası veriyordu; artık wine yoksa komutlar Köprü yoluna düşer ve eksik gereksinim bir kez günlüğe yazılır.",
+      "NOT: Wine yolu sahada doğrulama ister; Docker'da DLL yükleme/CreateDevice testi paket notunda raporlanır."
+    ]
+  },
+  {
+    surum: "2.4.215",
+    tarih: "2026-09-15",
+    baslik: "M50 CİHAZ OSD'Sİ: SDK üzerinden kareye basılan yazı ayarları (paket 2.5.85)",
+    maddeler: [
+      "CİHAZ OSD'Sİ (kullanıcı isteği: 'SDK ile görüntünün üzerine basılan OSD'): üreticinin datdefs.h dosyasındaki OsdInfo_t yapısı sürücüye aktarıldı; HVS_GetOsdInfo / HVS_SetOsdInfo çağrıları eklendi (Get → değiştir → Set deseni). M50 penceresinde 'Cihaz OSD'si' bölümü: kanal adı (metin, konum, hizalama), tarih/saat (konum, biçim, 24/12, haftanın günü, 1/10 sn), PTZ bilgisi (konum, azimut, açı-yön, odak, görüş açısı, zoom, takip/PTZ durumu, ondalık), pusula/GPS (konum, pusula, GPS, özel metin), genel (yazı boyu 16–64, yazı rengi, çok satır, renk tersleme, artı, ızgara, lazer mesafe). 'Cihazdan oku' / 'Cihaza yaz'; seçili ana kanal (görünür/termal) için çalışır, değerler cihazda kalıcıdır.",
+      "Sunucu komutları m50_osd_oku / m50_osd_yaz (köprüsüz mod); telemetride eo_cihazlar[].m50_osd[kanal]. Köprü üzerinden bağlı cihazlarda Köprü 1.7.21 gerekir.",
+      "Merkez'in kendi bilgi katmanı bölümü 'Merkez bilgi katmanı' olarak yeniden adlandırıldı (cihaz OSD'siyle karışmasın)."
+    ]
+  },
+  {
+    surum: "2.4.214",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: ekran bilgileri ayarı depodan okunur, ayraç belirginleştirildi, başlıkta arayüz sürümü (paket 2.5.84)",
+    maddeler: [
+      "EKRAN BİLGİLERİ (kullanıcı bildirimi: katman var, ayarlar etkilemiyor): 2.4.211 düzeltmesi yayınlı kodda doğrulandı; sahada yine etkisiz raporlandığı için ayar artık her çizimde doğrudan depodan okunur, bellekteki nesne kimliğine bağlı hiçbir yol kalmadı. Her değişiklikte 'Ekran bilgileri güncellendi' bildirimi çıkar.",
+      "SOL PANEL AYRACI (kullanıcı bildirimi: resize olmamış): ayraç 10 px'e çıkarıldı, üzerinde tutamaç simgesi var, üzerine gelince turuncu yanar. Sürükle: genişlik; çift tık: 300 px.",
+      "TANI: M50 penceresi başlığında çalışan arayüz sürümü rozeti (örn. v2.4.214). Sahada görülen sürüm kataloğun gerisindeyse tarayıcı/güncelleme sorunudur, kod sorunu değil."
+    ]
+  },
+  {
+    surum: "2.4.213",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresinde sol panel genişliği ayraçla değiştirilir; tüm paneller son boyut ve konumda açılır (paket 2.5.83)",
+    maddeler: [
+      "M50 PENCERESİ (kullanıcı isteği): sol kontrol paneli ile görüntü arasına sürüklenebilir ayraç eklendi (220 px … pencere−260 px); genişlik pencere başına hatırlanır, ayraca çift tık 300 px'e döndürür.",
+      "KÖK NEDEN — PANEL BOYUTU (kullanıcı isteği: 'tüm panellerde son bıraktığım boyut ve konumda açılsın'): yüzen paneller (Radarlar, EO cihazları, Hedefler, Kayıt…) boyutu kaydediyordu ama açılışta YALNIZ konum uygulanıyordu; taşıma kaydı da boyutu siliyordu. Artık açılışta kayıtlı genişlik/yükseklik geri yüklenir, taşıma boyutu korur. Program popup'larında da kayıtlı boyut bayrak sırasından bağımsız uygulanır."
+    ]
+  },
+  {
+    surum: "2.4.212",
+    tarih: "2026-09-15",
+    baslik: "Yayın alınamıyor (VLC alıyor) geri alma; GPS işaretçi çözümü; düzenleme formunda parola 'kayıtlı' görünümü (paket 2.5.82)",
+    maddeler: [
+      "YAYIN ALINAMIYOR (kullanıcı bildirimi: cihaz bağlı, VLC kimlikle yayını alıyor): 2.4.211'de OpenCV açılışına eklenen OPEN/READ zaman aşımı parametreleri GERİ ALINDI — OpenCV'nin FFmpeg'e geçirdiği 'timeout' seçeneği bazı FFmpeg sürümlerinde RTSP açmayı hemen başarısız kılıyor (bilinen uyumsuzluk). Zaman aşımı artık açmayı ayrı iş parçacığında yaparak sağlanır (15 sn); ffmpeg yolundaki -rw_timeout da kaldırıldı. Vekil kilidi kamera başına kaldığı için kilitlenme koruması korunur.",
+      "GPS (günlükle ölçüldü: boyut=24, ham=…fc7f0000 ×3): SDK geri çağrısı gömülü double değil ÜÇ x64 İŞARETÇİ döndürüyor. İşaretçiler çözülür (önce double, sonra metin); makul enlem/boylam bulunursa RTK konumu olarak kullanılır. Çözüm sonucu bir kez günlüğe yazılır ('GPS ptr cozum').",
+      "DÜZENLEME FORMU (kullanıcı bildirimi: şifre boş görünüyor): parola sunucudan asla gelmez; kayıtlıysa alanda maskeli nöbetçi değer (••••••••••••) görünür, değiştirilmedikçe gönderilmez ve mevcut parola korunur."
+    ]
+  },
+  {
+    surum: "2.4.211",
+    tarih: "2026-09-15",
+    baslik: "Kanal geçişinde siyah ekran / hizmet kilitlenmesi ve video kaydı kök nedenleri; M50 penceresi sol kontrol paneli + sağ görüntü (paket 2.5.81)",
+    maddeler: [
+      "KÖK NEDEN — HİZMET KİLİTLENMESİ (kullanıcı bildirimi, günlükle doğrulandı): video vekili GLOBAL kilidi kaynak durdurma (terminate + 3 sn) ve açma (RTSP/OpenCV, saniyeler; cihaz meşgulse sonsuz) boyunca tutuyordu; bu sırada tüm /kamera/<id> istekleri bekliyor, her görüntü kararıyordu. Kilit kamera başına bölündü; global kilit yalnız sözlük erişimini korur. OpenCV RTSP açma/okuma zaman aşımı 8 sn (ffmpeg yolunda -rw_timeout).",
+      "KÖK NEDEN — KANAL GEÇİŞİ (günlük: kamera 1 ch0/ch1 arasında gidip geliyor, kamera 2 de ch1): kontrol panelindeki kanal düğmeleri TEK kaydın adresini yeniden yazıyordu; kanal başına ayrı kayıt modeliyle iki kayıt aynı kanala düşüyor, akış her geçişte yeniden kuruluyordu. Artık kanal için kayıt varsa o gösterilir, yoksa ikinci kayıt açılır; M50 penceresi aynı kanalda çift kaydı yeniden amaçlar.",
+      "KÖK NEDEN — KAYDET HATASI (günlük: 'WinError 10061 bağlantı reddedildi'): kaydedici 127.0.0.1:8801'e bağlanıyordu; vekil bu kurulumda ayrı 8801 dinleyicisi açmıyor (canlı yayın aynı-origin HTTP yolunda). Kayıt artık SÜREÇ İÇİ kare aboneliğiyle yapılır (ağ yok); dosya kapanmadan 'bitti' denmez. Sahte akışla birim testi: 20 kare, dosya okunabilir.",
+      "YERLEŞİM (kullanıcı isteği): M50 penceresi ikiye bölündü — sol 300 px kontrol paneli (Kanal, Çözünürlük, Tanıma + Hassasiyet, Takip, Kayıt, Küçük görüntü, Ekran bilgileri; bölümler açılır/kapanır), sağda görüntü. Durum çubuğu kaldırıldı; ekran bilgileri ayarları popover yerine panelde satır içi (OSD 'çalışmıyor' bildirimi için)."
+    ]
+  },
+  {
+    surum: "2.4.210",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: ekran bilgileri ayar paneli, video kaydı, gündüz/gece küçük görüntü, tanıma hassasiyeti; FPS ve Az/Eğ kaldırıldı (paket 2.5.80)",
+    maddeler: [
+      "EKRAN BİLGİLERİ (kullanıcı isteği): durum çubuğundaki 'Ekran' düğmesi ayar panelini açar — cihaz adı, tarih/saat, azimut/eğim, kanal, çözünürlük·FPS, konum, takip ve kayıt durumu alanları tek tek açılıp kapanır; köşe ve yazı boyu seçilir; ayar pencere başına hatırlanır. NOT: cihazın kendi kareye bastığı yazılar (P/T açı, saat, Channel) elimizdeki SDK arayüzünde değiştirilemez; bu katman Merkez'in çizdiği bilgilerdir.",
+      "VİDEO KAYDI (kullanıcı isteği): 'Kaydet' düğmesi vekil akışını (AI çizimleri dahil) dosyaya yazar; ffmpeg gerekmez (OpenCV MJPG .avi). Dosyalar veri kökünde kayitlar/video altına düşer; düğme kayıt süresini gösterir, 'Durdur' bitirir. Sunucu komutları: video_kayit_baslat/durdur/durum.",
+      "KÜÇÜK GÖRÜNTÜ (kullanıcı isteği): 'Küçük görüntü' düğmesi pencere içinde ikinci bir görüntü açar — ana görüntü gündüzse gece, geceyse gündüz kanalı. Sürüklenir, genişliği ayarlanır, X ile kapanır; çift tık kanalları yer değiştirir. Kanal başına ayrı görüntü kaydı (m50:<eo>:gorunur / termal) gerekir; yoksa kendiliğinden oluşturulur. Kanal düğmesi artık sunucuya yazmadan ana/küçük görüntüyü değiştirir.",
+      "TANIMA HASSASİYETİ (kullanıcı isteği): Tanıma açıkken yanında 10–90 kaydırıcı; hava aracı sınıfının hassasiyeti kamera kaydına yazılır, çalışan AI izlemesi anında güncellenir.",
+      "DURUM ÇUBUĞU (kullanıcı isteği): FPS ve Az/Eğ alanları kaldırıldı (istenirse ekran bilgileri katmanında gösterilir)."
+    ]
+  },
+  {
+    surum: "2.4.209",
+    tarih: "2026-09-15",
+    baslik: "M50: hava aracı tanıma entegrasyonu — tespit kutusuna çift tık, görüntü işleme verisiyle PTZ takibi (paket 2.5.79)",
+    maddeler: [
+      "TANIMA (kullanıcı isteği): M50 penceresinin durum çubuğuna 'Tanıma' düğmesi eklendi; AI izlemesi (hava_araci görevi) bu kameranın vekil akışında başlatılır/durdurulur. Görev kayıtta yoksa önce kayda eklenir. Tespit kutuları sunucuda kareye çizilir.",
+      "ÇİFT TIK = TAKİP (kullanıcı isteği): görüntüde tespit kutusuna çift tıklayınca takip başlar. Takip SDK izleyicisine değil GÖRÜNTÜ İŞLEME VERİSİNE dayanır: her 300 ms en yakın tespit kutusu eşlenir, kutu merkezinin kare merkezinden sapması PTZ yön + hızına (1–60, ölü bölge %5) çevrilir. Kutu 4 sn gelmezse hedef kayıp sayılır, PTZ durdurulur. Takipteyken çift tık veya 'Durdur' bırakır; çerçeve tespit kutusunu izler.",
+      "M50 kamera kaydı 'hava_araci' AI göreviyle oluşturulur (AI izlemesi görevsiz başlatılamaz)."
+    ]
+  },
+  {
+    surum: "2.4.208",
+    tarih: "2026-09-15",
+    baslik: "Haritadaki M50 önizlemesine çift tık artık M50 penceresini açar (paket 2.5.78)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi: haritadaki önizlemeye çift tıklayınca eski pencere açılıyor): harita üzerindeki M50 canlı önizleme kutusunun çift tık işleyicisi kamera modülünün yüzen penceresini açıyordu; artık M50 canlı görüntü penceresi açılır.",
+      "KALICI KORUMA: kamera modülünün yüzen pencere açıcısı M50 kaydı için hiçbir yoldan çalışmaz (görüntü hedefi 'yüzen', eski çağrılar dahil); her yol M50 penceresine yönlenir."
+    ]
+  },
+  {
+    surum: "2.4.207",
+    tarih: "2026-09-15",
+    baslik: "M50 penceresi: etkileşimli durum çubuğu (kanal/çözünürlük/takip), tekerlekle zoom, harita tıklamasıyla açılış; düğme stili ve kullanıcı adı kök nedenleri (paket 2.5.77)",
+    maddeler: [
+      "KÖK NEDEN — DÜĞME STİLLERİ (kullanıcı bildirimi): dugme_birlik.css genel kuralı <span> taşımayan ikonlu düğmeleri 'yalnız ikon' sayıp 26 px kareye zorluyordu (ölçüldü: genişlik 26 px, iç boşluk 0). M50 penceresinin düğmeleri metni <span> içinde taşır; sorun giderildi.",
+      "KÖK NEDEN — KULLANICI ADI BOŞ (kullanıcı bildirimi): M50 vekilinin sır süzgeci 'kullanici' anahtarını sır sayıp atıyordu; kullanıcı ADI sır değildir (parola hiç taşınmaz). Artık düzenleme formuna ön-dolu gelir.",
+      "DURUM ÇUBUĞU ETKİLEŞİMLİ (kullanıcı isteği): Kanal değeri düğmedir — basınca Görünür/Termal arasında geçer (ayrı kanal düğmeleri kaldırıldı). Takip değeri düğmedir — 'Hedef seç' HEDEF işini yapar, takip sürerken 'Durdur' olur (HEDEF düğmesi kaldırıldı). Çözünürlük açılır seçimdir (320…1920 genişlik); değiştirince akış yeni çözünürlükte yeniden kurulur. IP, Durum, Konum ve Akış alanları gösterilmez.",
+      "ÇÖZÜNÜRLÜK ALTYAPISI: kamera kaydına 'genislik' alanı (vekil çıktı genişliği, varsayılan 960 = önceki sabit); ffmpeg scale ve OpenCV yeniden boyutlandırma bu değeri kullanır; değişince yayın yeniden kurulur.",
+      "TEKERLEK ZOOM (kullanıcı isteği): M50 görüntüsü üzerinde tekerlek ileri = yakınlaştır, geri = uzaklaştır (kontrol paneli ve M50 penceresi). Lens komutu basılı kipiyle gönderilir, tekerlek durunca bırakılır.",
+      "HARİTA (kullanıcı isteği): kamera ikonuna / canlı önizlemeye tıklayınca M50 canlı görüntü penceresi doğrudan açılır.",
+      "KAMERALAR MODÜLÜ (kullanıcı bildirimi: 'M50 neden kameralar modülünde de görünüyor'): M50 görüntü kayıtları Kameralar panelinde listelenmez; M50 ayrı sistemdir."
+    ]
+  },
+  {
+    surum: "2.4.206",
+    tarih: "2026-09-15",
+    baslik: "M50 canlı görüntü penceresi AYRI SİSTEM olarak yeniden tasarlandı; kamera penceresinde bütün-pencere boyutlandırma ve alt durum çubuğu (paket 2.5.76)",
+    maddeler: [
+      "M50 (kullanıcı bildirimi: 'M50 ayrı bir sistem … kameranın ayrılabilir panelini kopyalayıp gelmişsin'): kamera modülünden bağımsız yeni pencere (js/m50_pencere.js). Başlıkta cihaz adı + kanal/bağlantı/takip rozetleri; araç çubuğunda Görünür/Termal ve HEDEF / TAKİBİ DURDUR; en altta durum çubuğu: bağlantı, IP, kanal, çözünürlük, FPS tavanı, azimut/eğim, takip, konum (RTK), akış. Kamera düzenleme, AI, görüntü konumu ve dron piksel takibi düğmeleri bu pencerede YOK. Her cihaz için ayrı pencere açılır; konum/boyut hatırlanır.",
+      "KÖK NEDEN (2.4.205'te M50 düğmeleri görünmüyordu): kamera modülü her tazelemede alt çubuğu boşaltıyordu; M50 eklemeleri siliniyordu. Ayrı sistemle bu bağımlılık kalktı.",
+      "KAMERA PENCERESİ (kullanıcı bildirimi): yeniden boyutlandırma artık pencerenin BÜTÜNÜNE uygulanır, görüntü kalan alanı doldurur (önceden yalnız görüntü kutusu boyutlanıyordu). Boyut ve konum birlikte hatırlanır.",
+      "KAMERA PENCERESİ: en altta durum çubuğu — ad · protokol · çözünürlük · FPS tavanı · akış durumu; takip ipucu/teknik bilgi bu çubuğa taşındı.",
+      "KAMERA PENCERESİ: mavi görüntü-konumu düğmesine yanal boşluk (6 px) ve iç dolgu eklendi; bitişik görünüm giderildi.",
+      "KONUM AL 0.00000 / HARİTA İKONU YOK (kullanıcı bildirimi): SDK GPS geri çağrısından okunan değer sıfıra yakın çöp olduğunda eski denetim bunu geçerli RTK konumu sayıyordu; ikon Null Island'a düşüyor, form 0 doluyordu. Artık makul olmayan değer reddedilir (bayat RTK temizlenir), ilk geri çağrının ham baytları tanı için günlüğe yazılır. RTK ve kayıtlı konum yoksa ikon MERKEZ konumunda 'konum yok · merkezde' etiketiyle gösterilir; 'Konum al' sıfıra yakın RTK değerini atlayıp bilgisayar konumuna düşer.",
+      "CİHAZ DÜZENLEME (kullanıcı bildirimi: her seferinde kullanıcı adı/şifre istiyor): kayıtlı kullanıcı adı forma önceden yazılır; parola alanı 'kayıtlı — değiştirmek için yazın' ipucu taşır ve boş bırakılırsa değişmez."
+    ]
+  },
+  {
+    surum: "2.4.205",
+    tarih: "2026-09-15",
+    baslik: "M50: PTZ hız kaydırıcısı (1–60), ayrılabilir canlı görüntü penceresi ve hedef takibi, cihaz konumu (RTK / Konum al) (paket 2.5.75)",
+    maddeler: [
+      "PTZ HIZI (kullanıcı isteği): üst sınır 10'dan 60'a çıkarıldı; sayı kutusu yerine kaydırıcı, değer yanında gösterilir ve tarayıcıda hatırlanır. Görüntü üzerinde sürükleyerek PTZ de aynı 1–60 aralığını kullanır. Sunucu sınırı (M50_HIZ_MAX) 60.",
+      "AYRILABİLİR CANLI GÖRÜNTÜ (kullanıcı isteği): M50 kontrol panelindeki 'Ayır' düğmesi görüntüyü yeniden boyutlanabilir yüzen pencereye alır. Pencerenin altında footer: cihaz adı · kanal · azimut/eğim · bağlantı durumu · takip; Görünür/Termal geçişi footer'da (görüntü üzerinde değil). HEDEF düğmesi görüntü üzerine dikdörtgen çizdirir, çizim bitince takip seçimi + takip başlatma gönderilir; takip sürerken HEDEF gizlenir, TAKİBİ DURDUR görünür; durdurunca çerçeve silinir, takip durur, düğmeler geri döner. Durum telemetriden (takip.etkin) eşitlenir; Esc çizimi iptal eder.",
+      "M50 PANELİ (kullanıcı isteği): üstteki çoklu cihaz sekme şeridi kaldırıldı. Cihaz 'Elektro Optik Cihazları' listesinden seçilir; başlıkta seçili cihazın adı görünür. (Not: her cihaz için ayrı bağımsız pencere sonraki adımdır.)",
+      "CİHAZ KONUMU (kullanıcı isteği): SDK cihazın RTK/GPS konumunu zaten okuyordu (5 sn'de bir); harita ikonu bu konumu kullanır ve etikete '· RTK' ekler. Cihaz düzenleme formuna açılır 'KONUM' bölümü (enlem/boylam) eklendi; kayıt veritabanına (eo_cihazlar.lat/lon) yazılır ve RTK yoksa harita bu konuma düşer. 'Konum al' düğmesi: cihazın RTK konumu varsa onu, yoksa bu bilgisayarın konum servisini kullanır ve alanlara yazar (kaynak rozetle gösterilir).",
+      "HARİTA ÖNİZLEME (kullanıcı isteği): kamera ikonunun üzerine gelince küçük canlı görüntü önizlemesi açılır (kamera kaydı yoksa bilgi metni).",
+      "DÜZELTME: görüntü çalışırken başlık özetinde 'Yerel akış yapılandırılmadı' yazıyordu; kamera kaydı/RTSP adresi varsa akış kaynağı gösterilir."
+    ]
+  },
+  {
+    surum: "2.4.204",
+    tarih: "2026-09-15",
+    baslik: "M50 canlı görüntü: RTSP adresine kayıtlı kimlik yalnız yakalama katmanında eklenir (paket 2.5.74)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi: bağlantı/PTZ/tarama çalışıyor, görüntü gelmiyor): M50 RTSP akışı SDK oturumuyla aynı kullanıcı/parolayı ister. (a) Cihaz RTSP adresini kimlikle bildirdiğinde kod bunu 'şüpheli' sayıp adres yok diyordu — artık adres arındırılarak kabul edilir. (b) Kimliksiz adresle yakalayıcı 401 alıyordu — kayıtlı kimlik artık YALNIZ ffmpeg/OpenCV girdisine eklenir; arayüze ve telemetriye giden adres kimliksiz kalır, günlükte maskelenir.",
+      "2.4.203 içeriği dahil: açılış lisans özetine 'm50' alanı (Lisansı Yenile sonrası F5'te menünün kaybolması)."
+    ]
+  },
+  {
+    surum: "2.4.203",
+    tarih: "2026-09-15",
+    baslik: "Lisans yenilendikten sonra F5'te eski yetkiye dönme (paket 2.5.73)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): 'Lisansı Yenile' sonrası Elektro-Optik menüsü açılıyor, sayfa yenilenince kayboluyordu. Neden: açılışta gönderilen ayarlar paketindeki lisans özeti 'm50' alanını hiç taşımıyordu (ai/radar/gccdual vardı); yenileme yanıtı tam özeti gönderdiği için fark ancak F5'te görünüyordu. Belge doğruydu; özete 'm50' eklendi."
+    ]
+  },
+  {
+    surum: "2.4.202",
+    tarih: "2026-09-14",
+    baslik: "Harita etiketleri fareyle üzerine gelince; dron rengi kullanıcı seçimi (paket 2.5.72)",
+    maddeler: [
+      "YENİ (kullanıcı isteği): Dron ve radar hedefi ikonlarının altındaki bilgi etiketi varsayılan gizli; fare ikonun üzerine gelince yalnız o ikonun etiketi görünür, çekilince kapanır.",
+      "YENİ (kullanıcı isteği): Dron düzenleme penceresine 'Harita rengi' seçici eklendi; seçilen renk dron kaydına kalıcı yazılır ve haritadaki ikon, etiket, iz ve dikey çizgi hemen o renge döner."
+    ]
+  },
+  {
+    surum: "2.4.201",
+    tarih: "2026-09-14",
+    baslik: "Yardım > Lisansı Yenile: güncel lisans belgesi uygulama içinden alınır (paket 2.5.71)",
+    maddeler: [
+      "YENİ (kullanıcı bildirimi): Merkezde bir yetki (örn. M50 elektro-optik) sonradan açıldığında yerel imzalı lisans belgesi eski kalıyor, menü görünmüyor ve tek yol belgeyi kurumsal panelden elle indirip dosyayı değiştirmekti. Yardım menüsüne 'Lisansı Yenile' eklendi: merkez adresi + firma yöneticisi hesabıyla güncel belge indirilir, imzası doğrulanıp yerine yazılır ve yetkiler servis yeniden başlatılmadan uygulanır. Şifre kaydedilmez."
+    ]
+  },
+  {
+    surum: "2.4.200",
+    tarih: "2026-09-14",
+    baslik: "Elektro-Optik menüsü F5 sonrası kayboluyordu (paket 2.5.70)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): Menü sayfa yüklenince görünüyor, Köprü listesi 'Köprü yok' deyince gizleniyor, sonra gömülü SDK bayrağı menüyü geri açamıyordu — bayrak uygulaması cihaz listesi çiziminin arkasındaydı, orada bir hata olunca hiç çalışmıyordu. Bayrak artık listeden ÖNCE ve ayrı korumada uygulanır; ikinci güvence olarak liste işleyicisinin kendisi de uygular. Tarayıcı konsoluna teşhis satırı yazılır ([EO] gömülü SDK bayrağı …)."
+    ]
+  },
+  {
+    surum: "2.4.199",
+    tarih: "2026-09-14",
+    baslik: "Köprüsüz kurulumda Elektro-Optik menüsü görünmüyordu (paket 2.5.69)",
+    maddeler: [
+      "DÜZELTME (kullanıcı bildirimi): Elektro-Optik menüsü yalnız 'bir saha Köprüsünde M50 servisi çalışıyor' bilgisiyle açılıyordu; Merkez'in kendi gömülü SDK'sıyla (köprüsüz) çalışan kurulumda bu bilgi hiç gelmediği için menü gizli kalıyordu. Telemetri artık cihaz başına 'yerel_sdk' bayrağı taşır; gömülü SDK kullanılabilirse menü Köprü olmadan da açılır (lisans üst sınırı korunur)."
+    ]
+  },
+  {
+    surum: "2.4.198",
+    tarih: "2026-09-14",
+    baslik: "KRİTİK: taze kurulumda olay döngüsü kilitleniyordu (sihirbaz hiç gelmiyordu); panel stilleri Kameralar ile birleştirildi (paket 2.5.68)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, merkez_cokme.log yığın izi): Radar kaydı olan her kurulumda telemetri döngüsü ilk turunda KİLİTLENİYORDU — füzyon kodu (radarlar.hedefler) ortak kilidin içinden radarın radar_konum()'unu çağırıyor, o da aynı yeniden girişsiz kilidi tekrar almaya çalışıyordu. Gözetmen uygulamayı 20 sn'de bir yeniden başlattığı için sayfa yükleniyor ama WS üzerinden gelen her şey (kurulum sihirbazı dahil) donuyordu; F5 rastgele bir 'temiz an'a denk gelince çalışıyordu. radar_konum() artık kilit almaz (iki sayının okunması CPython'da atomiktir).",
+      "TUTARLILIK (kullanıcı isteği): Radarlar ve Elektro Optik Cihazları panelleri Kameralar paneliyle aynı desene alındı — alt çizgili başlık şeridi (RADAR YÖNETİMİ / ELEKTRO OPTİK YÖNETİMİ), sağa yaslı '+ Yeni …' düğmesi aynı stilde, alt durum çubuğu ortak modülden ('Radar Sayısı : 0/0 (Toplam / Bağlı)').",
+      "Sihirbaz komutlarının WS sırasından bağımsız işlenmesi (2.4.197) ve 30 sn bekçi korunur; asıl neden yukarıdaki kilittir."
+    ]
+  },
+  {
+    surum: "2.4.197",
+    tarih: "2026-09-14",
+    baslik: "Kurulum sihirbazı 'Bağlantı doğrulanıyor' adımında kilitlenmiyor (paket 2.5.67)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, ekran görüntüsü): Sihirbazın ilk adımı (PostgreSQL bağlantı doğrulama) yanıt alamıyor, düğme sonsuza kadar dönüyordu. Neden: sunucu WS komutlarını bağlantı başına SIRAYLA işliyordu; sayfa açılışında sıraya giren yavaş bir komut (özellikle internet yokken merkeze giden bir istek) sihirbazın komutunu dakikalarca bekletiyordu. Sihirbaz komutları artık sıradan bağımsız, ayrı görev olarak işlenir.",
+      "TEŞHİS: 3 saniyeden uzun süren her WS komutu adıyla günlüğe yazılır ('YAVAŞ KOMUT'), böylece sırayı tıkayan komut görünür.",
+      "İSTEMCİ: Doğrulama/oluşturma adımlarında 30 sn yanıt gelmezse düğme serbest bırakılır ve neden yazılır; sonsuz dönme yoktur."
+    ]
+  },
+  {
+    surum: "2.4.196",
+    tarih: "2026-09-14",
+    baslik: "Gizli panellerin görünür kalması, kurulum sihirbazının sonsuz dönmesi, parola alanı görünümü (paket 2.5.66)",
+    maddeler: [
+      "DÜZELTME (ölçüldü, ekran görüntüsü): Radarlar / Elektro Optik Cihazları / kayıt formu panelleri kapanmıyor ve aynı konumda üst üste görünüyordu (EO formunun arkasında radar formunun alanları). Neden: 2.4.195'te eklenen bir CSS kuralı gizli-panel kuralıyla aynı özgüllükteydi ve onu eziyordu. Kural kaldırıldı; paneller yeniden kapanıyor, boş durum ikonu ve durum çubuğu görünüyor.",
+      "DÜZELTME: Liste panelleri açılışta telemetri gelene kadar bomboş kalıyordu; artık ilk çizimde boş durum ikonu ve durum çubuğu (0 kayıt) hemen görünür.",
+      "DÜZELTME (ölçüldü): Kurulum sihirbazında PostgreSQL bilgileri girilip kurulum başlatılınca düğme sonsuza kadar dönüyor, sayfa yenilenince sistem kurulu açılıyordu. Neden: kurulum sürerken WS bağlantısı kopup yeniden kurulunca gelen durum yanıtı sihirbaz 'bekliyor' durumunda olduğu için yok sayılıyordu. Artık beklerken gelen 'yapılandırılmış + erişim var' durumu kurulumu tamamlanmış sayar; ayrıca 45 sn yanıt gelmezse durum yeniden sorgulanır. Sunucu kurulum başlangıç/bitişini ve gönderilemeyen yanıtı günlüğe yazar.",
+      "DÜZELTME: Yeni Elektro Optik formunda parola alanı diğer alanlardan farklı (beyaz, dar) görünüyordu; parola girdisi ortak alan stiline dahil edildi."
+    ]
+  },
+  {
+    surum: "2.4.195",
+    tarih: "2026-09-14",
+    baslik: "Kurulum sihirbazının atlanma nedeni giderildi; liste panellerinde durum çubuğu ve boş durum ikonu; form dipleri (paket 2.5.65)",
+    maddeler: [
+      "DÜZELTME (ölçüldü): Program kaldırılıp klasörler silindikten sonra yeniden kurulumda kurulum sihirbazı gelmiyordu. Neden: kaldırıcı program dizinindeki 'veri' alt klasörünü hiç silmiyordu; ortam değişkeni servise ulaşmadan çalışan ilk sürümler pg.json'u buraya yazar ve kod geçiş kuralı gereği bu eski konumu okumaya devam eder — dolayısıyla eski pg.json bulunuyor, sistem 'yapılandırılmış' sayılıyor ve PostgreSQL ayakta olduğu için sihirbaz açılmıyordu. Kaldırıcı 'veri silinsin mi?' sorusuna EVET denince artık program dizinindeki eski konumu da temizler. PostgreSQL'deki veritabanının kendisi silinmez (sihirbaz yeniden bağlanabilir).",
+      "TEŞHİS: Açılışta veri kökü ve sihirbaz kararı (pg.json bulundu/yok, hangi yolda) konsola yazılır; sihirbaz beklenmedik biçimde açılmazsa neden günlükte görünür.",
+      "YENİ: Radar menüsünden 'Radar Ayarları' kaldırıldı; radar yönetim paneli Radarlar listesindeki satıra tıklayınca açılır (listede Düzenle/Sil). Elektro-Optik menüsünden 'Yeni Elektro Optik' kaldırıldı; düğme liste panelindedir.",
+      "YENİ: Radarlar ve Elektro Optik Cihazları panellerinde durum çubuğu (kayıt / bağlı sayısı, son güncelleme) ve kayıt yokken diğer panellerdeki gibi büyük silik ikon.",
+      "YENİ: Kayıt formlarında KAYDET / İPTAL alt (footer) bölümünde."
+    ]
+  },
+  {
+    surum: "2.4.194",
+    tarih: "2026-09-14",
+    baslik: "Radarlar ve Elektro Optik Cihazları liste panelleri; kayıt formları; kontrol panelleri yalnız kontrol (paket 2.5.64)",
+    maddeler: [
+      "YENİ: Radar menüsüne 'Radarlar' — kayıtlı radarları listeleyen yüzen panel, YENİ RADAR düğmesi, satırda Düzenle/Sil. Satıra tıklayınca o radarın Radar Ayarları paneli açılır. Kayıt formu (ad, IP, port, enlem, boylam) ayrı yüzen paneldir; Radar Ayarları'nda IP/port artık salt okunurdur.",
+      "YENİ: Elektro-Optik menüsünden 'M50 Kontrolü' kaldırıldı. 'Cihazlar' → Elektro Optik Cihazları liste paneli (YENİ ELEKTRO OPTİK, Düzenle/Sil). Satıra tıklayınca cihazın kontrol paneli açılır; kontrol panelinde yalnız kontroller vardır, 'Bağlantı ve Kimlik' bölümü kaldırıldı.",
+      "YENİ: Elektro optik kayıt formu yalnız Cihaz adı, IP, Kullanıcı adı, Parola ve Port sorar; KAYDET listeye ekler. Kimlik cihaz kaydıyla birlikte sunucuda saklanır (parola arayüze/telemetriye çıkmaz); düzenlerken boş bırakılan parola değişmez. Kontrol panelindeki BAĞLAN kayıtlı kimliği kullanır.",
+      "KALDIRILDI: Kamera kaydı formundaki 'M50 Elektro-Optik' protokol seçeneği — elektro optik cihaz kamera değil, ayrı bir sistemdir; kamera kaydı Elektro-Optik panelinden kendiliğinden oluşur.",
+      "DÜZELTME (kurulum): Program kaldırılırken veri dizini (veritabanı ayarı, lisans, kayıtlar) her zaman korunuyordu; yeniden kurulumda eski yapılandırma bulunup kurulum sihirbazı atlanıyordu. Kaldırıcı artık soruyor: EVET → veri de silinir, sonraki kurulum sihirbazla sıfırdan başlar; HAYIR (varsayılan) → veri korunur."
+    ]
+  },
+  {
+    surum: "2.4.193",
+    tarih: "2026-09-14",
+    baslik: "Faz D (1/2): kamera başına FPS sınırı; ayrı Görüntü Köprüsü ürünü sistemden kaldırıldı (paket 2.5.63)",
+    maddeler: [
+      "YENİ: Kamera ayarlarında KARE HIZI SINIRI (FPS) alanı — 1–30 arası, kamera başına. Önceden kare hızı üç ayrı yerde 15'e sabitlenmişti (ffmpeg çıkışı, yerel USB kamera döngüsü, ffmpeg'siz OpenCV yolu); üçü de artık kameranın kendi değerini kullanır. Değer değişince yayın kendiliğinden yeniden kurulur, yoksa ayar kaydedilir ama akış eski hızda kalırdı. Sınır saha Köprüsüne de iletilir.",
+      "KORUMA: FPS değeri yalnız alan gönderildiğinde yazılır. Yapay Zekâ Ayarları paneli kameranın tamamını değil bir bölümünü kaydeder; ortak güncellemeye konsaydı her AI ayar değişiminde operatörün verdiği FPS sessizce varsayılana dönerdi (aynı sınıf hata daha önce AI hassasiyeti ve kalibrasyonda yaşanmıştı).",
+      "KALDIRILDI: Ayrı 'Görüntü Köprüsü' ürünü — kendi kurulumu, kendi yerel paneli (8802) ve ayrı indirmesi olan ikinci yazılım. Kamera yakalama ve yapay zekâ çıkarımı artık saha Köprüsünün kendi servislerinde çalışır; menüdeki öğe, indirme girişi ve ilgili arayüz dosyaları sistemden çıkarıldı.",
+      "GERİYE UYUM: Sahada kurulu eski Görüntü Köprüsü sürümleri merkeze 'video' ürünüyle kayıt istemeye devam edebilir. Bu istekler REDDEDİLMEZ — makine kaydını kaybedip sessizce çevrimdışı görünmesin diye 'kopru' olarak kabul edilir ve güncelleme akışıyla yeni Köprüye geçebilir."
+    ]
+  },
+  {
+    surum: "2.4.192",
+    tarih: "2026-09-14",
+    baslik: "Faz C: Saha Köprüsü üzerinden çoklu radar ve çoklu M50; Program Ayarları açılır-kapanır bölümler; yardım, sürüm geçmişi ve Elektro-Optik menü iyileştirmeleri (paket 2.5.62, Köprü 1.7.19)",
+    maddeler: [
+      "YENİ (Faz C): Merkez kipinde her radar ve her M50 artık saha Köprüsünden kendi kimliğiyle (radar_id / eo_id) yönetilir — Köprü 1.7.19 her cihaz için ayrı istemci çalıştırır. Bağlan/kes, RTK, ayar, PTZ ve takip komutları cihaz kimliğiyle Köprüye gider; durum tek köprü sorgusuyla alınıp cihazlara dağıtılır. Kayıttaki 'köprü örneği' seçildiyse komut o Köprüye yönlenir. Eski Köprü (≤1.7.18) ile yalnız 1 numaralı cihaz çalışmaya devam eder.",
+      "YENİ: Elektro-Optik menüsüne 'Cihazlar', 'Yeni M50' ve 'Tüm Cihazlara Bağlan' kısayolları eklendi (tüm cihazlar kayıtlı kimlikle bağlanır).",
+      "YENİ: Haritadaki M50 ikonunun yanında sabit küçük canlı kamera çerçevesi (cihaz bağlıyken; kamera kaydı yoksa otomatik oluşturulur). Çift tık yüzen panelde açar.",
+      "DÜZELTME: Program Ayarları ekrana sığmıyordu — C20 Radar, GCCDUAL, Servis durumu, Merkez Sunucu, DJI Köprü Belirteci ve Köprü Kimlikleri artık açılır-kapanır bölümler; açık/kapalı durumu hatırlanır.",
+      "DÜZELTME: Destek > Yardım Merkezi 404 veriyordu (paket yerel /yardim/ sayfası taşımıyor); artık çevrimiçi Destek Merkezi'ne (support.goktungu.com) yönlendirilir, yerel kopya varsa o sunulur.",
+      "DÜZELTME: Sürüm Geçmişi penceresinde karanlık modda kapalı sürüm başlıkları görünmüyordu.",
+      "DÜZELTME: Merkez kipinde 'Tüm cihazlara bağlan' ve boş alanla bağlan, cihazın kayıtlı kimliğini Köprü bağlantısı için de kullanır; Köprü üzerinden başarılı bağlantıda kimlik cihaz kaydına yazılır."
+    ]
+  },
+  {
+    surum: "2.4.191",
+    tarih: "2026-09-14",
+    baslik: "Çoklu Elektro-Optik (Faz B): birden fazla M50, cihazın RTK konumu haritada (paket 2.5.61)",
+    maddeler: [
+      "YENİ: Elektro-Optik panelinde cihaz sekmeleri — istenildiği kadar M50 eklenir (ad, IP, port); her cihazın kimliği, RTSP'si, PTZ/ön ayar/tarama/takip kontrolü ve kamera kaydı ayrıdır. Mevcut tek cihaz 'M50 1' olarak devam eder; kamera kayıtları 'm50:<cihaz>:<kanal>' biçimini alır (eski 'm50:<kanal>' = cihaz 1).",
+      "YENİ: Cihazın kendi RTK/GPS konumu ve pusulası SDK'dan (çevre birimi geri çağrısı: GPS + elektronik pusula) 5 sn'de bir okunur; haritada her M50 için özel kamera ikonu, ad etiketi ('· RTK' kaynağı) ve azimut yönünde görüş çizgisi. RTK yoksa kayıtlı enlem/boylam kullanılır.",
+      "Arka uç: goktungu/eo_cihazlar.py (EOKayitlari + EOYoneticisi), 'eo_cihazlar' tablosu, telemetride 'eo_cihazlar' listesi, WS: eo_listesi / eo_kaydet / eo_sil; tüm m50_* komutları eo_id alır (verilmezse birincil cihaz). Kimlik/ayarlar cihaz başına ayrı anahtarda saklanır; açılışta her cihaz için otomatik bağlanma.",
+      "NOT: Saha Köprüsü üzerinden (merkez kipi) Faz C'ye kadar yalnız 1 numaralı cihaz köprüden beslenir."
+    ]
+  },
+  {
+    surum: "2.4.190",
+    tarih: "2026-09-14",
+    baslik: "Çoklu radar (Faz A): birden fazla C20 radar, ortak izleme çerçevesi, haritada radar başına ikon (paket 2.5.60)",
+    maddeler: [
+      "YENİ: Radar Ayarları panelinde radar sekmeleri — istenildiği kadar radar eklenir (ad, IP, port, kurulu enlem/boylam, merkez yönü); her radar ayrı bağlanır/kesilir, ayarları ve RTK'sı ayrı yönetilir. Mevcut tek radar kurulumu otomatik 'Radar 1' olarak taşınır.",
+      "YENİ: Füzyon — takipçi artık tek bir ortak çerçevede (Merkez konumu orijin) çalışır; her radarın plotu kendi konumundan (RTK > kayıtlı > merkez) bu çerçeveye ötelenir, hedef kimlikleri radar bazında ayrıştırılır (radar_id×1.000.000+hedef). İki radarın gördüğü aynı hedefi GNN ataması birleştirir; angajman/kayıt zinciri değişmeden çok radarla çalışır.",
+      "YENİ: Haritada her radar kendi konumunda yön üçgeni + ad etiketi + menzil halkasıyla gösterilir; bağlı/hata/kapalı rengi. Radarın RTK konumu artık Merkez'i taşımaz, radarın kendi kaydına yazılır.",
+      "Arka uç: goktungu/radarlar.py (RadarKayitlari + RadarYoneticisi), veritabanında 'radarlar' tablosu, telemetride 'radarlar' listesi, WS: radar_listesi / radar_kaydet / radar_sil; mevcut radar_* komutları radar_id alır (verilmezse birincil radar).",
+      "NOT: Merkez kipinde (saha Köprüsü üzerinden) Faz C'ye kadar yalnız 1 numaralı radar köprüden beslenir."
+    ]
+  },
+  {
+    surum: "2.4.189",
+    tarih: "2026-09-14",
+    baslik: "Kamera Yönetimi sadeleşti: tek konum düğmesi, '…' menüsü, kameraya özel konsol (paket 2.5.59)",
+    maddeler: [
+      "YENİ: Her kamera satırında görüntü konumu (harita / yüzen / panel / tam ekran) artık dört ayrı düğme yerine tek bir açılır düğme; düğmenin ikonu seçili konumu gösterir.",
+      "YENİ: Düzenle, Yapay Zeka Ayarları, (M50 için) Elektro-Optik paneli ve kanal geçişi, Sil — tek bir '…' menüsünde toplandı. Satırda yalnız Oynat/Durdur, Ayrı Pencere, Konum ve '…' kaldı.",
+      "YENİ: Her kameranın satırının altında, dron panelindeki gibi açılır-kapanır bir kamera konsolu: o kameraya ait VIDEO/KAMERA/AI/M50 satırları (kaynak açıldı, hata, AI izleme, M50 bağlantı/PTZ) yalnız orada; duraklat/temizle; ardışık tekrarlar ×N rozetiyle sıkıştırılır. Tampon arka uçta tutulur, konsol ilk açıldığında geçmiş hazır gelir."
+    ]
+  },
+  {
+    surum: "2.4.188",
+    tarih: "2026-09-14",
+    baslik: "Elektro-Optik (M50) paneli: SDK'nın tamamı tek panelde, açılır-kapanır bölümler (paket 2.5.58)",
+    maddeler: [
+      "YENİ: Elektro-Optik menüsündeki M50 paneli baştan düzenlendi. Bölümler: Canlı Görüntü (gündüz/termal geçişi görüntü üzerinde, sürükle-bırak PTZ), PTZ ve Lens (8 yön + dur, zoom/netlik/iris), Açı Konumlama (canlı azimut/eğim, açıya git), Ön Ayarlar (listele/git/kaydet/sil/hepsini sil), Tarama/Devriye (ön ayar devriyesi, yatay, dikey, panorama, yelpaze, kare, desen; başlat/duraklat/devam/durdur), Hedef Takibi (takip yeteneği aç/kapat, mod, manuel seçim), Bağlantı ve Kimlik, Gelişmiş Ayarlar. Her bölüm açılıp kapanabilir.",
+      "YENİ: Panel, kamera listesindeki M50 kaydını kendisi bulur ve görüntüyü panele gömer; kayıt yoksa tek tıkla oluşturur. Kamera Yönetimi'nde ayrı bir M50 satırı gerekmez.",
+      "Arka uç: SDK'nın açı okuma (GetAngleX/Y), ön ayar (GetPresets/SetPreset/CallPreset/ClearPreset/ClearAllPreset), tarama (ControlScan) ve takip yeteneği (EnableTrackAbility) çağrıları hem köprüsüz modda hem saha Köprüsünde (1.7.18) desteklenir. Canlı açı saniyede bir tazelenir; ön ayar listesi yalnız değişince cihazdan okunur."
+    ]
+  },
+  {
+    surum: "2.4.187",
+    tarih: "2026-09-14",
+    baslik: "M50: RTSP adresi SDK'dan otomatik; kimlik bir kez girilir, kaydedilir, açılışta kendiliğinden bağlanır (paket 2.5.57)",
+    maddeler: [
+      "YENİ: M50'nin görünür/termal RTSP yayın adresi artık cihazın kendisinden (HVS_GetRtspUrl) otomatik okunuyor; operatörün elle RTSP adresi girmesi gerekmiyor. Elle girilmiş adres varsa yalnız SDK adres vermediğinde kullanılır.",
+      "DÜZELTME: Otomatik/elle RTSP adresi kamera akışının gerçekten okuduğu alana (m50_ayarlar) yazılıyor; 2.4.186'da adres yalnız durum özetine gidiyor, 'Bağlı' görünse de video gelmiyordu.",
+      "YENİ (köprüsüz mod): IP, port, kullanıcı adı ve parola başarılı ilk bağlantıdan sonra Merkez'in yerel ayarlar tablosuna kaydedilir; bir daha sorulmaz. Merkez yeniden başlayınca kayıtlı kimlikle kendiliğinden bağlanır. M50 panelinde form boş bırakılıp 'Bağlan'a basılınca kayıtlı kimlik kullanılır; parola hiçbir zaman arayüze geri gönderilmez.",
+      "NOT: Bu kalıcılık yalnız Merkez'in kendi makinesindeki köprüsüz modda geçerlidir; saha Köprüsü üzerinden bağlantıda kimlik yine saklanmaz."
+    ]
+  },
+  {
+    surum: "2.4.186",
+    tarih: "2026-09-14",
+    baslik: "M50 köprüsüz modda durum sürekli 'hata'ya dönüyordu — düzeltildi (paket 2.5.56)",
+    maddeler: [
+      "DÜZELTME: Telemetri döngüsü, köprüsüz (doğrudan) M50 modu aktifken de her saniye saha Köprüsü aramaya devam ediyordu; köprü bulunamayınca durumu 'hata'ya çeviriyor ve doğrudan bağlantının az önce yazdığı 'bağlı' durumunu anında eziyordu. Kullanıcı gerçekten bağlansa bile arayüz hep bağlantısız görünüyor, kamera formu sürekli bilgi girmeyi istiyordu. Doğrudan mod kullanılabilirken köprü sorgusu artık hiç yapılmıyor."
+    ]
+  },
+  {
+    surum: "2.4.185",
+    tarih: "2026-09-14",
+    baslik: "M50 SDK yol düzeltmesi — köprüsüz mod artık gerçekten bağlanabiliyor (paket 2.5.55)",
+    maddeler: [
+      "DÜZELTME: Üretici HVS SDK'sının Python bağlayıcısı (Hvs/datdefs.py), DLL dizinini çalışma dizinine (cwd) göre '..\\bin' olarak hesaplıyordu — bu yalnız üreticinin kendi demo klasör düzeninde doğruydu. Merkez'in çalışma dizini farklı olduğu için M50 bağlantısı '[WinError 2] Sistem belirtilen dosyayı bulamıyor' ile reddediliyordu (2.4.184'te köprüsüz mod aktifti ama bu yüzden hâlâ bağlanamıyordu). Yol artık dosyanın kendi konumundan hesaplanıyor; çalışma dizininden bağımsız."
+    ]
+  },
+  {
+    surum: "2.4.184",
+    tarih: "2026-09-14",
+    baslik: "M50 köprüsüz (doğrudan) bağlantı desteği eklendi (paket 2.5.54)",
+    maddeler: [
+      "YENİ: M50 artık ayrı bir 'Görüntü Köprüsü' kurmadan da çalışabilir. Merkez'in kendisi Windows x64 üzerinde çalışıyorsa ve gömülü HVS SDK kopyası (goktungu/m50_sdk/) mevcutsa, M50 bağlantı/PTZ/lens/takip komutları doğrudan bu süreçte işlenir; ayrı bir köprü kurulumu ve bağlantısı gerekmez.",
+      "Saha Köprüsü desteği KALDIRILMADI: Merkez Linux'ta çalışıyorsa veya gömülü SDK bulunmuyorsa sistem otomatik olarak eski köprü akışına düşer — çok siteli/merkezi kurulumlar etkilenmez.",
+      "GÜVENLİK KORUNDU: kullanıcı adı/parola doğrudan modda da kalıcı ayara veya günlüğe yazılmaz, yalnız bağlantı çağrısı süresince bellekte tutulur. Kalıcı olarak saklanan tek M50 ayarı RTSP görünür/termal adresleri ve SDK dizinidir (parola içermezler)."
+    ]
+  },
+  {
+    surum: "2.4.183",
+    tarih: "2026-09-14",
+    baslik: "Köprü listesi 'Oturum gerekli' hatası düzeltildi; güncelleme hatasında hedef sürüm artık yanıltıcı görünmüyor (paket 2.5.53)",
+    maddeler: [
+      "DÜZELTME: Yerel/offline kurulumlarda (çok kiracılı 'merkez kipi' DEĞİL) firma_id hiçbir zaman atanmaz; bağlantı yöneticisi ve M50 panelinin 'saha makinesi' listesi bu yüzden konsola sürekli '[KÖPRÜ] liste hatası: Oturum gerekli' yazıyor ve (birden fazla köprü varsa) seçici hiç dolmuyordu. Kontrol artık yalnız gerçekten merkez kipindeyken firma oturumu zorunlu kılıyor; yerel kurulumda boş liste sessizce dönüyor.",
+      "DÜZELTME: Güncelleme denetimi ağ/DNS hatasıyla başarısız olduğunda 'HEDEF SÜRÜM' alanı artık yanıltıcı biçimde kurulu sürümle aynı görünmüyor — 'Bilinmiyor (denetim başarısız)' gösteriyor.",
+      "ÖNEMLİ HATIRLATMA: M50 kamerası için 'Merkez' kurulumu TEK BAŞINA yeterli değildir — M50 HVS SDK yalnız ayrı 'Görüntü Köprüsü' (BRDIMG) yazılımında çalışır ve güvenlik gereği Merkez'e asla yüklenmez. M50'nin video/PTZ vermesi için aynı ağdaki bir makinede Görüntü Köprüsü kurulu, çalışır ve Merkez'e bağlı olmalı; aksi halde '[M50] Çevrimiçi saha makinesi yok' hatası alınır."
+    ]
+  },
+  {
+    surum: "2.4.182",
+    tarih: "2026-09-14",
+    baslik: "Hava aracı tespitinde sınıf-bazlı taban eşik sertleştirmesi (paket 2.5.52)",
+    maddeler: [
+      "ARAŞTIRMA SONUCU: Önerilen 'daha iyi' modellerin ikisi (BirdDrone-2C-FT/YOLO26 ve RT-DETR-R18) doğrudan doğrulandı ve GERÇEKTE MEVCUT DEĞİL (GitHub/HuggingFace'te böyle bir depo yok — büyük olasılıkla halüsinasyon). Mevcut kurulu modelin (Flying Objects YOLOv8m) yerine geçecek, doğrulanmış ve gerçekten daha iyi bir alternatif bulunamadı; model DEĞİŞTİRİLMEDİ.",
+      "Bunun yerine modelin KENDİ belgelenen sınıf bazlı zayıflığına göre (model kartı: Uçak %99, Drone %85, Kuş %68, Helikopter %67 doğruluk) taban güven eşiği sertleştirildi: Kuş ve Helikopter sınıflarında artık daha yüksek bir taban eşik zorunlu — kullanıcının hassasiyet kaydırıcısı bu tabanın ÜSTÜNE eklenir, ALTINA düşüremez. Amaç: modelin zayıf olduğu sınıflarda hassasiyeti yükseltmenin yanlış pozitifi aşırı artırmasını önlemek."
+    ]
+  },
+  {
+    surum: "2.4.181",
+    tarih: "2026-09-14",
+    baslik: "M50 kamera protokolü, sürükle-bırak PTZ ve iki kameranın aynı anda AI çalışması (paket 2.5.51)",
+    maddeler: [
+      "YENİ: Kamera ekle/düzenle formunda 'M50 Elektro-Optik (PTZ)' protokolü. Artık M50 için RTSP adresi elle yazılmıyor — yalnız kanal (Görünür/Termal) seçiliyor; ağ/kimlik bilgisi (IP, port, kullanıcı adı, parola) tamamen mevcut M50 Köprü alt yapısına devrediliyor. Kimlik bilgisi doldurulursa kaydederken M50 bağlantısı da otomatik kurulur; sunucuda hiçbir zaman saklanmaz.",
+      "YENİ: M50 kameralarında video panelinde sol fare tuşuna basılı tutup hareket ettirmek PTZ'yi o yöne, sürükleme mesafesiyle orantılı hızda hareket ettirir (joystick kipi); tuş bırakılınca durur.",
+      "YENİ: M50 kamera satırında/panelinde iki yeni düğme: 'M50 PTZ/Lens Kontrolü' (mevcut M50 kontrol panelini açar) ve 'Kanal Değiştir' (aynı kamera kaydında Görünür⇄Termal geçişi; angajman kalibrasyonu korunur).",
+      "KÖK NEDEN DÜZELTMESİ: iki kamera aynı anda AI ile izlenirken biri diğerini durduruyordu. Sebep: YOLO çıkarım oturumu (ONNX Runtime/cv2.dnn) işçi genelinde TEK ve paylaşılan bir nesneydi; her kameranın kendi iş parçacığından eşzamanlı çağrılması GPU/CPU çıkarımını bozabiliyordu. Çıkarım çağrısı artık kilitle sıraya alınıyor — kare okuma, takip ve video akışı etkilenmeden, birden fazla kamera artık güvenle eşzamanlı AI çalıştırabiliyor."
+    ]
+  },
+  {
+    surum: "2.4.180",
+    tarih: "2026-09-14",
+    baslik: "KESİN KÖK NEDEN BULUNDU VE DÜZELTİLDİ: Windows'ta takip bildirimi hiç sunucuya ulaşmıyordu (paket 2.5.50)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN (nihayet net bir traceback ile doğrulandı): `os.fchmod()` fonksiyonu Windows'ta HİÇ YOKTUR (yalnız Linux/Mac'te bulunur). Pasif görüntü takibinin her güncellemesinde çağrılan track-günlüğü yazma adımı bu satırda `AttributeError: module 'os' has no attribute 'fchmod'` ile çöküyor, fonksiyon WebSocket'e 'takip aktif' bildirimini göndermeden ÖNCE sonlanıyordu.",
+      "Bu, 'Angaje Ol' ve 'Takip Et' düğmelerinin hedef seçili ve takip görsel olarak aktifken bile HİÇBİR ZAMAN görünmemesinin gerçek ve tek nedeniydi — önceki tüm düzeltmeler (PostgreSQL bağlantı havuzu, geçici izleyici hatası toleransı) gerçek ve gerekli düzeltmelerdi ama bu son engeli kaldırmıyordu.",
+      "DÜZELTME: `os.fchmod` çağrısı artık yalnız mevcutsa (Linux/Mac) yapılıyor; Windows'ta dosya zaten güvenli izinlerle (0600) oluşturulduğu için atlanıyor. Bu, kod tabanının başka bir yerinde (O_NOFOLLOW için) zaten kullanılan aynı çapraz-platform güvenlik desenidir.",
+      "Bu güncellemeden sonra hedef seçip birkaç saniye içinde 'Angaje Ol' ve 'Takip Et' düğmelerinin video panelinde belirmesi gerekir."
+    ]
+  },
+  {
+    surum: "2.4.179",
+    tarih: "2026-09-14",
+    baslik: "AI uç hataları artık canlı KONSOL panelinde de görünür (paket 2.5.49)",
+    maddeler: [
+      "Önceki iki sürümde log dosyasına eklenen traceback bir türlü dışa aktarılan dosyada görünmüyordu (muhtemelen dışa aktarma zamanlaması/arabellek). /ai/tespit, /ai/kutular, /ai/takip uçlarındaki hatalar artık dosyayla birlikte uygulamanın kendi CANLI 'KONSOL' paneline de (WS üzerinden anında) düşüyor — dosya dışa aktarmaya gerek kalmadan ekrandan okunabilir."
+    ]
+  },
+  {
+    surum: "2.4.178",
+    tarih: "2026-09-13",
+    baslik: "Tanı: AI uç hatalarında artık tam iz (traceback) yazılıyor (paket 2.5.48)",
+    maddeler: [
+      "/ai/tespit, /ai/kutular, /ai/takip uçlarındaki hata mesajları artık yalnız kısa özet değil TAM PYTHON İZİ (traceback) ile ve anında diske zorla yazdırılarak (flush) merkez_cikti.log dosyasına düşüyor.",
+      "Bu, bir önceki sürümde ('/ai/takip' hâlâ HTTP 500 dönüyor ama log dosyasında hiçbir hata satırı görünmüyor' şeklinde bildirilen) teşhis boşluğunu kapatmak içindir — artık gerçek hata kesin olarak günlüğe düşecek."
+    ]
+  },
+  {
+    surum: "2.4.177",
+    tarih: "2026-09-13",
+    baslik: "KESİN KÖK NEDEN: PostgreSQL bağlantı havuzu doluyordu, takip sunucuya hiç ulaşmıyordu (paket 2.5.47)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN (loglardan doğrulandı): /ai/takip ucu her çağrıda kameranın bağlı drone kimliğini veritabanından okuyordu (`_kamera_dron_uid`) ama bu bağlantıyı havuza HİÇ İADE ETMİYORDU. Takip artık ayrı iş parçacığında en taze kareyle çalıştığı için bu uç saniyede birkaç kez tetikleniyor; havuz (10 bağlantı) saniyeler içinde doluyor, bundan sonraki HER 'Angaje Ol/Takip Et' düğmesinin dayandığı bildirim 'PostgreSQL bağlantı havuzu dolu' hatasıyla HTTP 500 dönüyordu. Bu yüzden hedef seçili ve takip başlamışken bile düğmeler hiç gelmiyordu.",
+      "DÜZELTME: /ai/tespit, /ai/kutular, /ai/takip uçları artık her istekten sonra veritabanı bağlantısını havuza kesin olarak iade ediyor (aynı 2.5.33'teki WebSocket tarafı düzeltmesinin HTTP tarafı karşılığı).",
+      "Ek: kameranın bağlı drone kimliği artık 3 saniyelik önbellekte tutuluyor — saniyede birkaç kez aynı veritabanı sorgusu tekrarlanmıyor.",
+      "ÖNEMLİ: bu güncellemeyi aldıktan sonra Merkez'i BİR KEZ yeniden başlatın (veya bilgisayarı yeniden başlatın) — önceki oturumda sızan bağlantılar yalnızca yeni bağlantıların sızmasını ENGELLER, havuzu geriye dönük TEMİZLEMEZ; havuzun sıfırlanması için yeniden başlatma gerekir."
+    ]
+  },
+  {
+    surum: "2.4.176",
+    tarih: "2026-09-13",
+    baslik: "KÖK NEDEN: piksel takip düğmeleri hedef görünürken bile kayboluyordu (paket 2.5.46)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN: CSRT/KCF gibi korelasyon tabanlı izleyiciler, özellikle düz gökyüzü gibi düşük kontrastlı fonlarda TEK KARELİK 'başarısız' dönüşü sıkça yaşar (bu normaldir, gerçek kayıp değildir — bu yüzden zaten bir kayıp toleransı vardı). Ancak her tek karelik başarısızlıkta sunucu 'kayıp: true' bildiriyor, Merkez takip kaydını HEMEN SİLİYOR, tarayıcı 'Angaje Ol/Takip Et' düğmelerini 'Hedef Seç'e döndürüyordu. İzleyici BİR SONRAKİ karede toparlansa bile, silinen kayıt yüzünden 'tekrar aktif' bildirimi hiçbir zaman gönderilmiyordu — kalıcı, sessiz bir kilitlenmeydi.",
+      "DÜZELTME: geçici (tolerans süresi içindeki) tek karelik başarısızlıklarda artık HİÇBİR bildirim gönderilmiyor; son bilinen konum ve 'aktif' durumu korunuyor. Yalnız gerçek kayıp (tolerans süresi dolduğunda, varsayılan 5 sn) bir kez bildiriliyor.",
+      "Tarayıcının 'bayat' kabul etme süresi (3 sn) sunucunun kendi kayıp toleransından (5 sn) KISAYDI — sunucu henüz pes etmeden tarayıcı zaten pasif gösterebiliyordu. Süre 8 saniyeye çıkarıldı, video üzerindeki kırmızı çerçevenin tazelik eşiği de (2 sn → 6 sn) buna göre uyumlandı.",
+      "Etkilenen arayüz dosyaları (kamera_takip.js, kameralar.js, angajman.js, angajman_izle.js, kamera_ai_panel.js) için tarayıcı önbellek sürümü güncellendi — bazı kurulumlarda tarayıcı, güncelleme sonrası bu dosyaların eski önbelleklenmiş kopyasını kullanmaya devam edebiliyordu."
+    ]
+  },
+  {
+    surum: "2.4.175",
+    tarih: "2026-09-13",
+    baslik: "YOLO tespiti artık her karede: hızlı uçan hedef sürekli takip ediliyor (paket 2.5.45)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: YOLO tespiti, video okuma döngüsünün 5 Hz'lik örnekleme sınırına (ayrıca kendi içinde ikinci bir 5 Hz sınırına) tabiydi. GPU çıkarımı 100 ms altında bitse bile hedef en fazla ~2-5 Hz güncelleniyordu; hızlı uçan bir uçak/İHA bu aralıkta çerçevenin dışına çıkabiliyor, takip 'sürekli' değil 'aralıklı' görünüyordu.",
+      "YOLO artık HER karede beslenir; örnekleme sınırı tamamen kaldırıldı. Gerçek hız artık yalnız modelin kendi çıkarım süresine bağlıdır (GPU'da tipik 50-150 ms → doğal olarak 6-15 Hz), kendi ayrı iş parçacığı sayesinde video akışını hâlâ yavaşlatmaz.",
+      "MOG2 (model yüklenmemişse devreye giren hareket dedektörü) hâlâ CPU dostu 5 Hz örneklemede kalıyor — bu değişiklik yalnız YOLO/GPU yolunu hızlandırıyor."
+    ]
+  },
+  {
+    surum: "2.4.174",
+    tarih: "2026-09-13",
+    baslik: "KÖK NEDEN DÜZELTMESİ: piksel takip artık video akışını ve sunucuyu kilitlemiyor (paket 2.5.44)",
+    maddeler: [
+      "ÖLÇÜLEN KÖK NEDEN: piksel takip motoru (CSRT/KCF/MIL) video okuma döngüsünde SENKRON çalışıyordu. Zayıf CPU'da tracker güncellemesi 100-500 ms sürebildiği için video okuma hızını kendisi düşürüyordu (video 4-5 fps'e düşüyordu) — bu da hem hedef seçiminin çok yavaş başlamasına hem de YOLO tespitinin yavaş görünmesine hem de 'Angaje Ol/Takip Et' düğmelerinin bazen hiç görünmemesine (durum yayını gecikip/atlanıp tarayıcının takibi 'pasif' sanmasına) yol açıyordu.",
+      "Piksel takip artık AYRI bir iş parçacığında, her zaman en TAZE kareyle çalışıyor; video okuma döngüsü artık asla takip tarafından yavaşlatılmıyor.",
+      "İKİNCİ KÖK NEDEN: hedef seçiminde 'geçmişten bugüne sarma' adımı, AI işçisinin HTTP isteğini yanıtlamadan önce onlarca kareyi senkron işliyordu; bu hem seçimi yavaşlatıyor hem de sunucunun WebSocket döngüsünü (tüm istemciler için) saniyelerce dondurabiliyordu. Sarma artık sıkı bir zaman bütçesiyle (120 ms) sınırlandı; kalan fark canlı takiple birkaç karede kapanır.",
+      "GÜVENLİK: Merkez'in 'Görüntüye Angaje Ol/Takip Et' başlatma ve bırakma komutları artık AI işçisine giden ağ isteğini ayrı iş parçacığında yapıyor — işçi yavaş yanıt verse bile Merkez'in WebSocket/telemetri döngüsü asla kilitlenmez."
+    ]
+  },
+  {
+    surum: "2.4.173",
+    tarih: "2026-09-13",
+    baslik: "Angaje Ol / Takip Et düğmeleri, mesafeli takip kipi, durdurma ve düzenli yerleşim (paket 2.5.43)",
+    maddeler: [
+      "Kamera panelinde artık İKİ ayrı düğme: 'Angaje Ol' (hedefe tam hızda yönel) ve 'Takip Et' (seçilen mesafeyi koruyarak izle, ÇARPMAZ). Takip Et açılan panelde dron seçimi + 'Takip Mesafesi (m)' ayarını sorar.",
+      "Uçuş seviyesinde (drone havada gerçekten hedefe yöneliyor/izliyor) aktif angajman veya takip varsa kamera panelinde 'Angajmanı Durdur' / 'Takibi Durdur' düğmesi belirir; ayrı izleme penceresi açmadan tek tıkla durdurulur.",
+      "Yerleşim düzenlendi: düğmeler tek satırda gruplu; tüm ipuçları, piksel-takip durumu, uçuş mesafesi/ETA ve AI teknoloji rozeti (GPU/CPU/fps) artık videonun ALTINDA tek bir durum çubuğunda toplanır — panel karmaşası giderildi.",
+      "DÜZELTME: Tam ekran modunda 'Yapay Zeka Ayarları' paneli artık videonun ÜZERİNDE açılır (eskiden arkada kalıp erişilemiyordu).",
+      "DÜZELTME: Elle hedef seçiminde (dikdörtgen çizme) takip artık seçim ANINDAKI kareye oturtuluyor ve o andan bugüne hızlıca 'sarılıyor' — eskiden görüntü boru hattı gecikmesi yüzünden takip hedefin gerisinden başlıyordu.",
+      "DÜZELTME: ESC tuşu artık hem seçim modunu hem de aktif piksel takibini bırakır; ayrıca 'Bırak' düğmesi eklendi ve takipteyken videoya çift tıklamak (çerçevenin tam içine denk gelmeden de) takibi güvenilir şekilde bırakır.",
+      "Takip kaybolma toleransı artık AI ayarlarından yapılandırılabilir (varsayılan 5 sn) ve zamana dayalıdır — eskiden sabit kare sayısına dayanıyordu."
+    ]
+  },
+  {
+    surum: "2.4.172",
+    tarih: "2026-09-13",
+    baslik: "Elle hedef seçimi: dikdörtgen çiz, takip başlasın (paket 2.5.42)",
+    maddeler: [
+      "Video panelinde 'Hedef Seç' düğmesi eklendi. Basınca videonun üzerinde fare ile dikdörtgen çizilir; çizim bitince seçilen bölge KIRMIZI çerçeveyle takibe alınır ve 'Görüntüye Angaje Ol' düğmesi açılır.",
+      "AI tespiti gerekmeden çalışır: tespit kutusu çıkmayan (durağan, kamufle, alçak kontrastlı) hedefler elle seçilip takip edilebilir ve angaje olunabilir.",
+      "ESC veya düğmeye tekrar basmak seçimi iptal eder; çok küçük seçim (8 pikselden dar) reddedilir. Takibi bırakmak yine kırmızı çerçeveye çift tıklamayla olur.",
+      "Seçim yüzen panel ve tam ekranda çalışır; koordinatlar video karesine bire bir çevrilir (işçi ile tarayıcı aynı akışı okur)."
+    ]
+  },
+  {
+    surum: "2.4.171",
+    tarih: "2026-09-13",
+    baslik: "Video altında AI teknoloji/performans rozeti (paket 2.5.41)",
+    maddeler: [
+      "Kamera panelinde video altına canlı durum rozeti eklendi: dedektör (YOLO-GPU / YOLO-ORT / YOLO / MOG2), donanım (DirectML GPU / CUDA GPU / CPU), çıkarım süresi (ms), tespit döngüsü (Hz) ve video kare hızı (fps).",
+      "GPU aktifse işlemci simgesi YEŞİL, CPU'da TURUNCU görünür — hızlandırmanın devrede olup olmadığı bir bakışta anlaşılır.",
+      "Değerler AI işçisinden ~2 sn'de bir canlı gelir (tespit olmasa da kalp atışıyla); çıkarım süresi ve tespit Hz'i kayan ortalamayla yumuşatılır."
+    ]
+  },
+  {
+    surum: "2.4.170",
+    tarih: "2026-09-13",
+    baslik: "YOLO tespitinde GPU hızlandırması (DirectML) (paket 2.5.40)",
+    maddeler: [
+      "Windows paketine ONNX Runtime + DirectML gömüldü: YOLO hava aracı tespiti artık NVIDIA/AMD/Intel fark etmeksizin tüm DirectX 12 GPU'larda donanım hızlandırmalı çalışır — CUDA veya sürücü dışında ek kurulum GEREKMEZ.",
+      "Hız: CPU'da saniyeler süren çıkarım GPU'da tipik olarak 20-80 ms'ye iner (~%95+ hızlanma); tespit gerçek zamanlıya yaklaşır.",
+      "Öncelik sırası: CUDA > DirectML > ORT-CPU > OpenCV-CPU. AI işçi logu ve /durum ucu aktif sağlayıcıyı bildirir (örn. 'dedektor=YOLO-GPU, DmlExecutionProvider').",
+      "ÖNEMLİ: GPU desteği gömülü Python'a eklendiği için dosya tabanlı artımlı güncellemeyle GELMEZ — Windows'ta 2.5.40 tam kurulumunu bir kez indirip çalıştırın (sonraki güncellemeler yine artımlı sürer).",
+      "Linux/sunucu işçilerinde onnxruntime pip ile kurulursa aynı öncelikle kullanılır."
+    ]
+  },
+  {
+    surum: "2.4.169",
+    tarih: "2026-09-13",
+    baslik: "Hava aracı tip sınıflandırması: Drone/Uçak/Helikopter/Kuş (paket 2.5.39)",
+    maddeler: [
+      "AI ayarlarında 'Hava Aracı' ana anahtarının altında dört alt sınıf: Drone/İHA, Uçak (sabit kanat), Helikopter, Kuş — her biri ayrı AÇ/KAPAT ve HASSASİYET taşır. Hiç alt sınıf seçilmemişse tümü açık sayılır (eski kayıtlar ve tek sınıflı modellerle geriye uyumlu).",
+      "Tip ayrımı YOLO modeli gerektirir: ai_modeller klasörüne 'hava_araci.onnx' + 'hava_araci.siniflar.txt' konur. Videoda kutular tipiyle etiketlenir: 'DRONE KOPTER %85', 'SABIT KANAT IHA %78', 'KUS %64'. Kuş sınıfı ayırt edilir; yanlış angajman riski düşer.",
+      "YOLO çıkarımı ayrı iş parçacığına alındı: yavaş CPU'da saniyeler süren model, video akışını ve takibi (CSRT her karede) artık bloklamaz.",
+      "Kutu geçerlilik süreleri uzatıldı (1.5sn→6sn): yavaş çıkarımda tespit kutuları ekranda yanıp sönmez, çift tıkla hedef seçimi zaman tanır.",
+      "Takip ve angajman zinciri değişmedi: tüm alt sınıflar angajman için 'hava aracı' hedefidir; sınıf yalnız tespit süzgeci ve etikettir."
+    ]
+  },
+  {
+    surum: "2.4.168",
+    tarih: "2026-09-13",
+    baslik: "Hava aracı tespitinde yanlış alarm koruması (paket 2.5.38)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: hareketli kameradan (örn. dron kamerasıyla çekilmiş video) gelen görüntüde MOG2 tüm sahneyi 'hareket' sayıyor, her arazi parçası HAVA ARACI olarak işaretleniyordu.",
+      "KAMERA HAREKETİ KORUMASI: karenin %6'sından fazlası hareketliyse bu kamera hareketidir; o karelerde tespit atlanır (konsola 30 sn'de bir uyarı düşer).",
+      "GÖKYÜZÜ/FON TEKDÜZELİĞİ: aday kutunun geniş çevresi dokulu (arazi/ağaç/bina) ise reddedilir — dron, düz gökyüzü fonu önünde kompakt cisim olarak aranır.",
+      "YOLO ONNX MODEL DESTEĞİ: ai_modeller klasörüne 'hava_araci.onnx' (YOLOv5/YOLOv8 formatı, tek veya çok sınıflı dron modeli) konursa hava aracı tespiti MOG2 yerine bu modelle yapılır — HAREKETLİ kamera görüntüsünde de çalışır. Model yoksa MOG2'ye düşülür. AI işçi durumu hangi dedektörün aktif olduğunu bildirir.",
+      "NOT: MOG2 hareket dedektörü SABİT kamera için tasarlanmıştır. En iyi sonuç: sabit (tripod/direk) kamera, gökyüzünü gören kadraj. Hareketli kameradan tespit için YOLO modeli kullanın."
+    ]
+  },
+  {
+    surum: "2.4.167",
+    tarih: "2026-09-13",
+    baslik: "ffmpeg'siz RTSP/video oynatma (OpenCV geri çekilmesi) (paket 2.5.37)",
+    maddeler: [
+      "ÖLÇÜLEN KUSUR: Windows kurulumunda ffmpeg yoksa RTSP/HTTP/MJPEG/video dosyası kaynakları hiç açılmıyordu (VLC oynatırken GRCOFF 'YAYIN ALINAMIYOR' gösteriyordu). Video kaynakları artık ffmpeg kurulu değilse OpenCV'nin kendi FFMPEG çözücüsüyle okunur — ek kurulum gerekmez.",
+      "İKİNCİ KUSUR: 'ffmpeg kurulu değil' gerekçesi HTTP başlığına yazılırken içindeki özel karakter (—) kodlama hatası üretiyor, gerekçe istemciye hiç ulaşmıyordu. Başlık artık güvenli kodlanır; hata nedeni arayüzde görünür.",
+      "Video dosyası (mp4) kaynağı OpenCV yolunda da döngülüdür: dosya bitince başa sarar, gerçek zamanlı hızda akar."
+    ]
+  },
+  {
+    surum: "2.4.166",
+    tarih: "2026-09-13",
+    baslik: "Test için video dosyası kamera kaynağı (paket 2.5.36)",
+    maddeler: [
+      "Yeni kamera protokolü: 'Video dosyası (MP4 döngü — test)'. MP4 dosyası arayüzden sunucuya yüklenir ve döngüde canlı kamera gibi yayınlanır.",
+      "Yüklenen video normal kamera akışı gibi AI boru hattından geçer: hava aracı tespiti, çift tıkla takip, 'Görüntüye Angaje Ol' ve sanal/gerçek dronla kinetik angajman testi yapılabilir.",
+      "Sabit kamera kalibrasyonu (konum/yön/FOV) video kaynağına da tanımlanabilir; tespit edilen hava hedefinin tahmini coğrafi konumu çözülür.",
+      "Yükleme, kamera görüntüleme oturumuyla (giriş yapılmış kullanıcı) korunur; yalnız video uzantıları kabul edilir, üst sınır 512 MB.",
+      "Kamera formundaki İnsan/Kara Aracı anahtarları kaldırıldı (C-UAS modu tamamlama)."
+    ]
+  },
+  {
+    surum: "2.4.165",
+    tarih: "2026-09-13",
+    baslik: "C-UAS modu: yalnız hava aracı tespiti ve kinetik angajman (paket 2.5.35)",
+    maddeler: [
+      "İnsan ve kara aracı tespiti sistemden tamamen kaldırıldı. Sistem artık yalnızca hava araçlarını (İHA/drone) tespit eder, takip eder ve angaje olur.",
+      "AI panelinde artık yalnız 'Hava Aracı (İHA / Drone)' sınıfı görünür.",
+      "MOG2 hareket dedektörü hava aracı profiline göre hassaslaştırıldı: daha geniş kare alanı (%70 yüksekliğe kadar), daha küçük alan alt sınırı ve daha geniş en-boy oranı aralığı ile alçak irtifadaki İHA'lar da yakalanır.",
+      "Tespit → çift tıkla takip → Görüntüye Angaje Ol → kinetik angajman akışı yalnız hava hedeflerine çalışır.",
+      "HOG insan dedektörü ve YuNet yüz modeli yüklenmez; başlangıç bellek ve CPU tüketimi azaldı."
+    ]
+  },
+  {
+    surum: "2.4.164",
+    tarih: "2026-09-13",
+    baslik: "Videoda çift tıkla takip ve görüntüye angajman (paket 2.5.34)",
+    maddeler: [
+      "Haritadaki kamera önizlemesine çift tıklayınca görüntü yüzen panelde açılır.",
+      "Yüzen panel veya tam ekranda tespit edilen hedefe çift tıklayınca takip başlar; takip çerçevesi videoda KIRMIZI 'TAKIP' olarak çizilir. Kırmızı çerçeveye tekrar çift tıklayınca takip bırakılır.",
+      "Takipteyken panelde 'Görüntüye Angaje Ol' düğmesi çıkar. Açılan YÜZEN angajman panelinde saldıran dron, angajman ayarları, kamera kalibrasyonu ve hedefin canlı tahmini konumu görünür; Başlat seçili dronla angajmanı başlatır.",
+      "Hedef konumu: kamera bir drona takılıysa o dronun telemetrisiyle (konum, yön, tutum; yer hedefinde zemin kesişimi), sabit kameraysa kamera kalibrasyonuyla hesaplanır. Dron kamerasında artık icra için herhangi bir bağlı dron seçilebilir.",
+      "DÜZELTMELER: yerel AI hedef hesabında merkez ve kutu biçimi yanlış okunuyordu (yön görüş alanının kenarına kayıyor, mesafe yanlış çıkıyordu); dron kamerası hedef irtifası MSL veriliyordu (artık eve göre göreli); yer hedefinde angajman ilk turda 'tamamlandı' diye bitiyordu; firma oturumunda yerel hedef bulunamıyordu.",
+      "GÜVENLİK: Görüntü angajmanında dron yer hedefine sürülmez; yöneliş irtifası en az 10 m'dir (hedefin üzerine gelir)."
+    ]
+  },
+  {
+    surum: "2.4.163",
+    tarih: "2026-09-13",
+    baslik: "Güncellemede ayrıntılı ilerleme; AI ayarında donma ve öksüz süreç sorunları giderildi (paket 2.5.33)",
+    maddeler: [
+      "Güncelleme penceresi her adımı ilerleme çubuğuyla gösterir: imzalı sürüm listesi, imza doğrulama, dosya karşılaştırma, her dosyanın indirilip SHA-256 ile doğrulanması (dosya no/toplam, MB), uygulamanın durdurulması, her dosyanın yedeklenip yerleştirilmesi, başlatma ve toplam süre. Adımlar saatleriyle listelenir; yeniden başlatma sırasında bağlantı bekleme sayacı gösterilir, bitince arayüz yeni sürümle kendiliğinden yenilenir. Otomatik güncellemeler de aynı pencerede açılır.",
+      "Güncelleme motoru her turda diskten taze yüklenir; güncelleyicinin kendisindeki iyileştirmeler servis yeniden başlatılmadan devreye girer. Eski servis için pencerede 'Güncelleme servisini yeniden başlat' düğmesi çıkar (bir kez).",
+      "DONMA KÖK NEDENİ: AI ayarı her değiştiğinde arka plan iş parçacıkları PostgreSQL bağlantısını geri vermiyordu; birkaç değişiklikten sonra 10'luk havuz doluyor ve arayüz kilitleniyordu. Bağlantılar artık her işlemden sonra iade edilir.",
+      "Servis yeniden başlatılırken eski Merkez süreci öldürülemeyip portu tutuyor, yeni Merkez sürekli 'kod 0' ile çıkıyordu. Süreçler artık bir Windows iş nesnesine bağlıdır (servisle birlikte kapanır) ve açılışta öksüz kalmış süreçler temizlenir.",
+      "Yüzden gelen insan tespiti videoda 'INSAN (YUZ) %güven' etiketiyle çizilir; AI işçisi farklı bir Merkez portuna bağlı kalmışsa yenilenir.",
+      "Tanı: olay döngüsü 20 sn yanıt vermezse tüm iş parçacıklarının yığın izi merkez_cokme.log'a yazılır; Merkez çıktısı merkez_uygulama.log'da."
+    ]
+  },
+  {
+    surum: "2.4.162",
+    tarih: "2026-09-13",
+    baslik: "Yapay zeka işçisi güncellemede artık yenileniyor; kapalı sınıflar gerçekten kapalı (paket 2.5.32)",
+    maddeler: [
+      "KÖK NEDEN: Yerel yapay zeka işçisi Merkez'den ayrı bir süreç olarak yaşıyor. Güncelleme Merkez'i yeniden başlatıyor ama işçiyi başlatmıyordu; yeni Merkez eski işçiyi bulup kullanmaya devam ediyordu. Bu yüzden arayüz güncellenirken yapay zeka tarafındaki düzeltmeler (yakın çekim yüz tespiti dahil) devreye girmiyordu. Artık işçi kod özetini bildiriyor; Merkez diskteki koddan farklıysa eski işçiyi kapatıp güncel kodla yeniden başlatıyor.",
+      "Tüm sınıflar kapalıyken bile hava/kara aracı tespiti çalışıyordu: boş görev listesi 'hepsi açık' sayılıyordu. Artık boş = hiç görev; görev seçilmeden izleme başlatılmaz ve uyarı verilir.",
+      "'Yüz (yakın çekim)' görevi Merkez'in görev süzgecinde tanınmıyor ve işçiye iletilmiyordu; düzeltildi.",
+      "Tanı: Merkez çökerse yığın izi veri dizinindeki merkez_cokme.log dosyasına yazılır; güncelleme servisi logları zaman damgalı."
+    ]
+  },
+  {
+    surum: "2.4.161",
+    tarih: "2026-09-13",
+    baslik: "Ayrı 'Yüz' tespiti, dron kamera menüsü, angajman kalibrasyonu panele taşındı (paket 2.5.31)",
+    maddeler: [
+      "Yapay Zeka Ayarları'na ayrı 'Yüz (yakın çekim)' aç/kapat ve hassasiyet eklendi. Tam beden (yaya) tespitinden bağımsızdır; ikisi birlikte açıkken hem uzaktaki yaya hem kameraya yakın kişi 'insan' olarak işaretlenir. Çok yakın/büyük yüzde küçültülmüş karede de aranır. Kimlik tanıma yapılmaz.",
+      "Dron panelindeki kamera '⋮' menüsü artık tıklanmadan açık görünmüyor; yalnız düğmeye basınca açılır.",
+      "Angajman kalibrasyonu (kamera tipi, konum, yükseklik, yön, görüş açısı, montaj) kamera formundan kaldırıldı; görüntü ile angajman başlatılırken açılan panelde 'KAMERA KALİBRASYONU' olarak düzenlenir ve kaydedilir.",
+      "Düzeltme: AI ayarı değiştirmek kameranın angajman kalibrasyonunu siliyordu; artık korunuyor."
+    ]
+  },
+  {
+    surum: "2.4.160",
+    tarih: "2026-09-13",
+    baslik: "Yardım menüsünde 'Güncellemeleri Denetle' düğmesi (paket 2.5.30)",
+    maddeler: [
+      "Yardım menüsüne 'Güncellemeleri Denetle' eklendi: yeni sürüm olup olmadığını denetler ve varsa tek düğmeyle günceller. İmzalı manifest çekilip Ed25519 ile doğrulanır, yerel dosyalarla SHA-256 farkı çıkarılıp kaç dosyanın değişeceği gösterilir.",
+      "'Güncelle ve Yeniden Başlat' arka plandaki güncelleme servisine (gözetmen) bir istek bırakır; gözetmen yalnız DEĞİŞEN dosyaları indirip atomik yerleştirir ve uygulamayı yeniden başlatır. Çalıştırılabilir (.exe) kurulum indirilmez — Defender yanlış-pozitifi oluşmaz.",
+      "Yeni sürüm hazır olduğunda üstte yeşil bir bilgi şeridi belirir; tıklanınca aynı pencere açılır."
+    ]
+  },
+  {
+    surum: "2.4.159",
+    tarih: "2026-09-13",
+    baslik: "Yerel AI güvenilirliği: 'AI sunucusu yok' hatası giderildi (paket 2.5.29)",
+    maddeler: [
+      "Yerel AI işçisi ayakta olduğu halde sağlık yoklaması tek seferlik bağlantı sıfırlanmasında (WinError 10054, loopback) işçiyi 'çevrimdışı' sayıp 'Uygun AI sunucusu yok' hatası veriyordu. Artık işçi 2 ardışık başarısızlıktan önce çevrimiçi kabul edilir; izleme başlatılırken işçi anında yoklanıp kısa süre yeniden denenir; işçi tarafındaki zararsız sıfırlanma log kirliliği susturuldu.",
+      "Böylece 'Başlat'a basınca AI güvenilir biçimde başlar."
+    ]
+  },
+  {
+    surum: "2.4.158",
+    tarih: "2026-09-13",
+    baslik: "Yakın çekim insan tespiti eklendi (paket 2.5.28)",
+    maddeler: [
+      "İnsan tespiti artık iki yolu birlikte kullanır: tam beden (yaya) tespiti KORUNDU; buna ek olarak yakın webcam/masa başı kadrajında YuNet yüz tespitiyle 'insan var' sinyali üretilir. Böylece hem uzaktaki yaya hem yakındaki kişi yakalanır.",
+      "GİZLİLİK: Yakın çekim yolu yalnız VARLIK tespitidir — yüz TANIMA (kimlik) yapmaz; embedding/isim çıkarılmaz, dışarı taşınmaz.",
+      "İnsan hassasiyeti bu yolu da ölçekler: yüksek hassasiyet daha küçük/daha düşük güvenli yüzleri de yakalar.",
+      "Manuel kontrol: Kamera artık kendiliğinden açılmaz. Yalnız 'Başlat'a basınca kamera açılır ve (görevi varsa) AI izlemesi başlar; 'Durdur'da kamera ve AI birlikte durur. Açılışta/kayıtta otomatik başlatma kaldırıldı.",
+      "Dron panelinde kamera kontrolleri (görüntü konumu + Yapay Zeka Ayarları) taşmayı önlemek için bir açılır menüye (⋯) toplandı; Ad ve Başlat görünür kalır.",
+      "İlk dosya tabanlı güncelleme ile gelir; yeni kurulum gerekmez."
+    ]
+  },
+  {
+    surum: "2.4.157",
+    tarih: "2026-09-13",
+    baslik: "Kritik: AI ayarı değiştirilince oluşan çökme giderildi (paket 2.5.27)",
+    maddeler: [
+      "KRİTİK: Bir kameranın AI ayarını (sınıf aç-kapa/hassasiyet) değiştirmek Merkez'i çökertiyordu (Windows yerel bellek bozulması, 0xC0000374). Neden: her kamera kaydında canlı yayın koşulsuz durdurulup yeniden açılıyor; webcam (cv2.VideoCapture) hızlı aç-kapada çöküyordu. Artık yayın yalnız kaynak (URL/protokol) gerçekten değiştiğinde durdurulur; AI-only değişiklikte webcam'e dokunulmaz.",
+      "Ek koruma: aynı yerel kamera cihazının açılışı ve kapanışı tek kilitle serileştirildi; eşzamanlı aç/kapa çakışması (çökme kaynağı) engellendi.",
+      "Bu düzeltme dosya tabanlı güncelleme servisiyle gelir; yeni kurulum .exe indirmeye gerek yoktur."
+    ]
+  },
+  {
+    surum: "2.4.156",
+    tarih: "2026-09-13",
+    baslik: "Dosya tabanlı arka plan güncelleme servisi (paket 2.5.26)",
+    maddeler: [
+      "Güncellemeler artık imzasız kurulum (.exe) indirmiyor; arka planda çalışan güncelleme servisi yalnız DEĞİŞEN düz dosyaları (imzalı manifest + sha256) indirip uyguluyor. Bu, Windows Defender'ın kurulum .exe'sini yanlışlıkla karantinaya almasını (Sabsik.FL.A!ml) ve güncellemenin [Errno 22] ile bozulmasını ortadan kaldırır; güncellemeler küçük ve hızlıdır (artımlı).",
+      "Arka plan servisi (gözetmen) uygulamayı çalıştırır, çökerse yeniden başlatır ve güncellemeyi uygular; güncelleme sırasında uygulama durdurulup dosyalar atomik yerleştirilir, hata olursa geri alınır. veri/, lisans ve loglar gibi kullanıcı dosyalarına dokunulmaz.",
+      "Not: dosya tabanlı güncellemeye geçiş için bu sürümü bir kez elle kurmak gerekir; sonraki güncellemeler otomatik ve AV dostudur."
+    ]
+  },
+  {
+    surum: "2.4.155",
+    tarih: "2026-09-13",
+    baslik: "Kritik: kamera aç-kapada sunucu çökmesi giderildi (paket 2.5.25)",
+    maddeler: [
+      "KRİTİK DÜZELTME: Kamera birkaç kez açılıp kapatıldığında (özellikle yerel AI etkinken) Merkez sunucusu 'PostgreSQL bağlantı havuzu dolu' hatasıyla çöküyordu. Her canlı MJPEG yayını, akış boyunca bir veritabanı havuz bağlantısını kilitliyordu; yerel AI işçisinin kendi kamera okuması da ana havuzdan kalıcı bir bağlantı tutuyordu. Yayın iş parçacığı artık kamera kaydını okuduktan hemen sonra bağlantıyı havuza iade eder; havuz (10) dolmaz, sunucu çökmez.",
+      "Dron panelindeki 'Kamera Başlat' düğmesinin etiketi 'Başlat' olarak kısaltıldı."
+    ]
+  },
+  {
+    surum: "2.4.154",
+    tarih: "2026-09-13",
+    baslik: "Dron panelinde kamera başlat + Yapay Zeka Ayarları paneli, tek konumda görüntü (paket 2.5.24)",
+    maddeler: [
+      "Dron paneline, drona bağlı kamera için 'Kamera Başlat/Durdur' düğmesi eklendi; kamera oynatılmıyorken tek tıkla başlatılır.",
+      "Canlı görüntü artık aynı anda tek yerde gösterilir: harita üzerinde küçük önizleme, yüzen pencere, kameralar paneli içi veya tam ekran. Görüntü hedefi seçici (dört kip) dron panelinde, kameralar panelinde ve yüzen pencerede bulunur; başka hedef seçiliyse önizleme o konumda çizilir, ikinci bir yerde görünmez.",
+      "Yapay Zeka Ayarları düğmesi ve açılır-kapanır (collapsible) panel eklendi: İnsan, Kara Aracı ve Hava Aracı için tanımayı ayrı ayrı açıp kapatma ve sınıf başına hassasiyet ayarı. Panel dron panelinden, kameralar panelinden ve yüzen/tam ekran görüntüden açılır.",
+      "Sınıf başına hassasiyet uçtan uca bağlandı: ayar kameraya kaydedilir (ai_hassasiyet), yerel AI işçisine iletilir ve tespit eşiklerine uygulanır. Varsayılan 50, önceki davranışla birebir aynıdır (regresyon yok).",
+      "Yüzen penceredeki eski satır içi AI kümesi kaldırıldı; hassasiyet çubuğu yanlışlıkla radar sınıflandırıcısına bağlıydı, artık kamera AI'sına doğru bağlanan sınıf bazlı panel kullanılır.",
+      "GRCON (çevrimiçi Merkez) değişmedi; bu arayüz yalnız GRCOFF yerel kamera/AI yüzeyindedir."
+    ]
+  },
+  {
+    surum: "2.4.153",
+    tarih: "2026-09-12",
+    baslik: "GRCOFF Merkez aynı zamanda AI sunucusu: köprüsüz canlı görüntü AI (paket 2.5.23)",
+    maddeler: [
+      "GRCOFF (offline Merkez) yerel AI işçisini kendisi başlatır ve AI yöneticisine 'GRCOFF Yerel AI' olarak kaydeder; ayrı bir AI sunucusu veya köprü gerekmez. Görevi seçili kameraların canlı görüntüsüne AI doğrudan uygulanır. 'Uygun (çevrimiçi/boş) AI sunucusu yok' hatası giderildi.",
+      "Yerel işçi Merkez ile birlikte açılır, düşerse artan beklemeyle yeniden başlatılır. Kamera işçi hazır olmadan kaydedildiyse veya işçi yeniden başladıysa, AI görevli kameralar kendiliğinden yeniden izlemeye alınır.",
+      "Kurulumun kaydırılmış AI portu (8910) kullanılır. İşçi canlı görüntüyü Merkez'in kendi yayın yolundan, yalnız bu makineden geçerli yerel işçi anahtarıyla okur; yayın dışarıya açılmaz İşçi yalnız 127.0.0.1 üzerinde dinler; yerel ağdan erişilemez. İşçi kayıtlarını program dizini yerine veri dizinine yazar (Windows: C:\\ProgramData\\Goktungu\\Merkez, Linux: /var/lib/goktungu-merkez).",
+      "Kamera formundan GRCOFF yerel işçisinde kapalı olan Kişi Tanıma ve Araç Tanıma anahtarları kaldırıldı; İnsan, Kara Aracı ve Hava Aracı tespiti etkin.",
+      "Kurulumda örnek olarak eklenen ve hiç çalışmayan 'ASUS Ascent GX10' ile 'CPU AI Sunucusu (Yerel)' kayıtları artık eklenmez; değiştirilmemiş eski kayıtlar açılışta kaldırılır.",
+      "GRCON (çevrimiçi Merkez) değişmedi: orada AI Görüntü Köprüsünde çalışır, yerel işçi başlatılmaz."
+    ]
+  },
+  {
+    surum: "2.4.152",
+    tarih: "2026-09-12",
+    baslik: "Kamera formunda AI görevleri geri geldi, form bölümlere ayrıldı (paket 2.5.22)",
+    maddeler: [
+      "Kamera ekle/düzenle formunda kaybolan 'AI Görevleri' bölümü geri geldi: Kişi Tanıma, Araç Tanıma, Hava Aracı Tespit, İnsan Tespit, Kara Aracı Tespit. Bölüm eksik olduğu için görevler hep boş kaydediliyor ve yerel AI izlemesi hiçbir kamerada başlamıyordu; görev seçilen kamerada izleme kayıt anında otomatik başlar.",
+      "Kamera formu açılır-kapanır bölümlere ayrıldı: Genel, AI Görevleri ve AI Angajman Kalibrasyonu. Bölüm başlıkları seçili görev sayısını ve kalibrasyon durumunu gösterir; Kaydet/İptal düğmeleri her zaman görünür kalır.",
+      "Otomatik güncelleme artık kurulu paketin gerçek sürümünü bildirir. 2.5.20 ve 2.5.21 kendini 2.5.19 olarak tanıttığı için 'Yeni sürüm hazır' uyarısı güncelleme yapıldıktan sonra da kaybolmuyordu."
+    ]
+  },
+  {
+    surum: "2.4.151",
+    tarih: "2026-09-12",
+    baslik: "Yerel AI ile takip edilen hedefe dron angajman altyapısı (paket 2.5.21)",
+    maddeler: [
+      "GRCOFF (offline Merkez) yerel AI ile takip edilen hedef, operatör onaylı angajman zincirine bağlandı: yerel kamera tespiti coğrafi konuma çözülüp mevcut hedef deposuna yazılır; hedef listesi → kuyruğa alma → onay → başlatma akışı yerel hedeflerde de çalışır.",
+      "İki kamera tipi eklendi. 'Sabit kamera': kamera sabit bir noktadadır, hedefi AYRI bir interceptor dron angaje eder; hedef konumu kalibrasyondan (konum/yükseklik/yön/eğim/görüş açısı) çözülür. 'Drona takılı kamera': kamera bir dronun üzerindedir ve onunla hareket eder; hedef konumu dronun canlı MAVLink pozundan çözülür ve hedefi kendi dronu angaje eder.",
+      "Mesafe kestirimi hibrit yöntemle yapılır: kara sınıfları (insan, kara aracı) sabit kamerada yer düzlemi kesişimiyle (düz zeminde ~%5-10 hata), hava aracı ve tüm drona takılı kamera hedefleri sınıf bazlı görünen boyutla (~%25-40 hata) konumlanır. Her hedef bir mesafe güven değeri taşır; kalibrasyon eksik veya konum güvenilir değilse hedef angajmana ALINMAZ.",
+      "Kamera formuna 'Kamera Tipi' seçici ve angajman kalibrasyon alanları eklendi. Yeni/eksik kalibreli kameralar açıkça 'angajmana alınamaz' olarak işaretlenir.",
+      "Hava aracı sınıfı düşman dron tespiti için kullanılabilir: yerel AI bir dronu 'hava_araci' olarak sınıflandırır, operatör onayıyla interceptor dron angaje olur.",
+      "2.5.20 pasif takip sözleşmesi (yerel NDJSON kayıt katmanı) DEĞİŞMEDEN korundu; yerel besleme kolu bu akıştan bağımsız ikinci bir tüketicidir. Angajman her durumda açık operatör onayı gerektirir."
+    ]
+  },
+  {
+    surum: "2.4.150",
+    tarih: "2026-09-12",
+    baslik: "GRCOFF yerel AI çalışma kipi ve Kamera paneli kapatması düzeltildi",
+    maddeler: [
+      "GRCOFF (offline Merkez) Kamera panelinin başlıktaki X düğmesi ortak görünürlük kaydını kalıcı olarak kapatır; panel açılışta görünür kalabilir ancak kullanıcı kapattığında kendiliğinden yeniden açılmaz.",
+      "GRCOFF, Köprü gerektirmeden aynı bilgisayarda 127.0.0.1:8900 üzerinde yerel AI işçisini başlatır. İşçi CPU ile çalışır; uygun NVIDIA ortamında GPU kipini seçer. Görüntü, tespit, yüz şablonu ve kimlik bilgisi haricî sunucuya veya Köprüye taşınmaz.",
+      "Offline paket AI modellerini içerir ve ilk kurulumdan sonra internet bağlantısı gerektirmeden yerel çalışma için hazırlanır. AI işçisi Merkez kapanırken düzenli biçimde durdurulur ve yinelenen başlatmalarda sağlık uç noktasından doğrulanır.",
+      "GRCON çevrimiçi sunucuda bu yerel AI işçisi başlatılmaz; çevrimiçi mimari ile GRCOFF yerel işleme ayrımı korunur."
+    ]
+  },
   {
     surum: "2.4.149",
     tarih: "2026-09-11",

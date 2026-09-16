@@ -259,7 +259,8 @@ function izgaraRenkUygula(bagli){
   const renk = Cesium.Color.fromCssColorString(bagli ? IZGARA_RENK : IZGARA_OFFLINE_RENK);
   const c = bagli ? 1.0 : OFFLINE_ALFA_CARPAN;
   for (const e of kapsamaVarliklar){
-    e.show = _rg;
+    // v2.4.220 (kullanici istegi): kapsama cizgileri YALNIZ radar cevrimiciyken
+    e.show = _rg && !!bagli;
     if (e.polyline){
       const alfaTaban = e._alfaTaban !== undefined ? e._alfaTaban : 0.7;
       e.polyline.material = renk.withAlpha(alfaTaban * c);
@@ -280,8 +281,9 @@ function kubbeRenkUygula(bagli){
   // v2.4.58 — ayni kusur kubbede de vardi (bkz. izgaraRenkUygula).
   const _rg = (typeof window.radarYetenekVar === "function")
     ? window.radarYetenekVar() : true;
-  irtifaKubbe.show = _rg;
-  for (const e of kubbeTelVarliklar) e.show = _rg;
+  // v2.4.220 (kullanici istegi): kubbe de yalniz radar cevrimiciyken gorunur
+  irtifaKubbe.show = _rg && !!bagli;
+  for (const e of kubbeTelVarliklar) e.show = _rg && !!bagli;
   const renk = Cesium.Color.fromCssColorString(bagli ? "#6bd8b9" : IZGARA_OFFLINE_RENK);
   const c = bagli ? 1.0 : OFFLINE_ALFA_CARPAN;
   irtifaKubbe.ellipsoid.material = renk.withAlpha(0.08 * c);
@@ -500,7 +502,7 @@ function radarOlustur(){
 const RADAR_IKON_RENKLERI = {
   bagli:  "#6bd8b9",   // bagli: teal (izgara/supurme ile uyumlu)
   hata:   "#e05555",   // hata: kirmizi
-  kapali: "#8a97a5",   // bagli degil / baglaniyor: gri
+  kapali: "#e05555",   // v2.4.220 (kullanici istegi): bagli degil -> KIRMIZI
 };
 
 // Radarin gercek bakis yonu (derece, 0-360): once telemetriden gelen
@@ -557,6 +559,300 @@ function radarIkonGuncelle(){
   } else if (gcsVarlik.billboard){
     gcsVarlik.billboard.image = ucgenIkon(renk);
   }
+}
+
+// =================================================================
+// v2.4.190 — COKLU RADAR IKONLARI
+// Her radar kendi konumunda (RTK > kayitli > merkez) yon ucgeni + ad
+// etiketi + kucuk menzil halkasi olarak cizilir. Merkezdeki supurme/
+// izgara (gcsKonum) izleme orijinini gosterir ve DEGISMEZ.
+// =================================================================
+const RADAR_IKON_HALKA_M = 1500;
+let radarIkonVarliklar = {};   // radar_id -> {ikon, halka, sonKey}
+
+window.radarIkonlariGuncelle = function(liste){
+  if (typeof viewer === "undefined" || !viewer) return;
+  const gorulen = {};
+  const _rg = (typeof window.radarYetenekVar === "function") ? window.radarYetenekVar() : true;
+  for (const r of (liste || [])){
+    const rid = Number(r.radar_id);
+    const lat = (typeof r.konum_lat === "number") ? r.konum_lat : null;
+    const lon = (typeof r.konum_lon === "number") ? r.konum_lon : null;
+    if (lat === null || lon === null) continue;
+    if (typeof window.gecerliKonumMu === "function" && !window.gecerliKonumMu(lat, lon)) continue;
+    gorulen[rid] = true;
+    const renk = r.durum === "bagli" ? RADAR_IKON_RENKLERI.bagli :
+                 r.durum === "hata" ? RADAR_IKON_RENKLERI.hata : RADAR_IKON_RENKLERI.kapali;
+    const yon = (r.ayarlar && typeof r.ayarlar.merkez_yonu === "number") ? r.ayarlar.merkez_yonu : 0;
+    const key = [lat.toFixed(6), lon.toFixed(6), renk, yon.toFixed(1), r.isim].join("|");
+    let v = radarIkonVarliklar[rid];
+    if (v && v.sonKey === key){ v.ikon.show = _rg; v.halka.show = _rg && r.durum === "bagli"; continue; }
+    const pos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
+    if (!v){
+      v = { sonKey: "", ikon: null, halka: null };
+      v.ikon = viewer.entities.add({
+        id: "radar_" + rid, position: pos, show: _rg,
+        billboard: {
+          image: ucgenIkon(renk), width: 36, height: 36,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          rotation: new Cesium.CallbackProperty(() => {
+            const kam = viewer ? viewer.camera.heading : 0;
+            const vv = radarIkonVarliklar[rid];
+            return -Cesium.Math.toRadians(vv ? vv.yon || 0 : 0) + kam;
+          }, false),
+        },
+        label: {
+          text: r.isim || ("Radar " + rid),
+          font: "bold 10px Consolas, monospace",
+          fillColor: Cesium.Color.fromCssColorString(renk),
+          style: Cesium.LabelStyle.FILL, showBackground: true,
+          backgroundColor: Cesium.Color.BLACK.withAlpha(0.7),
+          backgroundPadding: new Cesium.Cartesian2(5, 3),
+          verticalOrigin: Cesium.VerticalOrigin.TOP,
+          pixelOffset: new Cesium.Cartesian2(0, 20),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
+        }
+      });
+      v.halka = viewer.entities.add({
+        id: "radar_halka_" + rid, show: _rg && r.durum === "bagli",
+        polyline: { positions: dairePoz(lat, lon, RADAR_IKON_HALKA_M, 96), width: 1.5,
+                    material: Cesium.Color.fromCssColorString(renk).withAlpha(0.5),
+                    clampToGround: true }
+      });
+      radarIkonVarliklar[rid] = v;
+    } else {
+      v.ikon.position = pos;
+      v.ikon.billboard.image = ucgenIkon(renk);
+      v.ikon.label.text = r.isim || ("Radar " + rid);
+      v.ikon.label.fillColor = Cesium.Color.fromCssColorString(renk);
+      v.ikon.show = _rg;
+      v.halka.polyline.positions = dairePoz(lat, lon, RADAR_IKON_HALKA_M, 96);
+      v.halka.polyline.material = Cesium.Color.fromCssColorString(renk).withAlpha(0.5);
+      v.halka.show = _rg && r.durum === "bagli";
+    }
+    v.yon = yon; v.sonKey = key;
+  }
+  for (const rid of Object.keys(radarIkonVarliklar)){
+    if (!gorulen[rid]){
+      const v = radarIkonVarliklar[rid];
+      try { viewer.entities.remove(v.ikon); viewer.entities.remove(v.halka); } catch (e) {}
+      delete radarIkonVarliklar[rid];
+    }
+  }
+};
+
+// =================================================================
+// v2.4.191 — ELEKTRO-OPTIK (M50) IKONLARI
+// Konum: cihazin RTK/GPS'i (SDK) > kayitli enlem/boylam. Ikon kamera
+// simgesi; azimut (SDK) yonu gosterir; kisa gorus cizgisi eklenir.
+// =================================================================
+const EO_IKON_RENKLERI = { bagli: "#f0a830", hata: "#e05555", kapali: "#8a97a5" };
+const EO_GORUS_M = 800;
+let eoIkonVarliklar = {};
+
+function eoIkon(renk){
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+       <circle cx="20" cy="20" r="9" fill="${renk}" fill-opacity="0.25" stroke="${renk}" stroke-width="1.5"/>
+       <rect x="11" y="15" width="14" height="10" rx="2" fill="${renk}" stroke="#000" stroke-width="1.5"/>
+       <polygon points="25,17 33,13 33,27 25,23" fill="${renk}" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+       <path d="M 20 3 L 24 10 L 16 10 Z" fill="${renk}" stroke="#000" stroke-width="1"/>
+     </svg>`;
+  return "data:image/svg+xml;base64," + btoa(svg);
+}
+
+window.eoIkonlariGuncelle = function(liste){
+  if (typeof viewer === "undefined" || !viewer) return;
+  const gorulen = {};
+  for (const c of (liste || [])){
+    const eid = Number(c.eo_id);
+    const konum = c.konum && typeof c.konum === "object" ? c.konum : null;
+    const lat = konum && typeof konum.lat === "number" ? konum.lat : null;
+    const lon = konum && typeof konum.lon === "number" ? konum.lon : null;
+    if (lat === null || lon === null) continue;
+    if (typeof window.gecerliKonumMu === "function" && !window.gecerliKonumMu(lat, lon)) continue;
+    gorulen[eid] = true;
+    const d = c.m50_durum || {};
+    const renk = d.durum === "bagli" ? EO_IKON_RENKLERI.bagli :
+                 d.durum === "hata" ? EO_IKON_RENKLERI.hata : EO_IKON_RENKLERI.kapali;
+    const az = (typeof d.azimut === "number") ? d.azimut :
+               (d.pusula && typeof d.pusula.yon === "number") ? d.pusula.yon : 0;
+    const key = [lat.toFixed(6), lon.toFixed(6), renk, az.toFixed(1), c.isim, konum.kaynak].join("|");
+    let v = eoIkonVarliklar[eid];
+    if (v && v.sonKey === key) continue;
+    const pos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
+    const uc = noktada(lat, lon, EO_GORUS_M, az * Math.PI / 180);
+    const cizgi = Cesium.Cartesian3.fromDegreesArray([lon, lat, uc[0], uc[1]]);
+    const etiket = (c.isim || ("M50 " + eid)) + (konum.kaynak === "rtk" ? " · RTK" :
+                   konum.kaynak === "merkez" ? " · " + ((typeof D === "function" && D().eoKonumMerkez) || "konum yok · merkezde") : "");
+    if (!v){
+      v = { sonKey: "", ikon: null, gorus: null, az: 0 };
+      v.ikon = viewer.entities.add({
+        id: "eo_" + eid, position: pos,
+        billboard: {
+          image: eoIkon(renk), width: 36, height: 36,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER, horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          rotation: new Cesium.CallbackProperty(() => {
+            const kam = viewer ? viewer.camera.heading : 0;
+            const vv = eoIkonVarliklar[eid];
+            return -Cesium.Math.toRadians(vv ? vv.az || 0 : 0) + kam;
+          }, false),
+        },
+        label: {
+          show: false,   // v2.4.220 (kullanici istegi): M50 ikonunun altinda yazi yok
+          text: etiket, font: "bold 10px Consolas, monospace",
+          fillColor: Cesium.Color.fromCssColorString(renk), style: Cesium.LabelStyle.FILL,
+          showBackground: true, backgroundColor: Cesium.Color.BLACK.withAlpha(0.7),
+          backgroundPadding: new Cesium.Cartesian2(5, 3),
+          verticalOrigin: Cesium.VerticalOrigin.TOP, pixelOffset: new Cesium.Cartesian2(0, 20),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
+        }
+      });
+      v.gorus = viewer.entities.add({
+        id: "eo_gorus_" + eid, show: d.durum === "bagli",
+        polyline: { positions: cizgi, width: 2, clampToGround: true,
+                    material: Cesium.Color.fromCssColorString(renk).withAlpha(0.7) }
+      });
+      eoIkonVarliklar[eid] = v;
+    } else {
+      v.ikon.position = pos;
+      v.ikon.billboard.image = eoIkon(renk);
+      v.ikon.label.text = etiket;
+      v.ikon.label.fillColor = Cesium.Color.fromCssColorString(renk);
+      v.gorus.polyline.positions = cizgi;
+      v.gorus.polyline.material = Cesium.Color.fromCssColorString(renk).withAlpha(0.7);
+      v.gorus.show = d.durum === "bagli";
+    }
+    v.az = az; v.sonKey = key;
+  }
+  for (const eid of Object.keys(eoIkonVarliklar)){
+    if (!gorulen[eid]){
+      const v = eoIkonVarliklar[eid];
+      try { viewer.entities.remove(v.ikon); viewer.entities.remove(v.gorus); } catch (e) {}
+      delete eoIkonVarliklar[eid];
+    }
+  }
+  eoKameraOnizlemeTazele(liste || []);
+};
+
+// ---------------------------------------------------------------------
+// v2.4.192: M50 ikonunun yaninda SABIT canli kamera cercevesi (kullanici
+// istegi). Dron onizlemesiyle ayni desen: ayni origin /kamera/<id> MJPEG
+// vekili, postRender'da ikonun ekran konumuna yapistirilir. Cihaz
+// bagliysa ve kamera kaydi yoksa kayit bir kez otomatik olusturulur.
+// Cift tik: yuzen kamera panelinde acar.
+// ---------------------------------------------------------------------
+const eoKameraOnizlemeler = {};   // eo_id -> DOM
+const eoKameraOlusturuldu = {};   // eo_id -> true (oturumda bir kez)
+let eoKameraOnizlemeKuruldu = false;
+// v2.4.225 (kullanici bildirimi: M50 penceresi acikken haritadaki goruntu
+// kesiliyor; istegi: ikona cift tik ac / tekrar cift tik kapat): haritadaki
+// sabit canli cerceve VARSAYILAN KAPALIDIR; her cerceve ayri bir MJPEG akisi
+// actigi icin (pencere + PiP + hover + harita) tarayici baglanti siniri
+// asiliyor ve akislardan biri karariyordu. Acik olanlar localStorage'da.
+const EO_ONIZLEME_ANAHTAR = "m50_harita_onizleme";
+let eoSonListe = [];
+function eoOnizlemeAcikSet(){
+  try { const v = JSON.parse(localStorage.getItem(EO_ONIZLEME_ANAHTAR) || "[]"); return new Set(Array.isArray(v) ? v.map(Number) : []); } catch (e) { return new Set(); }
+}
+window.eoHaritaOnizlemeAcikMi = function (eid){ return eoOnizlemeAcikSet().has(Number(eid)); };
+window.eoHaritaOnizlemeAcKapa = function (eid){
+  eid = Number(eid); const set = eoOnizlemeAcikSet();
+  const acildi = !set.has(eid);
+  if (acildi) set.add(eid); else set.delete(eid);
+  try { localStorage.setItem(EO_ONIZLEME_ANAHTAR, JSON.stringify([...set])); } catch (e) {}
+  eoKameraOnizlemeTazele(eoSonListe);
+  return acildi;
+};
+function eoKameraOnizlemeKonumla(){
+  if (typeof viewer === "undefined" || !viewer || !viewer.scene) return;
+  for (const [eid, el] of Object.entries(eoKameraOnizlemeler)){
+    const v = eoIkonVarliklar[eid];
+    let pos = v && v.ikon && v.ikon.position;
+    if (pos && typeof pos.getValue === "function") pos = pos.getValue(Cesium.JulianDate.now());
+    if (!pos){ el.style.display = "none"; continue; }
+    const p = Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, pos);
+    const c = viewer.scene.canvas;
+    if (!p || p.x < -160 || p.y < -120 || p.x > c.clientWidth + 160 || p.y > c.clientHeight + 120){
+      el.style.display = "none"; continue;
+    }
+    el.style.display = "block";
+    el.style.transform = "translate(" + Math.round(p.x + 26) + "px," + Math.round(p.y - 44) + "px)";
+  }
+}
+function eoKameraOnizlemeSil(eid){
+  const el = eoKameraOnizlemeler[eid];
+  if (el) el.remove();
+  delete eoKameraOnizlemeler[eid];
+}
+function eoKameraOnizlemeTazele(liste){
+  eoSonListe = liste || [];
+  const alan = document.getElementById("haritaAlan");
+  const gorulen = {};
+  const acikSet = eoOnizlemeAcikSet();
+  if (alan && typeof window.kameraOnizlemeUrl === "function"){
+    for (const c of liste){
+      const eid = Number(c.eo_id);
+      const d = c.m50_durum || {};
+      if (!eoIkonVarliklar[eid] || d.durum !== "bagli") continue;
+      if (!acikSet.has(eid)) continue;   // v2.4.225: yalniz cift tikla acilanlar
+      const kam = typeof window.m50KameraBul === "function" ? window.m50KameraBul(eid) : null;
+      if (!kam){
+        if (!eoKameraOlusturuldu[eid] && typeof window.m50KameraOlustur === "function"){
+          eoKameraOlusturuldu[eid] = true;
+          window.m50KameraOlustur(eid, c.isim || ("M50 " + eid));
+        }
+        continue;
+      }
+      gorulen[eid] = true;
+      let el = eoKameraOnizlemeler[eid];
+      if (!el){
+        el = document.createElement("button");
+        el.type = "button";
+        el.className = "dron-kamera-onizleme eo-kamera-onizleme";
+        el.title = (typeof D === "function" && D().eoOnizlemeCerceveIpucu) || "Çift tık: M50 penceresi · ikona çift tık: bu çerçeveyi kapat";
+        const img = document.createElement("img");
+        img.alt = "M50 canlı görüntü"; img.decoding = "async";
+        const etiket = document.createElement("span");
+        el.append(img, etiket);
+        el.addEventListener("click", ev => { ev.preventDefault(); ev.stopPropagation(); });
+        // v2.4.208 (kullanici bildirimi): haritadaki M50 onizlemesine cift
+        // tik ESKI kamera penceresini aciyordu; M50 ayri sistemdir —
+        // kendi penceresi (m50_pencere.js) acilir.
+        el.addEventListener("dblclick", ev => {
+          ev.preventDefault(); ev.stopPropagation();
+          if (typeof window.m50PencereAc === "function") { window.m50PencereAc(eid); return; }
+          const kid = Number(el.dataset.kameraId);
+          if (Number.isFinite(kid) && typeof window.kameraIzlemeAc === "function") window.kameraIzlemeAc(kid);
+        });
+        alan.appendChild(el);
+        eoKameraOnizlemeler[eid] = el;
+      }
+      el.querySelector("span").textContent = (c.isim || ("M50 " + eid)).toUpperCase() + " · CANLI";
+      if (Number(el.dataset.kameraId) !== Number(kam.id)){
+        el.dataset.kameraId = String(kam.id);
+        const im = el.querySelector("img");
+        im.onerror = () => { el.classList.add("kam-hata"); el.setAttribute("data-kam-hata", (typeof D === "function" && D().kamBaglantiYok) || "BAĞLANTI YOK"); };
+        im.onload = () => { el.classList.remove("kam-hata"); el.removeAttribute("data-kam-hata"); };
+        im.src = window.kameraOnizlemeUrl(kam.id);
+      }
+    }
+  }
+  for (const eid of Object.keys(eoKameraOnizlemeler)) if (!gorulen[eid]) eoKameraOnizlemeSil(eid);
+  if (!eoKameraOnizlemeKuruldu && typeof viewer !== "undefined" && viewer && viewer.scene){
+    eoKameraOnizlemeKuruldu = true;
+    viewer.scene.postRender.addEventListener(eoKameraOnizlemeKonumla);
+  }
+  eoKameraOnizlemeKonumla();
 }
 
 let gcsVarlik = null;

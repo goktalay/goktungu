@@ -88,6 +88,7 @@ class M50Vekili:
                       "kaynak": "yerel_kopru",
                       "rtsp_gorunur": "", "rtsp_termal": ""}
         self.takip = {"etkin": False, "kanal": "", "secim_hazir": False}
+        self.osd = {}      # v2.4.215: kanal -> cihaz OSD ayarlari
 
     def cek_gerekirse(self):
         """Telemetri döngüsünden çağrılır; gerektiğinde Köprüden durum çeker."""
@@ -117,6 +118,7 @@ class M50Vekili:
         ham_ayarlar = paket.get("m50_ayarlar")
         ham_video = paket.get("m50_video")
         ham_takip = paket.get("m50_takip")
+        ham_osd = paket.get("m50_osd")          # v2.4.215
         with self.kilit:
             if isinstance(ham_durum, dict):
                 self.durum.update(_arindir(ham_durum))
@@ -126,24 +128,55 @@ class M50Vekili:
                 for alan in ("rtsp_gorunur", "rtsp_termal"):
                     if alan in temiz_ayarlar:
                         self.ayarlar[alan] = str(temiz_ayarlar.get(alan) or "")
+                # v2.4.187: sır olmayan kimlik özeti — arayüz "IP/port
+                # kayıtlı, tekrar girmene gerek yok" gösterebilsin.
+                for alan in ("ip", "port", "kimlik_kayitli"):
+                    if alan in temiz_ayarlar:
+                        self.ayarlar[alan] = temiz_ayarlar.get(alan)
+                # v2.4.207 (kullanici: "duzenlemede kullanici adi bos
+                # geliyor"): `_arindir` "kullanici" anahtarini sir sayip
+                # atar; kullanici ADI sir degildir (parola hic gelmez),
+                # duzenleme formunun on-dolumu icin ayrica tasinir.
+                ku = ham_ayarlar.get("kullanici")
+                self.ayarlar["kullanici"] = str(ku)[:64] if isinstance(ku, str) else ""
             if isinstance(ham_video, dict):
                 self.video.update(_arindir(ham_video))
             if isinstance(ham_takip, dict):
                 self.takip.update(_arindir(ham_takip))
+            if isinstance(ham_osd, dict):
+                self.osd = _arindir(ham_osd)
             # Tek durum kaynağı korunur: UI eski Köprü sürümlerinde dahi
             # `m50_durum.takip/video` üzerinden geriye düşebilir.
             self.durum["takip"] = dict(self.takip)
             self.durum["video"] = dict(self.video)
             self.durum["bagli"] = bool(self.durum.get("bagli"))
 
+    def rtsp_url(self, kanal: str):
+        """v2.4.181: kamera modülü için kanal->RTSP çözümü ('gorunur'/'termal').
+
+        Bu URL'ler kimlik bilgisi TAŞIMAZ (Köprü zaten `_arindir` ile
+        kullanıcı bilgili RTSP(S) URI'sini reddeder) — yerel Görüntü
+        Köprüsünün açık yeniden yayınıdır. Kamera kaydı bu değeri
+        DOĞRUDAN saklamaz; her akış açılışında burada TAZE okunur, böylece
+        Köprü ayarı sonradan değişse (SDK yeniden bağlanırsa port/URL
+        değişebilir) kamera kaydı güncellenmeden yeni adres kullanılır.
+        """
+        kanal = str(kanal or "").strip().lower()
+        if kanal not in ("gorunur", "termal"):
+            return None
+        with self.kilit:
+            return str(self.ayarlar.get("rtsp_" + kanal) or "").strip() or None
+
     def paket(self) -> Dict[str, Any]:
         """Telemetri için derin kopya niteliğinde, sırdan arındırılmış paket."""
         with self.kilit:
             return {
                 "m50_durum": _arindir(dict(self.durum)),
-                "m50_ayarlar": _arindir(dict(self.ayarlar)),
+                "m50_ayarlar": dict(_arindir(dict(self.ayarlar)),
+                                    kullanici=str(self.ayarlar.get("kullanici") or "")),
                 "m50_video": _arindir(dict(self.video)),
                 "m50_takip": _arindir(dict(self.takip)),
+                "m50_osd": _arindir(dict(self.osd)),
             }
 
     def _kopru_yok(self, mesaj):

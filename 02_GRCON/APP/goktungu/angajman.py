@@ -14,6 +14,8 @@ from pymavlink import mavutil
 # v2.4.18 - Interceptor angajman profili
 # Hucum hizi kullaniciya SORULMAZ: daima maksimum hizda gidilir.
 MAKS_HIZ_MS = 83.3          # 300 km/h (drondan daha yuksek okunursa o kullanilir)
+# v2.4.164: Goruntu angajmaninda yonelis irtifasi tabani (m, eve gore).
+GORUNTU_ASGARI_IRTIFA = 10.0
 HEDEF_MIN_IRTIFA = 3.0      # m - hedef bu irtifanin altina duserse angajman biter
 HEDEF_ZAMANASIMI = 10.0     # sn - hedef/dron verisi bu sure alinamazsa offline sayilir
 
@@ -426,6 +428,14 @@ class AngajmanYoneticisi:
         depo = getattr(self, "hedef_deposu", None)
         if depo is None:
             return None
+        # v2.4.164: Yerel AI hedefleri (sentetik ornek_id >= 900000000)
+        # depoya firma_id=None ile yazilir; firma oturumunda aramak onlari
+        # bulamiyor ve angajman "hedef bulunamadi" ile kesiliyordu.
+        try:
+            if int(kimlik[0]) >= 900000000:
+                firma_id = None
+        except (TypeError, ValueError):
+            pass
         try:
             return depo.hedef_bul(*kimlik, firma_id=firma_id)
         except Exception:
@@ -713,15 +723,30 @@ class AngajmanYoneticisi:
         goruntu_firma_id = param.get("_goruntu_firma_id")
         # v2.4.18: hucum hizi kullanicidan ALINMAZ; daima maksimum
         HUCUM_HIZI = self._maks_hiz(saldiran_sysid)
+        # v2.4.173: TAKIP KIPI (golge ucusu) — hedefe CARPMAZ, secilen
+        # mesafeyi koruyarak izler. Hiz P-denetleyicisiyle mesafe
+        # hatasindan turetilir; cok yaklasilirsa GERI acilir.
+        TAKIP_MODU = str(param.get("mod") or "").lower() == "takip"
+        try:
+            TAKIP_MESAFE = float(param.get("takip_mesafe", 30.0))
+        except (TypeError, ValueError):
+            TAKIP_MESAFE = 30.0
+        TAKIP_MESAFE = max(5.0, min(500.0, TAKIP_MESAFE))
 
         hedef_kayip_basi = None  # hedef konumu alinamayan ilk an
         veri_kayip_basi = None   # saldiran dron verisi alinamayan ilk an
         son_hiz_komutu = 0.0     # DO_CHANGE_SPEED tekrar zamani
         son_mod_komutu = 0.0     # GUIDED moda gecis tekrar zamani
-        self.konsol("ANGAJMAN",
-                    f"D{saldiran_sysid}: TAM HIZ angajman - hedef hiz "
-                    f"{HUCUM_HIZI:.1f} m/s ({HUCUM_HIZI * 3.6:.0f} km/h), "
-                    f"yaklasma yavaslamasi KAPALI", "basari")
+        if TAKIP_MODU:
+            self.konsol("ANGAJMAN",
+                        f"D{saldiran_sysid}: TAKIP kipi - hedef "
+                        f"{TAKIP_MESAFE:.0f} m mesafeden izlenecek "
+                        f"(azami hiz {HUCUM_HIZI:.1f} m/s)", "basari")
+        else:
+            self.konsol("ANGAJMAN",
+                        f"D{saldiran_sysid}: TAM HIZ angajman - hedef hiz "
+                        f"{HUCUM_HIZI:.1f} m/s ({HUCUM_HIZI * 3.6:.0f} km/h), "
+                        f"yaklasma yavaslamasi KAPALI", "basari")
 
         # Baslangic durumu: popup'in bos kalmamasini sagla
         self._canli[saldiran_sysid] = {
@@ -815,6 +840,15 @@ class AngajmanYoneticisi:
             cozum = self._kesisme_coz(s_lat, s_lon, s_alt, hedef_durum,
                                       HUCUM_HIZI, param)
             g_lat, g_lon, g_alt = cozum["lat"], cozum["lon"], cozum["alt"]
+            # v2.4.164: Goruntu hedefinde (yer tahmini, insan/kara ~0 m)
+            # dron yere surulmesin: yonelis irtifasina asgari taban.
+            if hedef_tip == "goruntu":
+                try:
+                    _taban = float(param.get("goruntu_asgari_irtifa",
+                                             GORUNTU_ASGARI_IRTIFA))
+                except (TypeError, ValueError):
+                    _taban = GORUNTU_ASGARI_IRTIFA
+                g_alt = max(float(g_alt or 0.0), _taban)
 
             # Canli hiz (dron groundspeed)
             canli_hiz = saldiran.get("groundspeed", 0) or 0
@@ -861,15 +895,25 @@ class AngajmanYoneticisi:
             # Yakalama mesafesine girmek ARTIK angajmani bitirmez ve hiz
             # dusurulmez - temas anina kadar tam hizda devam edilir.
             # ----------------------------------------------------------
-            if h_alt < HEDEF_MIN_IRTIFA:
+            # v2.4.164: Goruntu hedefinde irtifa YER TAHMINIDIR (insan/kara
+            # aracinda ~0 m). Bu kosul goruntu angajmanini ilk turda
+            # "tamamlandi" diye bitiriyordu. Goruntu hedefinde irtifa ile
+            # sonlanmaz; operator durdurur ya da iz kaybolur (HEDEF_ZAMANASIMI).
+            if h_alt < HEDEF_MIN_IRTIFA and hedef_tip != "goruntu":
                 self.konsol("ANGAJMAN",
                             f"D{saldiran_sysid}: Hedef irtifasi {h_alt:.1f} m "
                             f"(< {HEDEF_MIN_IRTIFA:.0f} m) - hedef etkisiz, "
                             f"angajman TAMAMLANDI", "basari")
                 self._loiter_yap(saldiran_sysid)
                 break
+            # v2.4.173: takip kipinde canli duruma kip bilgisi islenir
+            if TAKIP_MODU:
+                self._canli[saldiran_sysid]["mod"] = "takip"
+                self._canli[saldiran_sysid]["takip_mesafe"] = TAKIP_MESAFE
+                if abs(toplam_mesafe - TAKIP_MESAFE) <= 5.0:
+                    self._canli[saldiran_sysid]["durum"] = "mesafede"
             # Bilgi amacli temas bildirimi (angajman DEVAM eder)
-            if toplam_mesafe <= YAKALAMA_MESAFE:
+            elif toplam_mesafe <= YAKALAMA_MESAFE:
                 self._canli[saldiran_sysid]["durum"] = "temas"
 
             # ----------------------------------------------------------
@@ -899,14 +943,28 @@ class AngajmanYoneticisi:
                 if simdi - son_hiz_komutu > 2.0:
                     self._hiz_komutu(master, saldiran_sysid, HUCUM_HIZI)
                     son_hiz_komutu = simdi
-                # Yonelinen noktaya birim vektor (NED) * maksimum hiz
+                # Yonelinen noktaya birim vektor (NED) * istenen hiz
+                # v2.4.173: takip kipinde hiz, mesafe hatasindan (P)
+                # turetilir: uzaksa yaklasir, mesafedeyse durur, cok
+                # yakinsa GERI acilir. Angajmanda daima maksimum hiz.
+                hiz_istek = HUCUM_HIZI
+                if TAKIP_MODU:
+                    hata = toplam_mesafe - TAKIP_MESAFE
+                    hiz_istek = max(-0.5 * HUCUM_HIZI,
+                                    min(HUCUM_HIZI, 0.6 * hata))
                 yatay = max(yatay_gudum, 0.001)
                 dz = g_alt - s_alt          # +yukari
                 norm = math.sqrt(yatay ** 2 + dz ** 2) or 1.0
                 yon_rad = math.radians(yon)
-                vx = HUCUM_HIZI * (yatay / norm) * math.cos(yon_rad)  # kuzey
-                vy = HUCUM_HIZI * (yatay / norm) * math.sin(yon_rad)  # dogu
-                vz = -HUCUM_HIZI * (dz / norm)   # NED: asagi pozitif
+                vx = hiz_istek * (yatay / norm) * math.cos(yon_rad)  # kuzey
+                vy = hiz_istek * (yatay / norm) * math.sin(yon_rad)  # dogu
+                if TAKIP_MODU:
+                    # Dikey eksen irtifa farkini kapatir (geri aciliste
+                    # bile hedef irtifasina hizalanir), yatay hizdan
+                    # bagimsiz sinirli hizla.
+                    vz = -min(abs(hiz_istek), HUCUM_HIZI * 0.5) * (dz / norm)
+                else:
+                    vz = -HUCUM_HIZI * (dz / norm)   # NED: asagi pozitif
                 with self.kilit:
                     master.mav.set_position_target_global_int_send(
                         0,  # time_boot_ms

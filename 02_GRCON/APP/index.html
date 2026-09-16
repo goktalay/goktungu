@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24145">
+<link rel="stylesheet" href="css/stil.css?v=v24227">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -47,7 +47,6 @@
 <link rel="stylesheet" href="css/goruntu_hedefler.css?v=v24137">
   <link rel="stylesheet" href="css/dron_ekran_disi.css?v=v24127">
   <link rel="stylesheet" href="css/metin_secim.css?v=v24127">
-  <link rel="stylesheet" href="css/goruntu_koprusu.css?v=v24127">
 </head>
 <body>
 <div id="ustBar">
@@ -56,22 +55,25 @@
       <div class="mb-item" id="mbRadar" data-hizli="r">
         <span class="mb-etiket" data-i18n="mbRadar">Radar</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite"></i><span data-i18n="mbRadarAyar">Radar Ayarları</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzFiltre" data-hizli="h"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-filter"></i><span data-i18n="mbHedefFiltre">Hedef Filtresi</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzIz" data-hizli="i"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-route"></i><span data-i18n="mbIzAyar">İz Ayarları</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzSinif" data-hizli="s"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-tags"></i><span data-i18n="mbSinif">Hedef Sınıflandırma</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzKayit" data-hizli="k"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbKayit">Kayıt ve Tekrar Oynatma</span></div>
-          <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbTumTakibiBirak" data-hizli="b"><i class="fa-solid fa-ban"></i><span data-i18n="mbTumTakip">Tüm Takibi Bırak</span></div>
-          <div class="mb-ayrac"></div>
-          <div class="mb-oge mb-panel-toggle" id="mbPanelTespit" data-hizli="t" data-panel="tespit" data-hizli="t"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelTespit">Tespit Edilen Hedefler Paneli</span></div>
-          <div class="mb-oge mb-panel-toggle" id="mbPanelTakip" data-hizli="a" data-panel="takip" data-hizli="a"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelTakip">Takip Edilen Hedefler Paneli</span></div>
+          <!-- v2.4.194 (kullanici istegi #1): coklu radar -> once LISTE -->
+          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadarlar" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite-dish"></i><span data-i18n="mbRadarlar">Radarlar</span></div>
+          <!-- v2.4.227 (kullanici istegi): Hedef Filtresi, Iz Ayarlari,
+               Hedef Siniflandirma, Kayit & Tekrar Oynatma, Tum Takibi Birak,
+               Tespit/Takip panelleri KALDIRILDI. Radar yonetimi listedeki
+               radara tiklaninca acilan radar_pencere.js penceresindedir. -->
         </div>
       </div>
       <div class="mb-item" id="mbM50" data-hizli="e">
         <span class="mb-etiket" data-i18n="mbM50">Elektro-Optik</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzM50" data-hizli="e"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-binoculars"></i><span data-i18n="mbM50Ayar">M50 Kontrolü</span></div>
+          <!-- v2.4.194 (kullanici istegi #2): "M50 Kontrolu" menu ogesi
+               KALDIRILDI; kontrol paneli listedeki cihaza tiklaninca acilir.
+               Cihazlar -> liste paneli, Yeni M50 -> kayit formu. -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbEoCihazlar" data-yuzen="yzEoCihazlar" data-hizli="c"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
+          <!-- v2.4.195: "Yeni Elektro Optik" menuden KALDIRILDI; dugme
+               Elektro Optik Cihazlari liste panelindedir. -->
+          <div class="mb-ayrac"></div>
+          <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm Cihazlara Bağlan</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbDronlar" data-hizli="d">
@@ -92,7 +94,21 @@
           <div class="mb-oge" id="mbUcusDuvari" data-hizli="u"><i class="fa-solid fa-gauge-high"></i><span data-i18n="mbUcusDuvari">Uçuş Duvarı</span></div>
         </div>
       </div>
-
+      <!-- OFFLINE-KAMERA: Yerel Merkezde kameralar Köprü gerektirmeden
+           eklenir; görüntü aynı-origin yerel canlı yayın hattından izlenir. -->
+      <div class="mb-item" id="mbKameralar" data-hizli="k">
+        <span class="mb-etiket" data-i18n="mbKameralar">Kameralar</span>
+        <div class="mb-dropdown">
+          <div class="mb-oge" id="mbYeniKamera" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></div>
+          <div class="mb-oge" id="mbTumKamera" data-hizli="t"><i class="fa-solid fa-circle-play"></i><span data-i18n="mbTumKamera">Tüm Kameralara Bağlan</span></div>
+          <!-- v2.4.220: "Önizleme Görünümü" kaldırıldı (kullanıcı isteği: tek liste görünümü);
+               "Kameralar Paneli" geri geldi — 2.4.219'da yanlışlıkla kaldırılmıştı. -->
+          <div class="mb-ayrac"></div>
+          <div class="mb-oge" id="mbVideoDuvar" data-hizli="v"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></div>
+          <div class="mb-ayrac"></div>
+          <div class="mb-oge mb-panel-toggle" id="mbPanelKameralar" data-hizli="k" data-panel="kameralar"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelKameralar">Kameralar Paneli</span></div>
+        </div>
+      </div>
       <div class="mb-item" id="mbRotalar" data-hizli="o">
         <span class="mb-etiket" data-i18n="mbRotalar">Rotalar</span>
         <div class="mb-dropdown">
@@ -109,11 +125,14 @@
           <div class="mb-oge mb-panel-toggle" id="mbPanelRotalar" data-hizli="r" data-panel="rotalar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelRotalar">Rotalar Paneli</span></div>
         </div>
       </div>
-      <div class="mb-item" id="mbAI" data-hizli="i" style="display:none;">
+      <div class="mb-item" id="mbAI" data-hizli="i">
         <span class="mb-etiket" data-i18n="mbAI">AI</span>
         <div class="mb-dropdown">
           <div class="mb-oge mb-popup-toggle pasif" id="mbLokasyonlar" data-hizli="l" data-popup-hedef="lokasyonPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-location-dot"></i><span data-i18n="mbLokasyonlar">Kayıtlı Lokasyonlar</span></div>
-          <div class="mb-oge" id="mbGoruntuKoprusu" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-video"></i><span data-i18n="mbGoruntuKoprusu">Görüntü Köprüsü</span></div>
+          <!-- v2.4.193 (Faz D): AYRI "Goruntu Koprusu" urunu KALDIRILDI.
+               Kamera yakalama ve AI cikarimi artik saha Koprusunun kendi
+               `video` ve `ai` servislerinde calisir; ikinci bir kurulum,
+               ikinci bir panel (8802) ve ayri bir indirme yoktur. -->
           <!-- FAZ20-IS93 -->
           <div class="mb-oge" id="mbGoruntuHedefler" data-hizli="h"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-crosshairs"></i><span data-i18n="mbGoruntuHedefler">Görüntü Hedefleri</span></div>
 
@@ -136,6 +155,9 @@
         <span class="mb-etiket" data-i18n="mbYardim">Destek</span>
         <div class="mb-dropdown">
           <div class="mb-oge" id="mbYardimMerkez" data-hizli="y"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-book-open"></i><span data-i18n="mbYardimMerkez">Destek Merkezi</span></div>
+          <!-- v2.4.201: uygulama icinden lisans yenileme -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbLisansYenile" data-yuzen="yzLisans" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-key"></i><span data-i18n="mbLisansYenile">Lisansı Yenile</span></div>
+          <div class="mb-oge" id="mbGuncelleme" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-cloud-arrow-down"></i><span data-i18n="mbGuncelleme">Güncellemeleri Denetle</span></div>
           <div class="mb-ayrac"></div>
           <div class="mb-oge mb-popup-toggle pasif" id="mbHakkinda" data-yuzen="yzHakkinda" data-hizli="p"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-circle-info"></i><span data-i18n="mbHakkinda">Program Hakkında</span></div>
           <div class="mb-ayrac"></div>
@@ -175,226 +197,291 @@
 
 <div id="anaAlan">
 
-<div id="solPanel">
-  <div class="panel-toolbar" id="solToolbar">
-    <span class="tb-etiket" data-i18n="solPanelBaslik">TESP&#304;T ED&#304;LEN HEDEFLER</span>
-    <span class="tb-bosluk"></span>
-    <button id="tbHedefMenu" class="dk-menu-btn gizli-tasindi" data-i18n-title="ipAyarlar" title="Ayarlar"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-    <div id="hedefMenuDropdown" class="dk-menu-dropdown">
-      <div class="dk-menu-item" data-yuzen="yzRadar"><i class="fa-solid fa-satellite"></i><span data-i18n="mbRadarAyar">Radar Ayarları</span></div>
-      <div class="dk-menu-item" data-yuzen="yzFiltre"><i class="fa-solid fa-filter"></i><span data-i18n="mbHedefFiltre">Hedef Filtresi</span></div>
-      <div class="dk-menu-item" data-yuzen="yzIz"><i class="fa-solid fa-route"></i><span data-i18n="mbIzAyar">İz Ayarları</span></div>
-      <div class="dk-menu-item" data-yuzen="yzSinif"><i class="fa-solid fa-tags"></i><span data-i18n="mbSinif">Hedef Sınıflandırma</span></div>
-      <div class="dk-menu-item" data-yuzen="yzKayit"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbKayit">Kayıt &amp; Tekrar Oynatma</span></div>
-    </div>
-  </div>
-  <div class="sabit-icerik" id="hedefListeIcerik">
-    <div id="radarHedefListesi"></div>
-    <div id="hedefYokKutu" class="bos-panel">
-      <i class="fa-solid fa-cubes"></i>
-      <span data-i18n="hedefYokBuyuk">GÖSTERİLECEK HEDEF YOK</span>
-    </div>
-  </div>
-
-  <h2 class="sabit-baslik" id="takipBaslik"><i class="fa-solid fa-bullseye"></i><span data-i18n="takipPanelBaslik">TAKİP EDİLEN HEDEFLER</span></h2>
-  <div class="sabit-icerik" id="takipListeIcerik">
-    <div id="takipHedefListesi"></div>
-    <div id="takipYokKutu" class="bos-panel">
-      <i class="fa-solid fa-bullseye"></i>
-      <span data-i18n="takipYokBuyuk">TAKİP EDİLEN HEDEF YOK</span>
-    </div>
-  </div>
-</div>
-
 <!-- YUZEN PANEL: M50 ELEKTRO-OPTIK -->
 <div id="yzM50" class="yuzen-panel yuzen-gizli" style="min-width:500px;min-height:400px">
   <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelM50">M50 ELEKTRO-OPTİK KONTROLÜ</span></span>
+    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelM50">M50 ELEKTRO-OPTİK KONTROLÜ</span> <span id="m50BaslikAd" class="yuzen-baslik-ek"></span></span>
     <button class="yuzen-kapat" data-yuzen="yzM50" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
-  <div class="yuzen-icerik">
+  <div class="yuzen-icerik m50-icerik">
+    <!-- v2.4.188: Elektro-Optik paneli SDK'nin tum yuzeyini acilir-kapanir
+         bolumlerde toplar (kullanici istegi). Eleman id'leri korunur;
+         m50_panel.js her bolumu surer. -->
+    <!-- v2.4.191: coklu EO sekmeleri -->
+    <!-- v2.4.194: bu panel YALNIZ KONTROL tasir. Cihaz adi/IP/kimlik
+         "Elektro Optik Cihazlari" listesinden ve kayit formundan yonetilir. -->
+    <!-- v2.4.205 (kullanici istegi): cihaz sekmeleri KALDIRILDI; cihaz
+         "Elektro Optik Cihazlari" listesinden secilir, baslik adini gosterir. -->
     <div class="alan" id="m50KopruSar" style="display:none">
       <label for="m50KopruSec" data-i18n="m50SahaMakinesi">Saha makinesi</label>
       <select id="m50KopruSec" style="width:100%"></select>
     </div>
-    <div class="alan">
-      <label data-i18n="m50Baglanti">AÇIK CİHAZ BAĞLANTISI</label>
-      <div class="satir">
-        <div style="flex:2"><label for="m50Ip">M50 IP</label><input id="m50Ip" type="text" value="" placeholder="192.168.1.50" autocomplete="off" spellcheck="false"></div>
-        <div style="flex:1"><label for="m50Port">Port</label><input id="m50Port" type="text" value="" placeholder="Port" autocomplete="off" spellcheck="false"></div>
+    <div class="m50-ust">
+      <span id="m50DurumMetin" class="d-kapali" data-i18n="m50Kapali">Bağlı değil</span>
+      <span id="m50Ozet"></span>
+      <button id="btnM50Baglan" class="kucuk"><i class="fa-solid fa-plug"></i><span data-i18n="btnM50Baglan">M50'YE BAĞLAN</span></button>
+    </div>
+    <div id="m50Hata"></div>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumVideo" open>
+      <summary><i class="fa-solid fa-video"></i> <span data-i18n="m50BolumVideo">CANLI GÖRÜNTÜ</span><span class="kam-bolum-rozet" id="m50VideoRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div id="m50VideoSar" class="m50-video-sar">
+          <div id="m50VideoYok" class="m50-video-yok">
+            <span data-i18n="m50VideoYok">M50 kamera kaydı yok.</span>
+            <button id="btnM50KameraOlustur" class="kucuk"><i class="fa-solid fa-plus"></i><span data-i18n="btnM50KameraOlustur">KAMERAYI OLUŞTUR</span></button>
+          </div>
+          <div class="m50-video-ust">
+            <button class="m50-kanal kucuk" data-kanal="gorunur"><i class="fa-solid fa-sun"></i><span data-i18n="m50Gorunur">Görünür</span></button>
+            <button class="m50-kanal kucuk" data-kanal="termal"><i class="fa-solid fa-fire"></i><span data-i18n="m50Termal">Termal</span></button>
+            <span class="m50-video-ipucu" data-i18n="m50VideoIpucu">Görüntü üzerinde sürükle: PTZ</span>
+            <button id="btnM50VideoAyir" class="kucuk ikincil" data-i18n-title="m50VideoAyir" title="Yüzen pencereye ayır"><i class="fa-solid fa-up-right-from-square"></i><span data-i18n="m50VideoAyir">Ayır</span></button>
+          </div>
+        </div>
       </div>
-      <div class="satir">
-        <div style="flex:1"><label for="m50Kullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input id="m50Kullanici" type="text" value="" autocomplete="username" spellcheck="false"></div>
-        <div style="flex:1"><label for="m50Parola" data-i18n="m50Parola">Parola</label><input id="m50Parola" type="password" value="" autocomplete="new-password"></div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumPtz" open>
+      <summary><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="m50BolumPtz">PTZ VE LENS</span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:1"><label for="m50PtzHiz" data-i18n="m50PtzHiz">PTZ hızı (1–60)</label>
+            <div class="m50-hiz-satir"><input id="m50PtzHiz" type="range" min="1" max="60" step="1" value="20"><span id="m50PtzHizDeger" class="m50-hiz-deger">20</span></div></div>
+          <div style="flex:1"><label for="m50LensKanal" data-i18n="m50LensKanal">Lens kanalı</label><select id="m50LensKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div>
+        </div>
+        <div class="m50-ptz-izgara">
+          <button class="m50-ptz" data-yon="sol_yukari"><i class="fa-solid fa-arrow-up" style="transform:rotate(-45deg)"></i></button>
+          <button class="m50-ptz" data-yon="yukari"><i class="fa-solid fa-arrow-up"></i></button>
+          <button class="m50-ptz" data-yon="sag_yukari"><i class="fa-solid fa-arrow-up" style="transform:rotate(45deg)"></i></button>
+          <button class="m50-ptz" data-yon="sol"><i class="fa-solid fa-arrow-left"></i></button>
+          <button class="m50-ptz m50-ptz-dur" data-yon="dur"><i class="fa-solid fa-stop"></i></button>
+          <button class="m50-ptz" data-yon="sag"><i class="fa-solid fa-arrow-right"></i></button>
+          <button class="m50-ptz" data-yon="sol_asagi"><i class="fa-solid fa-arrow-down" style="transform:rotate(45deg)"></i></button>
+          <button class="m50-ptz" data-yon="asagi"><i class="fa-solid fa-arrow-down"></i></button>
+          <button class="m50-ptz" data-yon="sag_asagi"><i class="fa-solid fa-arrow-down" style="transform:rotate(-45deg)"></i></button>
+        </div>
+        <div class="m50-lens-izgara">
+          <button class="m50-lens" data-eylem="zoom_artir"><i class="fa-solid fa-magnifying-glass-plus"></i><span data-i18n="m50ZoomIn">Yakınlaştır</span></button>
+          <button class="m50-lens" data-eylem="zoom_azalt"><i class="fa-solid fa-magnifying-glass-minus"></i><span data-i18n="m50ZoomOut">Uzaklaştır</span></button>
+          <button class="m50-lens" data-eylem="odak_yakin"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusNear">Yakın netlik</span></button>
+          <button class="m50-lens" data-eylem="odak_uzak"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusFar">Uzak netlik</span></button>
+          <button class="m50-lens" data-eylem="iris_ac"><i class="fa-solid fa-circle-half-stroke"></i><span data-i18n="m50IrisAc">İris aç</span></button>
+          <button class="m50-lens" data-eylem="iris_kapat"><i class="fa-solid fa-circle"></i><span data-i18n="m50IrisKapat">İris kapat</span></button>
+        </div>
       </div>
-      <button id="btnM50Baglan" style="width:100%;padding:9px;margin-top:7px"><i class="fa-solid fa-plug"></i><span data-i18n="btnM50Baglan">M50'YE BAĞLAN</span></button>
-    </div>
-    <div class="alan">
-      <label data-i18n="m50DurumBaslik">M50 DURUMU</label>
-      <div id="m50DurumKutu"><span id="m50DurumMetin" class="d-kapali" data-i18n="m50Kapali">Bağlı değil</span><div id="m50Hata"></div></div>
-      <div id="m50Ozet" style="color:var(--soluk);font-size:11px;margin-top:6px"></div>
-    </div>
-    <div class="alan">
-      <label data-i18n="m50YerelVideo">YEREL VİDEO KAYNAKLARI</label>
-      <p class="aciklama" data-i18n="m50YerelVideoAciklama">Ham M50 görüntüsü Merkez'e taşınmaz. Görünür ve termal akışlar yalnız yerel Görüntü Köprüsünde işlenir.</p>
-      <div class="satir"><div style="flex:1"><label for="m50RtspGorunur">RTSP görünür</label><input id="m50RtspGorunur" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50RtspTermal">RTSP termal</label><input id="m50RtspTermal" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50SdkDizin" data-i18n="m50SdkDizin">SDK dizini (yalnız saha Köprüsü)</label><input id="m50SdkDizin" type="text" value="" placeholder="C:\\M50\\SDK" autocomplete="off"></div></div>
-      <button id="btnM50AyarKaydet" style="width:100%;padding:8px;margin-top:7px"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50AyarKaydet">YEREL AYARLARI KAYDET</span></button>
-    </div>
-    <div class="alan" id="m50KontrolAlan">
-      <label data-i18n="m50Kontrol">PTZ, LENS VE MANUEL TAKİP</label>
-      <p class="aciklama" data-i18n="m50TakipAciklama">Takip yalnız operatörün yerel video üzerindeki açık dikdörtgen seçimiyle başlar; otomatik hedef seçimi yoktur.</p>
-      <div class="satir"><div style="flex:1"><label for="m50PtzHiz" data-i18n="m50PtzHiz">PTZ hızı (1–10)</label><input id="m50PtzHiz" type="number" min="1" max="10" step="1" value="5"></div><div style="flex:1"><label for="m50LensKanal" data-i18n="m50LensKanal">Lens kanalı</label><select id="m50LensKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="yukari"><i class="fa-solid fa-arrow-up"></i></button></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="sol"><i class="fa-solid fa-arrow-left"></i></button><button class="m50-ptz" data-yon="dur"><i class="fa-solid fa-stop"></i></button><button class="m50-ptz" data-yon="sag"><i class="fa-solid fa-arrow-right"></i></button></div>
-      <div class="satir" style="justify-content:center;gap:6px"><button class="m50-ptz" data-yon="asagi"><i class="fa-solid fa-arrow-down"></i></button></div>
-      <div class="satir"><button class="m50-lens" data-eylem="zoom_artir"><i class="fa-solid fa-magnifying-glass-plus"></i><span data-i18n="m50ZoomIn">Yakınlaştır</span></button><button class="m50-lens" data-eylem="zoom_azalt"><i class="fa-solid fa-magnifying-glass-minus"></i><span data-i18n="m50ZoomOut">Uzaklaştır</span></button><button class="m50-lens" data-eylem="odak_yakin"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusNear">Yakın netlik</span></button><button class="m50-lens" data-eylem="odak_uzak"><i class="fa-solid fa-bullseye"></i><span data-i18n="m50FocusFar">Uzak netlik</span></button></div>
-      <div class="satir"><div style="flex:1"><label for="m50VideoDikdortgen" data-i18n="m50VideoDikdortgen">Video alanı (sol, üst, sağ, alt)</label><input id="m50VideoDikdortgen" type="text" value="" placeholder="0, 0, 1920, 1080" autocomplete="off" spellcheck="false"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50SecimDikdortgen" data-i18n="m50SecimDikdortgen">Operatör seçimi (sol, üst, sağ, alt)</label><input id="m50SecimDikdortgen" type="text" value="" placeholder="800, 300, 1100, 650" autocomplete="off" spellcheck="false"></div></div>
-      <div class="satir"><div style="flex:1"><label for="m50TakipKanal" data-i18n="m50TakipKanal">Takip kanalı</label><select id="m50TakipKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div><div style="flex:1"><label for="m50TakipMod" data-i18n="m50TakipMod">Takip modu</label><select id="m50TakipMod"><option value="hava_yari_otomatik" data-i18n="m50TakipModHava">Hava yarı otomatik</option><option value="kara_manuel" data-i18n="m50TakipModKaraManuel">Kara manuel</option><option value="kara_yari_otomatik" data-i18n="m50TakipModKaraYari">Kara yarı otomatik</option></select></div></div>
-      <div class="satir"><button id="btnM50TakipSec"><i class="fa-solid fa-vector-square"></i><span data-i18n="m50TakipSec">MANUEL SEÇİMİ GÖNDER</span></button><button id="btnM50TakipBaslat"><i class="fa-solid fa-crosshairs"></i><span data-i18n="m50TakipBaslat">TAKİBİ BAŞLAT</span></button><button id="btnM50TakipDurdur"><i class="fa-solid fa-ban"></i><span data-i18n="m50TakipDurdur">TAKİBİ DURDUR</span></button></div>
-      <div id="m50TakipDurum" class="aciklama" aria-live="polite"></div>
-    </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumAci">
+      <summary><i class="fa-solid fa-compass"></i> <span data-i18n="m50BolumAci">AÇI KONUMLAMA</span><span class="kam-bolum-rozet" id="m50AciRozet">—</span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:1"><label for="m50Azimut" data-i18n="m50Azimut">Azimut (°)</label><input id="m50Azimut" type="number" step="0.1" min="-360" max="360" placeholder="0.0"></div>
+          <div style="flex:1"><label for="m50Egim" data-i18n="m50Egim">Eğim (°)</label><input id="m50Egim" type="number" step="0.1" min="-90" max="90" placeholder="0.0"></div>
+          <div style="flex:1"><label for="m50AciHiz" data-i18n="m50AciHiz">Hız (1–60)</label><input id="m50AciHiz" type="number" min="1" max="60" step="1" value="5"></div>
+        </div>
+        <div class="satir">
+          <button id="btnM50AciGit"><i class="fa-solid fa-location-crosshairs"></i><span data-i18n="btnM50AciGit">AÇIYA GİT</span></button>
+          <button id="btnM50AciOku" class="ikincil"><i class="fa-solid fa-rotate"></i><span data-i18n="btnM50AciOku">CANLI AÇIYI OKU</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumOnayar">
+      <summary><i class="fa-solid fa-bookmark"></i> <span data-i18n="m50BolumOnayar">ÖN AYARLAR (PRESET)</span><span class="kam-bolum-rozet" id="m50OnayarRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:2"><label for="m50OnayarSec" data-i18n="m50OnayarSec">Kayıtlı ön ayar</label><select id="m50OnayarSec"></select></div>
+          <div style="flex:1"><label for="m50OnayarNo" data-i18n="m50OnayarNo">No (0–255)</label><input id="m50OnayarNo" type="number" min="0" max="255" step="1" value="1"></div>
+        </div>
+        <div class="satir">
+          <div style="flex:2"><label for="m50OnayarAd" data-i18n="m50OnayarAd">Ad</label><input id="m50OnayarAd" type="text" maxlength="64" autocomplete="off" spellcheck="false"></div>
+          <div style="flex:1"><label for="m50OnayarHiz" data-i18n="m50OnayarHiz">Hız (1–63)</label><input id="m50OnayarHiz" type="number" min="1" max="63" step="1" value="30"></div>
+        </div>
+        <div class="satir m50-dugme-satir">
+          <button id="btnM50OnayarCagir"><i class="fa-solid fa-play"></i><span data-i18n="btnM50OnayarCagir">GİT</span></button>
+          <button id="btnM50OnayarKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50OnayarKaydet">MEVCUT KONUMU KAYDET</span></button>
+          <button id="btnM50OnayarSil" class="tehlike"><i class="fa-solid fa-trash"></i><span data-i18n="btnM50OnayarSil">SİL</span></button>
+          <button id="btnM50OnayarHepsiniSil" class="tehlike ikincil"><i class="fa-solid fa-trash-can"></i><span data-i18n="btnM50OnayarHepsiniSil">HEPSİNİ SİL</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumTarama">
+      <summary><i class="fa-solid fa-radar"></i> <span data-i18n="m50BolumTarama">TARAMA / DEVRİYE</span><span class="kam-bolum-rozet" id="m50TaramaRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <div class="satir">
+          <div style="flex:2"><label for="m50TaramaTur" data-i18n="m50TaramaTur">Tarama türü</label>
+            <select id="m50TaramaTur">
+              <option value="onayar" data-i18n="m50TaramaOnayar">Ön ayar devriyesi</option>
+              <option value="yatay" data-i18n="m50TaramaYatay">Yatay tarama</option>
+              <option value="dikey" data-i18n="m50TaramaDikey">Dikey tarama</option>
+              <option value="panorama" data-i18n="m50TaramaPanorama">Panorama</option>
+              <option value="yelpaze" data-i18n="m50TaramaYelpaze">Yelpaze (sektör)</option>
+              <option value="kare" data-i18n="m50TaramaKare">Kare tarama</option>
+              <option value="desen" data-i18n="m50TaramaDesen">Desen (kayıtlı rota)</option>
+            </select></div>
+          <div style="flex:1"><label for="m50TaramaYol" data-i18n="m50TaramaYol">Yol no</label><input id="m50TaramaYol" type="number" min="0" max="31" step="1" value="0"></div>
+        </div>
+        <div class="satir m50-dugme-satir">
+          <button class="m50-tarama" data-kontrol="baslat"><i class="fa-solid fa-play"></i><span data-i18n="m50TaramaBaslat">BAŞLAT</span></button>
+          <button class="m50-tarama ikincil" data-kontrol="duraklat"><i class="fa-solid fa-pause"></i><span data-i18n="m50TaramaDuraklat">DURAKLAT</span></button>
+          <button class="m50-tarama ikincil" data-kontrol="devam"><i class="fa-solid fa-forward"></i><span data-i18n="m50TaramaDevam">DEVAM</span></button>
+          <button class="m50-tarama tehlike" data-kontrol="durdur"><i class="fa-solid fa-stop"></i><span data-i18n="m50TaramaDurdur">DURDUR</span></button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kam-bolum m50-bolum" id="m50BolumTakip">
+      <summary><i class="fa-solid fa-crosshairs"></i> <span data-i18n="m50BolumTakip">HEDEF TAKİBİ</span><span class="kam-bolum-rozet" id="m50TakipRozet"></span></summary>
+      <div class="m50-bolum-ic">
+        <p class="aciklama" data-i18n="m50TakipAciklama">Takip yalnız operatörün yerel video üzerindeki açık dikdörtgen seçimiyle başlar; otomatik hedef seçimi yoktur.</p>
+        <div class="satir">
+          <div style="flex:1"><label for="m50TakipKanal" data-i18n="m50TakipKanal">Takip kanalı</label><select id="m50TakipKanal"><option value="gorunur" data-i18n="m50Gorunur">Görünür</option><option value="termal" data-i18n="m50Termal">Termal</option></select></div>
+          <div style="flex:1"><label for="m50TakipMod" data-i18n="m50TakipMod">Takip modu</label><select id="m50TakipMod"><option value="hava_yari_otomatik" data-i18n="m50TakipModHava">Hava yarı otomatik</option><option value="kara_manuel" data-i18n="m50TakipModKaraManuel">Kara manuel</option><option value="kara_yari_otomatik" data-i18n="m50TakipModKaraYari">Kara yarı otomatik</option></select></div>
+          <div style="flex:1"><label data-i18n="m50TakipYetenek">Takip yeteneği</label>
+            <div class="satir" style="gap:4px"><button id="btnM50TakipYetenekAc" class="kucuk"><span data-i18n="acik">AÇIK</span></button><button id="btnM50TakipYetenekKapat" class="kucuk ikincil"><span data-i18n="kapali">KAPALI</span></button></div></div>
+        </div>
+        <div class="satir"><div style="flex:1"><label for="m50VideoDikdortgen" data-i18n="m50VideoDikdortgen">Video alanı (sol, üst, sağ, alt)</label><input id="m50VideoDikdortgen" type="text" value="" placeholder="0, 0, 1920, 1080" autocomplete="off" spellcheck="false"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50SecimDikdortgen" data-i18n="m50SecimDikdortgen">Operatör seçimi (sol, üst, sağ, alt)</label><input id="m50SecimDikdortgen" type="text" value="" placeholder="800, 300, 1100, 650" autocomplete="off" spellcheck="false"></div></div>
+        <div class="satir m50-dugme-satir">
+          <button id="btnM50TakipSec"><i class="fa-solid fa-vector-square"></i><span data-i18n="m50TakipSec">MANUEL SEÇİMİ GÖNDER</span></button>
+          <button id="btnM50TakipBaslat"><i class="fa-solid fa-crosshairs"></i><span data-i18n="m50TakipBaslat">TAKİBİ BAŞLAT</span></button>
+          <button id="btnM50TakipDurdur" class="tehlike"><i class="fa-solid fa-ban"></i><span data-i18n="m50TakipDurdur">TAKİBİ DURDUR</span></button>
+        </div>
+        <div id="m50TakipDurum" class="aciklama" aria-live="polite"></div>
+      </div>
+    </details>
+
+    <!-- v2.4.194: "BAGLANTI VE KIMLIK" bolumu KALDIRILDI (kullanici
+         istegi #2): IP/port/kullanici/parola cihaz kaydinda tutulur ve
+         Elektro Optik Cihazlari > Duzenle ile degistirilir. -->
+    <details class="kam-bolum m50-bolum" id="m50BolumAyar">
+      <summary><i class="fa-solid fa-sliders"></i> <span data-i18n="m50BolumAyar">GELİŞMİŞ AYARLAR</span></summary>
+      <div class="m50-bolum-ic">
+        <p class="aciklama" data-i18n="m50YerelVideoAciklama">RTSP adresleri cihazdan otomatik alınır; yalnız cihaz adres vermezse buradaki elle girilen adres kullanılır.</p>
+        <div class="satir"><div style="flex:1"><label for="m50RtspGorunur">RTSP görünür</label><input id="m50RtspGorunur" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50RtspTermal">RTSP termal</label><input id="m50RtspTermal" type="text" value="" placeholder="rtsp://..." autocomplete="off"></div></div>
+        <div class="satir"><div style="flex:1"><label for="m50SdkDizin" data-i18n="m50SdkDizin">SDK dizini (boş = gömülü)</label><input id="m50SdkDizin" type="text" value="" placeholder="" autocomplete="off"></div></div>
+        <button id="btnM50AyarKaydet" style="width:100%;padding:8px;margin-top:7px"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnM50AyarKaydet">YEREL AYARLARI KAYDET</span></button>
+      </div>
+    </details>
   </div>
 </div>
 
-<!-- YUZEN PANEL: RADAR AYARLARI -->
-<div id="yzRadar" class="yuzen-panel yuzen-gizli">
+<!-- ============ v2.4.201: LISANS YENILE ============ -->
+<div id="yzLisans" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:400px">
   <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-satellite"></i> <span data-i18n="panelRadar">RADAR AYARLARI</span></span>
-    <button class="yuzen-kapat" data-yuzen="yzRadar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+    <span><i class="fa-solid fa-key"></i> <span data-i18n="panelLisans">LİSANSI YENİLE</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzLisans" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="yuzen-icerik">
-  <div class="alan">
-    <div class="satir">
-      <div style="flex:2">
-        <label for="radarIp" data-i18n="lblRadarIp">Radar IP</label>
-        <!-- v2.4.62: ON DEGER KALDIRILDI. Eskiden burada
-             value="192.168.8.168" yaziliydi; operator alana
-             dokunmadan Baglan'a basinca kendi girmedigi bir adrese
-             baglanma denemesi basliyordu. Kullanici istegi: "kopru
-             kendisine baglan komutu gelmeden baglanmamali". Ipucu
-             metni bicimi gosterir ama DEGER olarak gonderilmez. -->
-        <input type="text" id="radarIp" value=""
-               placeholder="192.168.1.50"
-               data-i18n-ph="phRadarIp"
-               spellcheck="false" autocomplete="off">
-      </div>
-      <div style="flex:1">
-        <label for="radarPort" data-i18n="lblRadarPort">Port</label>
-        <input type="text" id="radarPort" value="5001"
-               spellcheck="false" autocomplete="off">
-      </div>
-    </div>
+    <p class="aciklama" data-i18n="lisansAciklama">Merkezdeki güncel lisans belgesi indirilip yerel belgenin üzerine yazılır; yetkiler (radar, elektro-optik, yapay zekâ) servis yeniden başlatılmadan güncellenir. Firma yöneticisi hesabı gerekir; şifre kaydedilmez.</p>
+    <div class="alan"><label for="lsAdres" data-i18n="lblLsAdres">Merkez sunucu adresi</label><input type="text" id="lsAdres" value="goktungu.com" spellcheck="false" autocomplete="off"></div>
+    <div class="alan"><label for="lsEposta" data-i18n="lblLsEposta">Firma yöneticisi e-postası</label><input type="text" id="lsEposta" autocomplete="username" spellcheck="false"></div>
+    <div class="alan"><label for="lsSifre" data-i18n="lblLsSifre">Şifre</label><input type="password" id="lsSifre" autocomplete="current-password"></div>
+    <div id="lsDurum" class="aciklama"></div>
+    <div id="lsOzet" class="aciklama" style="font-family:Consolas,monospace;font-size:11px"></div>
   </div>
-
-  <!-- v2.4.60: radar, kopru yaziliminin kuruldugu makinenin agindadir.
-       Firmada birden fazla kopru varsa hangisi kullanilacagi burada
-       secilir; tek kopru varsa bu satir gizli kalir (radar_panel.js). -->
-  <div class="alan" id="raKopruSar" style="display:none">
-    <label for="raKopruSec" data-i18n="raKopruEtiket">Saha makinesi</label>
-    <select id="raKopruSec" style="width:100%"></select>
-  </div>
-
-  <div class="alan">
-    <button id="btnRadarBaglan" style="width:100%;padding:9px;"><i class="fa-solid fa-plug"></i><span>RADARA BA&#286;LAN</span></button>
-  </div>
-
-  <div class="alan">
-    <label data-i18n="lblRadarDurum">Radar Durumu</label>
-    <div id="radarDurumKutu">
-      <span id="radarDurumMetin" class="d-kapali">Ba&#287;l&#305; de&#287;il</span>
-      <div id="radarHata"></div>
-    </div>
-  </div>
-
-  <div class="alan">
-    <div id="radarHedefOzet" style="color:var(--soluk);font-size:11px;
-         font-family:Consolas,monospace;"></div>
-  </div>
-
-  <div class="alan" id="radarAyarAlan">
-    <label data-i18n="lblRadarAyar">ÇALIŞMA AYARLARI</label>
-    <div class="satir">
-      <div style="flex:1">
-        <label for="raFrekans" data-i18n="lblRaFrekans">Frekans</label>
-        <select id="raFrekans">
-          <option value="0">0</option><option value="1">1</option>
-          <option value="2">2</option><option value="3">3</option>
-          <option value="4">4</option><option value="5">5</option>
-          <option value="6">6</option><option value="7">7</option>
-        </select>
-      </div>
-      <div style="flex:1">
-        <label for="raTespit" data-i18n="lblRaTespit">Tespit E&#351;i&#287;i</label>
-        <select id="raTespit">
-          <option value="0" data-i18n="raEsikDusuk">D&#252;&#351;&#252;k</option>
-          <option value="1" data-i18n="raEsikNormal">Normal</option>
-          <option value="2" data-i18n="raEsikYuksek">Y&#252;ksek</option>
-        </select>
-      </div>
-    </div>
-    <div class="satir">
-      <div style="flex:1">
-        <label for="raHiz" data-i18n="lblRaHiz">H&#305;z E&#351;i&#287;i (m/s)</label>
-        <select id="raHiz">
-          <option value="0">0.25</option><option value="1">0.5</option>
-          <option value="2">0.75</option><option value="3">1.0</option>
-        </select>
-      </div>
-      <div style="flex:1">
-        <label for="raRcs" data-i18n="lblRaRcs">RCS E&#351;i&#287;i (m&#178;)</label>
-        <select id="raRcs">
-          <option value="0" data-i18n="raKapali">KAPALI</option>
-          <option value="1">0.01</option><option value="2">0.05</option>
-        </select>
-      </div>
-    </div>
-    <div class="satir">
-      <div style="flex:1">
-        <label for="raMod" data-i18n="lblRaMod">&#199;al&#305;&#351;ma Modu</label>
-        <select id="raMod">
-          <option value="bekleme" data-i18n="raModBekleme">Bekleme</option>
-          <option value="tarama1" data-i18n="raModTarama1">Tarama 1 sn</option>
-          <option value="tarama2" data-i18n="raModTarama2">Tarama 2 sn</option>
-          <option value="tarama4" data-i18n="raModTarama4">Tarama 4 sn</option>
-        </select>
-      </div>
-      <div style="flex:1">
-        <label for="raMerkezYonu" data-i18n="lblRaMerkezYonu">Merkez Y&#246;n&#252; (&#176;)</label>
-        <input type="number" id="raMerkezYonu" min="0" max="359.99"
-               step="0.01" value="0" spellcheck="false" autocomplete="off">
-      </div>
-    </div>
-    <button id="btnRadarAyarKaydet" style="width:100%;padding:8px;margin-top:6px;"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnRadarAyarKaydet">AYARLARI KAYDET</span></button>
-    <button id="btnRtkKonum" style="width:100%;padding:8px;margin-top:6px;"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="btnRtkKonum">RTK'DAN KONUM AL</span></button>
-    <div id="rtkIlerlemeKutu" style="display:none;margin-top:6px;">
-      <div style="height:6px;background:var(--girinti,#2a3542);border-radius:3px;overflow:hidden;">
-        <div id="rtkIlerlemeBar" style="height:100%;width:0%;background:#6bd8b9;transition:width .3s;"></div>
-      </div>
-      <div id="rtkIlerlemeYazi" style="font-size:10px;margin-top:3px;opacity:.8;"></div>
-    </div>
-    <div id="raSonuc" style="margin-top:5px;color:var(--soluk);font-size:10px;
-         font-family:Consolas,monospace;min-height:13px;"></div>
-  </div>
-
-  <div class="alan" id="radarSaglikAlan" style="display:none;">
-    <label data-i18n="lblRadarSaglik">RADAR SA&#286;LI&#286;I</label>
-    <div id="radarSaglikKutu">
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsCalismaSuresi">&#199;al&#305;&#351;ma s&#252;resi</span><span class="rs-deger" id="rsCalisma">-</span></div>
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsVeriHizi">Veri h&#305;z&#305;</span><span class="rs-deger" id="rsVeriHizi">-</span></div>
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsSonVeri">Son veri</span><span class="rs-deger" id="rsSonVeri">-</span></div>
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsHbGecikme">Kalp at&#305;&#351;&#305; gecikmesi</span><span class="rs-deger" id="rsHb">-</span></div>
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsToplamMesaj">Toplam mesaj</span><span class="rs-deger" id="rsMesaj">-</span></div>
-      <div class="rs-satir"><span class="rs-etiket" data-i18n="rsCrcHata">Bozuk &#231;er&#231;eve</span><span class="rs-deger" id="rsCrc">-</span></div>
-    </div>
-  </div>
-
+  <div class="form-dip">
+    <button id="btnLsIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnLsYenile"><i class="fa-solid fa-rotate"></i><span data-i18n="btnLsYenile">YENİLE</span></button>
   </div>
 </div>
 
-<!-- YUZEN PANEL: HEDEF SINIFLANDIRMA -->
+<!-- ============ v2.4.194: RADARLAR (liste) + RADAR KAYIT FORMU ============ -->
+<div id="yzRadarlar" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:440px;min-height:300px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="panelRadarlar">RADARLAR</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzRadarlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <!-- v2.4.198: Kameralar paneliyle AYNI desen — panel-toolbar (alt cizgili
+       baslik seridi, saga yasli "+ Yeni ..." dugmesi) ve ortak durum
+       cubugu (panel_durumcubugu.js otomatik ekler). -->
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketRadarlar">RADAR YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnRadarYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnRadarYeni" title="Yeni Radar"><i class="fa-solid fa-plus"></i><span data-i18n="btnRadarYeni">Yeni Radar</span></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div id="radarlarListe" class="cl-liste"></div>
+  </div>
+</div>
+<div id="yzRadarForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-satellite-dish"></i> <span id="radarFormBaslik" data-i18n="panelRadarFormYeni">YENİ RADAR</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzRadarForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <input type="hidden" id="rfId" value="">
+    <div class="alan"><label for="rfIsim" data-i18n="lblRaIsim">Radar adı</label><input type="text" id="rfIsim" maxlength="64" spellcheck="false" autocomplete="off"></div>
+    <div class="satir">
+      <div style="flex:2"><label for="rfIp" data-i18n="lblRadarIp">Radar IP</label><input type="text" id="rfIp" placeholder="192.168.1.50" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="rfPort" data-i18n="lblRadarPort">Port</label><input type="text" id="rfPort" value="5001" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir">
+      <div style="flex:1"><label for="rfLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="rfLat" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="rfLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="rfLon" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
+    </div>
+  </div>
+  <div class="form-dip">
+    <button id="btnRadarFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnRadarFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
+  </div>
+</div>
+
+<!-- ============ v2.4.194: ELEKTRO OPTIK CIHAZLARI (liste) + KAYIT FORMU ============ -->
+<div id="yzEoCihazlar" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:440px;min-height:300px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-binoculars"></i> <span data-i18n="panelEoCihazlar">ELEKTRO OPTİK CİHAZLARI</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzEoCihazlar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketEo">ELEKTRO OPTİK YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnEoYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnEoYeni" title="Yeni Elektro Optik"><i class="fa-solid fa-plus"></i><span data-i18n="btnEoYeni">Yeni Elektro Optik</span></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div id="eoCihazListe" class="cl-liste"></div>
+  </div>
+</div>
+<div id="yzEoForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-binoculars"></i> <span id="eoFormBaslik" data-i18n="panelEoFormYeni">YENİ ELEKTRO OPTİK</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzEoForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <input type="hidden" id="efId" value="">
+    <div class="alan"><label for="efIsim" data-i18n="lblEoIsim">Cihaz adı</label><input type="text" id="efIsim" maxlength="64" spellcheck="false" autocomplete="off"></div>
+    <div class="satir">
+      <div style="flex:2"><label for="efIp">IP</label><input type="text" id="efIp" placeholder="192.168.1.64" spellcheck="false" autocomplete="off"></div>
+      <div style="flex:1"><label for="efPort" data-i18n="lblRadarPort">Port</label><input type="text" id="efPort" value="39020" spellcheck="false" autocomplete="off"></div>
+    </div>
+    <div class="satir">
+      <div style="flex:1"><label for="efKullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input type="text" id="efKullanici" autocomplete="off" spellcheck="false"></div>
+      <div style="flex:1"><label for="efParola" data-i18n="m50Parola">Parola</label><input type="password" id="efParola" autocomplete="new-password"></div>
+    </div>
+    <p class="aciklama" id="efNot" data-i18n="efNot">Parola sunucuda cihaz kaydıyla saklanır; düzenlerken boş bırakılırsa değişmez.</p>
+    <!-- v2.4.205 (kullanici istegi): cihaz konumu. RTK varsa "Konum al"
+         cihazdan, yoksa tarayici konumundan doldurur; kayit veritabanina
+         (eo_cihazlar.lat/lon) yazilir ve harita ikonu bu konuma duser. -->
+    <details class="kam-bolum" id="efKonumBolum">
+      <summary><i class="fa-solid fa-location-dot"></i> <span data-i18n="efKonumBaslik">KONUM</span><span id="efKonumRozet" class="kam-bolum-rozet"></span></summary>
+      <div class="prog-bolum-ic" style="padding:8px 10px">
+        <div class="satir">
+          <div style="flex:1"><label for="efLat" data-i18n="lblEnlem">Enlem</label><input type="text" id="efLat" inputmode="decimal" placeholder="39.925533" spellcheck="false" autocomplete="off"></div>
+          <div style="flex:1"><label for="efLon" data-i18n="lblBoylam">Boylam</label><input type="text" id="efLon" inputmode="decimal" placeholder="32.866287" spellcheck="false" autocomplete="off"></div>
+          <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button type="button" id="btnEfKonumAl" class="kucuk ikincil" data-i18n-title="efKonumAlIpucu" title="RTK varsa cihazdan, yoksa bu bilgisayarın konumundan doldurur"><i class="fa-solid fa-crosshairs"></i><span data-i18n="efKonumAl">Konum al</span></button></div>
+        </div>
+        <p class="aciklama" id="efKonumNot" data-i18n="efKonumNot">Cihazın RTK/GPS konumu varsa harita bu konumu kullanır; yoksa buraya girilen kayıtlı konum kullanılır.</p>
+      </div>
+    </details>
+  </div>
+  <div class="form-dip">
+    <button id="btnEoFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnEoFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
+  </div>
+</div>
+
 <!-- YUZEN PANEL: PROGRAM HAKKINDA -->
 <div id="yzHakkinda" class="yuzen-panel yuzen-gizli">
   <div class="yuzen-baslik">
@@ -422,180 +509,6 @@
          (sirket.js). Sirket tanimli degilse bu varsayilan kalir. -->
     <div class="hk-telif" id="hkTelif">© 2026 Gökkubbe Teknoloji Anonim Şirketi</div>
   </div>
-</div>
-
-<div id="yzSinif" class="yuzen-panel yuzen-gizli">
-  <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-tags"></i> <span data-i18n="panelSinif">HEDEF SINIFLANDIRMA</span></span>
-    <button class="yuzen-kapat" data-yuzen="yzSinif" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="yuzen-icerik">
-  <div class="alan" id="sinifAlan">
-    <div class="sinif-satir">
-      <span data-i18n="lblSinifAcik">Otomatik s&#305;n&#305;fland&#305;rma</span>
-      <input type="checkbox" id="sinifAcik" checked>
-    </div>
-    <div class="sinif-satir" style="margin-top:6px;">
-      <span data-i18n="lblSinifHassasiyet">Hassasiyet</span>
-      <span id="sinifHassasiyetDeger" style="font-family:Consolas,monospace;">40</span>
-    </div>
-    <input type="range" id="sinifHassasiyet" min="0" max="100" step="5" value="40" style="width:100%;margin-top:2px;">
-    <div class="sinif-aciklama">
-      <span data-i18n="lblSinifDusuk">Temkinli</span>
-      <span data-i18n="lblSinifYuksek">Agresif</span>
-    </div>
-    <div id="sinifBilgi" style="margin-top:4px;font-size:10px;color:var(--soluk);" data-i18n="lblSinifBilgi">D&#252;&#351;&#252;k de&#287;er: az ama emin karar. Y&#252;ksek de&#287;er: &#231;ok karar, hata riski artar.</div>
-  </div>
-  </div>
-</div>
-
-<!-- YUZEN PANEL: KAYIT & TEKRAR OYNATMA -->
-<div id="yzKayit" class="yuzen-panel yuzen-gizli">
-  <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-clapperboard"></i> <span data-i18n="panelKayit">KAYIT &amp; TEKRAR OYNATMA</span></span>
-    <button class="yuzen-kapat" data-yuzen="yzKayit" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="yuzen-icerik">
-  <div class="alan" id="kayitAlan">
-    <button id="btnKayit" style="width:100%;padding:9px;"><i class="fa-solid fa-circle" id="kayitNokta"></i><span id="btnKayitYazi" data-i18n="btnKayitBaslat">KAYIT BA&#350;LAT</span></button>
-    <div id="kayitBilgi" style="display:none;margin-top:5px;font-size:10px;
-         font-family:Consolas,monospace;color:var(--kotu);"></div>
-    <button id="btnKayitListeAc" style="width:100%;padding:8px;margin-top:6px;"><i class="fa-solid fa-list"></i><span data-i18n="btnKayitListe">KAYITLAR</span></button>
-    <div id="kayitListeKutu" style="display:none;margin-top:6px;"></div>
-    <div id="replayKontrol" style="display:none;margin-top:6px;">
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button id="btnReplayDurdur" style="flex:0 0 auto;padding:6px 10px;"><i class="fa-solid fa-stop"></i></button>
-        <select id="replayHiz" style="flex:0 0 auto;">
-          <option value="1">1x</option><option value="2">2x</option>
-          <option value="4">4x</option><option value="8">8x</option>
-        </select>
-        <div style="flex:1;height:6px;background:var(--cizgi);border-radius:3px;overflow:hidden;">
-          <div id="replayBar" style="height:100%;width:0%;background:#d97706;transition:width .3s;"></div>
-        </div>
-      </div>
-      <div id="replayYazi" style="font-size:10px;margin-top:3px;opacity:.85;
-           font-family:Consolas,monospace;"></div>
-    </div>
-  </div>
-  </div>
-</div>
-
-<!-- YUZEN PANEL: HEDEF FILTRESI -->
-<div id="yzFiltre" class="yuzen-panel yuzen-gizli">
-  <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-filter"></i> <span data-i18n="panelFiltre">HEDEF F&#304;LTRES&#304;</span></span>
-    <button class="yuzen-kapat" data-yuzen="yzFiltre" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="yuzen-icerik">
-  <div class="alan">
-    <div class="filtre-satir" id="fsYukseklik">
-      <div class="f-baslik">
-        <label data-i18n="lblFYukseklik">Y&#252;kseklik (m)</label>
-        <span class="f-deger" id="fdYukseklik">-100 ~ 3000</span>
-      </div>
-      <div class="cift-slider" data-filtre="yukseklik" data-min="-100" data-max="3000" data-adim="10">
-        <div class="ray"></div><div class="ray-dolgu"></div>
-        <input type="range" class="s-min" min="-100" max="3000" step="10" value="-100">
-        <input type="range" class="s-maks" min="-100" max="3000" step="10" value="3000">
-      </div>
-    </div>
-    <div class="filtre-satir" id="fsRcs">
-      <div class="f-baslik">
-        <label data-i18n="lblFRcs">RCS (m&#178;)</label>
-        <span class="f-deger" id="fdRcs">KAPALI</span>
-      </div>
-      <div class="cift-slider" data-filtre="rcs" data-min="-1" data-max="100" data-adim="0.5">
-        <div class="ray"></div><div class="ray-dolgu"></div>
-        <input type="range" class="s-min" min="-1" max="100" step="0.5" value="-1">
-        <input type="range" class="s-maks" min="-1" max="100" step="0.5" value="-1">
-      </div>
-    </div>
-    <div class="filtre-satir" id="fsHiz">
-      <div class="f-baslik">
-        <label data-i18n="lblFHiz">H&#305;z (m/s)</label>
-        <span class="f-deger" id="fdHiz">KAPALI</span>
-      </div>
-      <div class="cift-slider" data-filtre="hiz" data-min="-1" data-max="200" data-adim="1">
-        <div class="ray"></div><div class="ray-dolgu"></div>
-        <input type="range" class="s-min" min="-1" max="200" step="1" value="-1">
-        <input type="range" class="s-maks" min="-1" max="200" step="1" value="-1">
-      </div>
-    </div>
-    <div class="filtre-satir" id="fsAzimut">
-      <div class="f-baslik">
-        <label data-i18n="lblFAzimut">Azimut Maskesi (&#176;)</label>
-        <span class="f-deger" id="fdAzimut">KAPALI</span>
-      </div>
-      <div class="cift-slider" data-filtre="azimut" data-min="0" data-max="360" data-adim="1">
-        <div class="ray"></div><div class="ray-dolgu"></div>
-        <input type="range" class="s-min" min="0" max="360" step="1" value="0">
-        <input type="range" class="s-maks" min="0" max="360" step="1" value="0">
-      </div>
-    </div>
-  </div>
-  <div class="alan">
-    <label data-i18n="lblFTip">Hedef Tipi</label>
-    <div class="tip-filtre" id="tipFiltre">
-      <label><input type="checkbox" id="tfTumu" checked><span data-i18n="tfTumu">T&#252;m&#252;n&#252; G&#246;ster</span></label>
-      <label><input type="checkbox" class="tf-tip" value="INSAN"><span data-i18n="tfInsan">&#304;nsan</span></label>
-      <label><input type="checkbox" class="tf-tip" value="ARAC"><span data-i18n="tfArac">Ara&#231;</span></label>
-      <label><input type="checkbox" class="tf-tip" value="DRON"><span data-i18n="tfDron">Dron</span></label>
-      <label><input type="checkbox" class="tf-tip" value="KUS"><span data-i18n="tfKus">Ku&#351;</span></label>
-      <label><input type="checkbox" class="tf-tip" value="BELIRSIZ"><span data-i18n="tfBelirsiz">Belirsiz</span></label>
-      <label><input type="checkbox" class="tf-tip" value="TANIMSIZ"><span data-i18n="tfTanimsiz">Tan&#305;ms&#305;z</span></label>
-    </div>
-  </div>
-  </div>
-</div>
-
-<!-- YUZEN PANEL: IZ AYARLARI -->
-<div id="yzIz" class="yuzen-panel yuzen-gizli">
-  <div class="yuzen-baslik">
-    <span><i class="fa-solid fa-route"></i> <span data-i18n="panelIz">&#304;Z AYARLARI</span></span>
-    <button class="yuzen-kapat" data-yuzen="yzIz" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="yuzen-icerik">
-  <div class="alan">
-    <div class="filtre-satir" id="fsMofN">
-      <div class="f-baslik">
-        <label data-i18n="lblMofN">Teyit Kural&#305; (M/N)</label>
-        <span class="f-deger" id="fdMofN">3/5</span>
-      </div>
-      <select id="mofnSec" style="width:100%;">
-        <option value="1,1">1/1</option>
-        <option value="2,3">2/3</option>
-        <option value="3,5" selected>3/5</option>
-        <option value="4,6">4/6</option>
-      </select>
-    </div>
-    <div class="filtre-satir" id="fsGnn" style="margin-top:6px;">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-        <input type="checkbox" id="gnnKutu" checked>
-        <span data-i18n="lblGnn">&#304;z Devralma (GNN)</span>
-      </label>
-    </div>
-    <div class="filtre-satir" style="margin-top:6px;">
-      <label data-i18n="lblFDurum">&#304;z Durumu</label>
-      <div class="tip-filtre" id="durumFiltre" style="margin-top:4px;">
-        <label><input type="checkbox" class="df-durum" value="ADAY" checked><span data-i18n="dfAday">Aday</span></label>
-        <label><input type="checkbox" class="df-durum" value="TEYITLI" checked><span data-i18n="dfTeyitli">Teyitli</span></label>
-        <label><input type="checkbox" class="df-durum" value="SUZULEN" checked><span data-i18n="dfSuzulen">S&#252;z&#252;len (Kay&#305;p)</span></label>
-      </div>
-    </div>
-    <div class="filtre-satir" id="fsIzSure" style="margin-top:6px;">
-      <div class="f-baslik">
-        <label data-i18n="lblIzSure">&#304;z G&#246;r&#252;nme S&#252;resi</label>
-        <span class="f-deger" id="fdIzSure">1 dk</span>
-      </div>
-      <input type="range" id="izSureSlider" min="5" max="600" step="5" value="60" style="width:100%;">
-    </div>
-    <button id="btnIzTemizle" class="buton" style="margin-top:8px;"><i class="fa-solid fa-eraser"></i><span data-i18n="btnIzTemizle">HEDEFLER&#304; TEM&#304;ZLE</span></button>
-  </div>
-  </div>
-</div>
-
-<div id="solTutamac" class="panel-tutamac" data-i18n-title="ipTutamac" title="Sürükleyerek panel genişliğini ayarlayın">
-  <div class="tutamac-cizgi"></div>
 </div>
 
 <div id="haritaAlan">
@@ -673,6 +586,21 @@
        tasir. Bu kap kullaniciya asla gorunmez. -->
   <div id="dronKartListesi" style="display:none"></div>
 
+  <!-- OFFLINE-KAMERA: Yerel Merkez kamera yönetimi. Canlı yayın aynı
+       uygulama origin'i üzerinden gelir; kamera kaynağı Köprüye aktarılmaz. -->
+  <div class="panel-toolbar" id="kameralarToolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketKameralar">KAMERA YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="tbVideoDuvar" class="tb-btn tb-btn-metin" data-i18n-title="kamVideoDuvar" title="Video Duvarı"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></button>
+    <button id="tbYeniKamera" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="kamYeni" title="Yeni Kamera"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></button>
+  </div>
+  <div class="sabit-icerik" id="kameralarIcerik">
+    <div id="kameraListesi"></div>
+    <div id="kameraYokKutu" class="bos-panel">
+      <i class="fa-solid fa-video"></i>
+      <span data-i18n="kameraYokBuyuk">KAYITLI KAMERA YOK</span>
+    </div>
+  </div>
 
   <!-- FAZ18-IS35-ROTALAR: rota olusturma dugmeleri ust bara tasindi.
        Her dugme MENU OGESININ .click() tetikleyicisini kullanir; rota
@@ -1159,7 +1087,194 @@
     </div>
   </div>
 </div>
+<!-- KAMERA EKLE / DUZENLE MODALI -->
+<!-- OFFLINE-KAMERA: KAMERA EKLE / DÜZENLE MODALI -->
+<div id="kamModalPerde" class="popup-gizli">
+  <div id="kamModalKutu" class="yuzen-panel" style="min-width:500px;min-height:400px;">
+    <div class="popup-baslik">
+      <span><span id="kamModalBaslik" data-i18n="kamModalBaslikYeni">YENİ KAMERA</span></span>
+      <button id="btnKamModalKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="lok-kaydet-icerik">
+      <!-- v2.4.152: Form acilir-kapanir bolumlere ayrildi (kullanici:
+           "kamera ayarlari cok uzun bir form olarak aciliyor"). Kaydet /
+           Iptal bolumlerin DISINDADIR; her zaman gorunur. -->
+      <details class="kam-bolum" id="kamBolumGenel" open>
+        <summary><span data-i18n="kamBolumGenel">GENEL</span><span class="kam-bolum-rozet" id="kamRozetGenel"></span></summary>
+        <div class="kam-bolum-icerik">
+      <label for="kamAd" data-i18n="lblKamAd">KAMERA ADI</label>
+      <input type="text" id="kamAd" data-i18n-ph="phOrnKameraAd" placeholder="Örn: Kule Kamerası" spellcheck="false" maxlength="60">
+      <label for="kamLokasyon" data-i18n="lblKamLokasyon">BİNA / LOKASYON</label>
+      <select id="kamLokasyon"><option value="" data-i18n="optSecilmedi">— Seçilmedi —</option></select>
+      <label for="kamDron">BAĞLI DRON</label>
+      <select id="kamDron"><option value="">— Bağlı değil —</option></select>
+      <div class="form-not" id="kamDronBilgi">Dron seçilirse kamera yalnız bu dronun harita ikonunda yerel canlı önizleme olarak gösterilir.</div>
+      <label for="kamProtokol" data-i18n="lblKamProtokol">KAMERA TÜRÜ / PROTOKOL</label>
+      <select id="kamProtokol">
+        <option value="rtsp">RTSP</option>
+        <!-- v2.4.194: M50 secenegi KALDIRILDI (kullanici istegi): elektro-
+             optik cihaz kamera degil, ayri bir sistemdir; kamera kaydi
+             Elektro-Optik panelinden kendiliginden olusturulur. -->
+        <option value="rtp">RTP / UDP</option>
+        <option value="mjpeg">MJPEG</option>
+        <option value="hls">HLS (.m3u8)</option>
+        <option value="http">HTTP video (MP4/WebM)</option>
+        <option value="donanim">Yerel bilgisayar kamerası</option>
+        <option value="dosya">Video dosyası (MP4 döngü — test)</option>
+      </select>
+      <div id="kamDosyaSatir" class="gizli">
+        <label for="kamDosyaSec" data-i18n="lblKamDosya">VİDEO DOSYASI (MP4)</label>
+        <input type="file" id="kamDosyaSec" accept="video/mp4,video/*">
+        <div class="form-not" id="kamDosyaBilgi">Dosya sunucuya yüklenir ve döngüde canlı kamera gibi yayınlanır; AI tespiti ve angajman testi için kullanılabilir.</div>
+      </div>
+      <div id="kamCihazSatir" class="gizli">
+        <label data-i18n="lblKamCihaz">KAMERA CİHAZI</label>
+        <select id="kamCihazSec"><option value="" data-i18n="optCihazYukleniyor">— Cihazlar yükleniyor —</option></select>
+      </div>
+      <div id="kamDjiSatir" class="gizli"></div>
+      <!-- v2.4.181: M50 kamerası — kullanıcı RTSP yazmaz; kanal seçer,
+           ağ/kimlik bilgisi M50 Köprü alt yapısına (mevcut m50_baglan)
+           devredilir. Parola formdan gönderildikten sonra hemen silinir,
+           kamera kaydında ASLA saklanmaz. -->
+      <div id="kamM50Satir" class="gizli">
+        <label for="kamM50Kanal" data-i18n="lblKamM50Kanal">M50 KANALI</label>
+        <select id="kamM50Kanal">
+          <option value="gorunur" data-i18n="m50Gorunur">Görünür</option>
+          <option value="termal" data-i18n="m50Termal">Termal</option>
+        </select>
+        <div class="form-not" data-i18n="kamM50KanalNot">Aynı M50 cihazının görünür ve termal akışını ayrı kamera olarak eklemek isterseniz bu formu iki kez kullanın (kanalı değiştirip tekrar kaydedin).</div>
+        <label data-i18n="lblKamM50Baglanti">M50 CİHAZ BAĞLANTISI (yalnız bu Köprüye bağlı değilse doldurun)</label>
+        <div class="satir">
+          <div style="flex:2"><input type="text" id="kamM50Ip" placeholder="192.168.1.50" autocomplete="off" spellcheck="false"></div>
+          <div style="flex:1"><input type="text" id="kamM50Port" placeholder="Port" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="satir">
+          <div style="flex:1"><input type="text" id="kamM50Kullanici" placeholder="Kullanıcı adı" autocomplete="username" spellcheck="false"></div>
+          <div style="flex:1"><input type="password" id="kamM50Parola" placeholder="Parola" autocomplete="new-password"></div>
+        </div>
+        <div class="form-not" data-i18n="kamM50BaglantiNot">Dördü de doldurulursa kaydederken M50 Köprüsüne bağlanma isteği de gönderilir. Parola sunucuda saklanmaz; yalnız bağlantıyı kurmak için bir kez kullanılır. M50 zaten bağlıysa boş bırakın.</div>
+      </div>
+      <label for="kamUrl" id="lblKamUrlSatir" data-i18n="lblKamUrl">YAYIN ADRESİ (URL)</label>
+      <input type="text" id="kamUrl" placeholder="rtsp://kamera-yerel-adres/akış" spellcheck="false" maxlength="500">
+      <!-- v2.4.193 (Faz D): kamera basina kare hizi tavani. Onceden uc
+           ayri yerde sabit 15 idi; artik operator belirler. -->
+      <label for="kamFps" data-i18n="lblKamFps">KARE HIZI SINIRI (FPS)</label>
+      <input type="number" id="kamFps" min="1" max="30" step="1" value="15">
+      <div class="form-not" data-i18n="kamFpsNot">1–30 arası. Düşük değer saha bilgisayarını ve ağı rahatlatır; yüksek değer hareketi daha akıcı gösterir. AI çözümlemesi bu akıştan beslenir.</div>
+        </div>
+      </details>
 
+      <!-- v2.4.152: AI GOREVLERI geri geldi. OLCULEN KUSUR: bu blok bir
+           onceki kesimde formdan dusmustu; kameralar.js kutulari
+           (AI_GOREV_KUTULARI) arayip bulamiyor, `ai_gorevler` hep bos
+           kaydediliyordu. Arka uc (_ai_izleme_esitle) yerel AI izlemesini
+           YALNIZ gorevi secili kamerada baslattigi icin hicbir kamerada AI
+           calismiyordu. -->
+      <details class="kam-bolum" id="kamBolumAi">
+        <summary><span data-i18n="lblKamAiGorevler">AI GÖREVLERİ</span><span class="kam-bolum-rozet" id="kamRozetAi"></span></summary>
+        <div class="kam-bolum-icerik">
+          <div class="kam-ai-grid">
+            <!-- v2.4.153: Kisi/Arac Tanima GRCOFF yerel iscisinde KAPALIDIR
+                 (ai_sunucu.py IZINLI_SINIFLAR); anahtar hicbir sey yapmadigi
+                 icin gosterilmez. -->
+            <label class="kam-ai-satir"><span data-i18n="kamAiHava">Hava Aracı Tespit (ana anahtar)</span><span class="tgl"><input type="checkbox" id="kamAiHava" value="hava_araci"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiDrone">Drone / İHA</span><span class="tgl"><input type="checkbox" id="kamAiDrone" value="drone"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiUcak">Uçak (sabit kanat)</span><span class="tgl"><input type="checkbox" id="kamAiUcak" value="ucak"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiHeli">Helikopter</span><span class="tgl"><input type="checkbox" id="kamAiHeli" value="helikopter"><span class="tgl-iz"></span></span></label>
+            <label class="kam-ai-satir" style="margin-left:18px"><span data-i18n="kamAiKus">Kuş (ayırt etme)</span><span class="tgl"><input type="checkbox" id="kamAiKus" value="kus"><span class="tgl-iz"></span></span></label>
+          </div>
+          <div class="form-not" data-i18n="kamAiNot">C-UAS modu: sistem yalnız hava araçlarını tespit eder ve angaje olur. Alt sınıflar (Drone/Uçak/Helikopter/Kuş) yalnız YOLO modeli kuruluysa ayırt edilir; hiç alt sınıf seçilmemişse tümü açık sayılır.</div>
+        </div>
+      </details>
+
+      <!-- v2.5.21: YEREL AI ANGAJMAN KALIBRASYONU -->
+      <!-- Iki kamera tipi: 'sabit' (kamera sabit, AYRI interceptor dron
+           angaje olur) ve 'dron' (kamera bir dronun uzerinde, onunla
+           hareket eder). Tip, hedefin cografi konumunun hangi yolla
+           cozulecegini belirler. Kalibrasyon eksikse hedef angajmana
+           ALINAMAZ. -->
+      <!-- v2.4.161: Kullanici istegi — angajman ayarlari kamerada DEGIL,
+           "Angajman Baslat" panelinde. Bolum gizli tutulur (DOM'da kalir ki
+           kamera kaydinda mevcut kalibrasyon degerleri korunsun). -->
+      <details class="kam-bolum" id="kamBolumKalib" style="display:none">
+        <summary><span data-i18n="kamBolumKalib">AI ANGAJMAN KALİBRASYONU</span><span class="kam-bolum-rozet" id="kamRozetKalib"></span></summary>
+      <div id="kamAngajmanBolum" class="kam-bolum-icerik">
+        <label for="kamTipi" data-i18n="lblKamTipi">KAMERA TİPİ (AI ANGAJMAN)</label>
+        <select id="kamTipi">
+          <option value="sabit">Sabit kamera — ayrı dron angaje olur</option>
+          <option value="dron">Drona takılı kamera — dronla hareket eder</option>
+        </select>
+        <!-- SABIT kamera kalibrasyonu -->
+        <div id="kamSabitKalib">
+          <div class="form-ikili" style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label for="kamLat">ENLEM (lat)</label>
+              <input type="number" step="any" id="kamLat" placeholder="39.925">
+            </div>
+            <div style="flex:1;">
+              <label for="kamLon">BOYLAM (lon)</label>
+              <input type="number" step="any" id="kamLon" placeholder="32.866">
+            </div>
+          </div>
+          <div class="form-ikili" style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label for="kamYukseklik">YER ÜSTÜ YÜKSEKLİK (m)</label>
+              <input type="number" step="any" id="kamYukseklik" placeholder="30">
+            </div>
+            <div style="flex:1;">
+              <label for="kamYon">BAKIŞ YÖNÜ (°, 0=kuzey)</label>
+              <input type="number" step="any" id="kamYon" placeholder="0">
+            </div>
+          </div>
+          <div class="form-ikili" style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label for="kamTilt">AŞAĞI EĞİM (°, +aşağı)</label>
+              <input type="number" step="any" id="kamTilt" placeholder="30">
+            </div>
+          </div>
+          <div class="form-not">Sabit kamera hedefi, kara sınıfları için yer düzlemi kesişimiyle konumlanır (düz zeminde ~%5-10 hata). Hedefi ayrı bir interceptor dron angaje eder.</div>
+        </div>
+        <!-- DRON'a takili kamera kalibrasyonu -->
+        <div id="kamDronKalib" style="display:none;">
+          <div class="form-ikili" style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <label for="kamMontajPan">MONTAJ PAN (°)</label>
+              <input type="number" step="any" id="kamMontajPan" placeholder="0">
+            </div>
+            <div style="flex:1;">
+              <label for="kamMontajTilt">MONTAJ TILT (°)</label>
+              <input type="number" step="any" id="kamMontajTilt" placeholder="0">
+            </div>
+            <div style="flex:1;">
+              <label for="kamMontajRoll">MONTAJ ROLL (°)</label>
+              <input type="number" step="any" id="kamMontajRoll" placeholder="0">
+            </div>
+          </div>
+          <div class="form-not">Drona takılı kamerada hedef konumu, dronun canlı MAVLink pozundan çözülür. Yukarıdaki <b>BAĞLI DRON</b> seçimi bu kameranın taşıyıcı dronudur; bu tip için hedefi kendi dronu angaje eder.</div>
+        </div>
+        <!-- Ortak: gorus acilari (her iki tip icin gerekli) -->
+        <div class="form-ikili" style="display:flex;gap:8px;">
+          <div style="flex:1;">
+            <label for="kamFovY">YATAY GÖRÜŞ AÇISI (°)</label>
+            <input type="number" step="any" id="kamFovY" placeholder="60">
+          </div>
+          <div style="flex:1;">
+            <label for="kamFovD">DİKEY GÖRÜŞ AÇISI (°)</label>
+            <input type="number" step="any" id="kamFovD" placeholder="34">
+          </div>
+        </div>
+        <div class="form-not" id="kamKalibDurum"></div>
+      </div>
+      </details>
+
+      <div id="kamHata"></div>
+      <div class="lok-dugme-satir">
+        <button id="btnKamKaydet" data-i18n="btnKaydet">KAYDET</button>
+        <button id="btnKamIptal" data-i18n="btnIptal">İPTAL</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="rotaNoktaPopup" class="popup-gizli">
   <div class="popup-baslik">
@@ -1570,19 +1685,20 @@
 
 <script src="lib/jquery.min.js"></script>
 <script src="lib/flightindicators/jquery.flightindicators.min.js"></script>
-<script src="js/bolum_resize.js?v=v24127"></script>
-<script src="js/popup_tasima.js?v=v24144"></script>
+<script src="js/bolum_resize.js?v=v24227"></script>
+<script src="js/popup_tasima.js?v=v24213"></script>
+<script src="js/kamera_ai_panel.js?v=v24224"></script>
 <script src="js/dok_temizlik.js?v=v24127"></script>
 <script src="js/panel_acilis.js?v=v24127"></script>
 <!-- FAZ18/IS7: ortak bos durum yardimcisi. ai_* modullerinden ONCE
      yuklenmeli; bosPanelYap() penceresel kapsamda aranir. -->
 <script src="js/bos_panel.js?v=v24127"></script>
-<script src="js/bolum_popup.js?v=v24127"></script>
-<script src="js/arayuz.js?v=v24127"></script>
-<script src="js/i18n.js?v=v24148"></script>
+<script src="js/bolum_popup.js?v=v24227"></script>
+<script src="js/arayuz.js?v=v24213"></script>
+<script src="js/i18n.js?v=v24227"></script>
 <script src="js/onay.js?v=v24127"></script>
-<script src="js/angajman.js?v=v24134"></script>
-<script src="js/angajman_izle.js?v=v24127"></script>
+<script src="js/angajman.js?v=v24176"></script>
+<script src="js/angajman_izle.js?v=v24176"></script>
 <script src="js/suru.js?v=v24127"></script>
 <script src="js/harita.js?v=v24127"></script>
 <!-- FAZ18-PANEL-ISKELET: IS33 Harita Ayarlari accordion -->
@@ -1590,7 +1706,7 @@
 <!-- FAZ18-IS5-PILOT-KONUM: pilot bazli harita konumu + Gokkubbe adres isareti.
      harita.js SONRASINDA yuklenir: viewer koprusu orada
      tanimlanir. -->
-<script src="js/harita_pilot_konum.js?v=v24127"></script>
+<script src="js/harita_pilot_konum.js?v=v24219"></script>
 <!-- v2.4.29: prizma ikon + arazi yukseklik referansi (dronlar/hedefler/radar_gorsel ONCESINDE yuklenmeli) -->
 <script src="js/prizma_ikon.js?v=v24127"></script>
 <script src="js/tema.js?v=v24127"></script>
@@ -1599,7 +1715,7 @@
 <script src="js/param_meta.js?v=v24127"></script>
 <!-- v2.4.19: ArduPilot parametre deger secenekleri (combo box/bitmask) -->
 <script src="js/param_secenek.js?v=v24127"></script>
-<script src="js/dronlar.js?v=v24144"></script>
+<script src="js/dronlar.js?v=v24224"></script>
   <script src="js/dron_ekran_disi.js?v=v24127"></script>
 <!-- v2.4.42: HOME (kalkis/donus) noktasi harita ikonu. dronlar.js
      SONRASINDA yuklenmeli: dronRengi() ve sonVeri global'lerini kullanir
@@ -1630,12 +1746,13 @@
      popup cizilirken hazir olmalidir (kopru_kimlik.js ile ayni kural). -->
 <script src="js/dji_belirtec.js?v=v24127"></script>
 <script src="js/kopru_kimlik.js?v=v24127"></script>
-<script src="js/program_ayar.js?v=v24127"></script>
+<script src="js/program_ayar.js?v=v24200"></script>
+<script src="js/lisans_yenile.js?v=v24201"></script>
 <script src="js/servis_panel.js?v=v24127"></script>
 <!-- v2.4.50: pilot bazli joystick ayarlari (ters cevirme, olu bolge,
      merkez kalibrasyonu). Kisisel ayardir; rol sarti yoktur. -->
 <script src="js/joystick_ayar.js?v=v24127"></script>
-<script src="js/seri.js?v=v24143"></script>
+<script src="js/seri.js?v=v24224"></script>
 <!-- FAZ18-SIHIRBAZ: sanal dron olusturma sihirbazi.
      seri.js'den SONRA yuklenir: bagSanalTip/bagAd gibi
      ogeleri ve `ws` globalini kullanir. -->
@@ -1644,18 +1761,23 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24127"></script>
-<script src="js/radar_panel.js?v=v24127"></script>
-<script src="js/m50_panel.js?v=v24149"></script>
-<script src="js/kayit.js?v=v24127"></script>
-<script src="js/hedefler.js?v=v24134"></script>
-<script src="js/filtreler.js?v=v24127"></script>
+<script src="js/radar_gorsel.js?v=v24225"></script>
+<script src="js/radar_panel.js?v=v24227"></script>
+<script src="js/radar_pencere.js?v=v24227"></script>
+<script src="js/m50_panel.js?v=v24212"></script>
+<script src="js/hedefler.js?v=v24227"></script>
+<script src="js/harita_hover.js?v=v24225"></script>
+<script src="js/harita_cevrimici.js?v=v24220"></script>
 <script src="js/grafik.js?v=v24127"></script>
-<script src="js/konsol.js?v=v24127"></script>
+<script src="js/konsol.js?v=v24224"></script>
 <script src="js/harita_menu.js?v=v24127"></script>
 <script src="js/lokasyonlar.js?v=v24127"></script>
 <script src="lib/hls.min.js"></script>
-
+<!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
+<script src="js/mjpeg_yeniden.js?v=v24219"></script>
+<script src="js/kameralar.js?v=v24224"></script>
+<script src="js/m50_pencere.js?v=v24225"></script>
+<script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>
 <script src="js/serbest_form.js?v=v24127"></script>
@@ -1679,7 +1801,7 @@
      yuklenmeli: ws.js onopen icinde window.pgDurumSor() cagiriyor.
      Sirket sihirbazinin TERSINE giris ekranindan ONCE calisir;
      veritabani yapilandirilmamisken kullanici dogrulanamaz. -->
-<script src="js/pg_sihirbaz.js?v=v24127"></script>
+<script src="js/pg_sihirbaz.js?v=v24197"></script>
 <!-- v2.4.42: kisa deterministik ucus kodu (Crockford Base32).
      gecmis.js'ten ONCE yuklenmeli: gecmis.js ucus listesi satirlarinda
      window.ucusKodu() cagiriyor. -->
@@ -1705,14 +1827,14 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24148"></script>
+<script src="js/surum.js?v=v24227"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
-<script src="js/menubar.js?v=v24127"></script>
-<script src="js/goruntu_koprusu.js?v=v24130"></script>
+<script src="js/menubar.js?v=v24227"></script>
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
-<script src="js/ws.js?v=v2518"></script>
+<script src="js/guncelleme.js?v=v24183"></script>
+<script src="js/ws.js?v=v24227"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>
@@ -1729,10 +1851,177 @@
 <script src="js/pencere_iskelet.js?v=v24127"></script>
 <!-- IS51-PANEL-DURUMCUBUGU-V1: on yonetim panelinin altina ozet
      sayac seridi ekler. Gorsel sozlesme css/panel_durumcubugu.css. -->
-<script src="js/panel_durumcubugu.js?v=v24127"></script>
+<script src="js/panel_durumcubugu.js?v=v24198"></script>
 <!-- FAZ19-IS71-K1-INDEX-SOKUM -->
 <!-- FAZ19-IS71-K1B-DIV-ONARIM -->
 <!-- FAZ19-IS71-K3-DRONKAMERA-SOKUM -->
+
+<div id="aiSunucuPopup" class="popup-gizli">
+  <div class="popup-baslik">
+    <span><i class="fa-solid fa-server"></i> <span data-i18n="aiSunucuBaslik">AI SUNUCULARI</span></span>
+    <button id="btnAiSunucuKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="ai-popup-icerik">
+    <div class="ai-arac-cubugu">
+      <button id="btnAiSunucuYeni" class="onay-btn"><i class="fa-solid fa-plus"></i> <span data-i18n="btnAiSunucuYeni">YEN&#304; SUNUCU</span></button>
+    </div>
+    <div id="aiSunucuForm" class="yeni-kul-form" style="display:none;">
+      <label for="aisAd" data-i18n="aisLblAd">Sunucu Ad&#305;</label>
+      <input type="text" id="aisAd" placeholder="ASUS Ascent GX10" autocomplete="off">
+      <!-- v2.4.56: KOPRU secimi. Merkezde calisan ornekte AI sunucusu
+           saha makinesindedir; hangi kopru uzerinden erisilecegi
+           sorulur. Lokal kurulumda bu alan gizli kalir. -->
+      <div id="aisKopruAlan" style="display:none;">
+        <label for="aisKopruSec" data-i18n="lblBagKopru">KÖPRÜ (SAHA MAKİNESİ)</label>
+        <select id="aisKopruSec"></select>
+      </div>
+      <label for="aisTip" data-i18n="aisLblTip">Tip</label>
+      <select id="aisTip">
+        <option value="nvidia">NVIDIA (GPU)</option>
+        <option value="cpu">CPU</option>
+      </select>
+      <label for="aisHost" data-i18n="aisLblHost">Host / IP</label>
+      <input type="text" id="aisHost" placeholder="192.168.1.100" spellcheck="false" autocomplete="off">
+      <label for="aisPort" data-i18n="aisLblPort">Port</label>
+      <input type="number" id="aisPort" value="8900" min="1" max="65535">
+      <label for="aisKapasite" data-i18n="aisLblKapasite">Kapasite (e&#351;zamanl&#305; ak&#305;&#351;)</label>
+      <input type="number" id="aisKapasite" value="4" min="1" max="64">
+      <label for="aisNotlar" data-i18n="aisLblNotlar">Notlar</label>
+      <input type="text" id="aisNotlar" autocomplete="off">
+      <!-- v2.4.45: SSH ile uzaktan baslatma bilgileri -->
+      <div class="ais-ssh-baslik"><i class="fa-solid fa-terminal"></i> <span data-i18n="aisSshBaslik">SSH &#304;LE UZAKTAN BA&#350;LATMA</span></div>
+      <div class="ais-ssh-not" data-i18n="aisSshNot">Play d&#252;&#287;mesi bu bilgilerle SSH ba&#287;lan&#305;p AI i&#351;&#231;isini ba&#351;lat&#305;r.</div>
+      <label for="aisSshKullanici" data-i18n="aisLblSshKullanici">SSH Kullan&#305;c&#305; Ad&#305;</label>
+      <input type="text" id="aisSshKullanici" placeholder="ubuntu" spellcheck="false" autocomplete="off">
+      <label for="aisSshPort" data-i18n="aisLblSshPort">SSH Portu</label>
+      <input type="number" id="aisSshPort" value="22" min="1" max="65535">
+      <label for="aisSshAnahtar" data-i18n="aisLblSshAnahtar">&#214;zel Anahtar Yolu (&#246;nerilen)</label>
+      <input type="text" id="aisSshAnahtar" placeholder="C:\Users\mkade\.ssh\id_ed25519" spellcheck="false" autocomplete="off">
+      <label for="aisSshSifre" data-i18n="aisLblSshSifre">SSH &#350;ifresi (anahtar yoksa)</label>
+      <input type="password" id="aisSshSifre" autocomplete="new-password">
+      <div id="aisSifreVar" class="ais-ssh-not" style="display:none;" data-i18n="aisSifreKayitli">&#350;ifre kay&#305;tl&#305;. Bo&#351; b&#305;rak&#305;rsan&#305;z de&#287;i&#351;meden korunur.</div>
+      <label for="aisSshKomut" data-i18n="aisLblSshKomut">Ba&#351;latma Komutu</label>
+      <input type="text" id="aisSshKomut" placeholder="python3 -m gozcu_ai.isci --port 8900" spellcheck="false" autocomplete="off">
+      <div class="yk-alt">
+        <button id="btnAiSunucuKaydet" class="onay-btn"><i class="fa-solid fa-check"></i> <span data-i18n="btnKaydet">KAYDET</span></button>
+        <button id="btnAiSunucuVazgec"><span data-i18n="btnIptal">&#304;PTAL</span></button>
+        <span id="aisMesaj"></span>
+      </div>
+    </div>
+    <div id="aiSunucuListe"></div>
+    <div class="ai-bolum-baslik" data-i18n="aiIzlemeBaslik">AKT&#304;F AI &#304;ZLEMELER&#304;</div>
+    <div id="aiIzlemeListe"></div>
+  </div>
+</div>
+
+<div id="aiKisiPopup" class="popup-gizli">
+  <div class="popup-baslik">
+    <span><i class="fa-solid fa-user-tag"></i> <span data-i18n="aiKisiBaslik">K&Uuml;T&Uuml;PHANE &mdash; K&#304;&#350;&#304;LER</span></span>
+    <button id="btnAiKisiKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="ai-popup-icerik">
+    <div class="ai-arac-cubugu">
+      <button id="btnAiKisiYeni" class="onay-btn"><i class="fa-solid fa-user-plus"></i> <span data-i18n="btnAiKisiYeni">YEN&#304; K&#304;&#350;&#304;</span></button>
+      <input type="text" id="aiKisiAra" class="ai-ara" placeholder="Ara..." autocomplete="off">
+    </div>
+    <div id="aiKisiForm" class="yeni-kul-form" style="display:none;">
+      <label for="aikAd" data-i18n="aikLblAd">Ad Soyad</label>
+      <input type="text" id="aikAd" placeholder="Ad Soyad" autocomplete="off">
+      <label for="aikSeviye" data-i18n="aikLblSeviye">Arama Seviyesi</label>
+      <select id="aikSeviye">
+        <option value="GUVENLI" data-i18n="svGuvenli">G&Uuml;VENL&#304;</option>
+        <option value="GUVENSIZ" data-i18n="svGuvensiz">G&Uuml;VENS&#304;Z</option>
+        <option value="ARANILAN" data-i18n="svAranilan">ARANILAN</option>
+      </select>
+      <label for="aikNotlar" data-i18n="aikLblNotlar">Notlar</label>
+      <input type="text" id="aikNotlar" autocomplete="off">
+      <div class="yk-alt">
+        <button id="btnAiKisiKaydet" class="onay-btn"><i class="fa-solid fa-check"></i> <span data-i18n="btnKaydet">KAYDET</span></button>
+        <button id="btnAiKisiVazgec"><span data-i18n="btnIptal">&#304;PTAL</span></button>
+        <span id="aikMesaj"></span>
+      </div>
+    </div>
+    <div id="aiKisiListe"></div>
+  </div>
+</div>
+
+<div id="aiAracPopup" class="popup-gizli">
+  <div class="popup-baslik">
+    <span><i class="fa-solid fa-car"></i> <span data-i18n="aiAracBaslik">K&Uuml;T&Uuml;PHANE &mdash; ARA&Ccedil;LAR</span></span>
+    <button id="btnAiAracKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="ai-popup-icerik">
+    <div class="ai-arac-cubugu">
+      <button id="btnAiAracYeni" class="onay-btn"><i class="fa-solid fa-plus"></i> <span data-i18n="btnAiAracYeni">YEN&#304; ARA&Ccedil;</span></button>
+      <input type="text" id="aiAracAra" class="ai-ara" placeholder="Ara..." autocomplete="off">
+    </div>
+    <div id="aiAracForm" class="yeni-kul-form" style="display:none;">
+      <label for="aiaPlaka" data-i18n="aiaLblPlaka">Plaka</label>
+      <input type="text" id="aiaPlaka" placeholder="06 ABC 123" spellcheck="false" autocomplete="off">
+      <label for="aiaMarka" data-i18n="aiaLblMarka">Marka</label>
+      <input type="text" id="aiaMarka" placeholder="Toyota" autocomplete="off">
+      <label for="aiaModel" data-i18n="aiaLblModel">Model</label>
+      <input type="text" id="aiaModel" placeholder="Corolla" autocomplete="off">
+      <label for="aiaRenk" data-i18n="aiaLblRenk">Renk</label>
+      <input type="text" id="aiaRenk" placeholder="Beyaz" autocomplete="off">
+      <label for="aiaSeviye" data-i18n="aikLblSeviye">Arama Seviyesi</label>
+      <select id="aiaSeviye">
+        <option value="GUVENLI" data-i18n="svGuvenli">G&Uuml;VENL&#304;</option>
+        <option value="GUVENSIZ" data-i18n="svGuvensiz">G&Uuml;VENS&#304;Z</option>
+        <option value="ARANILAN" data-i18n="svAranilan">ARANILAN</option>
+      </select>
+      <label for="aiaNotlar" data-i18n="aikLblNotlar">Notlar</label>
+      <input type="text" id="aiaNotlar" autocomplete="off">
+      <div class="yk-alt">
+        <button id="btnAiAracKaydet" class="onay-btn"><i class="fa-solid fa-check"></i> <span data-i18n="btnKaydet">KAYDET</span></button>
+        <button id="btnAiAracVazgec"><span data-i18n="btnIptal">&#304;PTAL</span></button>
+        <span id="aiaMesaj"></span>
+      </div>
+    </div>
+    <div id="aiAracListe"></div>
+  </div>
+</div>
+
+<div id="aiKayitsizPopup" class="popup-gizli">
+  <div class="popup-baslik">
+    <span><i class="fa-solid fa-user-secret"></i> <span data-i18n="aiKayitsizBaslik">KAYITSIZ TESP&#304;TLER</span></span>
+    <button id="btnAiKayitsizKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="ai-popup-icerik">
+    <div class="ai-arac-cubugu">
+      <button id="btnAiKayitsizYenile"><i class="fa-solid fa-rotate"></i> <span data-i18n="btnYenile">YEN&#304;LE</span></button>
+    </div>
+    <div id="aiKayitsizListe"></div>
+  </div>
+</div>
+
+<div id="aiGecmisPopup" class="popup-gizli">
+  <div class="popup-baslik">
+    <span><i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="aiGecmisBaslik">TESP&#304;T GE&Ccedil;M&#304;&#350;&#304;</span></span>
+    <button id="btnAiGecmisKapat" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="ai-popup-icerik">
+    <div class="ai-filtre-cubugu">
+      <select id="aigTur">
+        <option value="" data-i18n="aigTumu">T&Uuml;M T&Uuml;RLER</option>
+        <option value="yuz" data-i18n="aigYuz">Y&Uuml;Z</option>
+        <option value="plaka" data-i18n="aigPlaka">PLAKA</option>
+      </select>
+      <select id="aigKamera"></select>
+      <input type="date" id="aigTarih">
+      <button id="btnAiGecmisAra" class="onay-btn"><i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="btnAra">ARA</span></button>
+    </div>
+    <div id="aiGecmisListe"></div>
+  </div>
+</div>
+
+<script src="js/ai_kutuphane.js?v=v24150"></script>
+
+<script src="js/ai_panel.js?v=v24150"></script>
+
+<script src="js/ai_sunucular.js?v=v24150"></script>
+
+<script src="js/ai_tespitler.js?v=v24150"></script>
 </body>
 </html>
 

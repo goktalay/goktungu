@@ -8,7 +8,8 @@
    ------------------------------------------------------------
    NEDEN AYRI DOSYA
    ------------------------------------------------------------
-   `goruntu_koprusu.js` yalnız indirme/panel açma girişidir ve
+   (v2.4.193: ayrı Görüntü Köprüsü ürünü kaldırıldı; hedefler saha
+   Köprüsünün `video`/`ai` servislerinden gelir.) Bu modül
    köprünün KURULU OLUP OLMADIĞINI bilemez (karma içerik engeli,
    İş 84). Bu dosya ise merkeze GELEN hedef verisini gösterir —
    veri WebSocket'ten gelir, tarayıcı köprüye hiç bağlanmaz.

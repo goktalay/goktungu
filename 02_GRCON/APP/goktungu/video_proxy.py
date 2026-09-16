@@ -14,10 +14,17 @@ kalmadiginda surec otomatik sonlandirilir (30 sn bekleme sonrasi).
 import http.server
 import json
 import os
+import shutil as _shutil
 import socketserver
 import subprocess
 import threading
 import time
+
+# v2.5.27: Aynı yerel kamera cihazının (cv2.VideoCapture) açılışı ve
+# release'i ASLA çakışmamalı — Windows DShow/MSMF eşzamanlı aç/kapada
+# yerel bellek bozulması üretir (0xC0000374). Tüm donanım aç/bırak
+# işlemleri bu tek kilit altında serileştirilir.
+_DONANIM_KILIDI = threading.Lock()
 
 try:
     import cv2
@@ -56,22 +63,14 @@ def _port_oku(anahtar, varsayilan):
 
 VIDEO_PROXY_PORT = _port_oku("GOKTUNGU_VIDEO_PORT", 8801)
 
-# Tespit turu -> cerceve rengi (BGR)
+# Tespit turu -> cerceve rengi (BGR) — C-UAS: yalniz hava araci + takip
 _TUR_RENK = {
-    "yuz": (80, 200, 60),
-    "plaka": (60, 170, 255),
-    "insan": (60, 120, 255),
     "hava_araci": (255, 120, 60),
-    "kara_araci": (60, 220, 220),
-    "takip": (0, 60, 255),
+    "takip": (0, 0, 255),        # v2.4.164: takip cercevesi TAM KIRMIZI (BGR)
 }
 
 _TUR_AD = {
-    "yuz": "KISI",
-    "plaka": "PLAKA",
-    "insan": "INSAN",
     "hava_araci": "HAVA ARACI",
-    "kara_araci": "KARA ARACI",
     "takip": "TAKIP",
 }
 
@@ -83,7 +82,10 @@ class AnotasyonDeposu:
     kutular gecersiz sayilir (akista donuk kalmamalari icin).
     """
 
-    GECERLILIK_SN = 1.5
+    # v2.4.169: YOLO cikarimi CPU'da saniyeler surebilir; kutular bir
+    # sonraki cikarima kadar ekranda kalmali (eskiden 1.5 sn'de siliniyor,
+    # yavas makinede surekli yanip sonuyordu).
+    GECERLILIK_SN = 6.0
 
     def __init__(self):
         self._veri = {}          # kamera_id -> {"kutular": [...], "ts": t}
@@ -132,7 +134,8 @@ def _kutulari_ciz(kare_jpg, kutular):
                     continue
                 tur = k.get("tur", "")
                 renk = _TUR_RENK.get(tur, (200, 200, 200))
-                cv2.rectangle(kare, (x, y), (x + w, y + h), renk, 2)
+                cv2.rectangle(kare, (x, y), (x + w, y + h), renk,
+                              4 if tur == "takip" else 2)
                 # kose vurgulari (hedef cercevesi gorunumu)
                 u = max(6, min(w, h) // 6)
                 for (cx, cy, dx, dy) in ((x, y, 1, 1), (x + w, y, -1, 1),
@@ -169,10 +172,23 @@ class _Yayin:
     """Tek kaynak icin FFmpeg sureci (veya OpenCV yakalama) + fan-out."""
 
     def __init__(self, kamera_id, url, protokol, konsol=None,
-                 anotasyon=None):
+                 anotasyon=None, fps=15, genislik=960):
         self.kamera_id = kamera_id
+        # v2.4.207: cikti genisligi tavani (kamera kaydi `genislik`);
+        # ffmpeg scale ve OpenCV yeniden boyutlandirma bunu kullanir.
+        try:
+            self.genislik = max(160, min(3840, int(genislik or 960)))
+        except (TypeError, ValueError):
+            self.genislik = 960
         self.url = url
         self.protokol = protokol
+        # v2.4.193 (Faz D): kare hizi tavani kamera kaydindan gelir.
+        # Onceden UC ayri yerde sabit 15 yaziyordu (ffmpeg -r, donanim
+        # dongusu, OpenCV geri cekilmesi); ucu de bu alani kullanir.
+        try:
+            self.fps = max(1, min(30, int(fps or 15)))
+        except (TypeError, ValueError):
+            self.fps = 15
         self.konsol = konsol
         self.anotasyon = anotasyon   # AnotasyonDeposu (opsiyonel)
         self.surec = None
@@ -198,6 +214,35 @@ class _Yayin:
             threading.Thread(target=self._oku_opencv, daemon=True).start()
             threading.Thread(target=self._bekci, daemon=True).start()
             return True
+        # v2.4.166: "dosya" — sunucuya yuklenmis video dosyasi, dongulu
+        # test yayini. url YALNIZ dosya adidir; yol daima veri kokundeki
+        # kamera_videolar klasorune cozulur (yol gezinme engeli).
+        # DIKKAT: self.url DEGISTIRILMEZ — yayin_al `y.url != url`
+        # kiyasi yapar; degistirilse yayin her istekte yeniden baslardi.
+        girdi = self.url
+        if self.protokol == "dosya":
+            from .sabitler import _veri_yolu
+            ad = os.path.basename(str(self.url or "").strip())
+            yol = _veri_yolu("kamera_videolar", ad) if ad else ""
+            if not ad or not os.path.isfile(yol):
+                self.hata = "video dosyasi bulunamadi: %s" % (ad or "(bos)")
+                return False
+            girdi = yol
+        # v2.4.167: ffmpeg YOKSA OpenCV geri cekilmesi. opencv-python
+        # tekerlegi kendi FFMPEG cozucusunu tasir; RTSP/HTTP/MJPEG/dosya
+        # kaynaklari ffmpeg ikilisi kurulmadan da okunabilir. (Olculen
+        # kusur: Windows kurulumunda ffmpeg yok; VLC RTSP'yi oynatirken
+        # GRCOFF 503 donduruyordu.)
+        if (cv2 is not None and _shutil.which("ffmpeg") is None
+                and self.protokol in ("rtsp", "rtp", "mjpeg", "hls",
+                                      "http", "dosya")):
+            self.calisiyor = True
+            self.hata = None
+            threading.Thread(target=self._oku_opencv_kaynak,
+                             args=(girdi, self.protokol == "dosya"),
+                             daemon=True).start()
+            threading.Thread(target=self._bekci, daemon=True).start()
+            return True
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         if self.protokol == "rtsp":
             cmd += ["-rtsp_transport", "tcp"]
@@ -220,16 +265,16 @@ class _Yayin:
         # zamanli okunur (-re) ve sonsuza dek dongulenir (-stream_loop):
         # boylece MP4 kaynagi da canli kamera gibi AI boru hattindan
         # kesintisiz akar.
-        if self.protokol in ("http", "hls"):
+        if self.protokol in ("http", "hls", "dosya"):
             cmd += ["-re", "-stream_loop", "-1"]
         else:
             # Dusuk gecikme secenekleri (canli kaynaklar)
             cmd += ["-fflags", "nobuffer", "-flags", "low_delay"]
-        cmd += ["-i", self.url,
+        cmd += ["-i", girdi,
                 "-an",                       # ses yok
-                "-vf", "scale='min(960,iw)':-2",  # bant genisligi icin sinirla
+                "-vf", "scale='min(%d,iw)':-2" % self.genislik,  # bant genisligi icin sinirla
                 "-q:v", "7",
-                "-r", "15",
+                "-r", str(self.fps),
                 "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"]
         try:
             self.surec = subprocess.Popen(
@@ -239,7 +284,7 @@ class _Yayin:
             # v2.4.34: eyleme donuk metin. Onceki "ffmpeg bulunamadi"
             # istemciye HIC ulasmiyordu; artik ulasiyor, dolayisiyla
             # kullanicinin ne yapacagini da soylemesi gerekiyor.
-            self.hata = ("ffmpeg kurulu degil — kurulum: "
+            self.hata = ("ffmpeg kurulu degil - kurulum: "
                          "winget install Gyan.FFmpeg (Windows) / "
                          "sudo apt install ffmpeg (Linux)")
             return False
@@ -308,18 +353,19 @@ class _Yayin:
         import sys as _sys
         adaylar = ([cv2.CAP_DSHOW, cv2.CAP_ANY]
                    if _sys.platform.startswith("win") else [cv2.CAP_ANY])
-        for be in adaylar:
-            try:
-                cap = cv2.VideoCapture(indeks, be)
-            except Exception:
-                cap = cv2.VideoCapture(indeks)
-            if cap.isOpened():
-                break
-            try:
-                cap.release()
-            except Exception:
-                pass
-            cap = None
+        with _DONANIM_KILIDI:
+            for be in adaylar:
+                try:
+                    cap = cv2.VideoCapture(indeks, be)
+                except Exception:
+                    cap = cv2.VideoCapture(indeks)
+                if cap.isOpened():
+                    break
+                try:
+                    cap.release()
+                except Exception:
+                    pass
+                cap = None
         if cap is None or not cap.isOpened():
             self.hata = "cihaz acilamadi (indeks %s)" % indeks
             self.calisiyor = False
@@ -338,9 +384,9 @@ class _Yayin:
             if not ok:
                 self.hata = "cihaz karesi okunamadi"
                 break
-            # 15 fps sinirla
+            # Kamera kaydindaki tavana gore sinirla (v2.4.193)
             simdi = time.time()
-            if simdi - onceki < 1.0 / 15:
+            if simdi - onceki < 1.0 / self.fps:
                 continue
             onceki = simdi
             okk, jpg = cv2.imencode(".jpg", kare,
@@ -348,7 +394,120 @@ class _Yayin:
             if not okk:
                 continue
             self._kare_yayinla(jpg.tobytes())
-        cap.release()
+        with _DONANIM_KILIDI:
+            try:
+                cap.release()
+            except Exception:
+                pass
+        self.calisiyor = False
+        with self.kosul:
+            self.kosul.notify_all()
+
+    def _oku_opencv_kaynak(self, girdi, dongulu):
+        """v2.4.167: ffmpeg ikilisi yokken RTSP/HTTP/MJPEG/dosya kaynagini
+        OpenCV (kendi FFMPEG arka ucu) ile okur.
+
+        `dongulu=True` ("dosya" protokolu): EOF'ta basa sarilir ve okuma
+        dosya FPS'ine gore hizlanmadan (gercek zamanli) ilerletilir.
+        Canli kaynaklar koptugunda 3 sn arayla yeniden baglanilir.
+        Cikti ffmpeg yoluyla ayni: en cok 15 fps, genislik <= 960.
+        """
+        CIKTI_FPS = float(self.fps)
+        while self.calisiyor:
+            cap = None
+            # v2.4.212 (kullanici: "cihaza bagli ama yayin alinamiyor, VLC
+            # aliyor"): 2.4.211'deki CAP_PROP_OPEN/READ_TIMEOUT parametreli
+            # acma GERI ALINDI — OpenCV'nin FFmpeg'e gecirdigi 'timeout'
+            # secenegi bazi FFmpeg surumlerinde RTSP acmayi hemen
+            # basarisiz kilar (bilinen uyumsuzluk). Zaman asimi artik
+            # acmayi ayri is parcaciginda yaparak saglanir: 15 sn icinde
+            # donmezse bu deneme birakilir, gecikmis nesne kendi
+            # parcaciginda serbest birakilir. Vekil kilidi kamera basina
+            # oldugundan diger yayinlar etkilenmez.
+            _tut = {}
+            def _ac():
+                try:
+                    _tut["cap"] = cv2.VideoCapture(girdi)
+                except Exception:
+                    _tut["cap"] = None
+            _th = threading.Thread(target=_ac, daemon=True)
+            _th.start()
+            _th.join(15.0 if not dongulu else 60.0)
+            if _th.is_alive():
+                self.hata = "kaynak acilamadi (OpenCV): 15 sn icinde yanit yok"
+                def _temizle():
+                    _th.join()
+                    c = _tut.get("cap")
+                    try:
+                        if c is not None:
+                            c.release()
+                    except Exception:
+                        pass
+                threading.Thread(target=_temizle, daemon=True).start()
+                cap = None
+            else:
+                cap = _tut.get("cap")
+            if cap is None or not cap.isOpened():
+                self.hata = "kaynak acilamadi (OpenCV): baglanti kurulamadi"
+                try:
+                    if cap is not None:
+                        cap.release()
+                except Exception:
+                    pass
+                if not self.calisiyor:
+                    break
+                # dosyada yeniden denemenin anlami yok; canli kaynakta var
+                if dongulu:
+                    break
+                time.sleep(3.0)
+                continue
+            self.hata = None
+            fps = 0.0
+            try:
+                fps = float(cap.get(cv2.CAP_PROP_FPS) or 0)
+            except Exception:
+                fps = 0.0
+            dosya_fps = fps if 1.0 <= fps <= 60.0 else 25.0
+            onceki_yayin = 0.0
+            while self.calisiyor:
+                ok, kare = cap.read()
+                if not ok:
+                    if dongulu:
+                        try:
+                            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                            ok, kare = cap.read()
+                        except Exception:
+                            ok = False
+                        if not ok:
+                            break   # dosya okunamaz oldu -> yeniden ac
+                    else:
+                        self.hata = "kaynak koptu; yeniden baglaniliyor"
+                        break
+                if dongulu:
+                    # dosya gercek zamanli aksin (yoksa saniyeler icinde biter)
+                    time.sleep(1.0 / dosya_fps)
+                simdi = time.time()
+                if simdi - onceki_yayin < 1.0 / CIKTI_FPS:
+                    continue
+                onceki_yayin = simdi
+                try:
+                    h, w = kare.shape[:2]
+                    if w > self.genislik:
+                        olcek = float(self.genislik) / w
+                        kare = cv2.resize(kare, (self.genislik, int(h * olcek)))
+                    okk, jpg = cv2.imencode(".jpg", kare,
+                                            [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    if okk:
+                        self._kare_yayinla(jpg.tobytes())
+                except Exception:
+                    continue
+            try:
+                cap.release()
+            except Exception:
+                pass
+            if not self.calisiyor:
+                break
+            time.sleep(3.0)
         self.calisiyor = False
         with self.kosul:
             self.kosul.notify_all()
@@ -437,7 +596,16 @@ class VideoProxy:
         self.port = port
         self.yayinlar = {}          # kamera_id -> _Yayin
         self._kilit = threading.Lock()
+        # v2.4.211 OLCULEN KUSUR (kullanici: "kanal gecisinde siyah ekran,
+        # hizmet kilitleniyor"): `yayin_al` GLOBAL kilidi kaynak durdurma
+        # (terminate+3 sn) ve acma (RTSP/OpenCV, saniyelerce; cihaz mesgulse
+        # sonsuz) boyunca tutuyordu; bu sirada TUM /kamera/<id> istekleri
+        # ve son_hata() bekliyor, her goruntu kararıyordu. Artik kaynak
+        # acma/kapama kamera basina kilitle yapilir; global kilit yalniz
+        # sozluk erisimini korur.
+        self._kam_kilitleri = {}
         self.dji_kopru = None       # v2.1.8: main.py baglar
+        self.m50_vekil = None       # v2.4.181: main.py baglar (M50Vekili)
         self.anotasyon = AnotasyonDeposu()  # v2.4.7: AI tespit kutulari
         # v2.4.34: kamera_id -> son basarisizlik gerekcesi (istemciye iletilir)
         self._son_hatalar = {}
@@ -468,6 +636,10 @@ class VideoProxy:
 
         'dji' protokolunde url 'dji:<sysid>' bicimindedir; gercek MJPEG
         adresi Android kopru uygulamasinin bildirdigi video_url'dir.
+        'm50' protokolunde url 'm50:<kanal>' (gorunur/termal) bicimindedir;
+        gercek RTSP adresi M50 saha Koprusunun bildirdigi (kimlik bilgisiz)
+        yerel yeniden yayindir — kamera kaydinda ASLA saklanmaz, her
+        acilista taze okunur (bkz. M50Vekili.rtsp_url).
         """
         url = kam["url"]
         if kam.get("protokol") == "dji" and self.dji_kopru:
@@ -477,6 +649,30 @@ class VideoProxy:
                 return None
             gercek = self.dji_kopru.video_url(sysid)
             return gercek or None
+        if kam.get("protokol") == "m50" and self.m50_vekil:
+            # v2.4.191: 'm50:<eo_id>:<kanal>' (coklu EO) veya eski 'm50:<kanal>'.
+            parcalar = str(url).split(":")
+            eo_id = None
+            kanal = ""
+            if len(parcalar) >= 3:
+                try:
+                    eo_id = int(parcalar[1])
+                except (TypeError, ValueError):
+                    eo_id = None
+                kanal = parcalar[2]
+            elif len(parcalar) == 2:
+                kanal = parcalar[1]
+            # v2.4.204: yakalama icin KIMLIKLI adres (varsa); arayuze/
+            # telemetriye giden arindirilmis adres degismez.
+            if hasattr(self.m50_vekil, "rtsp_url_yakalama"):
+                try:
+                    return self.m50_vekil.rtsp_url_yakalama(kanal, eo_id)
+                except Exception:
+                    pass
+            try:
+                return self.m50_vekil.rtsp_url(kanal, eo_id)
+            except TypeError:
+                return self.m50_vekil.rtsp_url(kanal)
         return url
 
     # ------------------------------------------------------------------
@@ -499,28 +695,67 @@ class VideoProxy:
             return None
         url = self._url_coz(kam)
         if not url:
-            self._hata_yaz(
-                kamera_id,
-                "DJI kopru henuz video adresi bildirmedi"
-                if kam.get("protokol") == "dji" else "kaynak adresi bos")
+            if kam.get("protokol") == "dji":
+                gerekce = "DJI kopru henuz video adresi bildirmedi"
+            elif kam.get("protokol") == "m50":
+                gerekce = ("M50 saha Koprusu henuz bu kanal icin RTSP "
+                          "adresi bildirmedi (M50 baglantisi/ayarlari "
+                          "kontrol edilmeli)")
+            else:
+                gerekce = "kaynak adresi bos"
+            self._hata_yaz(kamera_id, gerekce)
             return None
+        # v2.4.181: 'm50' cozulmus URL'si duz bir RTSP adresidir; _Yayin'e
+        # gercek protokol ("rtsp") verilir ki -rtsp_transport tcp gibi
+        # rtsp'ye ozgu ffmpeg secenekleri uygulansin.
+        fiili_protokol = "rtsp" if kam.get("protokol") == "m50" else kam["protokol"]
+        # v2.4.193: FPS tavani DEGISTIYSE de yayin yeniden kurulur;
+        # yoksa operator degeri kaydeder ama akis eski hizda kalir ve
+        # ayarin islemedigini sanir.
+        try:
+            istenen_fps = max(1, min(30, int(kam.get("fps") or 15)))
+        except (TypeError, ValueError):
+            istenen_fps = 15
+        try:
+            istenen_gen = max(160, min(3840, int(kam.get("genislik") or 960)))
+        except (TypeError, ValueError):
+            istenen_gen = 960
         with self._kilit:
-            y = self.yayinlar.get(kamera_id)
-            if y and (not y.calisiyor or y.url != url):
-                y.durdur()
+            kam_kilit = self._kam_kilitleri.setdefault(int(kamera_id), threading.Lock())
+        with kam_kilit:
+            with self._kilit:
+                y = self.yayinlar.get(kamera_id)
+            if y and (not y.calisiyor or y.url != url
+                      or getattr(y, "fps", 15) != istenen_fps
+                      or getattr(y, "genislik", 960) != istenen_gen):
+                with self._kilit:
+                    if self.yayinlar.get(kamera_id) is y:
+                        self.yayinlar.pop(kamera_id, None)
+                y.durdur()          # global kilit DISINDA (3 sn surebilir)
                 y = None
             if y is None:
-                y = _Yayin(kamera_id, url, kam["protokol"],
-                           self.konsol, anotasyon=self.anotasyon)
-                if not y.baslat():
-                    self._son_hatalar[int(kamera_id)] = (
-                        y.hata or "kaynak baslatilamadi")
+                y = _Yayin(kamera_id, url, fiili_protokol,
+                           self.konsol, anotasyon=self.anotasyon,
+                           fps=istenen_fps, genislik=istenen_gen)
+                if not y.baslat():  # global kilit DISINDA
+                    with self._kilit:
+                        self._son_hatalar[int(kamera_id)] = (
+                            y.hata or "kaynak baslatilamadi")
                     return None
-                self._son_hatalar.pop(int(kamera_id), None)
-                self.yayinlar[kamera_id] = y
+                with self._kilit:
+                    self._son_hatalar.pop(int(kamera_id), None)
+                    self.yayinlar[kamera_id] = y
+                # v2.4.204: adreste kimlik varsa gunluge MASKELI yazilir.
+                import re as _re
                 self.konsol("[VIDEO] Kaynak acildi (kamera %s): %s"
-                            % (kamera_id, url))
+                            % (kamera_id, _re.sub(r"//[^/@]+@", "//***:***@", str(url))))
             return y
+
+    def canli_kimlikler(self):
+        """v2.4.220: kare ureten (calisan, en az bir karesi olan) kamera kimlikleri."""
+        with self._kilit:
+            return sorted(int(k) for k, y in self.yayinlar.items()
+                          if getattr(y, "calisiyor", False) and getattr(y, "kare_no", 0) > 0)
 
     def _hata_yaz(self, kamera_id, gerekce):
         with self._kilit:
@@ -680,6 +915,10 @@ def mjpeg_gerekce_yaz(istek, kod, gerekce):
     """Canlı yayın hatasını güvenli, makine-okunabilir HTTP yanıtıyla yazar."""
     metin = str(gerekce or "kaynak acilamadi").replace("\r", " ").replace("\n", " ")[:400]
     govde = json.dumps({"hata": metin}, ensure_ascii=False).encode("utf-8")
+    # v2.4.167 OLCULEN KUSUR: HTTP basliklari latin-1 ile kodlanir; gerekce
+    # "—" gibi bir karakter tasiyinca send_header UnicodeEncodeError firlatir
+    # ve istemciye HICBIR gerekce ulasmazdi (bos "YAYIN ALINAMIYOR").
+    metin = metin.encode("latin-1", "replace").decode("latin-1")
     try:
         istek.send_response(int(kod))
         istek.send_header("Content-Type", "application/json; charset=utf-8")
@@ -707,6 +946,17 @@ def mjpeg_yaz(istek, kamera_id, proxy, gunluk=print):
         mjpeg_gerekce_yaz(istek, 404, "gecersiz kamera kimligi")
         return
     y = proxy.yayin_al(kid)
+    # v2.5.25 KRITIK: Bu istek uzun ömürlü bir MJPEG akış iş parçacığıdır.
+    # `yayin_al` -> `kameralar.bul` DB'ye dokunur ve bu iş parçacığına havuzdan
+    # bir bağlantı ödünç verir; akış boyunca (dakikalar) elde tutulursa havuz
+    # (HAVUZ_MAKS=10) birkaç kamerada/AI işçisinde dolar ve sunucu çöker
+    # ("PostgreSQL baglanti havuzu dolu"). Bundan sonra DB'ye dokunulmadığı
+    # için bağlantıyı HEMEN havuza iade et.
+    try:
+        from . import veritabani as _vt
+        _vt.baglanti_kapat()
+    except Exception:
+        pass
     if y is None:
         gerekce = proxy.son_hata(kid) or "kaynak acilamadi"
         mjpeg_gerekce_yaz(istek, 503, gerekce)

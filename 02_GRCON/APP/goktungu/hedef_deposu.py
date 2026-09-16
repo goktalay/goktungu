@@ -249,18 +249,33 @@ def hareketli_konum_coz(kal, hedef, dron_yonetici, simdi=None):
     kamera_govde = _donus_matrisi(mpan, mtilt, mroll)
     govde_ned = _donus_matrisi(yaw, pitch, roll)
     isin_ned = _mat_vektor(_mat_carp(govde_ned, kamera_govde), isin_kamera)
+    # v2.4.164: Irtifa angajman motoruyla AYNI cercevede (eve gore goreli,
+    # alt_rel) verilir; eskiden MSL veriliyordu ve saldiran dron (alt_rel)
+    # hedefi yuzlerce metre yukarida saniyordu.
+    rel = _sayi(d.get("alt_rel"))
+    zemin_notu = ""
+    # Yer hedefi (insan/kara araci) ve isin asagi bakiyorsa: gorunen boyut
+    # tahmini yerine ZEMIN KESISIMI (dronun yere gore yuksekligi / isinin
+    # asagi bileseni) — cok daha dogru.
+    tur = str(hedef.get("tur") or hedef.get("sinif") or "").lower()
+    if (tur in ("insan", "kara_araci") and rel is not None and rel > 1.0
+            and isin_ned[2] > 0.05):
+        mes_zemin = rel / isin_ned[2]
+        if 0 < mes_zemin < 5000:
+            mes = mes_zemin
+            zemin_notu = "; zemin kesisimi"
     kuzey, dogu, asagi = (mes * x for x in isin_ned)
     hlat, hlon, hata = _cografi_ilerlet(lat, lon, kuzey, dogu)
     if hata:
         return None, None, None, False, hata
-    halt = alt - asagi
+    halt = (rel if rel is not None else alt) - asagi
     if not math.isfinite(halt):
         return None, None, None, False, "cozulen irtifa gecersiz"
     if halt < 0:
         halt = 0.0
     guven = _sayi(hedef.get("mesafe_guven")) or 0.0
     return (hlat, hlon, round(halt, 1), True,
-            "hareketli kamera; mesafe tahmini guven=%.2f" % guven)
+            "hareketli kamera; mesafe tahmini guven=%.2f%s" % (guven, zemin_notu))
 
 
 class HedefDeposu:

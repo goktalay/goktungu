@@ -209,8 +209,12 @@ function kdListeIste() {
 // yaptigi icin birbirini etkilemez.
 window.kayitliDronlarVeri = function (liste) {
   _kdVeri = Array.isArray(liste) ? liste : [];
+  // Kamera formu bu referansı yalnız seçim listesi için okur.
+  window._kayitliDronlarSon = _kdVeri.slice();
   _kdYukleniyor = false;
   if (_kdPopup) kdCiz();
+  if (typeof window.kameraDronSeciciTazele === "function")
+    window.kameraDronSeciciTazele();
 };
 
 function kdSure(sn) {

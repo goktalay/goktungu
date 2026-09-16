@@ -350,6 +350,129 @@ def kopru_kaydet(ad, aciklama=""):
     }
 
 
+def _kayit_urunu(satir):
+    """Kaydin urununu JSONB/TEXT yeteneklerden guvenle okur.
+
+    Eski kayitlarda `urun` yoktur; geriye uyumlu varsayim `kopru`dur.
+    """
+    try:
+        yet = satir["yetenekler"]
+    except Exception:
+        yet = None
+    if isinstance(yet, str):
+        try:
+            yet = json.loads(yet)
+        except Exception:
+            yet = {}
+    if not isinstance(yet, dict):
+        yet = {}
+    return str(yet.get("urun") or "kopru").strip().lower(), yet
+
+
+def istemci_sunucu_kaydet(ad, aciklama="", makine_adi="", platform="",
+                           surum="", urun="kopru", yenile=False,
+                           eski_uid=""):
+    """Kopru HTTP ilk-kayit sozlesmesini yerel kimlik deposuna baglar.
+
+    Ayni makine icindeki farkli urunler (dron/video/radar/GCCDUAL/DJI)
+    birbirinin kimligini ezmez. Gizli veritabanina ASLA duz yazilmaz;
+    yalnizca SHA-256 ozeti saklanir ve duz gizli tek kez doner.
+
+    Donus: `(sonuc, hata, http_kodu)`.
+    """
+    from . import veritabani as vt
+
+    izinli_urunler = {"kopru", "radar", "gccdual", "dji"}
+    urun = str(urun or "kopru").strip().lower()
+    # v2.4.193 (Faz D): AYRI "Goruntu Koprusu" urunu (`video`) kaldirildi;
+    # islevi saha Koprusunun `video`/`ai` servislerine tasindi. Sahada
+    # KURULU eski surumler hala `urun="video"` ile kayit isteyebilir.
+    # Bunlari REDDETMEK, calisan bir saha makinesini sessizce cevrimdisi
+    # yapardi (operator sebebini goremez). Bu yuzden reddedilmez,
+    # `kopru` olarak KABUL EDILIR: makine kaydini korur ve guncelleme
+    # akisiyla yeni Kopruye gecebilir.
+    if urun == "video":
+        urun = "kopru"
+    if urun not in izinli_urunler:
+        return None, "Gecersiz sunucu urunu", 400
+
+    ad = str(ad or "").strip()
+    makine_adi = str(makine_adi or "").strip()
+    platform = str(platform or "").strip()
+    surum = str(surum or "").strip()
+    aciklama = str(aciklama or "").strip()
+    eski_uid = str(eski_uid or "").strip()
+    if not ad:
+        return None, "Sunucu adi zorunlu", 400
+
+    tablo_kur()
+    mevcutlar = []
+    with vt.baglanti() as con:
+        if eski_uid:
+            s = con.execute(
+                "SELECT ornek_id, kurulum_uid, ad, yetenekler FROM " +
+                TABLO + " WHERE kurulum_uid=? AND durum <> 'iptal'",
+                (eski_uid,)).fetchone()
+            if s and _kayit_urunu(s)[0] == urun:
+                mevcutlar = [s]
+        if not mevcutlar and makine_adi:
+            adaylar = con.execute(
+                "SELECT ornek_id, kurulum_uid, ad, yetenekler FROM " +
+                TABLO + " WHERE makine_adi=? AND durum <> 'iptal' "
+                "ORDER BY ornek_id", (makine_adi,)).fetchall()
+            mevcutlar = [s for s in (adaylar or [])
+                          if _kayit_urunu(s)[0] == urun]
+
+        if len(mevcutlar) > 1:
+            return ({"kayitli": True, "urun": urun},
+                    "Bu makine icin birden fazla urun kaydi var; "
+                    "otomatik esleme yapilmadi", 409)
+
+        mevcut = mevcutlar[0] if mevcutlar else None
+        if mevcut is not None and not bool(yenile):
+            return ({"kayitli": True,
+                     "ornek_id": int(mevcut["ornek_id"]),
+                     "ad": str(mevcut["ad"] or ad), "urun": urun},
+                    "Bu makine zaten kayitli", 409)
+
+        uid = kurulum_uid_uret()
+        gizli = gizli_uret()
+        gizli_ozet = gizli_ozetle(gizli)
+        if mevcut is not None:
+            _, yetenekler = _kayit_urunu(mevcut)
+            yetenekler.update({"urun": urun, "surum": surum})
+            con.execute(
+                "UPDATE " + TABLO +
+                " SET kurulum_uid=?, gizli_ozet=?, ad=?, aciklama=?, "
+                "surum=?, platform=?, makine_adi=?, yetenekler=?, "
+                "durum='etkin', cevrimici=? WHERE ornek_id=?",
+                (uid, gizli_ozet, ad, aciklama, surum, platform,
+                 makine_adi, json.dumps(yetenekler, ensure_ascii=False),
+                 False if vt.pg_kipinde() else 0,
+                 int(mevcut["ornek_id"])))
+            oid = int(mevcut["ornek_id"])
+        else:
+            yetenekler = {"urun": urun, "surum": surum}
+            im = con.execute(
+                "INSERT INTO " + TABLO +
+                " (kurulum_uid, gizli_ozet, ad, aciklama, surum, "
+                "platform, makine_adi, yetenekler, durum, cevrimici) "
+                "VALUES (?,?,?,?,?,?,?,?, 'etkin', ?)",
+                (uid, gizli_ozet, ad, aciklama, surum, platform,
+                 makine_adi, json.dumps(yetenekler, ensure_ascii=False),
+                 False if vt.pg_kipinde() else 0))
+            oid = getattr(im, "lastrowid", None)
+            if not oid:
+                s = con.execute(
+                    "SELECT ornek_id FROM " + TABLO +
+                    " WHERE kurulum_uid=?", (uid,)).fetchone()
+                oid = int(s["ornek_id"] if hasattr(s, "keys") else s[0])
+
+    return ({"ornek_id": int(oid), "kurulum_uid": uid,
+             "gizli": gizli, "ad": ad, "urun": urun,
+             "kimlik_onarildi": bool(mevcut is not None)}, None, 200)
+
+
 def kopru_sil(ornek_id):
     """Kaydi iptal eder. SATIR SILINMEZ: `kopru_ornek_id` tasiyan dron/
     kamera/AI kayitlari yetim kalmasin diye durum `iptal` yapilir."""

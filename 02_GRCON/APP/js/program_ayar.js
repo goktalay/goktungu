@@ -73,6 +73,7 @@ let _kopruServisBilgiVar = false;   // kopru listesi hic geldi mi
 let _kopruRadarAcik = false;        // herhangi bir koprude radar calisiyor
 let _kopruGcsdualAcik = false;      // herhangi bir koprude gcsdual calisiyor
 let _kopruM50Acik = false;          // herhangi bir Köprüde M50 HVS hizmeti çalışıyor
+let _m50YerelAcik = false;          // v2.4.199: Merkez'in kendi gömülü SDK'sı kullanılabilir (köprüsüz)
 // v2.4.56: merkezde mi calisiyoruz. Sunucu `kopru_liste` yanitinda
 // bildirir (bkz. sunucu.py). Menu kurali merkezde ve lokalde FARKLIDIR:
 // merkezde yetenegin kaynagi kopru servisidir, lokalde program ayari.
@@ -257,8 +258,17 @@ window.radarYetenekVar = radarYetenekVar;
 // bağımsız GCS'de fiziksel cihaz hizmeti yoksa menü kapalı kalır; lisans
 // özeti bu donanım kanıtının yerine geçmez.
 function m50YetenekVar(){
-  return !!_kopruM50Acik && lisansUstSinir("m50");
+  // v2.4.199: koprusuz (dogrudan SDK) kurulumda da menu acilir.
+  return (!!_kopruM50Acik || !!_m50YerelAcik) && lisansUstSinir("m50");
 }
+window.m50YerelDurum = function(v){
+  const yeni = !!v;
+  if (yeni === _m50YerelAcik) return;
+  _m50YerelAcik = yeni;
+  try { console.info("[EO] gomulu SDK bayragi:", yeni, "| kopru:", _kopruM50Acik,
+                     "| lisans:", lisansUstSinir("m50")); } catch (e) {}
+  m50MenuGorunumGuncelle();
+};
 window.m50YetenekVar = m50YetenekVar;
 
 function m50MenuGorunumGuncelle(){
@@ -455,6 +465,32 @@ window.programAyarOturumTazele = function(){
 // dkMiniPopupBaslikKur (dronlar.js) ile tasinabilir + X ile kapanir.
 // Yonetici olmayanlarda anahtar devre disi (sunucu ayrica denetler).
 // ---------------------------------------------------------------
+// v2.4.192 (kullanici bildirimi: "Program ayarlari ekrana sigmiyor"):
+// her bolum acilir-kapanir <details> icine alinir; acik/kapali durumu
+// tarayicida hatirlanir. Yalniz ilk bolum (radar) varsayilan aciktir.
+function progBolum(govde, baslik, ikon, acik){
+  const d = document.createElement("details");
+  d.className = "kam-bolum prog-bolum";
+  const anahtar = "progBolum_" + String(baslik).replace(/\W+/g, "_");
+  let ac = !!acik;
+  try {
+    const k = localStorage.getItem(anahtar);
+    if (k !== null) ac = (k === "1");
+  } catch (e) {}
+  d.open = ac;
+  d.addEventListener("toggle", () => {
+    try { localStorage.setItem(anahtar, d.open ? "1" : "0"); } catch (e) {}
+  });
+  const s = document.createElement("summary");
+  s.innerHTML = "<i class='fa-solid " + ikon + "'></i> " + baslik;
+  d.appendChild(s);
+  const ic = document.createElement("div");
+  ic.className = "prog-bolum-ic";
+  d.appendChild(ic);
+  govde.appendChild(d);
+  return ic;
+}
+
 function programAyarAc(fare){
   // v2.4.57 KALKAN: merkezde panel HIC acilmaz. Menu ogesi gizlidir
   // ama tek savunma degildir — menubar.js hizli tus (`p`) atamasi ve
@@ -482,6 +518,7 @@ function programAyarAc(fare){
   govde.className = "prog-ayar-govde";
 
   // --- C20 RADAR ac/kapat satiri ---
+  const bRadar = progBolum(govde, t.progAyarRadar || "C20 RADAR", "fa-satellite", true);
   const satir = document.createElement("div");
   satir.className = "prog-ayar-satir";
   const etiket = document.createElement("span");
@@ -517,14 +554,14 @@ function programAyarAc(fare){
   });
   satir.appendChild(etiket);
   satir.appendChild(anahtar);
-  govde.appendChild(satir);
+  bRadar.appendChild(satir);
 
   const aciklama = document.createElement("div");
   aciklama.className = "prog-ayar-aciklama";
   aciklama.textContent = radarAyarSunucu
     ? (t.progAyarRadarAcik || "Radar arayuzu aktif")
     : (t.progAyarRadarKapali || "Radar arayuzu gizlendi");
-  govde.appendChild(aciklama);
+  bRadar.appendChild(aciklama);
 
   // ---------------------------------------------------------------
   // v2.4.45: GCCDUAL - Yer Kontrol Istasyonu Dual ac/kapat + port
@@ -532,7 +569,8 @@ function programAyarAc(fare){
   // kapatilabilmeli; kapali ise menude gorunmemeli. Acilistada program
   // ayarlarinda varsa baglanmaya calismali."
   // ---------------------------------------------------------------
-  govde.appendChild(document.createElement("hr"));
+  const bIst2 = progBolum(govde, t.progAyarIst2 || "Yer Kontrol \u0130stasyonu Dual",
+                          "fa-gamepad", false);
 
   const ist2Acik = (typeof window.istasyon2ArayuzAcikMi === "function")
     ? window.istasyon2ArayuzAcikMi() : false;
@@ -555,7 +593,7 @@ function programAyarAc(fare){
   an2.appendChild(cb2); an2.appendChild(k2);
   if (!yonetici) an2.classList.add("prog-anahtar-kilitli");
   s2.appendChild(e2); s2.appendChild(an2);
-  govde.appendChild(s2);
+  bIst2.appendChild(s2);
 
   const a2 = document.createElement("div");
   a2.className = "prog-ayar-aciklama";
@@ -565,7 +603,7 @@ function programAyarAc(fare){
       : (t.progAyarIst2Kapali || "GCCDUAL kapal\u0131 (men\u00fcde g\u00f6r\u00fcnmez)");
   };
   a2Yaz(ist2Acik);
-  govde.appendChild(a2);
+  bIst2.appendChild(a2);
 
   // Seri port satiri (yalniz cihaz acikken anlamli)
   const sp = document.createElement("div");
@@ -581,13 +619,13 @@ function programAyarAc(fare){
   spG.placeholder = "/dev/ttyACM0";
   spG.disabled = !yonetici;
   sp.appendChild(spE); sp.appendChild(spG);
-  govde.appendChild(sp);
+  bIst2.appendChild(sp);
 
   const spA = document.createElement("div");
   spA.className = "prog-ayar-aciklama";
   spA.textContent = t.progAyarIst2PortAcik ||
     "Windows'ta COM7 gibi; a\u00e7\u0131l\u0131\u015fta bu porta ba\u011flan\u0131l\u0131r.";
-  govde.appendChild(spA);
+  bIst2.appendChild(spA);
 
   // Mevcut degeri sunucudan doldur (ayarlar duyurusu ile gelir)
   if (typeof window.progIst2PortDegeri === "string")
@@ -627,12 +665,14 @@ function programAyarAc(fare){
   // servisi durdurup baslatabilecegim program ayarlarinda bir bolum
   // olsun, bilgisayar acildiginda otomatik acilsin".
   // Durum SUNUCUDAN gelir (servis_durum); bolum kendini yeniden cizer.
-  if (typeof window.svBolumEkle === "function") window.svBolumEkle(govde);
+  if (typeof window.svBolumEkle === "function")
+    window.svBolumEkle(progBolum(govde, t.progAyarServisBaslik || "Servis durumu", "fa-gears", false));
 
   // v2.4.53: MERKEZ SUNUCU bolumu. Baglanti yoneticisindeki "acik
   // sunucular" listesi merkezden gelir; merkez hesabi burada girilir.
   if (typeof window.merkezBolumEkle === "function")
-    window.merkezBolumEkle(govde);
+    window.merkezBolumEkle(progBolum(govde, t.progAyarMerkezBaslik || "Merkez Sunucu",
+                                     "fa-tower-broadcast", false));
 
   // v2.4.67: KOPRU KIMLIKLERI bolumu. Merkez Uygulama'yi satin alan
   // sirket kapali devre calisabilir; saha bilgisayarlarindaki kopru
@@ -644,9 +684,11 @@ function programAyarAc(fare){
   // baglantilari reddedilir. Kullanici belirteci buradan uretip
   // Android kopru uygulamasina girer.
   if (typeof window.djiBelirtecBolumEkle === "function")
-    window.djiBelirtecBolumEkle(govde);
+    window.djiBelirtecBolumEkle(progBolum(govde, t.progAyarDjiBaslik || "DJI K\u00f6pr\u00fc Belirteci",
+                                          "fa-key", false));
   if (typeof window.kopruKimlikBolumEkle === "function")
-    window.kopruKimlikBolumEkle(govde);
+    window.kopruKimlikBolumEkle(progBolum(govde, t.progAyarKimlikBaslik || "K\u00f6pr\u00fc Kimlikleri",
+                                          "fa-id-badge", false));
 
   // Yonetici olmayan icin bilgilendirme
   if (!yonetici){

@@ -23,9 +23,15 @@ Bagimliliklar: bkz. requirements.txt (websockets, opencv-python,
 numpy, pymavlink, pyserial; opsiyonel: pygame)
 """
 import asyncio
+import json
+import re
 import os
 import sys
 import threading
+import socket
+import subprocess
+import time
+import shutil
 
 # ==================================================================
 # YOL COZUMLEME (v2.4.52'de EKLENDI)
@@ -49,6 +55,21 @@ import threading
 # Boylece v2.4.51 kurulumu uzerine yama uygulanirken, klasor gocu
 # yapilmadan once bile program acilabilir.
 PROJE_KOKU = os.path.dirname(os.path.abspath(__file__))
+
+# v2.4.162: Yerel (C/C++) çökmelerde Python yığın izini kalıcı dosyaya yaz.
+# Windows'ta 0xC0000374 gibi çökmeler aksi halde hiçbir iz bırakmıyordu.
+try:
+    import faulthandler as _fh
+    _cokme_dizin = (os.environ.get("GOKTUNGU_VERI_KOKU") or "").strip() or \
+        os.path.join(PROJE_KOKU, "veri")
+    os.makedirs(_cokme_dizin, exist_ok=True)
+    _COKME_DOSYA = open(os.path.join(_cokme_dizin, "merkez_cokme.log"), "a")
+    _COKME_DOSYA.write("\n=== Merkez basladi %s pid=%d ===\n"
+                       % (time.strftime("%Y-%m-%d %H:%M:%S"), os.getpid()))
+    _COKME_DOSYA.flush()
+    _fh.enable(file=_COKME_DOSYA, all_threads=True)
+except Exception:
+    pass
 _PY_KOKU = os.path.join(PROJE_KOKU, "assets", "python")
 if os.path.isdir(os.path.join(_PY_KOKU, "goktungu")):
     # YENI yapi (v2.4.52+)
@@ -426,25 +447,78 @@ def uygulama_kur():
         _radar_merkez = _mk_radar.merkez_kipinde()
     except Exception:
         _radar_merkez = False
+    # v2.4.190 (Faz A): COKLU RADAR. `radar` artik RadarYoneticisi'dir;
+    # eski tek-nesne yuzunu (durum/hedefler/baglan/kes...) birebir tasir,
+    # ayrica kayit basina istemci ve merkez-orijinli fuzyon saglar.
+    from goktungu.radarlar import RadarKayitlari, RadarYoneticisi
+    _radar_kayitlar = RadarKayitlari()
+    _radar_kayitlar.eski_ayardan_goc(ayarlar)
     if _radar_merkez:
         from goktungu.radar_vekil import RadarVekili
         # `cek` geri cagrisi WSSunucusu kuruldugunda baglanir: kopru
         # secimi oturum/firma baglami gerektirir ve o baglam sunucuda
-        # durur.
-        radar = RadarVekili(konsol, ayarlar, kilit)
+        # durur. Faz C'ye kadar yalniz 1 numarali radar kopruden beslenir;
+        # digerleri vekil olarak "kopru yok" durumunda kalir.
+        _birincil = RadarVekili(konsol, ayarlar, kilit)
+
+        def _radar_fabrika(kayit):
+            v = RadarVekili(konsol, ayarlar, kilit)
+            v.radar_id = int(kayit["id"]); v.isim = kayit.get("isim") or ""
+            v.konum_yedek = (kayit.get("lat"), kayit.get("lon"))
+            return v
+        radar = RadarYoneticisi(konsol, ayarlar, kilit, _radar_kayitlar,
+                                _radar_fabrika, birincil_istemci=_birincil)
         konsol("RADAR", "Merkez kipi: radar oturumu saha koprusunde "
                         "kurulur; merkezde yerel baglanti denenmez.",
                "bilgi")
     else:
-        radar = RadarIstemcisi(konsol, ayarlar, kilit)
+        def _radar_fabrika(kayit):
+            return RadarIstemcisi(konsol, ayarlar, kilit,
+                                  radar_id=int(kayit["id"]),
+                                  konum_yedek=(kayit.get("lat"), kayit.get("lon")),
+                                  isim=kayit.get("isim") or "")
+        radar = RadarYoneticisi(konsol, ayarlar, kilit, _radar_kayitlar,
+                                _radar_fabrika)
+        konsol("RADAR", "Coklu radar yoneticisi hazir: %d kayit"
+               % len(radar.istemciler), "bilgi")
 
-    # M50 HVS SDK yalnız Windows x64 SAHA Köprüsünde yüklenir. GCS/Merkez
-    # süreci, yerel kipte dahi cihaz DLL'si açmaz; M50 durumu ve izinli
-    # komutlar ortak Köprü kanalı üzerinden vekil edilir.
+    # v2.4.184: M50 artık İKİ yoldan çalışabilir:
+    #   1) SAHA KÖPRÜSÜ (değişmez) — çok-siteli/merkezi kurulumlarda,
+    #      M50 SDK'sı hiçbir zaman bu süreçte açılmaz; `m50_vekil.py`
+    #      yalnız Köprünün arındırılmış durumunu taşır.
+    #   2) DOĞRUDAN (yeni) — Merkez'in KENDİSİ Windows x64 ise ve gömülü
+    #      SDK kopyası (goktungu/m50_sdk/) varsa, `m50_yerel.py` SDK'yı
+    #      doğrudan bu süreçte çağırır; ayrı köprü kurulumu gerekmez.
+    #      `sunucu.py:_m50_kopruye` doğrudan modu kullanılamıyorsa
+    #      (Linux Merkez, SDK eksik) sessizce Köprü akışına düşer.
     from goktungu.m50_vekil import M50Vekili
-    m50 = M50Vekili(konsol, kilit)
-    konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur; "
-                  "Merkezde SDK/DLL yüklenmez.", "bilgi")
+    from goktungu.m50_yerel import M50YerelServisi
+    # v2.4.191 (Faz B): COKLU ELEKTRO-OPTIK. `eo` cihaz basina bir
+    # (M50Vekili, M50YerelServisi) cifti yonetir; `m50`/`m50_yerel`
+    # birincil cihazin nesneleridir (geriye uyum).
+    from goktungu.eo_cihazlar import EOKayitlari, EOYoneticisi
+    _eo_kayitlar = EOKayitlari()
+    _eo_kayitlar.ilk_kaydi_garanti_et()
+    eo = EOYoneticisi(
+        konsol, ayarlar, kilit, _eo_kayitlar,
+        vekil_fabrikasi=lambda k: M50Vekili(konsol, kilit),
+        yerel_fabrikasi=lambda k: M50YerelServisi(konsol, ayarlar, eo_id=int(k["id"])))
+    m50 = eo.m50
+    m50_yerel = eo.m50_yerel
+    video_proxy.m50_vekil = eo  # 'm50:<eo_id>:<kanal>' kamera URL cozumu
+    if m50_yerel is not None and m50_yerel.kullanilabilir():
+        konsol("M50", "M50 elektro-optik: gömülü SDK bulundu, köprüsüz "
+                      "doğrudan bağlantı kullanılabilir (%d cihaz kaydı)."
+               % len(eo.yereller), "bilgi")
+        # v2.4.187: kayıtlı kimlik varsa açılışta kendiliğinden bağlan.
+        # Ayrı iş parçacığı: SDK bağlantı zaman aşımı açılışı bekletmesin.
+        import threading as _thr
+        for _eid, _y in eo.yereller.items():
+            _thr.Thread(target=_y.otomatik_baglan,
+                        name="m50-otomatik-baglan-%d" % _eid, daemon=True).start()
+    else:
+        konsol("M50", "M50 elektro-optik oturumu saha Köprüsünde kurulur "
+                      "(bu makinede gömülü SDK yok/Windows değil).", "bilgi")
 
     # --- Islem katmani ---
     takipci = Takipci()
@@ -454,6 +528,13 @@ def uygulama_kur():
     from goktungu import hedef_deposu as _hd93
     angajman = AngajmanYoneticisi(konsol, dron, kilit, takipci=takipci, radar=radar,
                                   hedef_deposu=_hd93.DEPO)
+    # v2.5.21: hareketli (drona takili) kamera hedefi, dronun canli
+    # MAVLink pozundan cozulur; depo bunun icin DronYoneticisi'ne
+    # ihtiyac duyar. Ikinci ornek olusturulmaz, mevcut dron enjekte edilir.
+    try:
+        _hd93.DEPO.dron_yonetici_ata(dron)
+    except Exception as _e_hd:
+        konsol("HEDEF", f"Hedef deposu dron baglanamadi: {_e_hd}", "uyari")
     gorev = GorevYoneticisi(dron, konsol, kilit)
     ucus_gecmisi = UcusGecmisi(konsol)   # dron renkleri + ucus kayitlari
     manuel_kontrol = ManuelKontrol(dron, konsol, dji_kopru=dji_kopru)  # WASD/joystick
@@ -530,13 +611,25 @@ def uygulama_kur():
     ai_yonetici.kameralar = kameralar
     # v2.4.2: angajman motoru "ai_takip" hedef tipi icin AI koprusu
     angajman.ai_yonetici = ai_yonetici
+    # v2.5.21: YEREL HEDEF BESLEME KOLU
+    # ------------------------------------------------------------------
+    # Yerel AI takip olayini (piksel) cografi hedefe cevirip HedefDeposu'ya
+    # yazar; boylece operator-onayli angajman zinciri yerel AI ile de
+    # calisir. NDJSON sozlesme akisindan BAGIMSIZDIR (bkz. yerel_hedef.py).
+    # Besleyici `ai_yonetici.hedef_besleyici`ye baglanir; `takip_isle`
+    # olayi hem NDJSON'a yazar (degismez) hem de bu besleyiciye iletir.
+    from goktungu.yerel_hedef import YerelHedefBesleyici
+    hedef_besleyici = YerelHedefBesleyici(konsol, kameralar, _hd93.DEPO,
+                                          dron=dron)
+    ai_yonetici.hedef_besleyici = hedef_besleyici
     kisiler = KisiYoneticisi()
     araclar = AracYoneticisi()
 
     # --- Sunucu katmani ---
     ws_sunucu = WSSunucusu(konsol, ayarlar, kullanicilar, lokasyonlar,
                            kayit, dron, radar, angajman, takipci,
-                           m50=m50, etiket=etiket, rotalar=rotalar, gorev=gorev,
+                           m50=m50, m50_yerel=m50_yerel,
+                           etiket=etiket, rotalar=rotalar, gorev=gorev,
                            baglantilar=baglantilar, kameralar=kameralar,
                            video_proxy=video_proxy,
                            ucus_gecmisi=ucus_gecmisi,
@@ -548,6 +641,15 @@ def uygulama_kur():
                            ai_yonetici=ai_yonetici,
                            kisiler=kisiler, araclar=araclar,
                            istasyon2=istasyon2)
+    # v2.4.191: coklu elektro-optik yoneticisi sunucuya baglanir.
+    ws_sunucu.eo = eo
+    # v2.4.192 (Faz C): merkez kipinde her M50 vekili kopruden kendi
+    # alt paketini alir (tek HTTP, cihaz basina dagitim). Yerel SDK
+    # kullanilabilen cihazlar icin telemetri dongusu kopruyu hic sormaz.
+    try:
+        eo._cek = ws_sunucu._m50_kopru_durum_cek
+    except Exception:
+        pass
     # v2.4.39: sanal dron = gercek ArduPilot SITL sureci
     from goktungu.sitl import SitlYoneticisi
     ws_sunucu.sitl = SitlYoneticisi(konsol, ayarlar)
@@ -557,10 +659,21 @@ def uygulama_kur():
     gorev.sitl = ws_sunucu.sitl
     # v2.5.18: Guncelleme denetimi arka planda yapilir; ana telemetri
     # dongusu veya acilis bu uzak HTTP istegini ASLA beklemez.
-    from goktungu.guncelleme import GuncellemeYoneticisi
-    from goktungu.sabitler import VERI_KOKU
-    ws_sunucu.guncelleme = GuncellemeYoneticisi(
-        "gcs", "2.5.19", VERI_KOKU, gunluk=konsol)
+    # v2.5.30: Dosya tabanli (artimli) guncelleme. Eski .exe modeli
+    # (guncelleme.py) yerine calisan surec ICINDEN yalniz DENETLER; asil
+    # guncellemeyi arka plandaki gozetmen tetik dosyasiyla uygular.
+    from goktungu.guncelleme_dosya import DosyaGuncellemeYoneticisi
+    from goktungu.sabitler import VERI_KOKU, PROJE_KOKU
+    from goktungu.paket_surum import UYGULAMA_SURUM
+    # v2.4.195: "yeniden kurdum, sihirbaz gelmedi" teshisi icin veri
+    # kokunun NEREDE cozuldugu acikca yazilir (ortam degiskeni servise
+    # ulasmadiysa veri program dizinine duser ve kaldirmada gozden kacar).
+    konsol("VERI", "Veri koku: %s%s" % (
+        VERI_KOKU, "" if os.environ.get("GOKTUNGU_VERI_KOKU") else
+        "  (GOKTUNGU_VERI_KOKU tanimsiz; program dizini kullaniliyor)"),
+        "bilgi" if os.environ.get("GOKTUNGU_VERI_KOKU") else "uyari")
+    ws_sunucu.guncelleme = DosyaGuncellemeYoneticisi(
+        "gcs", UYGULAMA_SURUM, VERI_KOKU, kok=PROJE_KOKU, gunluk=konsol)
     ws_sunucu.guncelleme.denetle_arka_planda()
     ws_sunucu.betaflight = betaflight
     # Onceki oturumdan kalmis SITL surecleri portlari tutmaya devam eder
@@ -597,8 +710,22 @@ def uygulama_kur():
                 "(SITL pilotun makinesinde kosar).")
         else:
             _hazir, _eksik, _ayrinti = _sitl_mod.hazir_mi()
+        # v2.4.224 (kullanici: "sitl klasoru var ama her acilista uyari"):
+        # ikililerden EN AZ BIRI calisir durumdaysa kurulum "kismen hazir"
+        # sayilir; eksik tip bilgi satiri olur, uyari/bildirim uretmez.
+        # Sihirbaz tipe ozgu olcumu zaten ayrica yapar (_sitl_durum).
+        _kismen = False
+        if not _hazir:
+            try:
+                _kismen = any(_sitl_mod.ikili_bul(_tp)[0]
+                              for _tp in ("multirotor", "sabit_kanat"))
+            except Exception:
+                _kismen = False
         if _hazir:
             konsol("SITL", _ayrinti)
+        elif _kismen:
+            konsol("SITL", "Kismen hazir - " + str(_ayrinti or "") +
+                   " (eksik tip icin sanal dron olusturulamaz; mevcut tip calisir)")
         else:
             konsol("SITL", _ayrinti, "uyari")
             # v2.4.46: Iki ayri eksiklik tipi var ve verilecek ogut
@@ -633,6 +760,29 @@ def uygulama_kur():
         ws_sunucu.duyur_threadden({"tip": "dron_konsol_satir",
                                    "sysid": sysid, "satir": kayit})
     dron.konsol_kancasi = _dron_konsol_kancasi
+
+    # v2.4.189: KAMERA BASINA HABERLESME KONSOLU (dron konsolunun esi).
+    # Genel konsolun her satiri kamera numarasina gore suzulur; M50
+    # satirlari kayitli M50 kamerasina baglanir.
+    from goktungu.kamera_konsol import KameraKonsol
+
+    def _m50_kamera_id():
+        try:
+            liste = kameralar.listele() or []
+        except Exception:
+            return None
+        for k in liste:
+            if str(k.get("protokol") or "").lower() == "m50":
+                return int(k.get("id"))
+        return None
+    kamera_konsol = KameraKonsol(m50_kamera_id_bul=_m50_kamera_id)
+
+    def _kamera_konsol_kancasi(kamera_id, kayit):
+        ws_sunucu.duyur_threadden({"tip": "kamera_konsol_satir",
+                                   "id": kamera_id, "satir": kayit})
+    kamera_konsol.kanca = _kamera_konsol_kancasi
+    konsol.kamera_kancasi = kamera_konsol.konsoldan
+    ws_sunucu.kamera_konsol = kamera_konsol
 
     # v2.4.45: AI bilgisayarlarini SSH ile uzaktan baslatma + canli konsol
     # (kullanici istegi: play dugmesi SSH ile baglanip sunucuyu baslatsin,
@@ -756,6 +906,13 @@ def uygulama_kur():
 
     # --- v2.4.0: AI islem katmani ---
     ai_yonetici.baslat()   # saglik yoklama + kalici gorevleri geri yukle
+    # v2.4.153: GRCOFF (offline Merkez) ayni zamanda AI sunucusudur. Yerel
+    # isci baslatilir ve kaydedilir. GRCON (merkez kipi) AI'yi Goruntu
+    # Koprusunde yapar; orada yerel isci ASLA calistirilmaz.
+    if not _merkez_kipi:
+        threading.Thread(target=_yerel_ai_bekci,
+                         args=(ai_yonetici, http_sunucu),
+                         name="yerel-ai-bekci", daemon=True).start()
     # http_sunucu gecirilir: isci ANA ADRESI gercek porttan turetir
     # (sabit 8000 varsayimi, port 8080'e dustugunde AI'yi sessizce
     # devre disi birakiyordu).
@@ -770,6 +927,355 @@ def uygulama_kur():
 # silindi. Merkez kipinde zaten erken donuyordu ama her acilista
 # gunluge "[AI] Merkez kipi: yerel isci baslatilmadi" basiyordu.
 # Islev yokken konusan kod, sistemde AI varmis izlenimi verir.
+
+
+# FAZ20-GRCOFF-YEREL-AI
+# Offline Merkezde AI işçisi aynı makinede başlar; GRCON/çevrimiçi kipte
+# kesinlikle çalıştırılmaz. İşçi yalnız 127.0.0.1:8900 dinler ve görüntü
+# ya da kimlik bilgisini haricî bir köprü/sunucuya taşımaz.
+_yerel_ai_isci = None
+_yerel_ai_gunluk = None
+
+AI_ISCI_ADI = "GRCOFF Yerel AI"
+
+# veritabani._varsayilan_ai_sunuculari() v2.4.0-2.4.152 arasi her yerel
+# kurulumda bu iki ORNEK kaydi tohumluyordu. GRCOFF'ta ikisi de hayalettir
+# (192.168.1.100 ornek adres; 127.0.0.1:8900 artik kullanilmayan port) ve
+# arayuzde surekli "yanit vermiyor" gorunur. Kullanici adres/notu
+# degistirdiyse kayit KORUNUR.
+_AI_TOHUM_YER_TUTUCULARI = {
+    ("ASUS Ascent GX10", "192.168.1.100", 8900),
+    ("CPU AI Sunucusu (Yerel)", "127.0.0.1", 8900),
+}
+_AI_TOHUM_NOT_ONEKLERI = ("NVIDIA GB10 Grace Blackwell tabanli AI islem sunucusu.",
+                          "Ana sunucu ile ayni makinede calisan CPU tabanli isci")
+
+
+def _yerel_ai_portu():
+    """v2.4.153: Kurulum AI portunu kaydirir (GOKTUNGU_AI_PORT=8910)."""
+    try:
+        return int(os.environ.get("GOKTUNGU_AI_PORT") or 8900)
+    except ValueError:
+        return 8900
+
+
+def _yerel_ai_betigi():
+    """Isci betiginin yolu. Pakette assets/python altinda, kaynakta kokte."""
+    kok = os.path.dirname(os.path.abspath(__file__))
+    for yol in (os.path.join(kok, "assets", "python", "ai_sunucu.py"),
+                os.path.join(kok, "ai_sunucu.py")):
+        if os.path.isfile(yol):
+            return yol
+    return None
+
+
+def _yerel_ai_dinliyor(port=8900):
+    try:
+        with socket.create_connection(("127.0.0.1", int(port)), timeout=0.8) as soket:
+            soket.sendall(b"GET /durum HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n")
+            return b" 200 " in soket.recv(96)
+    except OSError:
+        return False
+
+def _yerel_ai_durum(port):
+    """Yerel iscinin /durum JSON'u; okunamazsa None (gecici hata olabilir)."""
+    try:
+        with socket.create_connection(("127.0.0.1", int(port)), timeout=1.5) as soket:
+            soket.sendall(b"GET /durum HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n")
+            ham = b""
+            while len(ham) < 65536:
+                parca = soket.recv(8192)
+                if not parca:
+                    break
+                ham += parca
+        bas, _, govde = ham.partition(b"\r\n\r\n")
+        if b" 200 " not in bas.split(b"\r\n", 1)[0]:
+            return None
+        veri = json.loads(govde.decode("utf-8", "replace") or "{}")
+        return veri if isinstance(veri, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _yerel_ai_disk_ozeti():
+    betik = _yerel_ai_betigi()
+    if not betik:
+        return ""
+    try:
+        import hashlib
+        with open(betik, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _port_sahibi_pid(port):
+    """127.0.0.1:<port>'u DINLEYEN surecin PID'i (Windows netstat / Linux ss)."""
+    try:
+        if os.name == "nt":
+            cikti = subprocess.run(
+                ["netstat", "-ano", "-p", "TCP"], capture_output=True,
+                text=True, timeout=10,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+            for satir in cikti.splitlines():
+                p = satir.split()
+                # Durum sutunu Turkce Windows'ta yerellestirilir; dinleyen
+                # soketi uzak adresin 0.0.0.0:0 olmasindan taniriz.
+                if (len(p) >= 5 and p[0].upper() == "TCP"
+                        and p[1].endswith(":%d" % int(port))
+                        and p[2] in ("0.0.0.0:0", "[::]:0")):
+                    return int(p[4])
+        else:
+            cikti = subprocess.run(["ss", "-ltnpH", "sport = :%d" % int(port)],
+                                   capture_output=True, text=True, timeout=10).stdout
+            m = re.search(r"pid=(\d+)", cikti)
+            if m:
+                return int(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
+def _yerel_ai_eskiyse_yenile(ai_port, http_port=None):
+    """v2.4.162: Calisan isci diskteki koddan ESKIYSE kapatir.
+
+    Isci Merkez'den ayri oturumda (start_new_session) yasar; dosya tabanli
+    guncelleme Merkez'i yeniden baslatir ama isciyi DEGIL. Yeni Merkez portu
+    dolu gorup eski isciyi kullanmaya devam ediyordu — AI duzeltmeleri hic
+    devreye girmiyordu. Yalniz /durum okunabilir, kendi iscimiz (ad eslesir)
+    ve ozet farkliysa kapatilir; gecici okuma hatasinda dokunulmaz.
+    True donerse isci kapatildi (bekci yeniden baslatir)."""
+    durum = _yerel_ai_durum(ai_port)
+    if not durum or durum.get("ad") != AI_ISCI_ADI:
+        return False
+    disk = _yerel_ai_disk_ozeti()
+    kod_ayni = bool(disk) and durum.get("kod_ozeti") == disk
+    # v2.4.163: Isci BU Merkez'in HTTP portuna bildirim yapmiyorsa (onceki,
+    # olmus/oksuz bir Merkez icin baslatilmis) tespit kutulari bu Merkez'e
+    # hic ulasmaz; videoda cizim gorunmez. O durumda da yenilenir.
+    ana = str(durum.get("ana_url") or "")
+    port_ayni = (not http_port or not ana
+                 or ana.rstrip("/").endswith(":%d" % int(http_port)))
+    if kod_ayni and port_ayni:
+        return False
+    if not disk and port_ayni:
+        return False
+    pid = durum.get("pid") or _port_sahibi_pid(ai_port)
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        print("[AI] Yerel AI işçisi eski sürümde ama PID bulunamadı; "
+              "servisi yeniden başlatın.", flush=True)
+        return False
+    if pid == os.getpid():
+        return False
+    print(f"[AI] Yerel AI işçisi eski kodla çalışıyor (pid={pid}); "
+          "güncel kodla yeniden başlatılıyor.", flush=True)
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                           capture_output=True, timeout=15,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        else:
+            os.kill(pid, 15)
+    except Exception as e:
+        print(f"[AI] Eski işçi kapatılamadı: {e}", flush=True)
+        return False
+    for _ in range(20):
+        if not _yerel_ai_dinliyor(ai_port):
+            return True
+        time.sleep(0.5)
+    return True
+
+
+def _yerel_ai_isci_baslat(http_sunucu, ai_port=8900):
+    global _yerel_ai_isci, _yerel_ai_gunluk
+    try:
+        from goktungu import merkez_kimlik
+        if merkez_kimlik.merkez_kipinde():
+            print("[AI] GRCON kipi: GRCOFF yerel AI işçisi başlatılmadı.")
+            return
+    except Exception:
+        pass
+    if _yerel_ai_dinliyor(ai_port):
+        print(f"[AI] GRCOFF yerel AI işçisi zaten çalışıyor (127.0.0.1:{ai_port}).")
+        return
+    for _ in range(30):
+        port = getattr(http_sunucu, "aktif_port", None)
+        if port:
+            break
+        time.sleep(0.2)
+    else:
+        print("[AI] GRCOFF yerel AI işçisi başlatılmadı: HTTP portu alınamadı.")
+        return
+    try:
+        from goktungu.sabitler import _veri_alt_yolu
+        gunluk_yolu = _veri_alt_yolu("ai_isci.log")
+        os.makedirs(os.path.dirname(gunluk_yolu), exist_ok=True)
+        _yerel_ai_gunluk = open(gunluk_yolu, "a", encoding="utf-8")
+        betik = _yerel_ai_betigi()
+        if not betik:
+            print("[AI] GRCOFF yerel AI işçisi başlatılamadı: ai_sunucu.py bulunamadı.")
+            return
+        tip = "nvidia" if shutil.which("nvidia-smi") else "cpu"
+        komut = [sys.executable, betik, "--port", str(int(ai_port)), "--dinle", "127.0.0.1", "--ad", AI_ISCI_ADI,
+                 "--tip", tip, "--kapasite", "4", "--ana", f"http://127.0.0.1:{int(port)}"]
+        _yerel_ai_isci = subprocess.Popen(
+            komut, cwd=os.path.dirname(betik), stdout=_yerel_ai_gunluk,
+            stderr=subprocess.STDOUT, start_new_session=True)
+        print(f"[AI] GRCOFF yerel AI işçisi başlatıldı ({tip}, pid={_yerel_ai_isci.pid}).")
+    except Exception as e:
+        print(f"[AI] GRCOFF yerel AI işçisi başlatılamadı: {e}")
+
+def _yerel_ai_jetonu():
+    """Yerel isci anahtarini hazirlar ve ortama koyar (isci miras alir).
+
+    Anahtar veri dizininde KALICIDIR (0600): Merkez beklenmedik kapanip
+    yeniden acildiginda hala calisan eski isci ayni anahtarla yayini
+    okumaya devam eder. Yalniz loopback'ten gelen isteklerde gecerlidir
+    (sunucu.py::_yerel_ai_isci_mi).
+    """
+    import secrets
+    from goktungu.sabitler import _veri_alt_yolu
+    yol = _veri_alt_yolu("ai_isci_anahtari")
+    jeton = ""
+    try:
+        with open(yol, "r", encoding="utf-8") as f:
+            jeton = f.read().strip()
+    except OSError:
+        pass
+    if len(jeton) < 32:
+        jeton = secrets.token_urlsafe(32)
+        os.makedirs(os.path.dirname(yol), exist_ok=True)
+        gecici = yol + ".yeni"
+        with open(gecici, "w", encoding="utf-8") as f:
+            f.write(jeton)
+        try:
+            os.chmod(gecici, 0o600)
+        except OSError:
+            pass
+        os.replace(gecici, yol)
+    os.environ["GOKTUNGU_AI_ISCI_JETON"] = jeton
+    return jeton
+
+
+def _yerel_ai_kaydet(ai_yonetici, ai_port):
+    """Yerel isciyi AI yoneticisine tanitir (tekillik: host+port).
+
+    Port degismisse (or. 8900 -> 8910) eski yerel kayit silinir; aksi
+    halde arayuzde surekli "yanit vermiyor" gorunen hayalet bir sunucu kalir.
+    """
+    tip = "nvidia" if shutil.which("nvidia-smi") else "cpu"
+    for k in ai_yonetici.listele():
+        if (k.get("ad"), str(k.get("host")), int(k.get("port") or 0)) in _AI_TOHUM_YER_TUTUCULARI \
+                and str(k.get("notlar") or "").startswith(_AI_TOHUM_NOT_ONEKLERI):
+            ai_yonetici.sil(k["id"])
+            print(f"[AI] Kullanılmayan örnek AI kaydı kaldırıldı: {k.get('ad')}", flush=True)
+            continue
+        if (k.get("ad") == AI_ISCI_ADI
+                and str(k.get("host")) in ("127.0.0.1", "localhost")
+                and int(k.get("port") or 0) != int(ai_port)):
+            ai_yonetici.sil(k["id"])
+    ai_yonetici.kaydet(None, AI_ISCI_ADI, tip, "127.0.0.1", int(ai_port), 4,
+                       notlar="GRCOFF Merkez ile birlikte otomatik başlar")
+
+
+def _yerel_ai_gorevleri_esitle(ai_yonetici, son_deneme):
+    """AI gorevi secili ama iscide akisi olmayan kameralari izlemeye alir.
+
+    Kamera, isci henuz ayaga kalkmadan kaydedildiyse veya isci yeniden
+    basladiysa gorev kaybolur; kullanici kamerayi yeniden kaydetmek
+    zorunda kalmamali. Ayni kamera 30 sn'de bir kereden sik denenmez.
+    """
+    if ai_yonetici.kameralar is None or ai_yonetici._en_az_yuklu() is None:
+        return
+    iscide = set()
+    for s in list(ai_yonetici.saglik.values()):
+        for ak in ((s.get("son_durum") or {}).get("akislar") or []):
+            try:
+                iscide.add(int(ak.get("kamera_id")))
+            except (TypeError, ValueError):
+                pass
+    simdi = time.time()
+    for kam in ai_yonetici.kameralar.listele():
+        gorevler = (kam.get("ai_gorevler") or "").strip()
+        kid = int(kam["id"])
+        if not gorevler or kid in iscide:
+            continue
+        if simdi - son_deneme.get(kid, 0) < 30:
+            continue
+        son_deneme[kid] = simdi
+        sonuc = ai_yonetici.izleme_baslat(kid, "/kamera/%s" % kid,
+                                          "gcs_proxy", gorevler)
+        if not sonuc.get("tamam"):
+            print(f"[AI] Kamera #{kid} izlemesi başlatılamadı: "
+                  f"{sonuc.get('hata', '')}", flush=True)
+
+
+def _yerel_ai_bekci(ai_yonetici, http_sunucu):
+    """v2.4.153: GRCOFF'ta Merkez ayni zamanda AI sunucusudur.
+
+    Isciyi baslatir, AI yoneticisine kaydeder, dusen isciyi artan
+    beklemeyle yeniden baslatir ve gorevli kameralari izlemeye alir.
+    """
+    ai_port = _yerel_ai_portu()
+    try:
+        _yerel_ai_jetonu()
+    except Exception as e:
+        print(f"[AI] Yerel AI işçi anahtarı hazırlanamadı: {e}", flush=True)
+    try:
+        _yerel_ai_kaydet(ai_yonetici, ai_port)
+    except Exception as e:
+        print(f"[AI] Yerel AI işçisi kaydedilemedi: {e}", flush=True)
+    deneme, son_baslatma, son_deneme = 0, 0.0, {}
+    while True:
+        try:
+            if _yerel_ai_dinliyor(ai_port) and _yerel_ai_eskiyse_yenile(
+                    ai_port, getattr(http_sunucu, "aktif_port", None)):
+                # Eski kodlu isci kapatildi; hemen gunceliyle baslat.
+                _yerel_ai_isci_baslat(http_sunucu, ai_port)
+                son_baslatma = time.time()
+            elif _yerel_ai_dinliyor(ai_port):
+                deneme = 0
+                # v2.4.158: AI izleme ARTIK otomatik başlatılmaz. Kullanıcı
+                # kamerayı "Başlat" ile açtığında izleme başlar, "Durdur" ile
+                # durur (manuel kontrol). Gözetmen yalnız işçiyi ayakta tutar.
+            else:
+                surec_var = (_yerel_ai_isci is not None
+                             and _yerel_ai_isci.poll() is None)
+                bekle = min(300, 15 * (2 ** deneme))
+                if not surec_var and time.time() - son_baslatma >= bekle:
+                    if deneme:
+                        print("[AI] Yerel AI işçisi yanıt vermiyor; yeniden "
+                              f"başlatılıyor (deneme {deneme + 1}).", flush=True)
+                    _yerel_ai_isci_baslat(http_sunucu, ai_port)
+                    son_baslatma = time.time()
+                    deneme += 1
+        except Exception as e:
+            print(f"[AI] Yerel AI bekçisi: {e}", flush=True)
+        time.sleep(10)
+
+
+def _yerel_ai_isci_durdur():
+    global _yerel_ai_isci, _yerel_ai_gunluk
+    try:
+        if _yerel_ai_isci and _yerel_ai_isci.poll() is None:
+            _yerel_ai_isci.terminate()
+            try:
+                _yerel_ai_isci.wait(timeout=8)
+            except subprocess.TimeoutExpired:
+                _yerel_ai_isci.kill()
+            print("[AI] GRCOFF yerel AI işçisi durduruldu.", flush=True)
+    except Exception as e:
+        print(f"[AI] Yerel işçi kapanışı atlandı: {e}", flush=True)
+    finally:
+        _yerel_ai_isci = None
+        if _yerel_ai_gunluk:
+            try:
+                _yerel_ai_gunluk.close()
+            except Exception:
+                pass
+            _yerel_ai_gunluk = None
 
 def _port_dosyasi_yaz(ws_sunucu, http_sunucu):
     """v2.4.49: gercekte alinan portlari `veri/calisma.json`'a yazar.
@@ -856,6 +1362,7 @@ def _kapanis_temizligi(ws_sunucu):
     Her adim ayri ayri korunur: birinin basarisizligi digerini
     engellememelidir, cunku amac kapanisi TAMAMLAMAKTIR.
     """
+    _yerel_ai_isci_durdur()
     try:
         if getattr(ws_sunucu, "sitl", None):
             ws_sunucu.sitl.tumunu_durdur()
@@ -961,6 +1468,10 @@ def main():
     # HTTP sunucusu arka plan thread'inde calisir
     threading.Thread(target=http_sunucu.calistir, daemon=True).start()
 
+    # v2.4.153: Yerel AI isci baslatma buradan KALDIRILDI; uygulama_kur()
+    # icindeki `_yerel_ai_bekci` yapar. Iki yol birlikte kalinca ayni anda
+    # iki isci sureci aciliyordu (olculdu: art arda iki pid).
+
     # v2.4.49: servis kipinde gercek portlari diske yaz. Portlar sirayla
     # denendigi icin (HTTP_PORTLAR/WS_PORTLAR) hangi portun alindigi
     # ancak baglandiktan sonra bilinir. Kiosk betigi bu dosyayi okur;
@@ -980,8 +1491,46 @@ def main():
                      name="port-yaz").start()
 
     # WebSocket sunucusu + telemetri yayini ana asyncio dongusunde
+    async def _bekcili_calistir():
+        # v2.4.163: DONMA BEKCISI. Olay dongusu 20 sn yanit vermezse tum is
+        # parcaciklarinin yigin izi merkez_cokme.log'a yazilir (nerede
+        # kilitlendigi gorulsun). Surece dokunmaz.
+        loop = asyncio.get_running_loop()
+        son = [time.time()]
+
+        def _nabiz():
+            son[0] = time.time()
+
+        def _bekci():
+            yazildi = False
+            while True:
+                time.sleep(5)
+                try:
+                    loop.call_soon_threadsafe(_nabiz)
+                except RuntimeError:
+                    return
+                gecikme = time.time() - son[0]
+                if gecikme > 20 and not yazildi:
+                    yazildi = True
+                    try:
+                        import faulthandler as _fh2
+                        _COKME_DOSYA.write(
+                            "\n=== DONMA %s: olay dongusu %.0f sn yanit vermiyor ===\n"
+                            % (time.strftime("%Y-%m-%d %H:%M:%S"), gecikme))
+                        _COKME_DOSYA.flush()
+                        _fh2.dump_traceback(file=_COKME_DOSYA, all_threads=True)
+                        _COKME_DOSYA.flush()
+                    except Exception:
+                        pass
+                    print("[GCS] UYARI: olay dongusu %.0f sn yanit vermiyor; "
+                          "yigin izi merkez_cokme.log'a yazildi" % gecikme, flush=True)
+                elif gecikme < 10:
+                    yazildi = False
+        threading.Thread(target=_bekci, daemon=True, name="donma-bekcisi").start()
+        await ws_sunucu.calistir()
+
     try:
-        asyncio.run(ws_sunucu.calistir())
+        asyncio.run(_bekcili_calistir())
     except KeyboardInterrupt:
         print("\n[GCS] Kapatiliyor.")
     finally:

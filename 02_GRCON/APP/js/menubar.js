@@ -150,6 +150,16 @@
       if (typeof menubarKapat === "function") menubarKapat();
     });
   }
+  // YARDIM > Guncellemeleri Denetle: uygulama ici dosya tabanli guncelleme
+  // penceresini acar ve taze bir surum denetimi baslatir (js/guncelleme.js).
+  const mbGunc = document.getElementById("mbGuncelleme");
+  if (mbGunc) {
+    mbGunc.addEventListener("click", () => {
+      if (typeof menubarKapat === "function") menubarKapat();
+      if (typeof window.guncellemePenceresiAc === "function")
+        window.guncellemePenceresiAc();
+    });
+  }
   const mbHak = document.getElementById("mbHakkinda");
   if (mbHak){
     mbHak.addEventListener("click", () => {
@@ -186,14 +196,17 @@
   // 2 sol bolum de kapaliysa sol panel + tutamaci gizlenir.
   // =====================================================================
   const PANEL_BOLUM = {
-    tespit:    { taraf: "sol", eller: ["solToolbar", "hedefListeIcerik"] },
-    takip:     { taraf: "sol", eller: ["takipBaslik", "takipListeIcerik"] },
+    // v2.4.227 (kullanici istegi): Tespit/Takip sol dock bolumleri KALDIRILDI.
     // v2.4.33: ayri DRONLAR bolumu kaldirildi (kartlar Baglanti
     // Yoneticisi icinde). Kayit silindi; yoksa panelUygula() olmayan
     // ogeleri arar ve menu ogesi hicbir seyi degistirmez.
+    // GRCOFF-IS1: Kamera popup'inin çarpı düğmesi ortak görünürlük
+    // durumunu kapatır. Bu kayıt olmazsa kapatma isteği sessizce yok
+    // sayılır ve Kamera paneli açık kalır.
+    kameralar: { taraf: "sag", eller: ["kameralarToolbar", "kameralarIcerik"] },
     rotalar:   { taraf: "sag", eller: ["rotalarToolbar", "rotalarIcerik"] },
   };
-  let panelDurum = { tespit:true, takip:true, rotalar:true };
+  let panelDurum = { kameralar:true, rotalar:true };
   try {
     const k = JSON.parse(localStorage.getItem("gcs_panel_gorunum") || "{}");
     for (const ad in panelDurum) if (typeof k[ad] === "boolean") panelDurum[ad] = k[ad];
@@ -221,7 +234,7 @@
       if (solTut) solTut.style.display = solAcik ? "" : "none";
       // Sag taraf: 3 bolum de kapaliysa paneli tamamen gizle
       // v2.4.33: panelDurum.dronlar kaldirildi (ayri DRONLAR bolumu yok)
-      const sagAcik = panelDurum.rotalar;
+      const sagAcik = panelDurum.kameralar || panelDurum.rotalar;
       document.body.classList.toggle("sag-panel-gizli", !sagAcik);
       const sagTut = document.getElementById("sagTutamac");
       if (sagTut) sagTut.style.display = sagAcik ? "" : "none";

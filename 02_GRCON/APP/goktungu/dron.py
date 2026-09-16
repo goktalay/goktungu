@@ -262,6 +262,28 @@ class DronYoneticisi:
                     " VALUES (?,?)",
                     (str(uid), json.dumps(veri, ensure_ascii=False)))
 
+    def dron_renk_kaydet(self, sysid, renk):
+        """v2.4.202 (kullanici istegi): dronun harita rengini kullanici
+        secer. Renk kalici kayda (dronlar.renk) yazilir; telemetri
+        `dron_renkler` haritasi `ucus_gecmisi.renk_al` uzerinden her
+        turda kayittan okudugu icin degisiklik aninda yayilir."""
+        renk = str(renk or "").strip().lower()
+        import re as _re
+        if not _re.fullmatch(r"#[0-9a-f]{6}", renk):
+            return False
+        d = self.dronlar.get(sysid)
+        if d:
+            d["renk"] = renk
+        dron_id = self.dron_db_id.get(sysid)
+        if dron_id:
+            try:
+                from . import veritabani as _vt
+                _vt.dron_alan_guncelle(dron_id, renk=renk)
+                return True
+            except Exception:
+                return False
+        return False
+
     def dron_isim_kaydet(self, sysid, isim):
         """Belirtilen sysid'nin UID'sine isim ata ve kaydet.
         UID henuz alinmadiysa sysid'yi anahtar olarak kullan.

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yer İstasyonu 2 — Kontrol Paneli Testi (GÖKTUNGU v2.4.44)</title>
+<!--
+  Yer Istasyonu 2 (ESP32-S3) protokol test sayfasi.
+  BAGIMSIZ tek dosya: harici kutuphane / CDN YOK (saha internetsiz calisir).
+
+  Iki veri kaynagi:
+    1) KOPRU  : Python kopru.py (veya benzetici.py --ws) -> WebSocket
+                GCS entegrasyonunda kullanilacak gercek mimari.
+    2) SERI   : Web Serial API ile dogrudan porta baglanma (Chrome/Edge,
+                https veya localhost sart). Kopru gerekmeden hizli deneme.
+
+  Protokol (README_istasyon2.md):
+    ESP32 -> PC : her satir TAM durum iceren JSON
+    PC -> ESP32 : DUZ METIN  LED,P3,ON | LED,ALL,OFF | PING
+    PING cevabi : "PONG"  (JSON DEGIL -> parse'tan ONCE kontrol edilir)
+-->
+<style>
+:root{
+  --panel:#0b0e11; --cizgi:#1e2630; --panel2:#11161c;
+  --metin:#cfd8e3; --soluk:#5c6b7a;
+  --vurgu:#35d0ff; --iyi:#3ddc84; --kotu:#ff5d5d; --uyari:#ffc94d;
+  --led:#ffb02e; --giris:#060809; --dugme:#141a21; --dugme-h:#1c2530;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--panel); color:var(--metin);
+  font:13px/1.45 "Segoe UI",Roboto,system-ui,sans-serif;
+  display:flex; flex-direction:column;
+}
+
+/* ---------- ust bar ---------- */
+#ustbar{
+  height:40px; flex:0 0 40px; display:flex; align-items:center; gap:10px;
+  padding:0 12px; background:#0d1216; border-bottom:1px solid var(--cizgi);
+}
+#ustbar h1{font-size:13px;margin:0;letter-spacing:.06em;font-weight:600}
+#ustbar h1 span{color:var(--vurgu)}
+.bosluk{flex:1}
+#durum-rozet{
+  display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:11px;
+  background:rgba(0,0,0,.4);border:1px solid var(--cizgi);font-size:11px;
+}
+#durum-nokta{width:8px;height:8px;border-radius:50%;background:var(--kotu);
+  box-shadow:0 0 6px currentColor;color:var(--kotu)}
+#durum-nokta.acik{background:var(--iyi);color:var(--iyi)}
+#durum-nokta.bekliyor{background:var(--uyari);color:var(--uyari)}
+
+/* ---------- yerlesim ---------- */
+#govde{flex:1;display:grid;grid-template-columns:300px 1fr 340px;
+  gap:10px;padding:10px;overflow:auto;min-height:0}
+.kutu{background:var(--panel2);border:1px solid var(--cizgi);border-radius:8px;
+  display:flex;flex-direction:column;min-height:0}
+.kutu>h2{
+  margin:0;padding:7px 10px;font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--soluk);
+  border-bottom:1px solid var(--cizgi);background:rgba(0,0,0,.22);
+  border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;
+}
+.kutu>h2 .say{margin-left:auto;color:var(--vurgu);font-variant-numeric:tabular-nums}
+.ic{padding:10px;overflow:auto;min-height:0}
+.sutun{display:flex;flex-direction:column;gap:10px;min-height:0}
+
+/* ---------- form ogeleri ---------- */
+label.kk{display:block;font-size:11px;color:var(--soluk);margin:6px 0 3px}
+input[type=text],select{
+  width:100%;background:var(--giris);color:var(--metin);
+  border:1px solid var(--cizgi);border-radius:5px;padding:5px 7px;font:inherit;
+  font-size:12px;
+}
+button{
+  background:var(--dugme);color:var(--metin);border:1px solid var(--cizgi);
+  border-radius:5px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer;
+}
+button:hover:not(:disabled){background:var(--dugme-h);border-color:var(--vurgu)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.ana{border-color:var(--vurgu);color:var(--vurgu)}
+button.kes{border-color:var(--kotu);color:var(--kotu)}
+.satir{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.satir>button{flex:1;min-width:70px}
+.ipucu{font-size:11px;color:var(--soluk);margin-top:7px;line-height:1.5}
+.kaynak-sec{display:flex;gap:4px;margin-bottom:4px}
+.kaynak-sec button{flex:1;font-size:11px;padding:4px 6px}
+.kaynak-sec button.etkin{background:var(--dugme-h);border-color:var(--vurgu);
+  color:var(--vurgu)}
+
+/* ---------- butonlar ---------- */
+#butonlar{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.btn-hucre{
+  position:relative;aspect-ratio:1/1;border-radius:8px;
+  border:2px solid var(--cizgi);background:#0a0d10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;transition:background .05s,border-color .05s,box-shadow .05s;
+  cursor:pointer;user-select:none;
+}
+.btn-hucre .ad{font-size:15px;font-weight:700;letter-spacing:.03em}
+.btn-hucre .alt{font-size:9px;color:var(--soluk);text-transform:uppercase}
+.btn-hucre.ledli{border-color:#3a3320}
+.btn-hucre.basili{background:var(--vurgu);border-color:var(--vurgu);color:#04222c;
+  box-shadow:0 0 12px rgba(53,208,255,.55)}
+.btn-hucre.basili .alt{color:#04222c}
+/* LED gostergesi: hucrenin sag ust kosesinde nokta */
+.btn-hucre .ledp{
+  position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;
+  background:#241c0a;border:1px solid #4a3a12;
+}
+.btn-hucre.led-acik .ledp{background:var(--led);border-color:var(--led);
+  box-shadow:0 0 9px var(--led)}
+.btn-hucre.ledsiz .ledp{display:none}
+
+/* ---------- toggle ---------- */
+.tg{display:flex;align-items:center;gap:10px;margin:9px 0}
+.tg .ad{width:26px;font-weight:700}
+.tg-iz{
+  flex:1;display:flex;background:#0a0d10;border:1px solid var(--cizgi);
+  border-radius:6px;overflow:hidden;
+}
+.tg-poz{
+  flex:1;text-align:center;padding:5px 0;font-size:11px;color:var(--soluk);
+  border-right:1px solid var(--cizgi);cursor:pointer;user-select:none;
+}
+.tg-poz:last-child{border-right:0}
+.tg-poz.etkin{background:var(--vurgu);color:#04222c;font-weight:700}
+.tg .tip{font-size:9px;color:var(--soluk);width:44px;text-align:right}
+
+/* ---------- joystick ---------- */
+#joylar{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.joy{display:flex;flex-direction:column;align-items:center;gap:6px}
+.joy canvas{
+  width:100%;max-width:180px;aspect-ratio:1/1;background:#080b0e;
+  border:1px solid var(--cizgi);border-radius:8px;cursor:crosshair;touch-action:none;
+}
+.joy .bilgi{font-size:11px;font-variant-numeric:tabular-nums;text-align:center;
+  color:var(--soluk);line-height:1.5}
+.joy .bilgi b{color:var(--metin);font-weight:600}
+.joy .ad{font-size:12px;font-weight:700;letter-spacing:.05em}
+
+/* ---------- ham akis ---------- */
+#akis{
+  font:11px/1.5 "Cascadia Mono",Consolas,monospace;
+  white-space:pre-wrap;word-break:break-all;
+}
+#akis div{padding:2px 4px;border-bottom:1px solid rgba(255,255,255,.04)}
+#akis .e-READY{color:var(--iyi)}
+#akis .e-LED_CMD{color:var(--led)}
+#akis .e-btn{color:var(--vurgu)}
+#akis .e-tg{color:#c792ea}
+#akis .e-joy{color:var(--soluk)}
+#akis .e-pong{color:var(--iyi);font-weight:700}
+#akis .e-tx{color:var(--uyari)}
+#akis .e-sys{color:var(--kotu)}
+#akis .zm{color:#3d4c5a;margin-right:6px}
+
+/* ---------- olcum ---------- */
+#olcum{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.olc{background:#0a0d10;border:1px solid var(--cizgi);border-radius:6px;
+  padding:6px 8px}
+.olc .d{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--vurgu)}
+.olc .e{font-size:9px;color:var(--soluk);text-transform:uppercase;
+  letter-spacing:.05em}
+
+/* ---------- led paneli ---------- */
+#ledler{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.led-h{display:flex;flex-direction:column;align-items:center;gap:4px}
+.led-h .ad{font-size:10px;color:var(--soluk)}
+.led-h .amp{width:100%;aspect-ratio:1/1;border-radius:5px;background:#241c0a;
+  border:1px solid #4a3a12;cursor:pointer}
+.led-h .amp.acik{background:var(--led);border-color:var(--led);
+  box-shadow:0 0 10px var(--led)}
+.kalb-bilgi{font-size:11px;color:var(--soluk);margin-top:7px;
+  font-variant-numeric:tabular-nums}
+.uyari-kutu{
+  margin-top:8px;padding:6px 8px;border-radius:5px;font-size:11px;
+  background:rgba(255,201,77,.09);border:1px solid rgba(255,201,77,.3);
+  color:var(--uyari);
+}
+</style>
+</head>
+<body>
+
+<div id="ustbar">
+  <h1>YER İSTASYONU 2 — <span>ESP32-S3 KONTROL PANELİ TESTİ</span></h1>
+  <div class="bosluk"></div>
+  <div id="durum-rozet">
+    <span id="durum-nokta"></span>
+    <span id="durum-yazi">Bağlı değil</span>
+  </div>
+</div>
+
+<div id="govde">
+
+  <!-- ====================== SOL SÜTUN ====================== -->
+  <div class="sutun">
+    <div class="kutu">
+      <h2>Bağlantı</h2>
+      <div class="ic">
+        <div class="kaynak-sec">
+          <button id="k-kopru" class="etkin">Köprü (WebSocket)</button>
+          <button id="k-seri">Web Serial</button>
+        </div>
+
+        <div id="alan-kopru">
+          <label class="kk">WebSocket adresi</label>
+          <input type="text" id="ws-url" value="ws://localhost:8765">
+          <div class="satir">
+            <button id="b-bagla" class="ana">Bağlan</button>
+            <button id="b-kes" class="kes" disabled>Kes</button>
+          </div>
+          <div class="ipucu">
+            Benzetici: <code>benzetici.py --ws 8765</code><br>
+            Gerçek donanım: <code>kopru.py COM7 8765</code>
+          </div>
+        </div>
+
+        <div id="alan-seri" style="display:none">
+          <div class="ipucu" id="seri-destek"></div>
+          <div class="satir">
+            <button id="b-seri-bagla" class="ana">Port Seç ve Bağlan</button>
+            <button id="b-seri-kes" class="kes" disabled>Kes</button>
+          </div>
+          <div class="ipucu">
+            115200 baud. ESP32-S3 iki port olarak görünür —
+            <b>UART/COM</b> portunu seçin (native USB yalnız firmware yükleme).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kutu">
+      <h2>LED Denetimi <span class="say" id="led-say">0/7</span></h2>
+      <div class="ic">
+        <div id="ledler"></div>
+        <div class="satir">
+          <button id="b-all-on">ALL ON</button>
+          <button id="b-all-off">ALL OFF</button>
+        </div>
+        <div class="satir">
+          <button id="b-ping" class="ana">PING</button>
+          <button id="b-yoksay">LED,P8,ON dene</button>
+        </div>
+        <div class="ipucu" id="ping-sonuc">
+          LED kutusuna tıkla → <code>LED,Px,ON/OFF</code> gönderilir.
+        </div>
+        <div class="uyari-kutu">
+          P8–P11, T1, T2 için LED komutu <b>sessizce yok sayılır</b>
+          (LED çıkışı yok). "LED,P8,ON dene" düğmesi bunu doğrular:
+          yanıt gelmemesi <b>beklenen</b> davranıştır.
+        </div>
+      </div>
+    </div>
+
+    <div class="kutu">
+      <h2>Ölçüm</h2>
+      <div class="ic">
+        <div id="olcum">
+          <div class="olc"><div class="d" id="o-toplam">0</div>
+            <div class="e">Toplam mesaj</div></div>
+          <div class="olc"><div class="d" id="o-hiz">0</div>
+            <div class="e">Mesaj / sn</div></div>
+          <div class="olc"><div class="d" id="o-gecikme">—</div>
+            <div class="e">PING gecikmesi</div></div>
+          <div class="olc"><div class="d" id="o-tx">0</div>
+            <div class="e">Gönderilen komut</div></div>
+          <div class="olc"><div class="d" id="o-bozuk">0</div>
+            <div class="e">Bozuk satır</div></div>
+          <div class="olc"><div class="d" id="o-sure">0s</div>
+            <div class="e">Bağlı süre</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== ORTA SÜTUN ====================== -->
+  <div class="sutun">
+    <div class="kutu">
+      <h2>Push Butonlar <span class="say" id="btn-say">0 basılı</span></h2>
+      <div class="ic">
+        <div id="butonlar"></div>
+        <div class="ipucu">
+          Sarı çerçeve = LED'li (P1–P7) · Gri çerçeve = LED'siz (P8–P11).
+          Sağ üst nokta LED durumunu gösterir.
+          <b>Benzetici bağlıysa</b> kutulara tıklayarak fiziksel basma
+          benzetimi yapılabilir (debounce 25 ms uygulanır).
+        </div>
+      </div>
+    </div>
+
+    <div class="kutu">
+      <h2>Toggle Switch</h2>
+      <div class="ic">
+        <div class="tg">
+          <span class="ad">T1</span>
+          <div class="tg-iz" id="t1-iz">
+            <div class="tg-poz" data-d="0">0</div>
+            <div class="tg-poz" data-d="1">1</div>
+          </div>
+          <span class="tip">int 0/1</span>
+        </div>
+        <div class="tg">
+          <span class="ad">T2</span>
+          <div class="tg-iz" id="t2-iz">
+            <div class="tg-poz" data-d="UP">UP</div>
+            <div class="tg-poz" data-d="CENTER">CENTER</div>
+            <div class="tg-poz" data-d="DOWN">DOWN</div>
+          </div>
+          <span class="tip">string</span>
+        </div>
+        <div class="ipucu">
+          T2'nin değeri <b>string</b>, T1 ve butonlar <b>int</b> —
+          protokoldeki tip farkı burada ayrıca doğrulanır:
+          <span id="tip-denetim" style="color:var(--soluk)">bekleniyor…</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kutu">
+      <h2>Joystickler <span class="say" id="joy-say">eşik 40 birim</span></h2>
+      <div class="ic">
+        <div id="joylar">
+          <div class="joy">
+            <div class="ad">J1</div>
+            <canvas id="c-j1" width="360" height="360"></canvas>
+            <div class="bilgi" id="i-j1">—</div>
+          </div>
+          <div class="joy">
+            <div class="ad">J2</div>
+            <canvas id="c-j2" width="360" height="360"></canvas>
+            <div class="bilgi" id="i-j2">—</div>
+          </div>
+        </div>
+        <div class="satir">
+          <button id="b-kalibre" class="ana">Kalibre Et (merkezi kaydet)</button>
+          <button id="b-kalibre-sil">Sıfırla</button>
+        </div>
+        <div class="kalb-bilgi" id="kalb-bilgi">
+          Merkez: varsayılan 2048 (kalibre edilmedi)
+        </div>
+        <div class="ipucu">
+          Ham değer 0–4095. Normalize (−1…+1) kalibre edilen merkeze göre
+          hesaplanır — protokol belgesi orta noktanın sabit 2048
+          varsayılmamasını şart koşuyor. Benzetici bağlıysa daireye
+          tıklayıp sürükleyerek eksen benzetimi yapılabilir.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== SAĞ SÜTUN ====================== -->
+  <div class="sutun">
+    <div class="kutu" style="flex:1">
+      <h2>Ham Akış <span class="say" id="akis-say">0</span></h2>
+      <div class="ic" id="akis"></div>
+    </div>
+    <div class="kutu" style="flex:0 0 auto">
+      <h2>Akış Ayarı</h2>
+      <div class="ic">
+        <div class="satir">
+          <button id="b-temizle">Temizle</button>
+          <button id="b-dondur">Dondur</button>
+        </div>
+        <label class="kk">
+          <input type="checkbox" id="joy-gizle" style="width:auto">
+          Joystick olaylarını akışta gizle
+        </label>
+        <div class="ipucu">
+          Yeşil = READY · Turuncu = LED_CMD · Mavi = buton ·
+          Mor = toggle · Gri = joystick · Sarı = gönderilen komut
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   Yer Istasyonu 2 test sayfasi - JS
+   Bagimsiz, harici kutuphane yok.
+   ===================================================================== */
+"use strict";
+
+/* --- sabitler (protokol) ------------------------------------------- */
+const BUTONLAR = ["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11"];
+const LEDLI    = ["P1","P2","P3","P4","P5","P6","P7"];   // yalniz bunlarda LED var
+const EKSENLER = ["J1_X","J1_Y","J2_X","J2_Y"];
+const T2_POZ   = ["UP","CENTER","DOWN"];
+const ADC_MAKS = 4095;
+const ESIK     = 40;         // JOYSTICK_THRESHOLD (belgeden)
+
+/* --- durum ---------------------------------------------------------- */
+let durum = {
+  event:null,
+  buttons:Object.fromEntries(BUTONLAR.map(b=>[b,0])),
+  toggles:{T1:0,T2:"CENTER"},
+  joysticks:Object.fromEntries(EKSENLER.map(e=>[e,2048])),
+  leds:Object.fromEntries(LEDLI.map(p=>[p,0]))
+};
+let merkez = Object.fromEntries(EKSENLER.map(e=>[e,2048]));
+let kalibreEdildi = false;
+let sonGonderilen = {};      // eksen esigi olcumu icin
+let kaynak = "kopru";        // kopru | seri
+let ws = null;
+let seriPort = null, seriYazici = null, seriOkuyucuIptal = null;
+let baglandiMs = 0;
+let benzeticiMi = false;     // sim komutlari gonderilebilir mi
+let dondu = false;
+
+/* olcum sayaclari */
+let sayToplam=0, sayTx=0, sayBozuk=0, sonSaniye=[], pingT0=0;
+
+/* =====================================================================
+   Arayuz kurulumu
+   ===================================================================== */
+const el = id => document.getElementById(id);
+
+/* --- buton izgarasi --- */
+const btnKutu = el("butonlar");
+BUTONLAR.forEach(ad=>{
+  const ledVar = LEDLI.includes(ad);
+  const d = document.createElement("div");
+  d.className = "btn-hucre " + (ledVar ? "ledli" : "ledsiz");
+  d.id = "bh-"+ad;
+  d.innerHTML = `<span class="ledp"></span>
+    <span class="ad">${ad}</span>
+    <span class="alt">${ledVar?"LED":"—"}</span>`;
+  // Benzetici kipinde fiziksel basma benzetimi
+  d.addEventListener("pointerdown", ()=>simBuTon(ad,true));
+  d.addEventListener("pointerup",   ()=>simBuTon(ad,false));
+  d.addEventListener("pointerleave",()=>{ if(durum.buttons[ad]) simBuTon(ad,false); });
+  btnKutu.appendChild(d);
+});
+
+/* --- LED izgarasi --- */
+const ledKutu = el("ledler");
+LEDLI.forEach(ad=>{
+  const d = document.createElement("div");
+  d.className = "led-h";
+  d.innerHTML = `<div class="amp" id="lm-${ad}"></div><div class="ad">${ad}</div>`;
+  d.querySelector(".amp").addEventListener("click", ()=>{
+    komutGonder(`LED,${ad},${durum.leds[ad] ? "OFF" : "ON"}`);
+  });
+  ledKutu.appendChild(d);
+});
+
+/* --- toggle tiklamalari (benzetici kipinde) --- */
+el("t1-iz").querySelectorAll(".tg-poz").forEach(p=>{
+  p.addEventListener("click", ()=>simGonder({tur:"toggle",ad:"T1",deger:p.dataset.d}));
+});
+el("t2-iz").querySelectorAll(".tg-poz").forEach(p=>{
+  p.addEventListener("click", ()=>simGonder({tur:"toggle",ad:"T2",deger:p.dataset.d}));
+});
+
+/* =====================================================================
+   Kaynak secimi
+   ===================================================================== */
+el("k-kopru").onclick = ()=>kaynakSec("kopru");
+el("k-seri").onclick  = ()=>kaynakSec("seri");
+function kaynakSec(k){
+  kaynak = k;
+  el("k-kopru").classList.toggle("etkin", k==="kopru");
+  el("k-seri").classList.toggle("etkin",  k==="seri");
+  el("alan-kopru").style.display = k==="kopru" ? "" : "none";
+  el("alan-seri").style.display  = k==="seri"  ? "" : "none";
+}
+/* Web Serial destegi */
+(function(){
+  const var_ = ("serial" in navigator);
+  el("seri-destek").innerHTML = var_
+    ? "Web Serial API <b style='color:var(--iyi)'>destekleniyor</b>. " +
+      "Port seçme penceresi açılacak."
+    : "Web Serial API <b style='color:var(--kotu)'>desteklenmiyor</b> " +
+      "(Chrome/Edge + https veya localhost gerekir). Köprü kipini kullanın.";
+  el("b-seri-bagla").disabled = !var_;
+})();
+
+/* =====================================================================
+   KOPRU kipi - WebSocket
+   ===================================================================== */
+el("b-bagla").onclick = ()=>{
+  const url = el("ws-url").value.trim();
+  if(!url) return;
+  durumYaz("bekliyor","Bağlanıyor…");
+  try{ ws = new WebSocket(url); }
+  catch(h){ sistemSatiri("WebSocket açılamadı: "+h.message); durumYaz("kapali","Hata"); return; }
+  ws.onopen = ()=>{
+    baglandiMs = Date.now();
+    benzeticiMi = true;      // kopru/benzetici: sim komutu denenebilir
+    durumYaz("acik","Köprü bağlı");
+    el("b-bagla").disabled = true; el("b-kes").disabled = false;
+    sistemSatiri("WebSocket açıldı: "+url);
+  };
+  ws.onmessage = e => satirIsle(String(e.data));
+  ws.onclose = ()=>{
+    durumYaz("kapali","Bağlantı kapandı");
+    el("b-bagla").disabled = false; el("b-kes").disabled = true;
+    ws = null; benzeticiMi = false;
+    sistemSatiri("WebSocket kapandı");
+  };
+  ws.onerror = ()=> sistemSatiri("WebSocket hatası");
+};
+el("b-kes").onclick = ()=>{ if(ws) ws.close(); };
+
+/* =====================================================================
+   SERI kipi - Web Serial API
+   ===================================================================== */
+el("b-seri-bagla").onclick = async ()=>{
+  try{
+    seriPort = await navigator.serial.requestPort();
+    await seriPort.open({baudRate:115200});
+    seriYazici = seriPort.writable.getWriter();
+    baglandiMs = Date.now();
+    benzeticiMi = false;     // gercek donanim: sim komutu YOK
+    durumYaz("acik","Seri port bağlı (115200)");
+    el("b-seri-bagla").disabled = true; el("b-seri-kes").disabled = false;
+    sistemSatiri("Seri port açıldı @115200");
+    seriOku();
+  }catch(h){
+    sistemSatiri("Seri port açılamadı: "+h.message);
+  }
+};
+el("b-seri-kes").onclick = async ()=>{
+  try{
+    if(seriOkuyucuIptal) await seriOkuyucuIptal();
+    if(seriYazici){ seriYazici.releaseLock(); seriYazici=null; }
+    if(seriPort){ await seriPort.close(); seriPort=null; }   // duzgun kapat (belge md.6)
+  }catch(h){ sistemSatiri("Kapatma hatası: "+h.message); }
+  durumYaz("kapali","Bağlı değil");
+  el("b-seri-bagla").disabled = false; el("b-seri-kes").disabled = true;
+  sistemSatiri("Seri port kapatıldı");
+};
+async function seriOku(){
+  const cozucu = new TextDecoderStream();
+  const bitis = seriPort.readable.pipeTo(cozucu.writable).catch(()=>{});
+  const okuyucu = cozucu.readable.getReader();
+  seriOkuyucuIptal = async ()=>{ try{ await okuyucu.cancel(); }catch(e){} await bitis; };
+  let tampon = "";
+  try{
+    while(true){
+      const {value,done} = await okuyucu.read();
+      if(done) break;
+      tampon += value;
+      let n;
+      while((n = tampon.indexOf("\n")) >= 0){
+        const s = tampon.slice(0,n).trim();
+        tampon = tampon.slice(n+1);
+        if(s) satirIsle(s);
+      }
+    }
+  }catch(h){ sistemSatiri("Okuma hatası: "+h.message); }
+}
+
+/* =====================================================================
+   GONDERIM
+   ===================================================================== */
+function hamGonder(metin){
+  if(kaynak==="kopru"){
+    if(!ws || ws.readyState!==1) return false;
+    ws.send(metin);
+    return true;
+  }
+  if(!seriYazici) return false;
+  seriYazici.write(new TextEncoder().encode(metin+"\n"));
+  return true;
+}
+/* ESP32 komutu (DUZ METIN) */
+function komutGonder(k){
+  if(!hamGonder(k)){ sistemSatiri("Gönderilemedi (bağlı değil): "+k); return; }
+  sayTx++; el("o-tx").textContent = sayTx;
+  akisEkle(k, "e-tx", "TX");
+  if(k==="PING") pingT0 = performance.now();
+}
+/* Benzeticiye fiziksel etki benzetimi (yalniz kopru/benzetici kipinde) */
+function simGonder(nesne){
+  if(kaynak!=="kopru" || !ws || ws.readyState!==1) return;
+  ws.send(JSON.stringify({sim:nesne}));
+}
+function simBuTon(ad,basili){ simGonder({tur:"buton",ad:ad,basili:basili}); }
+
+el("b-all-on").onclick  = ()=>komutGonder("LED,ALL,ON");
+el("b-all-off").onclick = ()=>komutGonder("LED,ALL,OFF");
+el("b-ping").onclick    = ()=>{ el("ping-sonuc").innerHTML =
+  "PING gönderildi, PONG bekleniyor…"; komutGonder("PING"); };
+el("b-yoksay").onclick  = ()=>{
+  el("ping-sonuc").innerHTML =
+    "<b>LED,P8,ON</b> gönderildi — yanıt <b>gelmemesi</b> doğru davranıştır.";
+  komutGonder("LED,P8,ON");
+};
+
+/* =====================================================================
+   GELEN SATIR ISLEME
+   Belge md.1: once PONG mu diye bak, sonra JSON parse et.
+   ===================================================================== */
+function satirIsle(ham){
+  const s = ham.trim();
+  if(!s) return;
+  sayToplam++; sonSaniye.push(performance.now());
+
+  /* 1) PONG - DUZ METIN, JSON DEGIL */
+  if(s === "PONG"){
+    const gecikme = pingT0 ? (performance.now()-pingT0) : 0;
+    el("o-gecikme").textContent = pingT0 ? gecikme.toFixed(1)+" ms" : "—";
+    el("ping-sonuc").innerHTML =
+      `<b style="color:var(--iyi)">PONG</b> alındı` +
+      (pingT0 ? ` — gecikme <b>${gecikme.toFixed(1)} ms</b>` : "") +
+      ` · düz metin (JSON değil) olarak doğru ayrıştırıldı.`;
+    pingT0 = 0;
+    akisEkle("PONG","e-pong","RX");
+    sayacGuncelle();
+    return;
+  }
+
+  /* 2) JSON */
+  let d;
+  try{ d = JSON.parse(s); }
+  catch(h){
+    sayBozuk++; el("o-bozuk").textContent = sayBozuk;
+    akisEkle("[BOZUK] "+s.slice(0,120),"e-sys","RX");
+    sayacGuncelle();
+    return;
+  }
+
+  /* 2a) Kopru durum mesaji (ESP32'den DEGIL, kopru.py'den) */
+  if(d && d.kopru){
+    const k = d.kopru;
+    sistemSatiri(`Köprü: ${k.durum}` + (k.port?` (${k.port}`:"") +
+      (k.baud?` @${k.baud})`:(k.port?")":"")) + (k.hata?` — ${k.hata}`:""));
+    if(k.durum==="acik") durumYaz("acik",`Köprü → ${k.port}`);
+    else if(k.durum==="hata"||k.durum==="koptu") durumYaz("bekliyor","Köprü: port yok");
+    benzeticiMi = false;   // gercek kopru: sim komutu yok
+    sayToplam--;           // ESP32 mesaji degil, sayaca girmesin
+    return;
+  }
+
+  /* 2b) ESP32 durum mesaji */
+  if(!d || !d.buttons || !d.joysticks){
+    akisEkle("[BEKLENMEDİK] "+s.slice(0,120),"e-sys","RX");
+    sayacGuncelle();
+    return;
+  }
+  esikDenetle(d);
+  durum = d;                       // gövde TAM durum -> komple overwrite
+  arayuzTazele();
+  tipDenetle(d);
+  akisEkle(s, olaySinifi(d.event), "RX");
+  sayacGuncelle();
+}
+
+function olaySinifi(ev){
+  if(ev==="READY") return "e-READY";
+  if(ev==="LED_CMD") return "e-LED_CMD";
+  if(ev==="T1"||ev==="T2") return "e-tg";
+  if(EKSENLER.includes(ev)) return "e-joy";
+  return "e-btn";
+}
+
+/* Esik olcumu: ardisik ayni eksen mesajlari >=40 birim olmali */
+let esikIhlal = 0;
+function esikDenetle(d){
+  const ev = d.event;
+  if(!EKSENLER.includes(ev)) return;
+  const v = d.joysticks[ev];
+  if(sonGonderilen[ev]!==undefined && Math.abs(v-sonGonderilen[ev]) < ESIK) esikIhlal++;
+  sonGonderilen[ev] = v;
+  el("joy-say").textContent = esikIhlal
+    ? `eşik 40 · ${esikIhlal} ihlal` : "eşik 40 birim · uyumlu";
+}
+
+/* Tip denetimi: T2 string, T1/butonlar int */
+function tipDenetle(d){
+  const t2s = typeof d.toggles.T2 === "string";
+  const t1i = typeof d.toggles.T1 === "number";
+  const bi  = BUTONLAR.every(b=>typeof d.buttons[b]==="number");
+  const tam = Object.keys(d.buttons).length===11 &&
+              Object.keys(d.joysticks).length===4 &&
+              Object.keys(d.leds).length===7;
+  const ok = t2s && t1i && bi && tam;
+  const e = el("tip-denetim");
+  e.style.color = ok ? "var(--iyi)" : "var(--kotu)";
+  e.innerHTML = ok
+    ? "T2=string ✓ · T1/P*=int ✓ · gövde tam durum (11/4/7) ✓"
+    : `T2=${typeof d.toggles.T2} · T1=${typeof d.toggles.T1} · gövde ${
+        Object.keys(d.buttons).length}/${Object.keys(d.joysticks).length}/${
+        Object.keys(d.leds).length}`;
+}
+
+/* =====================================================================
+   ARAYUZ TAZELEME
+   ===================================================================== */
+function arayuzTazele(){
+  let basili = 0;
+  BUTONLAR.forEach(ad=>{
+    const h = el("bh-"+ad);
+    const b = durum.buttons[ad]===1;
+    if(b) basili++;
+    h.classList.toggle("basili", b);
+    if(LEDLI.includes(ad)) h.classList.toggle("led-acik", durum.leds[ad]===1);
+  });
+  el("btn-say").textContent = basili+" basılı";
+
+  /* LED paneli */
+  let acik = 0;
+  LEDLI.forEach(ad=>{
+    const a = durum.leds[ad]===1;
+    if(a) acik++;
+    el("lm-"+ad).classList.toggle("acik", a);
+  });
+  el("led-say").textContent = acik+"/7";
+
+  /* toggle */
+  el("t1-iz").querySelectorAll(".tg-poz").forEach(p=>{
+    p.classList.toggle("etkin", String(durum.toggles.T1)===p.dataset.d);
+  });
+  el("t2-iz").querySelectorAll(".tg-poz").forEach(p=>{
+    p.classList.toggle("etkin", durum.toggles.T2===p.dataset.d);
+  });
+
+  joyCiz("c-j1","i-j1","J1_X","J1_Y");
+  joyCiz("c-j2","i-j2","J2_X","J2_Y");
+}
+
+/* --- joystick cizimi --- */
+function normalize(eksen){
+  const ham = durum.joysticks[eksen];
+  const m = merkez[eksen];
+  const yay = ham >= m ? (ADC_MAKS - m) : m;
+  return yay ? (ham - m) / yay : 0;   // -1 .. +1
+}
+function joyCiz(cid, iid, ex, ey){
+  const c = el(cid), g = c.getContext("2d");
+  const G = c.width, O = G/2, R = G*0.44;
+  g.clearRect(0,0,G,G);
+
+  /* izgara */
+  g.strokeStyle = "#1e2630"; g.lineWidth = 2;
+  g.beginPath(); g.arc(O,O,R,0,Math.PI*2); g.stroke();
+  g.beginPath(); g.arc(O,O,R*0.5,0,Math.PI*2); g.stroke();
+  g.beginPath(); g.moveTo(O-R,O); g.lineTo(O+R,O);
+  g.moveTo(O,O-R); g.lineTo(O,O+R); g.stroke();
+
+  /* deadzone (esik 40 birim) */
+  const dz = R * (ESIK/2048);
+  g.strokeStyle = "rgba(255,201,77,.45)"; g.lineWidth = 1.5;
+  g.beginPath(); g.arc(O,O,Math.max(dz,3),0,Math.PI*2); g.stroke();
+
+  const nx = normalize(ex), ny = normalize(ey);
+  const px = O + nx*R, py = O - ny*R;    // Y ekseni yukari pozitif
+
+  /* iz cizgisi */
+  g.strokeStyle = "rgba(53,208,255,.5)"; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(O,O); g.lineTo(px,py); g.stroke();
+
+  /* stik */
+  g.fillStyle = "#35d0ff";
+  g.shadowColor = "#35d0ff"; g.shadowBlur = 14;
+  g.beginPath(); g.arc(px,py,G*0.055,0,Math.PI*2); g.fill();
+  g.shadowBlur = 0;
+
+  /* merkez */
+  g.fillStyle = "#5c6b7a";
+  g.beginPath(); g.arc(O,O,3,0,Math.PI*2); g.fill();
+
+  el(iid).innerHTML =
+    `X <b>${durum.joysticks[ex]}</b> → <b>${nx>=0?"+":""}${nx.toFixed(3)}</b><br>` +
+    `Y <b>${durum.joysticks[ey]}</b> → <b>${ny>=0?"+":""}${ny.toFixed(3)}</b>`;
+}
+
+/* --- joystick tiklama ile benzetim --- */
+[["c-j1","J1_X","J1_Y"],["c-j2","J2_X","J2_Y"]].forEach(([cid,ex,ey])=>{
+  const c = el(cid);
+  let bas = false;
+  const gonder = e=>{
+    const r = c.getBoundingClientRect();
+    const nx = ((e.clientX - r.left)/r.width - 0.5)*2;
+    const ny = -(((e.clientY - r.top)/r.height - 0.5)*2);
+    const s = v => Math.max(0, Math.min(ADC_MAKS,
+      Math.round(2048 + Math.max(-1,Math.min(1,v/0.88)) * 2047)));
+    simGonder({tur:"eksen",ad:ex,deger:s(nx)});
+    simGonder({tur:"eksen",ad:ey,deger:s(ny)});
+  };
+  c.addEventListener("pointerdown", e=>{bas=true; c.setPointerCapture(e.pointerId); gonder(e);});
+  c.addEventListener("pointermove", e=>{ if(bas) gonder(e); });
+  c.addEventListener("pointerup",   ()=>{bas=false;});
+  c.addEventListener("dblclick", ()=>{
+    simGonder({tur:"eksen",ad:ex,deger:2048});
+    simGonder({tur:"eksen",ad:ey,deger:2048});
+  });
+});
+
+/* --- kalibrasyon --- */
+el("b-kalibre").onclick = ()=>{
+  EKSENLER.forEach(e=> merkez[e] = durum.joysticks[e]);
+  kalibreEdildi = true;
+  el("kalb-bilgi").innerHTML = "Merkez kalibre edildi: " +
+    EKSENLER.map(e=>`${e}=<b>${merkez[e]}</b>`).join(" · ");
+  arayuzTazele();
+};
+el("b-kalibre-sil").onclick = ()=>{
+  EKSENLER.forEach(e=> merkez[e] = 2048);
+  kalibreEdildi = false;
+  el("kalb-bilgi").textContent = "Merkez: varsayılan 2048 (kalibre edilmedi)";
+  arayuzTazele();
+};
+
+/* =====================================================================
+   HAM AKIS
+   ===================================================================== */
+const AKIS_MAKS = 200;
+el("b-temizle").onclick = ()=>{ el("akis").innerHTML=""; el("akis-say").textContent="0"; };
+el("b-dondur").onclick = e=>{
+  dondu = !dondu;
+  e.target.textContent = dondu ? "Devam Et" : "Dondur";
+  e.target.classList.toggle("ana", dondu);
+};
+function akisEkle(metin, sinif, yon){
+  if(dondu) return;
+  if(el("joy-gizle").checked && sinif==="e-joy") return;
+  const a = el("akis");
+  const d = document.createElement("div");
+  d.className = sinif;
+  const t = new Date();
+  const zm = t.toLocaleTimeString("tr-TR",{hour12:false}) + "." +
+             String(t.getMilliseconds()).padStart(3,"0");
+  d.innerHTML = `<span class="zm">${zm} ${yon}</span>` +
+    metin.replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+  a.appendChild(d);
+  while(a.children.length > AKIS_MAKS) a.removeChild(a.firstChild);
+  a.scrollTop = a.scrollHeight;
+  el("akis-say").textContent = a.children.length;
+}
+function sistemSatiri(m){ akisEkle("— "+m+" —","e-sys","**"); }
+
+/* =====================================================================
+   OLCUM
+   ===================================================================== */
+function sayacGuncelle(){ el("o-toplam").textContent = sayToplam; }
+setInterval(()=>{
+  const t = performance.now();
+  sonSaniye = sonSaniye.filter(x => t-x < 1000);
+  el("o-hiz").textContent = sonSaniye.length;
+  el("o-sure").textContent = baglandiMs
+    ? Math.floor((Date.now()-baglandiMs)/1000)+"s" : "0s";
+}, 250);
+
+function durumYaz(sinif, yazi){
+  const n = el("durum-nokta");
+  n.className = sinif==="acik" ? "acik" : (sinif==="bekliyor" ? "bekliyor" : "");
+  el("durum-yazi").textContent = yazi;
+}
+
+/* ilk cizim */
+arayuzTazele();
+sistemSatiri("Test sayfası hazır. Köprü adresini girip Bağlan'a basın.");
+</script>
+</body>
+</html>

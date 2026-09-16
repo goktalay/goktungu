@@ -7,6 +7,29 @@
 // ---------------------------------------------------------------
 const wsDurum = document.getElementById("wsDurum");
 
+// FAZ20-OFFLINE-KAMERA-OTURUM: Canlı MJPEG URL'si yalnız kamera kimliği
+// taşır. WebSocket oturum jetonu URL'ye yazılmaz; aynı origin'e HTTPS/yerel
+// HTTP üzerinden Authorization başlığıyla verilir ve sunucu HttpOnly çerez
+// üretir. Başarısızlık görüntü hattını açmaz.
+async function kameraOturumuAc(jeton){
+  if (!jeton || typeof jeton !== "string") return false;
+  try {
+    const yanit = await fetch("/api/istemci/kamera_oturum", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + jeton
+      },
+      body: "{}"
+    });
+    return !!yanit.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Sunucu tarafindaki WS_PORTLAR listesiyle ayni sirada olmali
 const WS_PORTLAR = [8765, 8766, 8777, 9765];
 const WSS_PORT = 9443; // sunucudaki WSS_PORT sabitiyle ayni olmali
@@ -50,14 +73,29 @@ function telemetriIsle(m){
   // Replay mesajindaki radar durumu gecmis kayittir; canli radar
   // panelini (baglanti/ayar/saglik) replay verisiyle ezme
   _guvenli("radar_paneli", () => {
-    if (m.radar && !m.replay) radarPaneliGuncelle(m.radar);
+    // v2.4.190: coklu radar — liste geldiyse secili radarin durumu panele
+    // gider; eski tek `radar` alani yalniz liste yoksa kullanilir.
+    if (!m.replay){
+      if (m.radarlar && typeof radarListesiGuncelle === "function")
+        radarListesiGuncelle(m.radarlar, m.radar);
+      else if (m.radar) radarPaneliGuncelle(m.radar);
+    }
   });
 
   // M50 HVS SDK Merkezde yüklenmez; bu alan yalnız yetkili saha
   // Köprüsünün arındırılmış durum/yerel akış özetidir. Bir hata diğer
   // telemetri bileşenlerini etkilemez.
   _guvenli("m50_paneli", () => {
-    if (m.m50 && !m.replay && typeof m50PaneliGuncelle === "function")
+    // v2.4.191: coklu EO — liste geldiyse secili cihazin paketi panele gider.
+    // v2.4.200: menu bayragi LISTEDEN ONCE ve ayri korumada uygulanir;
+    // liste cizimi hata verse bile Elektro-Optik menusu kapali kalmaz
+    // (kullanici bildirimi: "F5'te once gorunuyor sonra kalkiyor").
+    if (!m.replay && Array.isArray(m.eo_cihazlar) && typeof window.m50YerelDurum === "function"){
+      try { window.m50YerelDurum(m.eo_cihazlar.some(c => c && c.yerel_sdk)); } catch (e) {}
+    }
+    if (!m.replay && m.eo_cihazlar && typeof window.eoListesiGuncelle === "function")
+      window.eoListesiGuncelle(m.eo_cihazlar, m.m50);
+    else if (m.m50 && !m.replay && typeof m50PaneliGuncelle === "function")
       m50PaneliGuncelle(m.m50);
   });
 
@@ -70,9 +108,10 @@ function telemetriIsle(m){
     _guvenli("grafik",          () => grafikOrnekle((m.radar_izler || []).length));
   }
 
-  _guvenli("kayit_durum",     () => { if (m.kayit_durum) kayitDurumGuncelle(m.kayit_durum); });
-  _guvenli("replay_durum",    () => { if (m.replay_durum) replayDurumGuncelle(m.replay_durum); });
-  _guvenli("takipci_ayarlar", () => { if (m.takipci_ayarlar) takipciAyarSenkron(m.takipci_ayarlar); });
+  // v2.4.227: kayit/replay/filtre panelleri kaldirildi (kayit.js, filtreler.js yuklenmez)
+  _guvenli("kayit_durum",     () => { if (m.kayit_durum && typeof kayitDurumGuncelle === "function") kayitDurumGuncelle(m.kayit_durum); });
+  _guvenli("replay_durum",    () => { if (m.replay_durum && typeof replayDurumGuncelle === "function") replayDurumGuncelle(m.replay_durum); });
+  _guvenli("takipci_ayarlar", () => { if (m.takipci_ayarlar && typeof takipciAyarSenkron === "function") takipciAyarSenkron(m.takipci_ayarlar); });
   _guvenli("konsol",          () => { if (m.konsol) konsolGuncelle(m.konsol); });
 
   // DRONLAR — en kritik alt sistem.
@@ -85,6 +124,10 @@ function telemetriIsle(m){
       if (m.dron_renkler) window.dronRenkler = m.dron_renkler;
     });
     const gelenDronlar = m.dronlar || [];
+    window.dronlarSon = gelenDronlar;   // v2.4.220: harita cevrimici listesi
+    _guvenli("kamera_canli", () => {
+      if (typeof window.haritaKameraCanliIsle === "function") window.haritaKameraCanliIsle(m.kamera_canli || []);
+    });
     _guvenli("dron_temizle", () => {
       if (gelenDronlar.length === 0 && Object.keys(sonVeri).length > 0)
         tumDronlariTemizle();
@@ -180,7 +223,6 @@ function wsBaglan(){
     hicBaglanmadi = false;
     wsDurum.textContent = D().wsBagli(port);
     wsDurum.className = "f-iyi";
-    btnRadarBaglan.disabled = false;
     if (typeof siniflandirmaDurumSorgula === "function")
       siniflandirmaDurumSorgula();
     // v2.4.51: veritabani yapilandirmasini sor. Yanit (pg_durum)
@@ -201,7 +243,7 @@ function wsBaglan(){
   ws.onclose = () => {
     wsDurum.textContent = D().wsKoptu;
     wsDurum.className = "f-kotu";
-    btnRadarBaglan.disabled = true;
+    // v2.4.227: eski radar paneli dugmesi kaldirildi (radar_pencere.js kendi durumunu telemetriden okur)
     // Henuz hic baglanamadiysak siradaki aday portu dene,
     // once baglanip koptuysak ayni portta bekle
     if (hicBaglanmadi) wsPortIdx = (wsPortIdx + 1) % WS_PORTLAR.length;
@@ -405,7 +447,9 @@ function wsBaglan(){
       if (typeof window.istasyon2SonucIsle === "function")
         window.istasyon2SonucIsle(m);
     } else if (m.tip === "giris_sonuc"){
-
+      // Çerez hazırlanması tamamlanmadan kamera paneli çizilmez; aksi halde
+      // ilk <img> isteği 401 alır ve gereksiz yeniden deneme başlatır.
+      const devam = function(){
         girisSonucIsle(m);
         // IS108: Firma oturumu doğrulandıktan sonra kayıtlı dron UID/ID→SYSID
         // özeti ve yalnız son onaylı küçük kareler istenir. Girişten önce
@@ -413,6 +457,12 @@ function wsBaglan(){
         if (m.basarili && ws && ws.readyState === WebSocket.OPEN){
           ws.send(JSON.stringify({tip:"goruntu_son_kareler"}));
         }
+      };
+      if (m.basarili && m.jeton){
+        kameraOturumuAc(m.jeton).then(devam, devam);
+      } else {
+        devam();
+      }
     } else if (m.tip === "kullanici_liste"){
       kullaniciListeCiz(m.kullanicilar || []);
       if (typeof window.pilotHakkindaKullaniciTazele === "function")
@@ -552,6 +602,13 @@ function wsBaglan(){
       // v2.4.45: konsol ilk acildiginda (ya da temizlendiginde) gecmis
       if (typeof window.dronKonsolGecmis === "function")
         window.dronKonsolGecmis(m);
+    } else if (m.tip === "kamera_konsol_satir"){
+      // v2.4.189: kamera satirinin altindaki konsola tek satir
+      if (typeof window.kameraKonsolSatir === "function")
+        window.kameraKonsolSatir(m);
+    } else if (m.tip === "kamera_konsol_gecmis"){
+      if (typeof window.kameraKonsolGecmis === "function")
+        window.kameraKonsolGecmis(m);
     } else if (m.tip === "log_listesi"){
       if (typeof window.dkLogListesiGeldi === "function")
         window.dkLogListesiGeldi(m.sysid, m.loglar || [], m.hata);
@@ -584,14 +641,14 @@ function wsBaglan(){
       if (typeof window.hrtCacheIlerleme === "function")
         window.hrtCacheIlerleme(m);
     } else if (m.tip === "kayit_listesi"){
-      kayitListeCiz(m.kayitlar || []);
+      if (typeof kayitListeCiz === "function") kayitListeCiz(m.kayitlar || []);
     } else if (m.tip === "replay_bitti"){
-      replayDurumGuncelle({aktif: false});
+      if (typeof replayDurumGuncelle === "function") replayDurumGuncelle({aktif: false});
     } else if (m.tip === "siniflandirma_durum"){
       if (typeof siniflandirmaDurumUygula === "function")
         siniflandirmaDurumUygula(m.ayar);
     } else if (m.tip === "etiket_listesi"){
-      if (m.dosya === replayDosya){
+      if (typeof replayDosya !== "undefined" && m.dosya === replayDosya){
         etiketler = m.etiketler || {};
         if (typeof etiketRozetleriTazele === "function") etiketRozetleriTazele();
       }
@@ -629,6 +686,8 @@ function wsBaglan(){
     // v2.4.66: merkez kullanici esitlemesi (sihirbaz adim 4).
     // GIRIS ONCESI gelir: yerel kullanici tablosu bos oldugu icin
     // kimlik dogrulanamaz; yonlendirme KOSULSUZ olmalidir.
+    } else if (m.tip === "lisans_yenile_sonuc"){
+      if (typeof window.lisansYenileSonuc === "function") window.lisansYenileSonuc(m);
     } else if (m.tip === "merkez_esitle_sonuc"){
       if (typeof window.pgSonucGeldi === "function")
         window.pgSonucGeldi(m);
@@ -678,7 +737,17 @@ function wsBaglan(){
     } else if (m.tip === "ai_tespit_islem_sonuc"){
       if (typeof window.aiIslemSonucIsle === "function")
         window.aiIslemSonucIsle(m);
+    } else if (m.tip === "video_kayit_durum"){
+      // v2.4.210: M50 penceresi video kaydi durumu
+      if (typeof window.videoKayitDurumIsle === "function")
+        window.videoKayitDurumIsle(m);
+    } else if (m.tip === "ai_kutular"){
+      // v2.4.164: canli AI kutulari (videoda cift tikla takip icin)
+      if (typeof window.kameraAiKutularIsle === "function")
+        window.kameraAiKutularIsle(m);
     } else if (m.tip === "ai_takip_sonuc" || m.tip === "ai_takip"){
+      if (typeof window.kameraTakipIsle === "function")
+        window.kameraTakipIsle(m);
       // v2.4.2: hedef takibi baslatma sonucu + canli takip durumu
       if (typeof window.dronTakipIsle === "function")
         window.dronTakipIsle(m);

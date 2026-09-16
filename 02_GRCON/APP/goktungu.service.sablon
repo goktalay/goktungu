@@ -1,0 +1,62 @@
+[Unit]
+# GOKTUNGU GCS - Yer Kontrol Istasyonu (v2.4.49)
+# Bu dosya bir SABLONdur; servis_kur.sh icindeki yer tutuculari doldurur.
+#   @KULLANICI@  -> servisi calistiracak kullanici (root DEGIL)
+#   @GRUP@       -> kullanicinin birincil grubu
+#   @KOK@        -> kurulum dizini (main.py'nin bulundugu dizin)
+#   @PYTHON@     -> python3 yorumlayicisinin tam yolu
+Description=GOKTUNGU GCS - Yer Kontrol Istasyonu
+Documentation=file://@KOK@/GOKTUNGU_KURULUM_VE_SURUM_NOTLARI.md
+
+# Ag hazir olmadan baslamasin: sunucu TCP portlarina baglanir ve
+# harita onbellegi/AI sunuculari icin ag erisimi ister.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# ---- Kimlik -------------------------------------------------------------
+# Servis KULLANICI hesabiyla calisir, root olarak DEGIL. Bunun iki nedeni
+# var: (1) root olarak calisirsa veri/ ve gunluk dosyalarinin sahipligi
+# root'a gecer ve kullanici programi elle baslattiginda "izin yok" hatasi
+# alir; (2) GCS'in root yetkisine ihtiyaci yoktur.
+User=@KULLANICI@
+Group=@GRUP@
+
+# ---- Calisma dizini ----------------------------------------------------
+# KRITIK: main.py goreli yollar kullanir (veri/, js/, css/, sitl/).
+# WorkingDirectory verilmezse servis / dizininde baslar ve hicbir dosyayi
+# bulamaz. Bu, servis kurulumlarinda en sik yapilan hatadir.
+WorkingDirectory=@KOK@
+ExecStart=@PYTHON@ -u @KOK@/main.py
+
+# ---- Kapanis -----------------------------------------------------------
+# main.py SIGTERM'de sanal dron (SITL) sureclerini temizleyip cikar.
+# v2.4.49'de olculen kapanis suresi ~1 saniyedir; 30 saniye bol paydir.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# KillMode=mixed: SIGTERM yalniz ana surece gider (kendi temizligini
+# yapabilsin), SIGKILL gerekirse tum gruba gider. "control-group" olsaydi
+# SITL surecleri ana surecle ayni anda SIGTERM alir ve programin duzenli
+# temizligi yarida kalirdi.
+KillMode=mixed
+
+# ---- Kendini toparlama -------------------------------------------------
+Restart=on-failure
+RestartSec=5
+
+# Cakilma dongusune girmesin: 5 dakikada 5 denemeden fazlasi olursa dur.
+# Aksi halde yapilandirma hatasi varsa surec sonsuz dongude yeniden baslar
+# ve gunlugu doldurur.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# ---- Gunluk ------------------------------------------------------------
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=goktungu
+
+[Install]
+WantedBy=multi-user.target
