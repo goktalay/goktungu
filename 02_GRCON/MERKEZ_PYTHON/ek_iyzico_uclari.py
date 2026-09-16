@@ -98,7 +98,7 @@ def _u_genel_fiyatlar(h, istek, oturum):
         "tamam": True,
         "paketler": liste,
         "yillik_indirim": paket.YILLIK_INDIRIM,
-        "tahsilat": "Gokkubbe Teknoloji Anonim Sirketi",
+        "tahsilat": "Turkbey Teknoloji Anonim Sirketi",
         "saglayici": "iyzico",
         "odeme_acik": iyzico.yapilandirilmis_mi(),
     })

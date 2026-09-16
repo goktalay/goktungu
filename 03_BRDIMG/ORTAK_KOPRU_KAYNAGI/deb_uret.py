@@ -48,7 +48,7 @@ from kopru.surumler import KOPRU_SURUM  # noqa: E402
 
 PAKET_AD = "goktungu-kopru"
 MIMARI = "all"
-BAKIMCI = "Gokkubbe Teknoloji <destek@gokkubbetech.com>"
+BAKIMCI = "Turkbey Teknoloji <destek@gokkubbetech.com>"
 HEDEF = "/opt/goktungu/kopru"
 VERI = "/var/lib/goktungu-kopru"
 SERVIS_KULLANICI = "goktungu-kopru"

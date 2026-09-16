@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.227";
+const GCS_SURUM = "2.4.228";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.228",
+    tarih: "2026-09-16",
+    baslik: "Sahip firma unvanı Türkbey Teknoloji Anonim Şirketi olarak güncellendi (paket 2.5.98)",
+    maddeler: [
+      "ŞİRKET UNVANI (kullanıcı isteği): Program Hakkında telif satırı, harita üzerindeki merkez işareti ve kısayol ipucu, kurulum/paket künyeleri ve tüm görünen metinlerde 'Gökkubbe Teknoloji Anonim Şirketi' → 'Türkbey Teknoloji Anonim Şirketi'. Alan adı, e-posta adresleri ve paket kimlikleri değişmedi."
+    ]
+  },
   {
     surum: "2.4.227",
     tarih: "2026-09-16",
@@ -1227,12 +1235,12 @@ const GCS_SURUM_GECMISI = [
       "SONUC: Arayuz 6/6, sunucu 7/7. Kontrol deneyleri sirasiyla 1/6 ve 4/7 - kusur birebir olculuyor."
     ] },
   { s: "2.4.120", t: "2026-08-21",
-    b: "Gokkubbe Teknoloji harita konumu duzeltildi + haritaya kurumsal kisayol dugmesi [IS62_SURUM_v1]",
+    b: "Turkbey Teknoloji harita konumu duzeltildi + haritaya kurumsal kisayol dugmesi [IS62_SURUM_v1]",
     m: [
-      "BELIRTI: Gokkubbe Teknoloji isareti harita uzerinde YANLIS koordinatta gosteriliyordu.",
+      "BELIRTI: Turkbey Teknoloji isareti harita uzerinde YANLIS koordinatta gosteriliyordu.",
       "OLCUM: Yanlis deger tek yerde tanimliydi (js/harita_pilot_konum.js) - lat 39.9334 / lon 32.5785. Gercek adres 39.973112 / 32.546172. Haversine ile olculen sapma 5205 m (5.21 km); isaret Sincan'da bambaska bir noktayi gosteriyordu.",
       "TEK NOKTADAN DUZELTME: Sabit ayni dosya icinde DORT yerde okunuyor - harita isareti konumu, ilk giris acilis konumu, `haritaGokkubbeyeGit()` ve `haritaGokkubbeKoordinat()`. Dagilmis nusha olmadigi AST/metin taramasiyla dogrulandi, bu yuzden tek satirlik duzeltme dordunu birden duzeltir.",
-      "KISAYOL DUGMESI: Harita arac grubuna (arama/cetvel/sigdir/konumuma) BESINCI dugme olarak uygulama ikonu eklendi ve kumenin ILK ogesi yapildi. Tiklaninca Gokkubbe adresine ucar (Cesium camera.flyTo, 2600 m).",
+      "KISAYOL DUGMESI: Harita arac grubuna (arama/cetvel/sigdir/konumuma) BESINCI dugme olarak uygulama ikonu eklendi ve kumenin ILK ogesi yapildi. Tiklaninca Turkbey adresine ucar (Cesium camera.flyTo, 2600 m).",
       "ISLEV ZATEN VARDI: `window.haritaGokkubbeyeGit` 2.4.x boyunca tanimliydi ve kod yorumunda 'menu/kisayol eklenmek istenirse' yaziyordu; onu cagiran dugme hic eklenmemisti. Zincirin her halkasi olculdu (viewer koprusu -> merkezeGit -> camera.flyTo) ve saglam oldugu dogrulandi.",
       "YAMA ICI KUSUR YAKALANDI: Dugmenin ilk halinde HTML/CSS/i18n vardi ama TIKLAMA OLAYI BAGLANMAMISTI - dugme gorunur ama islevsiz olacakti. Gorsel denetimde yakalandi ve baglama eklendi.",
       "BAGLAMA YERI OLCUMLE SECILDI: harita_pilot_konum.js, harita.js'ten SONRA yuklenir (index.html:1813 vs 1819). Baglama harita.js icinde yapilsaydi islev o an henuz tanimsiz olurdu. Tanim ve baglama ayni dosyada yan yana durur; ileride biri degisirse digeri gozden kacmaz.",
@@ -1748,7 +1756,7 @@ const GCS_SURUM_GECMISI = [
   { s: "2.4.82", t: "2026-08-18", d: "AI paneli ve tespit gecmisi merkez kipinde acilmiyordu: saha vekili, sunucu katmaninin cagirdigi 17 yontemin yalniz 3'unu tasiyordu. Eksik 14 yontem tamamlandi — veritabani isleri tek kaynaktan devralindi, saha erisimi gerektiren uc yontem (hedef takibi, yuz vektoru) kopruye devredildi. Saglik durumu artik kopruden turetiliyor." },
   { s: "2.4.81", t: "2026-08-18", d: "Panel ust barlari birlestirildi: Kisiler, Araclar, AI Sunuculari, Kayitsiz Tespitler ve Tespit Gecmisi panellerinde ekleme dugmeleri ve filtreler govdeden ust bara tasindi (Kameralar/Rotalar deseni). Suru Ucus kurulumunda SLAVE EKLE ve SURUYU BASLAT ust bara alindi. Bos durumlar duz gri metin yerine 64px ikonlu kutuya cevrildi (Kisiler, Araclar, Kayitsiz Tespitler, Tespit Gecmisi, AI Sunuculari, Baglanti Yoneticisi). Kamera tipleri ikonlu dugme kumesi olarak eklendi; protokol listesi erisilebilirlik icin korundu." },
   { s: "2.4.80", t: "2026-08-18", d: "Dronlar > Gecmis Yonetimi menusu duzeltildi: menu bagi var olmayan tbDronGecmis dugmesine tiklamaya calisiyordu, artik gecmis paneli dogrudan aciliyor." },
-  { s: "2.4.79", t: "2026-08-18", d: "Harita acilis konumu PILOT BAZINDA saklanir; ilk girise kurumsal adres ve Gokkubbe isareti geldi. Genel ayar duyurusu artik pilotun kendi gorunumunu ezmez (radar merkezi islevi korunur)." },
+  { s: "2.4.79", t: "2026-08-18", d: "Harita acilis konumu PILOT BAZINDA saklanir; ilk girise kurumsal adres ve Turkbey isareti geldi. Genel ayar duyurusu artik pilotun kendi gorunumunu ezmez (radar merkezi islevi korunur)." },
   {
     s: "2.4.78", t: "2026-08-18",
     d: [
@@ -1840,9 +1848,9 @@ const GCS_SURUM_GECMISI = [
     s: "2.4.70", t: "2026-08-17",
     d: [
       "URUN ADI ARTIK GOKTUNGU. GOKTUNGU adi arayuzden tamamen kaldirildi: sekme basligi, ust serit basligi, menu ogesi, ucus duvari basligi, PWA uygulama adi ve Program Hakkinda penceresi yeni ada cekildi. Teknik kimlikler DEGISMEDI -- servis adi (goktungu-app), oturum anahtari (goktungu_oturum), sunucu basligi (X-Goktungu-Hata), dosya yollari ve Python paket adi ayni kaldi; bunlar marka degil calisan sistemin kimligidir ve degistirilmesi oturumlari ve servisleri kirardi",
-      "FIRMA LOGOSU DONGUSU KALDIRILDI. Program Hakkinda penceresindeki logoya CTRL + tiklandiginda uc firma logosu arasinda donuluyordu (GOKKUBBE, VEILOX, NOVIXAIR). Artik firma logosu kullanilmiyor; yalnizca GOKTUNGU urun logosu gosteriliyor. Firma adi tek yerde geciyor: sahiplik satiri. Donguden kalan secim tarayicida durabilecegi icin `gcs_logo` yerel kaydi da temizleniyor -- aksi halde bu anahtari okuyan bir kod eski firma logosunu geri yazabilirdi",
+      "FIRMA LOGOSU DONGUSU KALDIRILDI. Program Hakkinda penceresindeki logoya CTRL + tiklandiginda uc firma logosu arasinda donuluyordu (TURKBEY, VEILOX, NOVIXAIR). Artik firma logosu kullanilmiyor; yalnizca GOKTUNGU urun logosu gosteriliyor. Firma adi tek yerde geciyor: sahiplik satiri. Donguden kalan secim tarayicida durabilecegi icin `gcs_logo` yerel kaydi da temizleniyor -- aksi halde bu anahtari okuyan bir kod eski firma logosunu geri yazabilirdi",
       "LOGO ARTIK TEMAYLA BIRLIKTE DEGISIYOR. Koyu temada acik yazili, acik temada koyu yazili surum gosteriliyor; tema anahtari degistiginde logo ayni anda degisir. Koyu temada logolara uygulanan beyaz parlama suzgeci kaldirildi: eski firma logolari koyu ve renkli oldugu icin gerekliydi, yeni logonun koyu tema surumu zaten acik yazili uretildi ve ayni suzgec yaziyi dagitip okunurlugu dusuruyordu",
-      "SAHIPLIK SATIRI TAM UNVANA CEVRILDI: 'Gokkubbe Teknoloji Anonim Sirketi'. Kisaltilmis yazim yerine ticaret sicilinde kayitli tam unvan kullaniliyor",
+      "SAHIPLIK SATIRI TAM UNVANA CEVRILDI: 'Turkbey Teknoloji Anonim Sirketi'. Kisaltilmis yazim yerine ticaret sicilinde kayitli tam unvan kullaniliyor",
       "YETKI METNINDEKI MARKA ADI ROL ADINA CEVRILDI. Radar ve Yer Kontrol Istasyonu Dual yetkisini anlatan surum kaydinda 'yalnizca VEILOX ust yoneticisi acar' yaziyordu; artik boyle bir marka olmadigi icin bu ibare yetki seviyesini anlatmak yerine marka gibi okunuyordu. Metin 'yalnizca ust yonetici acar' oldu. Koddaki `veilox` yetki anahtari DEGISMEDI",
       "KURUM UNVANI ORNEK METNI GUNCELLENDI. Sirket bilgileri formundaki unvan alaninin ornegi eski firma adini gosteriyordu",
     ],

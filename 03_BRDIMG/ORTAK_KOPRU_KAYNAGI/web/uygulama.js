@@ -841,7 +841,7 @@ function hakkindaHtml(ad, surum, gecmis){
     + '<div class="hk-surum">Sürüm <b>' + kacis(surum || '—') + '</b>'
     + (tarih ? ' &middot; ' + kacis(tarih) : '') + '</div>'
     + (firma ? '<div class="hk-firma">' + kacis(firma) + '</div>' : '')
-    + '<div class="hk-telif">© 2026 Gökkubbe Teknoloji Anonim Şirketi</div>'
+    + '<div class="hk-telif">© 2026 Türkbey Teknoloji Anonim Şirketi</div>'
     + '</div>';
 }
 

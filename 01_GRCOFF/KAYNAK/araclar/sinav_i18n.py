@@ -213,7 +213,7 @@ JS_TAZELER = {
 
 # Ozel isim / marka / birim: cevrilmez.
 OZEL_AD = re.compile(
-    r"^(G[ÖO]ZC[ÜU]|GOKKUBBE|G[ÖO]KKUBBE|VEILOX|MKE|NOVIXAIR"
+    r"^(G[ÖO]ZC[ÜU]|TURKBEY|G[ÖO]KKUBBE|VEILOX|MKE|NOVIXAIR"
     r"|ArduPilot|Mission Planner|Cesium|MAVLink|DJI|RFD900X?)",
     re.IGNORECASE,
 )

@@ -23,24 +23,24 @@ window.YASAL_EN = {
   "bas.mevzuatd": "Law No. 6698, Article 10",
 
   /* Giris */
-  "p.giris": "This notice has been prepared in accordance with Article 10 of Turkish Law No. 6698 on the Protection of Personal Data and the related Communiqué on the Procedures and Principles to be Followed in Fulfilling the Obligation to Inform, in respect of personal data processed within the GÖKTUNGU low-altitude airspace command and control system developed by Gökkubbe Teknoloji Anonim Şirketi and provided at <strong>goktungu.com</strong>.",
+  "p.giris": "This notice has been prepared in accordance with Article 10 of Turkish Law No. 6698 on the Protection of Personal Data and the related Communiqué on the Procedures and Principles to be Followed in Fulfilling the Obligation to Inform, in respect of personal data processed within the GÖKTUNGU low-altitude airspace command and control system developed by Türkbey Teknoloji Anonim Şirketi and provided at <strong>goktungu.com</strong>.",
 
   /* 1. Rol */
   "h.rol": "1. Distinction Between Data Controller and Data Processor",
   "p.rol1": "GÖKTUNGU is a multi-tenant system. Each organisation registers with its own tax identity and legal title, and manages its own user accounts, pilot roster and operational data within its own tenant space. For data protection purposes this structure creates two distinct levels of responsibility.",
   "t.rol.h1": "Data set",
   "t.rol.h2": "Data controller",
-  "t.rol.h3": "Position of Gökkubbe",
+  "t.rol.h3": "Position of Türkbey",
   "t.rol.a1": "Pilot, personnel, person, vehicle and operational data entered into the system by the organisation",
   "t.rol.a2": "The relevant organisation (tenant)",
   "t.rol.a3": "Data processor — hosting and operation upon the organisation's instructions",
   "t.rol.b1": "Contact data of the organisation's representative arising from the contract, registration and support relationship",
-  "t.rol.b2": "Gökkubbe Teknoloji Anonim Şirketi",
+  "t.rol.b2": "Türkbey Teknoloji Anonim Şirketi",
   "t.rol.b3": "Data controller",
   "t.rol.c1": "System security records (sign-in attempts, client registrations)",
-  "t.rol.c2": "Gökkubbe and the relevant organisation (joint)",
+  "t.rol.c2": "Türkbey and the relevant organisation (joint)",
   "t.rol.c3": "Data controller — for legal obligation and security purposes",
-  "not.rol": "<strong>Notice to organisations.</strong> When you enter personal data relating to your personnel, third parties or vehicles into the system, you are the data controller in respect of that data. The obligation to inform the data subjects, to obtain explicit consent where required, and to determine retention periods rests with your organisation. Gökkubbe hosts and processes such data solely upon your instructions.",
+  "not.rol": "<strong>Notice to organisations.</strong> When you enter personal data relating to your personnel, third parties or vehicles into the system, you are the data controller in respect of that data. The obligation to inform the data subjects, to obtain explicit consent where required, and to determine retention periods rests with your organisation. Türkbey hosts and processes such data solely upon your instructions.",
 
   /* 2. Veri kategorileri */
   "h.veri": "2. Categories of Personal Data Processed",
@@ -142,13 +142,13 @@ window.YASAL_EN = {
   /* 9. Basvuru */
   "h.basvuru": "9. How to Apply",
   "p.basvuru1": "You may submit requests concerning your rights in writing to our registered office, together with information establishing your identity. Depending on its nature, your request will be concluded free of charge as soon as possible and in any event within thirty days of the date on which it reaches us. Where the process entails an additional cost, a fee within the tariff determined by the Board may be charged.",
-  "p.basvuru2": "Where the data has been entered into the system by your organisation, you should address your request primarily to the <strong>relevant organisation</strong>, since that organisation is the data controller in respect of such data. Gökkubbe fulfils such requests as a data processor, acting upon the organisation's instructions.",
+  "p.basvuru2": "Where the data has been entered into the system by your organisation, you should address your request primarily to the <strong>relevant organisation</strong>, since that organisation is the data controller in respect of such data. Türkbey fulfils such requests as a data processor, acting upon the organisation's instructions.",
 
   /* 10. Degisiklik */
   "h.degisiklik": "10. Amendments to this Notice",
   "p.degisiklik1": "This notice may be updated in line with legislative developments and functional changes made to the system. The current text is always published at this address and its effective date is shown in the heading.",
 
-  "kunye": "<strong>Data Controller:</strong> Gökkubbe Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
+  "kunye": "<strong>Data Controller:</strong> Türkbey Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
 
   /* Alt bilgi */
   "ft.tanim": "GÖKTUNGU is a command and control system that fuses radar, unmanned aircraft and AI vision sources into a single operational picture for low-altitude airspace awareness.",
@@ -156,6 +156,6 @@ window.YASAL_EN = {
   "ft.yasal": "Legal",
   "ft.iletisim": "Contact",
   "ft.ulke": "Türkiye",
-  "ft.kunye": "Gökkubbe Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Gökkubbe Teknoloji Anonim Şirketi.",
+  "ft.kunye": "Türkbey Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Türkbey Teknoloji Anonim Şirketi.",
   "ft.surum": "Version {s}"
 };

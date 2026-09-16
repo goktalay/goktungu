@@ -2,7 +2,7 @@
 
 Paket adı: `com.gokkubbetech.goktungu`
 Sürüm: 1.0.0 (versionCode 1)
-Yayıncı: Gökkubbe Teknoloji Anonim Şirketi
+Yayıncı: Türkbey Teknoloji Anonim Şirketi
 
 ---
 
@@ -75,7 +75,7 @@ DJI Mobile SDK v5'in desteklediği kurumsal ve profesyonel araçlar
 (Matrice ve Mavic kurumsal serileri dahil). Desteklenen araç listesi
 DJI'nin SDK sürümüne bağlı olarak değişir.
 
-Gökkubbe Teknoloji Anonim Şirketi tarafından geliştirilmiştir.
+Türkbey Teknoloji Anonim Şirketi tarafından geliştirilmiştir.
 
 ### EN
 
@@ -127,7 +127,7 @@ Android 6.0 or later. ARM processor. A DJI aircraft and remote controller
 supported by DJI Mobile SDK v5. Network access to a GOKTUNGU central command
 and control system.
 
-Developed by Gokkubbe Teknoloji Anonim Sirketi.
+Developed by Turkbey Teknoloji Anonim Sirketi.
 
 ---
 
@@ -157,7 +157,7 @@ doğrulanmıştır; varsayım içermez.
 | Uygulama etkinlik günlüğü | Evet | Hayır | Uygulama işlevi (komut kaydı) | Evet |
 
 **Önemli:** Toplanan veriler yalnız kullanıcının **kendi** merkez
-sunucusuna gönderilir. Gökkubbe Teknoloji Anonim Şirketi bu verilere erişmez, üçüncü taraflarla
+sunucusuna gönderilir. Türkbey Teknoloji Anonim Şirketi bu verilere erişmez, üçüncü taraflarla
 paylaşmaz ve reklam amacıyla kullanmaz. Kapalı devre kurulumlarda veri
 kurum ağının dışına çıkmaz.
 
@@ -203,7 +203,7 @@ gerçek görüntüler ilk cihaz denemesinde alınıp değiştirilmelidir.
    paket adı için üretilip `yerel.properties` dosyasına yazılmalı.
 2. **Gizlilik politikası bağlantısı** — genel erişime açık bir URL
    zorunlu. Öneri: `https://goktungu.com/yasal/gizlilik/`
-3. **İmza anahtarının yedeği** — `gokkubbe_goktungu.jks` kaybedilirse
+3. **İmza anahtarının yedeği** — `turkbey_goktungu.jks` kaybedilirse
    güncelleme yayınlanamaz.
 4. **Kapalı deneme** — Play Console yeni yayıncılar için 12 sürekli test
    kullanıcısıyla 14 gün kapalı deneme isteyebilir.

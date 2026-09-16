@@ -67,7 +67,7 @@
 
     <string name="hakkinda_baslik">About</string>
     <string name="hakkinda_surum">Version %1$s</string>
-    <string name="hakkinda_telif">Gokkubbe Teknoloji A.S.</string>
+    <string name="hakkinda_telif">Turkbey Teknoloji A.S.</string>
     <string name="hakkinda_lisans">Third-Party Licences</string>
     <string name="hakkinda_lisans_metni">This application uses DJI Mobile SDK v5. The DJI Android SDK links dynamically against unmodified FFmpeg libraries licensed under LGPL v2.1. FFmpeg source code and build instructions: https://github.com/dji-sdk/FFmpeg — DJI sample code is provided under the MIT licence.</string>
     <string name="hakkinda_kapat">Close</string>

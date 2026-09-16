@@ -23,7 +23,7 @@ Unicode true
 
 !define URUN         "GOKTUNGU Kopru Yazilimi"
 !define URUN_KISA    "GOKTUNGU Kopru"
-!define SIRKET       "Gokkubbe Teknoloji Anonim Sirketi"
+!define SIRKET       "Turkbey Teknoloji Anonim Sirketi"
 !define SERVIS_ADI   "GoktunguKopru"
 !define PANEL_URL    "http://127.0.0.1:8790/"
 !define KAYIT_ANAHTAR "Software\Microsoft\Windows\CurrentVersion\Uninstall\GoktunguKopru"

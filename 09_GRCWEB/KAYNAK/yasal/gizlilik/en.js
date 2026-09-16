@@ -23,7 +23,7 @@ window.YASAL_EN = {
   "bas.kapsamd": "goktungu.com and field clients",
 
   /* Giris */
-  "p.giris": "This policy explains the privacy approach of the GÖKTUNGU command and control system developed by Gökkubbe Teknoloji Anonim Şirketi. For the statutory notice concerning the processing of personal data, please refer to the <a href=\"/yasal/kvkk/\">Data Protection Notice</a>. This policy sets out, at a technical level, where data resides as a consequence of the system architecture and which data never reaches any part of the system at all.",
+  "p.giris": "This policy explains the privacy approach of the GÖKTUNGU command and control system developed by Türkbey Teknoloji Anonim Şirketi. For the statutory notice concerning the processing of personal data, please refer to the <a href=\"/yasal/kvkk/\">Data Protection Notice</a>. This policy sets out, at a technical level, where data resides as a consequence of the system architecture and which data never reaches any part of the system at all.",
 
   /* 1. Ilkeler */
   "h.ilke": "1. Core Privacy Principles",
@@ -85,7 +85,7 @@ window.YASAL_EN = {
   "h.degisiklik": "9. Amendments to this Policy",
   "p.degisiklik1": "This policy may be updated in line with functional changes made to the system and with legislative developments. The current text is always published at this address and its effective date is shown in the heading. Material changes are additionally notified to organisation administrators.",
 
-  "kunye": "<strong>Publisher:</strong> Gökkubbe Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
+  "kunye": "<strong>Publisher:</strong> Türkbey Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
 
   /* Alt bilgi */
   "ft.tanim": "GÖKTUNGU is a command and control system that fuses radar, unmanned aircraft and AI vision sources into a single operational picture for low-altitude airspace awareness.",
@@ -93,6 +93,6 @@ window.YASAL_EN = {
   "ft.yasal": "Legal",
   "ft.iletisim": "Contact",
   "ft.ulke": "Türkiye",
-  "ft.kunye": "Gökkubbe Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Gökkubbe Teknoloji Anonim Şirketi.",
+  "ft.kunye": "Türkbey Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Türkbey Teknoloji Anonim Şirketi.",
   "ft.surum": "Version {s}"
 };

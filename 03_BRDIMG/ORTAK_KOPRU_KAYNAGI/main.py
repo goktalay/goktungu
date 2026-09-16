@@ -83,7 +83,7 @@ def main(argv=None):
 
     print("=" * 62)
     print(" GOKTUNGU KOPRU YAZILIMI  %s" % ayar_mod.SURUM)
-    print(" Gokkubbe Teknoloji Anonim Sirketi")
+    print(" Turkbey Teknoloji Anonim Sirketi")
     print("=" * 62)
 
     # Tek ornek kilidi: iki kopru sureci ayni merkez kimligini

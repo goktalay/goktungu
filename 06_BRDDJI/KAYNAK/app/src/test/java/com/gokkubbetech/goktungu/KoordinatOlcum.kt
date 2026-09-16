@@ -17,7 +17,7 @@ import org.junit.Test
  */
 class KoordinatOlcum {
 
-    // Referans: Ankara Sincan (Gokkubbe Teknoloji A.S. adresi)
+    // Referans: Ankara Sincan (Turkbey Teknoloji A.S. adresi)
     private val ankaraEnlem = 39.9700
     private val ankaraBoylam = 32.8200
 

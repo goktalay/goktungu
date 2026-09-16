@@ -133,7 +133,7 @@ import mk_iyzico as iyzico
 # odeme sayfasinda gorunur; ASCII'ye dusurulmus unvan ticari belge
 # hatasidir. Iki ayri ucta kopyalanmaz -- biri eskir.
 _TAHSILAT_KUNYE = {
-    "unvan": "Gökkubbe Teknoloji Anonim Şirketi",
+    "unvan": "Türkbey Teknoloji Anonim Şirketi",
     "vkn": "6290873411",
     "vergi_dairesi": "Sincan",
     "ticaret_sicil": "418199",
@@ -2993,7 +2993,7 @@ def _u_destek_p_personel(h, istek, oturum):
 # =====================================================================
 # SISTEM YONETICISI / DESTEK PERSONELI YONETIMI
 # ---------------------------------------------------------------------
-# Bu uclar Gokkubbe ic personelini yonetir (`sistem_yoneticileri`).
+# Bu uclar Turkbey ic personelini yonetir (`sistem_yoneticileri`).
 # Firma kullanicilari (`kullanicilar`) ayri bir tablodur ve
 # `/api/admin/kullanicilar` uclari ile yonetilir -- karistirilmamali.
 #

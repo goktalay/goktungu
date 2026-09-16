@@ -83,7 +83,7 @@ window.YASAL_EN = {
   "h.degisiklik": "7. Amendments to this Policy",
   "p.degisiklik1": "Should a new local storage record be added to the system, this table will be updated and the effective date changed. No tracking or advertising technology is envisaged; should such a change be made, separate prior notice will be given.",
 
-  "kunye": "<strong>Publisher:</strong> Gökkubbe Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
+  "kunye": "<strong>Publisher:</strong> Türkbey Teknoloji Anonim Şirketi<br>Ahi Evren OSB Mahallesi, Büyük Selçuklu Caddesi No: 2/B, Sincan / Ankara, Türkiye<br>Sincan Tax Office &middot; Tax ID 6290873411 &middot; Commercial Register No 418199<br><a href=\"https://gokkubbetech.com\" rel=\"noopener\">gokkubbetech.com</a><br>System: <a href=\"https://goktungu.com\">goktungu.com</a> &middot; Version {s} &middot; Protocol GZ-PROTO-251",
 
   /* Alt bilgi */
   "ft.tanim": "GÖKTUNGU is a command and control system that fuses radar, unmanned aircraft and AI vision sources into a single operational picture for low-altitude airspace awareness.",
@@ -91,6 +91,6 @@ window.YASAL_EN = {
   "ft.yasal": "Legal",
   "ft.iletisim": "Contact",
   "ft.ulke": "Türkiye",
-  "ft.kunye": "Gökkubbe Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Gökkubbe Teknoloji Anonim Şirketi.",
+  "ft.kunye": "Türkbey Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Türkbey Teknoloji Anonim Şirketi.",
   "ft.surum": "Version {s}"
 };

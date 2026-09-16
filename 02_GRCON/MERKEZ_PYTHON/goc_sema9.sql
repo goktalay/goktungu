@@ -593,7 +593,7 @@ UPDATE firmalar
 -- D7. Lisanslı firmalara bakım bitişi (lisans tarihinden +1 yıl).
 -- Bakım bitişi geçmişte olsa bile sistem ÇALIŞMAYA DEVAM EDER.
 --
--- KOŞUL NEDEN `sinirsiz` DE İÇERİYOR: ölçümde Gökkubbe'nin
+-- KOŞUL NEDEN `sinirsiz` DE İÇERİYOR: ölçümde Türkbey'nin
 -- `sinirsiz = true` ama `merkez_lisans = false` olduğu görüldü —
 -- sınırsızlık elle verilmiş, lisans bayrağı açılmamış. Yalnız
 -- `merkez_lisans` aranırsa bu firmaya bakım bitişi HİÇ atanmaz ve

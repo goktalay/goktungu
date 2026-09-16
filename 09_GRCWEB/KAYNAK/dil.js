@@ -41,8 +41,8 @@
      --------------------------------------------------------------- */
   var EN = {
     /* --- Sayfa ust verisi --- */
-    "meta.baslik": "GÖKTUNGU — Low-Altitude Airspace Command and Control System | Gökkubbe Teknoloji",
-    "meta.aciklama": "GÖKTUNGU is a low-altitude airspace command and control system that fuses radar, unmanned aircraft and AI vision sources into a single operational picture. The ground control station runs on the organisation's own computer. A product of Gökkubbe Teknoloji Anonim Şirketi.",
+    "meta.baslik": "GÖKTUNGU — Low-Altitude Airspace Command and Control System | Türkbey Teknoloji",
+    "meta.aciklama": "GÖKTUNGU is a low-altitude airspace command and control system that fuses radar, unmanned aircraft and AI vision sources into a single operational picture. The ground control station runs on the organisation's own computer. A product of Türkbey Teknoloji Anonim Şirketi.",
 
     /* --- Ust cubuk --- */
     "menu.mimari": "Architecture",
@@ -216,7 +216,7 @@
     "cta.dg2": "Command and Control Interface",
 
     /* --- Alt bilgi --- */
-    "ft.tanim": "Gökkubbe Teknoloji Anonim Şirketi is a defence industry company operating in low-altitude airspace awareness, guidance and control systems, and unmanned aircraft technologies.",
+    "ft.tanim": "Türkbey Teknoloji Anonim Şirketi is a defence industry company operating in low-altitude airspace awareness, guidance and control systems, and unmanned aircraft technologies.",
     "ft.sistem": "System",
     "ft.erisim": "Access",
     "ft.iletisim": "Contact",
@@ -228,7 +228,7 @@
     "ft.cerez": "Cookie Policy",
     "ft.kvkk": "Data Protection Notice",
     "ft.ulke": "Türkiye",
-    "ft.kunye": "Gökkubbe Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Gökkubbe Teknoloji Anonim Şirketi.",
+    "ft.kunye": "Türkbey Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Türkbey Teknoloji Anonim Şirketi.",
     "ft.surum": "Version {s}",
 
     /* --- Indirme kartlari (js/indir.js tarafindan kullanilir) --- */

@@ -335,7 +335,7 @@ function skFormKur(secenek) {
   // ---- Metin alanlari ----
   const alanlar = [
     {ad: "unvan", etiket: t.skUnvan || "\u015eirket \u00dcnvan\u0131",
-     zorunlu: true, ipucu: "\u00d6rn. G\u00f6kkubbe Teknoloji Anonim \u015eirketi"},
+     zorunlu: true, ipucu: "\u00d6rn. T\u00fcrkbey Teknoloji Anonim \u015eirketi"},
     {ad: "adres", etiket: t.skAdres || "Adres", zorunlu: true,
      coksatir: true},
     {ad: "telefon", etiket: t.skTelefon || "Telefon", zorunlu: true,

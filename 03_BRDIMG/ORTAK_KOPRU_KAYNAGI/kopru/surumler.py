@@ -18,8 +18,19 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.21"
+KOPRU_SURUM = "1.7.22"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.22",
+        "tarih": "2026-09-16",
+        "notlar": [
+            "SIRKET UNVANI: sahip firma adi Windows kurulum kunyesi "
+            "(yayimci), Debian paket bakimcisi, uygulama menusu telif "
+            "satiri ve konsol basligi dahil her yerde 'Turkbey Teknoloji "
+            "Anonim Sirketi' olarak guncellendi. Alan adi/e-posta ve "
+            "servis davranisi degismedi.",
+        ]
+    },
     {
         "surum": "1.7.21",
         "tarih": "2026-09-16",
@@ -273,9 +284,9 @@ KOPRU_GECMIS = [
             "degistirilse onceki kurulum denetim masasindan kaldirilamaz "
             "hale gelir. Bu ayrim sayesinde mevcut kurulumlar bu surume "
             "dogrudan yukseltilir; yeniden kurulum gerekmez.",
-            "PAKET KUNYESI GOKKUBBE OLARAK GUNCELLENDI. Windows "
+            "PAKET KUNYESI TURKBEY OLARAK GUNCELLENDI. Windows "
             "kurulumunun yayimci alani, Debian paketinin Maintainer alani "
-            "ve uygulama menusu aciklamasi Gokkubbe Teknoloji Anonim "
+            "ve uygulama menusu aciklamasi Turkbey Teknoloji Anonim "
             "Sirketi kunyesini tasiyor. Kurulum dosyasi adi "
             "GOKTUNGU-Kopru-Setup olarak degisti; mavi urun ikonu ise "
             "kullanicinin acik istegi uzerine KORUNDU.",

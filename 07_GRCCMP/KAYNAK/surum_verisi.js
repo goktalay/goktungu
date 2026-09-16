@@ -14,7 +14,7 @@ window.PANEL_SURUM = {
   ad: 'GÖKTUNGU Kurumsal Panel',
   surum: '1.3.7',
   tarih: '2026-09-11',
-  telif: '© 2026 Gökkubbe Teknoloji Anonim Şirketi',
+  telif: '© 2026 Türkbey Teknoloji Anonim Şirketi',
   gecmis: [
     {
       s: "1.3.7", t: "11 Eylül 2026",
@@ -174,14 +174,14 @@ window.PANEL_SURUM = {
         'tamamen kaldırıldı. Giriş başlığı, kayıt başlığı, üst şerit ' +
         'markası ve sekme başlığı yeni ada çekildi.',
         'Firma adı artık yalnızca sahiplik satırında: telif kaydı ' +
-        '"Gökkubbe Teknoloji Anonim Şirketi" tam ünvanına çevrildi ' +
+        '"Türkbey Teknoloji Anonim Şirketi" tam ünvanına çevrildi ' +
         've panel yüzeyinden firma tanıtımı kaldırıldı.',
         'Yetki metinlerindeki "VEILOX" ibaresi rol tanımına çevrildi ' +
         '("üst yönetici"). Artık böyle bir marka olmadığı için bu ' +
         'ibare yetki seviyesini anlatmak yerine marka gibi ' +
         'okunuyordu. Kod tarafındaki `veilox` yetki anahtarı ' +
         'DEĞİŞMEDİ — yalnızca görünen metin düzeltildi.',
-        'Talep yönlendirmelerinde "VEILOX ekibi" ibaresi "Gökkubbe ' +
+        'Talep yönlendirmelerinde "VEILOX ekibi" ibaresi "Türkbey ' +
         'ekibi" olarak güncellendi.',
         'Kurabiye adı (`goktungu_firma`), servis adları ' +
         '(`goktungu-merkez`, `goktungu-kopru`) ve sistem adresi korundu; ' +

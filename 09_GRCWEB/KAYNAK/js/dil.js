@@ -16,7 +16,7 @@
      data-i18n-html   -> innerHTML olarak yazilir (ic etiket korunur)
      data-i18n-attr   -> "attr:anahtar" ciftleri (placeholder, alt, ...)
 
-   (c) Gokkubbe Teknoloji Anonim Sirketi
+   (c) Turkbey Teknoloji Anonim Sirketi
    ================================================================= */
 (function () {
   "use strict";
@@ -148,7 +148,7 @@
     "gk.kayitAlt": "Register your organization and the trial subscription starts immediately. The first pilot and administrator accounts are free.",
     "gk.bolumKurum": "Organization",
     "gk.unvan": "Legal name",
-    "gk.unvanIpucu": "e.g. Gokkubbe Technology Inc.",
+    "gk.unvanIpucu": "e.g. Turkbey Technology Inc.",
     "gk.vergi": "Tax number",
     "gk.telefon": "Telephone",
     "gk.adres": "Address",
@@ -448,7 +448,7 @@
     "fiy.t4alt": "The bridge software is downloaded, the pilot roster is defined from the corporate panel and the operational picture is established.",
 
     "fiy.kosulBaslik": "Payment and scope conditions",
-    "fiy.ks1": "<strong>Domestic payments are denominated in Turkish lira and international payments in United States dollars.</strong> Collection is carried out in the name of <strong>G\u00f6kkubbe Teknoloji Anonim \u015eirketi</strong> through the iyzico infrastructure (tax no. 6290873411). Payment in foreign currency requires a foreign card.",
+    "fiy.ks1": "<strong>Domestic payments are denominated in Turkish lira and international payments in United States dollars.</strong> Collection is carried out in the name of <strong>T\u00fcrkbey Teknoloji Anonim \u015eirketi</strong> through the iyzico infrastructure (tax no. 6290873411). Payment in foreign currency requires a foreign card.",
     "fiy.ks2": "<strong>Membership and role management is carried out from the corporate panel.</strong> Adding pilots, changing roles and purchasing seats are conducted from the organisation administrator's panel, not from the command and control interface.",
     "fiy.ks3": "<strong>Your existing pilots are never locked out.</strong> Once the free seat is taken, a seat is purchased in order to add a new pilot; under no circumstances is a defined pilot's access withdrawn.",
     "fiy.ks4": "<strong>The annual billing discount is 20%.</strong> Annual amounts correspond to approximately ten months rather than twelve.",
@@ -475,7 +475,7 @@
     "ft.cerez": "Cookie Policy",
     "ft.kvkk": "Data Protection Notice",
     "ft.ulke": "Türkiye",
-    "ft.kunye": "Gökkubbe Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Gökkubbe Teknoloji Anonim Şirketi.",
+    "ft.kunye": "Türkbey Teknoloji Anonim Şirketi. All rights reserved. GÖKTUNGU is a product of Türkbey Teknoloji Anonim Şirketi.",
     "ft.surum": "Version {s}",
     /* Site surum defteri: URUN surumunden ayri yurutulur
        (js/surum_verisi.js). */

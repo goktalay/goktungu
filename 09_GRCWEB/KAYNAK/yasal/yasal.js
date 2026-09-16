@@ -1,6 +1,6 @@
 /* =================================================================
    GOKTUNGU v2.12.3 -- Yasal sayfalar ortak betigi (M20)
-   Gokkubbe Teknoloji Anonim Sirketi
+   Turkbey Teknoloji Anonim Sirketi
    -----------------------------------------------------------------
    Yasal metinler tek dosyada tutulmaz; her sayfa kendi TR icerigini
    HTML icinde tasir (JS kapali olsa da okunabilir olmasi gerekir --

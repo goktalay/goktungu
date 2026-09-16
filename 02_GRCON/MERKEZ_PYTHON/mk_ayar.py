@@ -57,7 +57,7 @@ VARSAYILAN_AYAR: dict[str, Any] = {
         "key": "/etc/letsencrypt/live/goktungu.com/privkey.pem",
     },
     "alan_adi": "goktungu.com",
-    "kurum": "Gökkubbe Teknoloji Anonim Şirketi",
+    "kurum": "Türkbey Teknoloji Anonim Şirketi",
     "oturum_saat": 12,             # yönetici oturum ömrü
     "kopru_zaman_asimi_sn": 90,    # bu süre heartbeat gelmezse çevrimdışı say
     # Köprü ajanına verilecek ters bağlantı adresi (kurulum çıktısında

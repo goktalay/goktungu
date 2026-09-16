@@ -1,5 +1,5 @@
 /* ================================================================
-   FAZ18-IS5-PILOT-KONUM — Pilot bazli harita konumu + Gokkubbe isareti
+   FAZ18-IS5-PILOT-KONUM — Pilot bazli harita konumu + Turkbey isareti
    ----------------------------------------------------------------
    NEDEN BU DOSYA VAR
    Olcumde bulunan kok neden: haritanin acilis konumu sunucu tarafinda
@@ -17,13 +17,13 @@
    katmani. Anahtar `gcs_harita_konum_<eposta>`; boylece ayni
    tarayicida farkli pilotlar birbirinin gorunumunu ezmez.
 
-   ILK GIRIS: kayit yoksa Gokkubbe adresine gidilir ve o adreste
+   ILK GIRIS: kayit yoksa Turkbey adresine gidilir ve o adreste
    kurumsal isaret gosterilir.
    ================================================================ */
 (function () {
   "use strict";
 
-  /* Gokkubbe Teknoloji A.S. — Ahi Evren OSB Mah. Buyuk Selcuklu Cad.
+  /* Turkbey Teknoloji A.S. — Ahi Evren OSB Mah. Buyuk Selcuklu Cad.
      No:2/B Sincan/Ankara
 
      v2.4.120 (IS62): KOORDINAT DUZELTILDI. Onceki deger
@@ -32,7 +32,7 @@
      Bu sabit dort yerde okunur (isaret konumu, ilk giris acilisi,
      `haritaGokkubbeyeGit`, `haritaGokkubbeKoordinat`) — tek
      noktadan duzeltmek dordunu birden duzeltir. */
-  var GOKKUBBE = { lat: 39.973112, lon: 32.546172, yuk: 2600 };
+  var TURKBEY = { lat: 39.973112, lon: 32.546172, yuk: 2600 };
 
   var ONEK = "gcs_harita_konum_";
   var pilot = null;          // aktif pilotun eposta anahtari
@@ -113,7 +113,7 @@
     } catch (e) {}
   }
 
-  /* -------------------- GOKKUBBE ISARETI --------------------------
+  /* -------------------- TURKBEY ISARETI --------------------------
      Kurumsal adres isareti. Logo dokulu billboard + zemin halkasi +
      etiket. `disableDepthTestDistance` mevcut tum varliklarda
      kullanilan desendir: arazi kabarttiginda isaret dagin arkasinda
@@ -125,8 +125,8 @@
     if (!v || !Cs || !v.entities) return;
     try {
       isaretEnt = v.entities.add({
-        id: "gokkubbe_merkez",
-        position: Cs.Cartesian3.fromDegrees(GOKKUBBE.lon, GOKKUBBE.lat, 0),
+        id: "turkbey_merkez",
+        position: Cs.Cartesian3.fromDegrees(TURKBEY.lon, TURKBEY.lat, 0),
         // v2.4.219 (kullanici istegi): merkez ikonu KUCUK simge, yazi etiketi
         // yok — buyuk logo + etiket haritayi kapliyordu.
         billboard: {
@@ -148,7 +148,7 @@
         },
         label: {
           show: false,
-          text: "GOKKUBBE TEKNOLOJI",
+          text: "TURKBEY TEKNOLOJI",
           font: "bold 11px 'Chakra Petch', sans-serif",
           fillColor: Cs.Color.fromCssColorString("#5cc8ff"),
           showBackground: true,
@@ -182,7 +182,7 @@
     } else {
       // Ilk giris: kurumsal adres
       if (typeof window.__haritaMerkezeGit === "function")
-        window.__haritaMerkezeGit(GOKKUBBE.lat, GOKKUBBE.lon, GOKKUBBE.yuk);
+        window.__haritaMerkezeGit(TURKBEY.lat, TURKBEY.lon, TURKBEY.yuk);
     }
   }
 
@@ -208,7 +208,7 @@
   window.haritaGokkubbeyeGit = function () {
     isaretKur();
     if (typeof window.__haritaMerkezeGit === "function")
-      window.__haritaMerkezeGit(GOKKUBBE.lat, GOKKUBBE.lon, GOKKUBBE.yuk);
+      window.__haritaMerkezeGit(TURKBEY.lat, TURKBEY.lon, TURKBEY.yuk);
   };
 
   // Pilotun kayitli gorunumunu sifirla (bir sonraki girise kurumsal
@@ -226,11 +226,11 @@
   };
 
   window.haritaGokkubbeKoordinat = function () {
-    return { lat: GOKKUBBE.lat, lon: GOKKUBBE.lon };
+    return { lat: TURKBEY.lat, lon: TURKBEY.lon };
   };
 
   /* -------------------- KISAYOL DUGMESI -------------------------
-     v2.4.120 (IS62): harita arac grubundaki Gokkubbe dugmesi.
+     v2.4.120 (IS62): harita arac grubundaki Turkbey dugmesi.
 
      BAGLAMA NEDEN BURADA: `haritaGokkubbeyeGit` bu dosyada
      tanimlidir ve bu dosya harita.js'ten SONRA yuklenir. Baglama

@@ -621,7 +621,7 @@
   }
   #hkLogoKutu:hover img { transform: scale(1.04); }
   /* v2.12.4: KOYU TEMA PARLAMA SUZGECI KALDIRILDI.
-     Onceki surumde koyu zeminde firma logolari (gokkubbe/veilox/
+     Onceki surumde koyu zeminde firma logolari (turkbey/veilox/
      novixair) renkli ve koyu oldugu icin beyaz bir parlama
      uygulaniyordu.  Marka gecisiyle firma logolari kaldirildi; yerine
      gelen GOKTUNGU logosunun koyu tema surumu ZATEN acik yazili
@@ -4558,7 +4558,7 @@
   backdrop-filter: blur(4px); padding: 0;
 }
 #haritaAracGrubu > button:hover { color: var(--metin); border-color: var(--soluk); }
-/* v2.4.120 (IS62): GOKKUBBE KISAYOL DUGMESI.
+/* v2.4.120 (IS62): TURKBEY KISAYOL DUGMESI.
    Kardes dugmeler Font Awesome ikonu tasir ve rengini
    `color` degiskeninden alir. Bu dugme bir GORSEL tasidigi icin
    renk degiskeni islemez; onun yerine solukluk kullanilir ve

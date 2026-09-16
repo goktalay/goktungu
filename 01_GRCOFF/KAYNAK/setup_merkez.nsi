@@ -31,7 +31,7 @@ Unicode true
 
 !define URUN         "GOKTUNGU Merkez Uygulamasi"
 !define URUN_KISA    "GOKTUNGU Merkez"
-!define SIRKET       "Gokkubbe Teknoloji Anonim Sirketi"
+!define SIRKET       "Turkbey Teknoloji Anonim Sirketi"
 !define SERVIS_ADI   "GoktunguMerkez"
 !define PANEL_URL    "http://127.0.0.1:8000/"
 !define VERI_DIZINI  "C:\ProgramData\Goktungu\Merkez"

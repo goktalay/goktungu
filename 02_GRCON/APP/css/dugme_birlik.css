@@ -110,7 +110,7 @@ button:not(#btnBaglan):not(.tema-grup button):not(.dk-hucre-btn):not(.dk-joy-btn
    metinli sozlesmeyi alir -- bozulma degil, yalnizca yayvan gorunum.
    --------------------------------------------------------------------- */
 /* v2.4.120 (IS62): `<img>` TASIYAN IKON DUGMELERI DE KAPSANIR.
-   Olculdu: harita arac grubuna eklenen Gokkubbe dugmesi 33x26
+   Olculdu: harita arac grubuna eklenen Turkbey dugmesi 33x26
    render oluyordu, kardesleri 26x26. Sebep bu secicinin yalniz
    `<i>` arayip `<img>` tasiyan dugmeyi disarida birakmasiydi;
    dugme genel `button { padding: 8px 14px }` kuralina dusuyordu.

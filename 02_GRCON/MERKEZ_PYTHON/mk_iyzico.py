@@ -1,6 +1,6 @@
 """GÖKTUNGU MERKEZ — iyzico (iyzipay) API istemcisi.
 
-Tahsilat: **Gökkubbe Teknoloji Anonim Şirketi**
+Tahsilat: **Türkbey Teknoloji Anonim Şirketi**
 VKN 6290873411 · Ticaret Sicil 418199
 Ahi Evren OSB Mah. Büyük Selçuklu Cad. No:2/B Sincan/Ankara
 
@@ -141,7 +141,7 @@ def durum() -> dict[str, Any]:
         "acik": bool(y["api_anahtar"] and y["gizli_anahtar"]),
         "kip": y["kip"],
         "sinav_modu": y["kip"] != "canli",
-        "tahsilat": "Gökkubbe Teknoloji Anonim Şirketi",
+        "tahsilat": "Türkbey Teknoloji Anonim Şirketi",
         "vkn": "6290873411",
         "para_birimleri": ["TRY", "USD"],
         "bildirim_yolu": "/api/genel/iyzico_bildirim",

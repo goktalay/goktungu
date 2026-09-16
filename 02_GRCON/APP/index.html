@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24227">
+<link rel="stylesheet" href="css/stil.css?v=v24228">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -38,7 +38,7 @@
      onceki tum yastik ve yazi boyu bildirimlerine ustun gelir.
      Renk/arka plan/kenarlik gibi KIMLIK tasiyan ozelliklere
      dokunulmaz. -->
-<link rel="stylesheet" href="css/dugme_birlik.css?v=v24127">
+<link rel="stylesheet" href="css/dugme_birlik.css?v=v24228">
 <!-- FAZ18/IS7: panel ust bari + kamera tipi ikon kumesi. -->
 <link rel="stylesheet" href="css/panel_ustbar.css?v=v24127">
 <!-- IS51-PANEL-DURUMCUBUGU-V1: panel alt durum cubugu gorsel sozlesmesi -->
@@ -507,7 +507,7 @@
     </div>
     <!-- v2.4.41: sirket unvani sunucudaki sirket bilgisinden gelir
          (sirket.js). Sirket tanimli degilse bu varsayilan kalir. -->
-    <div class="hk-telif" id="hkTelif">© 2026 Gökkubbe Teknoloji Anonim Şirketi</div>
+    <div class="hk-telif" id="hkTelif">© 2026 Türkbey Teknoloji Anonim Şirketi</div>
   </div>
 </div>
 
@@ -515,13 +515,13 @@
   <div id="cesiumContainer"></div>
   <!-- v2.1.7c: HARITA ARAC GRUBU (dikey): arama dugmesi + cetvel -->
   <div id="haritaAracGrubu">
-    <!-- v2.4.120 (IS62): GOKKUBBE KISAYOLU. Arac grubunun ILK ogesi
+    <!-- v2.4.120 (IS62): TURKBEY KISAYOLU. Arac grubunun ILK ogesi
          oldugu icin dikey kumede en ustte durur. Cagirdigi islev
          (`haritaGokkubbeyeGit`) 2.4.x boyunca tanimliydi ama hicbir
          yerden cagrilmiyordu; eksik olan tek halka bu dugmeydi. -->
     <button id="btnGokkubbeyeGit" class="arac-logo"
             data-i18n-title="ipGokkubbeyeGit"
-            title="G&#246;kkubbe Teknoloji'ye git"><img src="logo.png" alt="G&#246;kkubbe" draggable="false"></button>
+            title="T&#252;rkbey Teknoloji'ye git"><img src="logo.png" alt="T&#252;rkbey" draggable="false"></button>
     <button id="btnHaritaArama" title="Yer ara veya koordinat gir" data-i18n-title="aramaBaslik"><i class="fa-solid fa-magnifying-glass"></i></button>
     <button id="btnCetvel" data-i18n-title="ipCetvel" title="Cetvel (mesafe &#246;l&#231;&#252;m&#252;)"><i class="fa-solid fa-ruler"></i></button>
     <!-- v2.4.34: TUMUNU SIGDIR - haritadaki tum aktif bilesenleri
@@ -1695,7 +1695,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24227"></script>
+<script src="js/i18n.js?v=v24228"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1703,13 +1703,13 @@
 <script src="js/harita.js?v=v24127"></script>
 <!-- FAZ18-PANEL-ISKELET: IS33 Harita Ayarlari accordion -->
 <script src="js/harita_accordion.js?v=v24127"></script>
-<!-- FAZ18-IS5-PILOT-KONUM: pilot bazli harita konumu + Gokkubbe adres isareti.
+<!-- FAZ18-IS5-PILOT-KONUM: pilot bazli harita konumu + Turkbey adres isareti.
      harita.js SONRASINDA yuklenir: viewer koprusu orada
      tanimlanir. -->
-<script src="js/harita_pilot_konum.js?v=v24219"></script>
+<script src="js/harita_pilot_konum.js?v=v24228"></script>
 <!-- v2.4.29: prizma ikon + arazi yukseklik referansi (dronlar/hedefler/radar_gorsel ONCESINDE yuklenmeli) -->
 <script src="js/prizma_ikon.js?v=v24127"></script>
-<script src="js/tema.js?v=v24127"></script>
+<script src="js/tema.js?v=v24228"></script>
 <script src="js/param_aciklama.js?v=v24127"></script>
 <script src="js/param_aciklama_tr.js?v=v24127"></script>
 <script src="js/param_meta.js?v=v24127"></script>
@@ -1796,7 +1796,7 @@
 <!-- v2.4.41: sirket bilgileri (zorunlu ilk kurulum sihirbazi + yonetici
      paneli). kullanici.js SONRASINDA yuklenmeli; oturum acilinca
      sirketSihirbazDenetle() cagrilir. -->
-<script src="js/sirket.js?v=v24129"></script>
+<script src="js/sirket.js?v=v24228"></script>
 <!-- v2.4.51: PostgreSQL ilk kurulum / goc sihirbazi. ws.js'ten ONCE
      yuklenmeli: ws.js onopen icinde window.pgDurumSor() cagiriyor.
      Sirket sihirbazinin TERSINE giris ekranindan ONCE calisir;
@@ -1827,7 +1827,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24227"></script>
+<script src="js/surum.js?v=v24228"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24227"></script>

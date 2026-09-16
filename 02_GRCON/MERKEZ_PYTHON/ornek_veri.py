@@ -18,9 +18,9 @@ import mk_db as db
 ISARET = "ORNEK-"
 
 FIRMALAR = [
-    ("Gökkubbe Teknoloji Anonim Şirketi", "GÖKKUBBE", "Ankara, Sincan",
+    ("Türkbey Teknoloji Anonim Şirketi", "TÜRKBEY", "Ankara, Sincan",
      "kurumsal", 25, 8, 39.95, 32.58),
-    ("Gökkubbe Teknoloji A.Ş.", "GÖKKUBBE", "Ankara, Sincan",
+    ("Türkbey Teknoloji A.Ş.", "TÜRKBEY", "Ankara, Sincan",
      "kurumsal", 20, 6, 39.97, 32.62),
     ("Anadolu Tarım Havacılık Ltd.", "ANADOLU", "Konya, Selçuklu",
      "standart", 10, 3, 37.87, 32.49),

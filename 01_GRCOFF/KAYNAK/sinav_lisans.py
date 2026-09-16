@@ -86,7 +86,7 @@ ornekler = [
                   "gccdual": False}},
     # TURKCE KARAKTER: ensure_ascii farki tam burada patlar.
     {"surum": 1, "firma_id": 7,
-     "firma_unvan": "Gökkubbe Teknoloji Ltd. Şti. — Çığır Ölçüm",
+     "firma_unvan": "Türkbey Teknoloji Ltd. Şti. — Çığır Ölçüm",
      "lisans_uid": "ŞğİÖÜ-42",
      "yetkiler": {"sinirsiz": True, "ai": False, "radar": True,
                   "gccdual": True}},
@@ -205,7 +205,7 @@ if KUTUPHANE:
         lisans.ACIK_ANAHTAR_B64 = acik_b64
 
         govde = {"surum": 1, "firma_id": 42,
-                 "firma_unvan": "Gökkubbe Teknoloji Ltd. Şti.",
+                 "firma_unvan": "Türkbey Teknoloji Ltd. Şti.",
                  "lisans_uid": "TEST-UID-1",
                  "yetkiler": {"sinirsiz": True, "ai": True,
                               "radar": True, "gccdual": False}}
@@ -249,7 +249,7 @@ if KUTUPHANE:
         if y:
             olc("lisans_oku: firma_id dogru", y["firma_id"] == 42)
             olc("lisans_oku: unvan Turkce karakterle bozulmadan geldi",
-                y["firma_unvan"] == "Gökkubbe Teknoloji Ltd. Şti.",
+                y["firma_unvan"] == "Türkbey Teknoloji Ltd. Şti.",
                 repr(y.get("firma_unvan")))
             olc("lisans_oku: sinirsiz dogru", y["sinirsiz"] is True)
             olc("lisans_oku: ai dogru", y["ai"] is True)

@@ -147,9 +147,9 @@
     "eky.n2": "When a user is deactivated they can no longer sign in, but their <strong>flight records are preserved</strong>. Reactivating the user restores access to those records.",
 
     /* ---------- yönetim paneli ---------- */
-    "ypn.baslik": "Gökkubbe Administration Panel",
-    "ypn.ozet": "The administration panel is the highest-level interface, where Gökkubbe staff manage all organizations, subscriptions, licences and support tickets.",
-    "ypn.n1": "This panel is open <strong>to Gökkubbe staff only</strong>. Customer organizations have no access to it.",
+    "ypn.baslik": "Türkbey Administration Panel",
+    "ypn.ozet": "The administration panel is the highest-level interface, where Türkbey staff manage all organizations, subscriptions, licences and support tickets.",
+    "ypn.n1": "This panel is open <strong>to Türkbey staff only</strong>. Customer organizations have no access to it.",
     "ypn.b1": "Panel sections",
     "ypn.m1e": "Organizations", "ypn.m1a": "Organization records, subscription and module management",
     "ypn.m2e": "Users", "ypn.m2a": "User records across all organizations",
@@ -157,16 +157,16 @@
     "ypn.m4e": "Payments", "ypn.m4a": "Subscription payments and invoice records",
     "ypn.m5e": "Release Repository", "ypn.m5a": "Installation packages and the release ledger",
     "ypn.m6e": "Support", "ypn.m6a": "All support tickets and replies",
-    "ypn.m7e": "Staff", "ypn.m7a": "Gökkubbe staff accounts and roles",
+    "ypn.m7e": "Staff", "ypn.m7a": "Türkbey staff accounts and roles",
     "ypn.m8e": "Infrastructure", "ypn.m8a": "Service status and system settings",
     "ypn.b2": "Module allocation",
-    "ypn.p1": "The radar and GCCDual modules cannot be purchased; they are allocated to an organization by a Gökkubbe system administrator. An allocated module becomes active both in the operations interface and in the central application the organization downloads.",
+    "ypn.p1": "The radar and GCCDual modules cannot be purchased; they are allocated to an organization by a Türkbey system administrator. An allocated module becomes active both in the operations interface and in the central application the organization downloads.",
     "ypn.b3": "Licence allocation",
     "ypn.p2": "Once a central application licence is allocated to an organization, the download link appears in its corporate panel. A licensed organization may use the software without limits and may run it fully air-gapped.",
 
     /* ---------- personel yönetimi ---------- */
-    "pyn.baslik": "Gökkubbe Staff Management",
-    "pyn.ozet": "Gökkubbe staff accounts are created and assigned roles from the staff section of the administration panel. Each role carries a different level of authority.",
+    "pyn.baslik": "Türkbey Staff Management",
+    "pyn.ozet": "Türkbey staff accounts are created and assigned roles from the staff section of the administration panel. Each role carries a different level of authority.",
     "pyn.b1": "Staff roles",
     "pyn.r1e": "System Administrator", "pyn.r1a": "Full panel access; manages organizations, licences, staff and support",
     "pyn.r2e": "Support Staff", "pyn.r2a": "Sees and answers support tickets only",
@@ -198,7 +198,7 @@
     "mrg.l4": "Radar and GCCDual modules allocated to the organization arrive enabled",
     "mrg.l5": "Can run alongside the bridge software on the same computer",
     "mrg.b2": "Licence",
-    "mrg.p1": "The central application carries a one-time licence fee. The licence is allocated to the organization by Gökkubbe; once allocated, the download link appears in the corporate panel.",
+    "mrg.p1": "The central application carries a one-time licence fee. The licence is allocated to the organization by Türkbey; once allocated, the download link appears in the corporate panel.",
     "mrg.n1": "The central application requires a <strong>PostgreSQL database</strong>. The installation wizard asks for the database connection details and creates the tables itself.",
 
     /* ---------- merkez kurulum ---------- */
@@ -301,7 +301,7 @@
     "dtl.m7e": "Aircraft", "dtl.m7a": "Connection, commands and telemetry",
     "dtl.m8e": "Route", "dtl.m8a": "Route planning and mission upload",
     "dtl.m9e": "Corporate Panel", "dtl.m9a": "Team, subscription and record management",
-    "dtl.m10e": "Administration Panel", "dtl.m10a": "Gökkubbe staff only",
+    "dtl.m10e": "Administration Panel", "dtl.m10a": "Türkbey staff only",
     "dtl.m11e": "Central Application", "dtl.m11a": "Installation on the organization's server",
     "dtl.m12e": "DJI Bridge", "dtl.m12a": "Android application",
     "dtl.m13e": "Payment", "dtl.m13a": "Subscription and invoicing",
@@ -347,7 +347,7 @@
 
     /* ---------- iletişim ---------- */
     "ilt.baslik": "Contact",
-    "ilt.ozet": "Göktungu is developed and operated by Gökkubbe Teknoloji Anonim Şirketi.",
+    "ilt.ozet": "Göktungu is developed and operated by Türkbey Teknoloji Anonim Şirketi.",
     "ilt.b1": "Company details",
     "ilt.t1": "Legal name",
     "ilt.t2": "Address",

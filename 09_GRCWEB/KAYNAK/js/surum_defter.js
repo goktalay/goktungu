@@ -154,7 +154,7 @@
       `<div class="sd-surum">Sürüm <b>${kacir(v.surum || '-')}</b>` +
       (v.tarih ? ` &middot; ${kacir(v.tarih)}` : '') + '</div>' +
       `<div class="sd-telif">${kacir(v.telif ||
-        '© 2026 Gökkubbe Teknoloji A.Ş.')}</div>`;
+        '© 2026 Türkbey Teknoloji A.Ş.')}</div>`;
     p.appendChild(kim);
 
     /* govde: akordiyon */

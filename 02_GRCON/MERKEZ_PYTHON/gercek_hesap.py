@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.11
 # =================================================================
 # GOKTUNGU MERKEZ - gercek kullanici hesabini olustur
-# Kullanicinin sahada kullandigi hesap (Gokkubbe Teknoloji) merkeze
+# Kullanicinin sahada kullandigi hesap (Turkbey Teknoloji) merkeze
 # eklenir; boylece GCS'in "acik sunucular" akisi gercek kimlikle
 # uctan uca sinanir. Ornek veri hesaplari @ornek.local uzantilidir
 # ve bu hesapla karismaz.
@@ -25,8 +25,8 @@ if not GOKTUNGU_SINAV_SIFRE:
                      "Bu betik gercek bir hesap sifresi kullanir; "
                      "sifre kaynak kodda tutulmaz.")
 SIFRE = GOKTUNGU_SINAV_SIFRE
-UNVAN = "Gökkubbe Teknoloji Anonim Şirketi"
-KISA = "GÖKKUBBE TEK"
+UNVAN = "Türkbey Teknoloji Anonim Şirketi"
+KISA = "TÜRKBEY TEK"
 
 
 def firma_bul_veya_ekle() -> int:

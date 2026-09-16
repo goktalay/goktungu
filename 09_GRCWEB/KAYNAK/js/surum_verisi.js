@@ -25,7 +25,7 @@ window.PANEL_SURUM = {
   surum: '2.14.0',
   tarih: '2026-09-14',
   logo: '/img/goktungu.webp',
-  telif: '© 2026 Gökkubbe Teknoloji Anonim Şirketi',
+  telif: '© 2026 Türkbey Teknoloji Anonim Şirketi',
   gecmis: [
     {
       /* YETENEK-ANLATIMI-20260914 */ s: "2.14.0", t: "14 Eylül 2026",

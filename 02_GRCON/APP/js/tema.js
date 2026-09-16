@@ -59,7 +59,7 @@ btnAcik.addEventListener("click", () => temaUygula("acik", true));
    v2.12.4: FIRMA LOGOSU DONGUSU KALDIRILDI.
    Onceki surumde "Program Hakkinda" penceresindeki logoya CTRL +
    tiklamayla firma logolari arasinda donuluyordu:
-       GOKKUBBE -> VEILOX -> NOVIXAIR -> GOKKUBBE
+       TURKBEY -> VEILOX -> NOVIXAIR -> TURKBEY
    Marka gecisiyle firma logosu kullanimi tamamen kaldirildi; artik
    yalnizca GOKTUNGU urun logosu gosterilir.  Firma adi yalnizca
    sahiplik (telif) satirinda gecer.

@@ -14,7 +14,7 @@ window.PANEL_SURUM = {
   ad: 'GÖKTUNGU Yönetim Paneli',
   surum: '1.2.5',
   tarih: '2026-08-19',
-  telif: '© 2026 Gökkubbe Teknoloji Anonim Şirketi',
+  telif: '© 2026 Türkbey Teknoloji Anonim Şirketi',
   gecmis: [
     {
       s: "1.2.5", t: "19 Ağustos 2026",
@@ -138,7 +138,7 @@ window.PANEL_SURUM = {
         'tamamen kaldırıldı. Giriş başlığı, üst şerit markası ve ' +
         'sekme başlığı yeni ada çekildi.',
         'Panel adı "VEILOX Yönetim Paneli" → "GÖKTUNGU Yönetim ' +
-        'Paneli" oldu; telif satırı "Gökkubbe Teknoloji Anonim ' +
+        'Paneli" oldu; telif satırı "Türkbey Teknoloji Anonim ' +
         'Şirketi" tam ünvanına çevrildi.',
         'Giriş ekranındaki "VEILOX Savunma A.Ş." alt satırı ' +
         'kaldırıldı: firma adı artık yalnızca sahiplik satırında ' +

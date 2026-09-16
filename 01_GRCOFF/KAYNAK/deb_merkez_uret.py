@@ -75,7 +75,7 @@ def _paket_surum_oku(ad: str) -> str:
 
 PAKET_SURUM = _paket_surum_oku("PAKET_SURUM")
 UYGULAMA_SURUM = _paket_surum_oku("UYGULAMA_SURUM")
-BAKIMCI = "Gokkubbe Teknoloji Anonim Sirketi <destek@gokkubbetech.com>"
+BAKIMCI = "Turkbey Teknoloji Anonim Sirketi <destek@gokkubbetech.com>"
 HEDEF = "/opt/goktungu/merkez"
 VERI = "/var/lib/goktungu-merkez"
 SERVIS_KULLANICI = "goktungu-merkez"

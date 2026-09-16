@@ -2248,7 +2248,7 @@ async function sayfaDenetim(par) {
 window.denetimSayfa = (n) => { DURUM.denetim.sayfa = n; sayfaDenetim(); };
 
 /* ================================================================ DESTEK */
-/* Gökkubbe destek personeli görünümü.
+/* Türkbey destek personeli görünümü.
  *
  * `yetki="destek"` uçlarını kullanır: sistem yöneticisi VE destek
  * personeli erişir; rol denetimi taşıma katmanındadır.
@@ -2599,11 +2599,11 @@ async function destekDenetimKaydet(tid) {
 }
 
 /* ============================================================ PERSONEL
- * Gokkubbe ic personeli yonetimi (`sistem_yoneticileri` tablosu).
+ * Turkbey ic personeli yonetimi (`sistem_yoneticileri` tablosu).
  *
  * FIRMA KULLANICILARI ILE KARISTIRILMAMALI: `#kullanicilar` bolumu
  * musteri tarafi kullanicilarini (`kullanicilar` tablosu) yonetir.
- * Bu bolum Gokkubbe personelini yonetir ve YALNIZ `sistem_yonetici`
+ * Bu bolum Turkbey personelini yonetir ve YALNIZ `sistem_yonetici`
  * rolune aciktir -- `destek_personel` ve `gozlemci` uctan 403 alir.
  *
  * Roller:
@@ -2650,7 +2650,7 @@ async function sayfaPersonel() {
 
   el('#icerik').innerHTML = `
     <h2>Personel</h2>
-    <p class="aciklama">Gökkubbe iç personeli. <strong>Destek
+    <p class="aciklama">Türkbey iç personeli. <strong>Destek
     Personeli</strong> rolü yalnızca destek taleplerini yönetir;
     müşteri, abonelik ve altyapı bölümlerine erişemez. Müşteri tarafı
     kullanıcıları için <a href="#kullanicilar">Kullanıcılar</a>

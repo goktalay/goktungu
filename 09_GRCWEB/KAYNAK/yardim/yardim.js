@@ -1,6 +1,6 @@
 /* =================================================================
    GOKTUNGU -- Yardim Merkezi betigi (M21)
-   Gokkubbe Teknoloji Anonim Sirketi
+   Turkbey Teknoloji Anonim Sirketi
    -----------------------------------------------------------------
    Sorumluluklar:
      1. Sol agac: dal ac/kapa, durum saklama (localStorage)

@@ -336,7 +336,7 @@ def dogrulama_gonder(hedef_tur: str, hedef_id: int,
         f"Bag {saat} saat gecerlidir ve yalniz bir kez kullanilabilir.\n\n"
         "Bu kaydi siz yapmadiysaniz bu iletiyi yok sayabilirsiniz; "
         "dogrulama yapilmadan hesap kullanilamaz.\n\n"
-        "Gokkubbe Teknoloji Anonim Sirketi\n"
+        "Turkbey Teknoloji Anonim Sirketi\n"
         "Ahi Evren OSB Mah. Buyuk Selcuklu Cad. No:2/B Sincan/Ankara\n"
     )
 
@@ -371,7 +371,7 @@ def dogrulama_gonder(hedef_tur: str, hedef_id: int,
     </p>
     <div style="height:1px;background:#16222f;margin:22px 0"></div>
     <p style="margin:0;font-size:12px;color:#5a6b80;line-height:1.5">
-      Gökkubbe Teknoloji Anonim Şirketi<br>
+      Türkbey Teknoloji Anonim Şirketi<br>
       Ahi Evren OSB Mah. Büyük Selçuklu Cad. No:2/B Sincan/Ankara
     </p>
   </div>

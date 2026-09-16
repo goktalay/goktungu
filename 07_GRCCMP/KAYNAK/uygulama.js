@@ -1638,7 +1638,7 @@ async function sayfaAbonelik() {
     ${testModu ? `<p class="uyari-satir">Ödeme altyapısı <strong>test
       modunda</strong>. Gerçek tahsilat yapılmaz.</p>` : ''}
     ${!odemeAcik ? `<p class="uyari-satir">Çevrimiçi ödeme henüz
-      etkinleştirilmedi. Talep oluşturabilirsiniz; Gökkubbe ekibi ön
+      etkinleştirilmedi. Talep oluşturabilirsiniz; Türkbey ekibi ön
       değerlendirme sonrası üyeliğinizi tanımlar.</p>` : ''}
     ${ozet}
     <div class="pano">
@@ -1791,7 +1791,7 @@ function talepPencere(kalem, ad, tek) {
       <label>Telefon<input type="text" name="iletisim_tel"></label>
       <label class="tam">Mesaj<textarea name="mesaj" rows="3"
         placeholder="Kullanım amacı, beklenen kullanıcı sayısı, özel istekler"></textarea></label>
-      <p class="aciklama tam">Talebiniz Gökkubbe ekibi tarafından
+      <p class="aciklama tam">Talebiniz Türkbey ekibi tarafından
         değerlendirilir. Onaylandığında üyeliğiniz tanımlanır ve bu
         sayfada görünür.</p>
     </form>`, [
@@ -2268,7 +2268,7 @@ async function sayfaDestek(par) {
   el('#icerik').innerHTML = `
     <h2>Destek Talepleri</h2>
     <p class="aciklama">Yaşadığınız sorunu ilgili modülü seçerek bildirin.
-      Ekran görüntüsü veya günlük dosyası ekleyebilirsiniz. Gökkubbe
+      Ekran görüntüsü veya günlük dosyası ekleyebilirsiniz. Türkbey
       destek ekibi taleplerinizi bu ekrandan yanıtlar.</p>
     <div class="arac-cubugu">
       <select id="destek-durum-suzgec">
@@ -2404,7 +2404,7 @@ window.destekAc = async (tid) => {
             'benim' : 'destek'}">
           <div class="mesaj-bas">
             <strong>${kacir(m.yazan_ad || (m.yazan_tur === 'kullanici' ?
-              'Siz' : 'Gökkubbe Destek'))}</strong>
+              'Siz' : 'Türkbey Destek'))}</strong>
             <span class="aciklama">${tarih(m.olusma_ts)}</span>
           </div>
           <div class="mesaj-govde">${kacir(m.govde).replace(/\n/g, '<br>')}</div>

@@ -1403,7 +1403,7 @@ const DILLER = {
     ipCetvel: "Cetvel (mesafe \u00f6l\u00e7\u00fcm\u00fc)",
     // v2.4.34: harita odak dugmeleri
     ipTumunuSigdir: "T\u00fcm bile\u015fenleri g\u00f6r\u00fcn\u00fcme s\u0131\u011fd\u0131r",
-    ipGokkubbeyeGit: "G\u00f6kkubbe Teknoloji'ye git",
+    ipGokkubbeyeGit: "T\u00fcrkbey Teknoloji'ye git",
     ipKonumuma: "Konumuma git",
     // FAZ18-DRON-EKRAN-DISI: ekran disi dron gostergesi
     dronEkranDisiBaslik: "DRON G\u00d6R\u00dcN\u00dcM DI\u015eINDA",
@@ -3562,7 +3562,7 @@ const DILLER = {
     ipCetvel: "Ruler (distance measurement)",
     // v2.4.34: map focus buttons
     ipTumunuSigdir: "Fit all components into view",
-    ipGokkubbeyeGit: "Go to G\u00f6kkubbe Teknoloji",
+    ipGokkubbeyeGit: "Go to T\u00fcrkbey Teknoloji",
     ipKonumuma: "Go to my location",
     // FAZ18-DRON-EKRAN-DISI: off-screen drone indicator
     dronEkranDisiBaslik: "DRONE OUT OF VIEW",
