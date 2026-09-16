@@ -13,7 +13,9 @@
   const oynayanlar = new Set();  // oynatilan kamera id'leri
   const ayrikler = {};           // id -> ayrik pencere DOM kaydi
   const hlsNesneleri = {};       // id -> Hls instance (temizlik icin)
-  let gorunum = localStorage.getItem("kamGorunum") || "liste"; // liste|onizleme
+  // v2.4.219 (kullanici istegi): Kameralar panelinde TEK gorunum (liste);
+  // onizleme/izgara kipi ve gorunum secici kaldirildi.
+  let gorunum = "liste";
   let duzenlenenId = null;       // modal duzenleme modundaki kamera id
 
   const listeKok = () => document.getElementById("kameraListesi");
@@ -546,22 +548,8 @@
   // GORUNUM TOGGLE (liste <-> onizleme)
   // ----------------------------------------------------------------
   const btnGorunum = document.getElementById("tbKamGorunum");
-  function gorunumIkonTazele() {
-    const t = T();
-    if (gorunum === "liste") {
-      btnGorunum.innerHTML = "<i class='fa-solid fa-table-cells-large'></i>";
-      btnGorunum.title = t.kamGorunumOnizleme || "Önizleme Görünümü";
-    } else {
-      btnGorunum.innerHTML = "<i class='fa-solid fa-list'></i>";
-      btnGorunum.title = t.kamGorunumListe || "Liste Görünümü";
-    }
-  }
-  btnGorunum.addEventListener("click", () => {
-    gorunum = (gorunum === "liste") ? "onizleme" : "liste";
-    localStorage.setItem("kamGorunum", gorunum);
-    gorunumIkonTazele();
-    listeCiz();
-  });
+  function gorunumIkonTazele() { if (btnGorunum) btnGorunum.style.display = "none"; }
+  try { localStorage.removeItem("kamGorunum"); } catch (e) {}
 
   // ----------------------------------------------------------------
   // VIDEO ELEMANI OLUSTURMA / TEMIZLEME
@@ -908,11 +896,15 @@
     const es = document.createElement("span"); es.className = "dk-kons-etiket"; es.textContent = s.etiket || "";
     const ms = document.createElement("span"); ms.className = "dk-kons-metin"; ms.textContent = s.metin || "";
     el.append(zs, es, ms);
-    if (s.tekrar && s.tekrar > 1) { const roz = document.createElement("span"); roz.className = "dk-kons-tekrar"; roz.textContent = "×" + s.tekrar; el.appendChild(roz); }
-    k.govde.appendChild(el);
-    k.sonSatirEl = el; k.sonMetin = (s.etiket || "") + " " + (s.metin || "");
-    k.adet++;
-    while (k.govde.childElementCount > KAM_KONSOL_DOM_LIMIT) k.govde.removeChild(k.govde.firstElementChild);
+    if (s.tekrar && s.tekrar > 1) { const roz = document.createElement("span"); roz.className = "dk-kons-tekrar"; roz.textContent = "\u00d7" + s.tekrar; el.appendChild(roz); }
+    // v2.4.219: etiketi AI olan satirlar AI sekmesine
+    const aiMi = String(s.etiket || "").toUpperCase() === "AI";
+    const hedefGovde = (aiMi && k.govdeAi) ? k.govdeAi : k.govde;
+    hedefGovde.appendChild(el);
+    k.sonSatirEl = el; k.sonMetin = (s.etiket || "") + " " + (s.metin || "");
+    if (aiMi) { k.adetAi = (k.adetAi || 0) + 1; if (k.skAi) k.skAi.querySelector(".kam-konsol-sekme-sayac").textContent = String(Math.min(k.adetAi, 9999)); }
+    else k.adet++;
+    while (hedefGovde.childElementCount > KAM_KONSOL_DOM_LIMIT) hedefGovde.removeChild(hedefGovde.firstElementChild);
   }
   function kamKonsolBolumu(id) {
     if (kamKonsollar[id]) return kamKonsollar[id];
@@ -932,18 +924,36 @@
     araclar.append(btnDur, btnTemiz);
     bas.append(ok, ikon, ad, sayac, araclar);
     const govde = document.createElement("div"); govde.className = "dk-konsol-govde gizli";
-    kok.append(bas, govde);
-    const k = { kok, bas, govde, sayac, ok, btnDur, acik: false, duraklat: false,
-                gecmisIstendi: false, adet: 0, sonMetin: null, sonSatirEl: null };
+    // v2.4.219 (kullanici istegi): AI cikti satirlari ayri sekmede
+    const sekmeler = document.createElement("div"); sekmeler.className = "kam-konsol-sekmeler gizli";
+    const govdeAi = document.createElement("div"); govdeAi.className = "dk-konsol-govde gizli";
+    const skKam = document.createElement("button"); skKam.type = "button"; skKam.className = "kam-konsol-sekme aktif";
+    skKam.innerHTML = "<i class='fa-solid fa-video'></i><span>" + (t.kamKonsolSekmeKamera || "Kamera") + "</span>";
+    const skAi = document.createElement("button"); skAi.type = "button"; skAi.className = "kam-konsol-sekme";
+    skAi.innerHTML = "<i class='fa-solid fa-robot'></i><span>" + (t.kamKonsolSekmeAi || "AI") + "</span><b class='kam-konsol-sekme-sayac'></b>";
+    sekmeler.append(skKam, skAi);
+    kok.append(bas, sekmeler, govde, govdeAi);
+    const k = { kok, bas, govde, govdeAi, sekmeler, skKam, skAi, sayac, ok, btnDur, acik: false, duraklat: false,
+                gecmisIstendi: false, adet: 0, adetAi: 0, sonMetin: null, sonSatirEl: null, sekme: "kam" };
+    const sekmeSec = (ad) => {
+      k.sekme = ad;
+      skKam.classList.toggle("aktif", ad === "kam"); skAi.classList.toggle("aktif", ad === "ai");
+      govde.classList.toggle("gizli", !(k.acik && ad === "kam"));
+      govdeAi.classList.toggle("gizli", !(k.acik && ad === "ai"));
+      const g = ad === "ai" ? govdeAi : govde; g.scrollTop = g.scrollHeight;
+    };
+    skKam.addEventListener("click", (e) => { e.stopPropagation(); sekmeSec("kam"); });
+    skAi.addEventListener("click", (e) => { e.stopPropagation(); sekmeSec("ai"); });
+    k.sekmeSec = sekmeSec;
     bas.addEventListener("click", (e) => {
       if (e.target.closest(".dk-konsol-araclar")) return;
       e.stopPropagation();
       k.acik = !k.acik;
       bas.classList.toggle("kapali", !k.acik);
-      govde.classList.toggle("gizli", !k.acik);
+      sekmeler.classList.toggle("gizli", !k.acik);
+      sekmeSec(k.sekme);
       if (k.acik) {
         if (!k.gecmisIstendi) { k.gecmisIstendi = true; wsGonder({ tip: "kamera_konsol_gecmis", id }); }
-        govde.scrollTop = govde.scrollHeight;
       }
     });
     btnDur.addEventListener("click", (e) => {
@@ -955,7 +965,8 @@
     btnTemiz.addEventListener("click", (e) => {
       e.stopPropagation();
       wsGonder({ tip: "kamera_konsol_temizle", id });
-      govde.innerHTML = ""; k.adet = 0; k.sonMetin = null; k.sonSatirEl = null; sayac.textContent = "0";
+      govde.innerHTML = ""; govdeAi.innerHTML = ""; k.adet = 0; k.adetAi = 0; k.sonMetin = null; k.sonSatirEl = null; sayac.textContent = "0";
+      k.skAi.querySelector(".kam-konsol-sekme-sayac").textContent = "";
     });
     kamKonsollar[id] = k;
     return k;
@@ -972,10 +983,10 @@
   window.kameraKonsolGecmis = function (m) {
     const k = kamKonsollar[m.id];
     if (!k) return;
-    k.govde.innerHTML = ""; k.adet = 0; k.sonMetin = null; k.sonSatirEl = null;
+    k.govde.innerHTML = ""; if (k.govdeAi) k.govdeAi.innerHTML = ""; k.adet = 0; k.adetAi = 0; k.sonMetin = null; k.sonSatirEl = null;
     (m.satirlar || []).forEach((s) => kamKonsolSatirBas(k, s));
     k.sayac.textContent = String(k.adet);
-    k.govde.scrollTop = k.govde.scrollHeight;
+    k.govde.scrollTop = k.govde.scrollHeight; if (k.govdeAi) k.govdeAi.scrollTop = k.govdeAi.scrollHeight;
   };
 
   function satirOlustur(kamera) {
@@ -997,22 +1008,38 @@
     // v2.4.8: AI izleme aktifse yesil AI rozeti
     const aiRozetS = aiRozetOlustur(kamera.id);
     if (aiRozetS) sol.appendChild(aiRozetS);
-    satir.append(sol, araclarOlustur(kamera));
-
-    // v2.4.189: her satirin altinda acilir-kapanir, kameraya ozel konsol
-    // (dron panelindeki gibi). Konsol DOM'u yeniden cizimde korunur.
+    // v2.4.219 (kullanici istegi): panel satirinda YALNIZ Duzenle + Sil;
+    // oynat/ayir/goruntu-hedefi/menu yok. Satira tiklamak yuzen pencereyi
+    // acar (canli goruntu, konsol ve diger araclar orada).
+    const t = T();
+    const araclar = document.createElement("div");
+    araclar.className = "kam-araclar kam-satir-araclar";
+    const bDuzenle = document.createElement("button");
+    bDuzenle.className = "kam-btn"; bDuzenle.title = t.kamDuzenle || "Düzenle";
+    bDuzenle.innerHTML = "<i class='fa-solid fa-pen'></i>";
+    bDuzenle.addEventListener("click", (e) => { e.stopPropagation(); modalAc(kamera); });
+    const bSil = document.createElement("button");
+    bSil.className = "kam-btn kam-btn-sil"; bSil.title = t.kamSil || "Sil";
+    bSil.innerHTML = "<i class='fa-solid fa-trash'></i>";
+    bSil.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onayIste(onayMetni("onayKameraSil", {ad: kamera.isim || kamera.id}), () => {
+        durdur(kamera.id);
+        ayrikKapat(kamera.id);
+        wsGonder({ tip: "kamera_sil", id: kamera.id });
+      });
+    });
+    araclar.append(bDuzenle, bSil);
+    satir.append(sol, araclar);
+    satir.classList.add("kam-satir-tikla");
+    satir.title = t.kamSatirAc || "Yüzen pencerede aç";
+    satir.addEventListener("click", () => {
+      if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kamera.id, "yuzen");
+      else window.kameraIzlemeAc(kamera.id);
+    });
     const dis = document.createElement("div");
     dis.className = "kam-blok";
     dis.appendChild(satir);
-    // Liste gorunumunde oynayan kameranin videosu satirin altinda gosterilir
-    // (v2.5.24: yalniz goruntu hedefi 'panel' iken; tek konumda gosterim)
-    if (oynayanlar.has(kamera.id) && !ayrikler[kamera.id] && hedef(kamera.id) === "panel") {
-      const kutu = document.createElement("div");
-      kutu.className = "kam-video-kutu";
-      kutu.appendChild(videoOlustur(kamera));
-      dis.appendChild(kutu);
-    }
-    dis.appendChild(kamKonsolBolumu(kamera.id).kok);
     return dis;
   }
 
@@ -1300,6 +1327,8 @@
     const durumBar = document.createElement("div");
     durumBar.className = "kam-pencere-durum";
     pencere.append(durumBar);
+    // v2.4.219: kamera konsolu (Kamera / AI sekmeleri) yuzen pencerenin altinda
+    pencere.appendChild(kamKonsolBolumu(id).kok);
     document.body.appendChild(pencere);
     // v2.4.206 (kullanici istegi): yeniden boyutlandirma PENCERENIN
     // BUTUNUNE uygulanir (CSS .kam-pencere resize:both); goruntu kutusu

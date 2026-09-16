@@ -123,6 +123,10 @@ function telemetriIsle(m){
       if (m.dron_renkler) window.dronRenkler = m.dron_renkler;
     });
     const gelenDronlar = m.dronlar || [];
+    window.dronlarSon = gelenDronlar;   // v2.4.220: harita cevrimici listesi
+    _guvenli("kamera_canli", () => {
+      if (typeof window.haritaKameraCanliIsle === "function") window.haritaKameraCanliIsle(m.kamera_canli || []);
+    });
     _guvenli("dron_temizle", () => {
       if (gelenDronlar.length === 0 && Object.keys(sonVeri).length > 0)
         tumDronlariTemizle();

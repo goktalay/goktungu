@@ -168,7 +168,10 @@ function dronKameraOnizlemeTazele(d){
   if (Number(el.dataset.kameraId) !== kameraId){
     el.dataset.kameraId = String(kameraId);
     // URL yalnız uygulamanın kendi /kamera/<id> vekilidir.
-    el.querySelector("img").src = window.kameraOnizlemeUrl(kameraId);
+    const im = el.querySelector("img");
+    im.onerror = () => { el.classList.add("kam-hata"); el.setAttribute("data-kam-hata", (typeof D === "function" && D().kamBaglantiYok) || "BAĞLANTI YOK"); };
+    im.onload = () => { el.classList.remove("kam-hata"); el.removeAttribute("data-kam-hata"); };
+    im.src = window.kameraOnizlemeUrl(kameraId);
   }
   dronKameraOnizlemeKur();
   dronKameraOnizlemeKonumla();

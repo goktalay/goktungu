@@ -259,7 +259,8 @@ function izgaraRenkUygula(bagli){
   const renk = Cesium.Color.fromCssColorString(bagli ? IZGARA_RENK : IZGARA_OFFLINE_RENK);
   const c = bagli ? 1.0 : OFFLINE_ALFA_CARPAN;
   for (const e of kapsamaVarliklar){
-    e.show = _rg;
+    // v2.4.220 (kullanici istegi): kapsama cizgileri YALNIZ radar cevrimiciyken
+    e.show = _rg && !!bagli;
     if (e.polyline){
       const alfaTaban = e._alfaTaban !== undefined ? e._alfaTaban : 0.7;
       e.polyline.material = renk.withAlpha(alfaTaban * c);
@@ -280,8 +281,9 @@ function kubbeRenkUygula(bagli){
   // v2.4.58 — ayni kusur kubbede de vardi (bkz. izgaraRenkUygula).
   const _rg = (typeof window.radarYetenekVar === "function")
     ? window.radarYetenekVar() : true;
-  irtifaKubbe.show = _rg;
-  for (const e of kubbeTelVarliklar) e.show = _rg;
+  // v2.4.220 (kullanici istegi): kubbe de yalniz radar cevrimiciyken gorunur
+  irtifaKubbe.show = _rg && !!bagli;
+  for (const e of kubbeTelVarliklar) e.show = _rg && !!bagli;
   const renk = Cesium.Color.fromCssColorString(bagli ? "#6bd8b9" : IZGARA_OFFLINE_RENK);
   const c = bagli ? 1.0 : OFFLINE_ALFA_CARPAN;
   irtifaKubbe.ellipsoid.material = renk.withAlpha(0.08 * c);
@@ -500,7 +502,7 @@ function radarOlustur(){
 const RADAR_IKON_RENKLERI = {
   bagli:  "#6bd8b9",   // bagli: teal (izgara/supurme ile uyumlu)
   hata:   "#e05555",   // hata: kirmizi
-  kapali: "#8a97a5",   // bagli degil / baglaniyor: gri
+  kapali: "#e05555",   // v2.4.220 (kullanici istegi): bagli degil -> KIRMIZI
 };
 
 // Radarin gercek bakis yonu (derece, 0-360): once telemetriden gelen
@@ -704,6 +706,7 @@ window.eoIkonlariGuncelle = function(liste){
           }, false),
         },
         label: {
+          show: false,   // v2.4.220 (kullanici istegi): M50 ikonunun altinda yazi yok
           text: etiket, font: "bold 10px Consolas, monospace",
           fillColor: Cesium.Color.fromCssColorString(renk), style: Cesium.LabelStyle.FILL,
           showBackground: true, backgroundColor: Cesium.Color.BLACK.withAlpha(0.7),
@@ -815,7 +818,10 @@ function eoKameraOnizlemeTazele(liste){
       el.querySelector("span").textContent = (c.isim || ("M50 " + eid)).toUpperCase() + " · CANLI";
       if (Number(el.dataset.kameraId) !== Number(kam.id)){
         el.dataset.kameraId = String(kam.id);
-        el.querySelector("img").src = window.kameraOnizlemeUrl(kam.id);
+        const im = el.querySelector("img");
+        im.onerror = () => { el.classList.add("kam-hata"); el.setAttribute("data-kam-hata", (typeof D === "function" && D().kamBaglantiYok) || "BAĞLANTI YOK"); };
+        im.onload = () => { el.classList.remove("kam-hata"); el.removeAttribute("data-kam-hata"); };
+        im.src = window.kameraOnizlemeUrl(kam.id);
       }
     }
   }

@@ -2,11 +2,34 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.218";
+const GCS_SURUM = "2.4.220";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.220",
+    tarih: "2026-09-16",
+    baslik: "Harita: çevrimdışı radar kırmızı ve kapsama gizli; M50 ikonu etiketsiz; sağda çevrimiçi cihaz listesi (paket 2.5.90)",
+    maddeler: [
+      "RADAR (kullanıcı isteği): radar bağlı değilken ikonu kırmızı; kapsama çizgileri (menzil halkaları, mesafe/azimut ızgarası, kubbe, iz dilimleri) yalnız radar çevrimiçiyken görünür.",
+      "M50 (kullanıcı isteği): harita ikonunun altındaki ad/RTK etiketi kaldırıldı; yalnız ikon (üzerine gelince canlı önizleme, tıklayınca pencere).",
+      "ÇEVRİMİÇİ LİSTE (kullanıcı isteği): haritanın sağ kenarında alt alta, yarı saydam etiketler — bağlı dronlar, bağlı M50'ler ve kare üreten kameralar (isim). Üzerine gelince belirginleşir, tıklayınca haritada o cihaza uçulur (dron/M50 varlığı, kamera koordinatı ya da bağlı lokasyon). Cihaz çevrimdışı olunca listeden düşer; telemetriye 'kamera_canli' alanı eklendi.",
+      "DÜZELTME (kullanıcı bildirimi: 'Kameralar panelini neden kaldırdın'): 2.4.219'da menüden yanlış öğe kaldırılmıştı. 'Kameralar Paneli' öğesi geri geldi; kaldırılması istenen 'Önizleme Görünümü' öğesi menüden çıkarıldı."
+    ]
+  },
+  {
+    surum: "2.4.219",
+    tarih: "2026-09-16",
+    baslik: "Kameralar paneli sadeleşti; 'BAĞLANTI YOK' mesajı; konsolda AI sekmesi; düğme boşluğu; merkez ikonu küçüldü (paket 2.5.89)",
+    maddeler: [
+      "BAĞLANTI YOK (kullanıcı isteği): kamera/M50 erişilemezken kırık resim simgesi yerine dile göre büyük 'BAĞLANTI YOK' metni (harita önizlemeleri, yüzen pencere, M50 penceresi, panel kutuları); sunucu gerekçesi gelirse onunla değişir.",
+      "KAMERALAR PANELİ (kullanıcı isteği): satırda yalnız Düzenle ve Sil; oynat/ayır/görüntü-konumu/menü ve satır altı önizleme ile konsol kaldırıldı. Satıra tıklamak yüzen pencereyi açar. Önizleme/izgara görünümü ve görünüm seçici kaldırıldı (tek liste görünümü); menüdeki 'Kameralar Paneli' öğesi kaldırıldı.",
+      "KAMERA KONSOLU: yalnız yüzen pencerede, iki sekmeli — Kamera ve AI. AI sekmesi yerel AI işçisinin günlüğünü (ai_isci.log) kamera bazında gösterir: kamera numarası taşıyan satırlar o kameraya, genel satırlar AI izlemesi açık kameralara düşer (sunucu günlük kuyruğu, 'AI' etiketi).",
+      "DÜĞMELER (kullanıcı bildirimi): mavi görüntü-konumu düğmesine yanal iç boşluk (10 px) ve kenar boşluğu (6 px) eklendi; bitişik görünüm giderildi.",
+      "HARİTA (kullanıcı isteği): merkez konumu ikonu küçük simge olarak gösterilir, yazı etiketi kaldırıldı (haritayı kaplıyordu)."
+    ]
+  },
   {
     surum: "2.4.218",
     tarih: "2026-09-15",

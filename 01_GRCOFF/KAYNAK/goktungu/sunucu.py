@@ -3075,6 +3075,74 @@ class WSSunucusu:
             return eo.yerel(k.get("eo_id") if isinstance(k, dict) else None)
         return getattr(self, "m50_yerel", None)
 
+    def _ai_gunluk_kuyrugu_baslat(self):
+        kk = getattr(self, "kamera_konsol", None)
+        if kk is None or getattr(self, "_ai_gunluk_iplik", None) is not None:
+            return
+        try:
+            from .sabitler import _veri_alt_yolu
+            yol = _veri_alt_yolu("ai_isci.log")
+        except Exception:
+            return
+        import re as _re
+        desen_kam = _re.compile(r"kam(?:era)?\s*[=#]?\s*(\d+)")
+
+        def _sev(m):
+            ml = m.lower()
+            if "hata" in ml or "traceback" in ml or "error" in ml:
+                return "hata"
+            if "uyari" in ml or "uyarı" in ml or "warning" in ml:
+                return "uyari"
+            if "hazir" in ml or "yuklendi" in ml:
+                return "basari"
+            return "bilgi"
+
+        def _dongu():
+            f = None
+            konum = None
+            while True:
+                try:
+                    if f is None:
+                        if not os.path.isfile(yol):
+                            time.sleep(3.0)
+                            continue
+                        f = open(yol, "r", encoding="utf-8", errors="replace")
+                        f.seek(0, os.SEEK_END)
+                        konum = f.tell()
+                    satir = f.readline()
+                    if not satir:
+                        # dosya kesildi/yeniden olusturulduysa yeniden ac
+                        try:
+                            if os.path.getsize(yol) < (konum or 0):
+                                f.close(); f = None
+                        except OSError:
+                            f.close(); f = None
+                        time.sleep(0.5)
+                        continue
+                    konum = f.tell()
+                    m = satir.strip()
+                    if not m:
+                        continue
+                    if m.startswith("[AI]"):
+                        m = m[4:].strip()
+                    e = desen_kam.search(m)
+                    hedefler = []
+                    if e:
+                        hedefler = [int(e.group(1))]
+                    else:
+                        ay = getattr(self, "ai_yonetici", None)
+                        try:
+                            hedefler = [int(iz["kamera_id"]) for iz in (ay.izleme_listesi() if ay else [])]
+                        except Exception:
+                            hedefler = []
+                    for kid in hedefler[:8]:
+                        kk.ekle(kid, "AI", m[:400], _sev(m))
+                except Exception:
+                    time.sleep(2.0)
+
+        self._ai_gunluk_iplik = threading.Thread(target=_dongu, daemon=True, name="ai-gunluk-kuyrugu")
+        self._ai_gunluk_iplik.start()
+
     async def _m50_yerelden(self, websocket, eylem, veri=None, k=None):
         """M50 komutunu Merkez'in kendi gömülü SDK'sıyla (köprüsüz) uygular.
 
@@ -10915,8 +10983,15 @@ class WSSunucusu:
                                 pass
                 try:
                     eo_cihazlar = _eo.paketler() if _eo is not None else []
+                    # v2.4.220: kare ureten kamera kimlikleri (harita cevrimici listesi)
+                    try:
+                        kamera_canli = (self.video_proxy.canli_kimlikler()
+                                        if hasattr(self.video_proxy, "canli_kimlikler") else [])
+                    except Exception:
+                        kamera_canli = []
                 except Exception:
                     eo_cihazlar = []
+                    kamera_canli = []
                 # `M50Vekili.paket()` aynı ortak kilidi alır; bu nedenle
                 # kopyayı telemetri ana kilidine girmeden önce oluştururuz.
                 # Aksi halde `threading.Lock` yeniden girişsiz olduğu için
@@ -11048,6 +11123,7 @@ class WSSunucusu:
                         "angajmanlar": angajman_durum,
                         "m50": m50,
                         "eo_cihazlar": eo_cihazlar,
+                        "kamera_canli": kamera_canli,   # v2.4.220
                     })
                 else:
                     veri = json.dumps({
@@ -11070,6 +11146,7 @@ class WSSunucusu:
                         "angajmanlar": angajman_durum,
                         "m50": m50,
                         "eo_cihazlar": eo_cihazlar,
+                        "kamera_canli": kamera_canli,   # v2.4.220
                     })
                 # ---- IS94_TELEMETRI_KISMA ----------------------
                 # OLCULEN KUSUR: paket bosta TAMAMEN SABIT (0/141
@@ -11165,6 +11242,14 @@ class WSSunucusu:
         adres = self.ayarlar.yukle().get("ws_adres", WS_ADRES)
         # v2.4.0: thread'lerden gelen yayinlar icin dongu referansi
         self._loop = asyncio.get_running_loop()
+        # v2.4.219 (kullanici istegi: kamera konsolunda AI ciktilari): yerel
+        # AI iscisinin gunlugu (ai_isci.log) kuyruklanir; kamera numarasi
+        # tasiyan satirlar o kameranin konsoluna, genel satirlar AI izlemesi
+        # acik tum kameralara "AI" etiketiyle dusurulur.
+        try:
+            self._ai_gunluk_kuyrugu_baslat()
+        except Exception as _e:
+            self.konsol("AI", "AI gunluk kuyrugu baslatilamadi: %s" % _e, "uyari")
         # v2.4.33: harita onbellek ozetini durum cubuguna yayinla
         self._tile_ozet_kur()
         son_hata = None

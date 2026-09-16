@@ -1225,12 +1225,23 @@
   /* v2.4.181: M50 PTZ suruklemesi — basili+hareket ettir kipini belirtir */
   .kam-video-m50 { cursor: grab; touch-action: none; }
   .kam-video-m50:active, .kam-video-m50.m50-ptz-aktif { cursor: grabbing; }
+  /* v2.4.219: baglanti yok — BUYUK, dile gore metin (data-kam-hata; mjpeg_yeniden.js) */
   .kam-hata::after {
     content: "\26a0 YAYIN ALINAMIYOR"; position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    color: #ef4444; font-size: 11px; letter-spacing: .08em;
-    background: rgba(0,0,0,.65);
+    color: #ef4444; font-size: 16px; font-weight: 700; letter-spacing: .1em;
+    background: rgba(0,0,0,.7); text-align: center; padding: 8px;
   }
+  .kam-hata[data-kam-hata]::after { content: "\26a0 " attr(data-kam-hata); }
+  .dron-kamera-onizleme.kam-hata::after { font-size: 10px; letter-spacing: .04em; padding: 2px; }
+  .kam-satir-tikla { cursor: pointer; }
+  .kam-satir-tikla:hover { background: rgba(255,255,255,.04); }
+  .kam-konsol-sekmeler { display: flex; gap: 2px; padding: 4px 8px 0; }
+  .kam-konsol-sekmeler.gizli { display: none; }
+  .kam-konsol-sekme { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border: 1px solid var(--cizgi);
+    border-bottom: none; border-radius: 4px 4px 0 0; background: transparent; color: var(--soluk); font-size: 11px; cursor: pointer; }
+  .kam-konsol-sekme.aktif { background: rgba(255,255,255,.06); color: var(--metin); }
+  .kam-konsol-sekme-sayac:not(:empty) { font-size: 9px; padding: 0 5px; border-radius: 8px; background: #1d4ed8; color: #fff; }
   .kam-bos-onizleme {
     width: 100%; height: 100%; display: flex; align-items: center;
     justify-content: center; color: var(--soluk); font-size: 20px;
@@ -1283,6 +1294,18 @@
   .eo-kamera-onizleme { width: 132px; height: 86px; border-color: #ffb454; }
   .eo-kamera-onizleme:hover { border-color: #ffd28a; box-shadow: 0 0 0 2px rgba(255,180,84,.28); }
   .eo-kamera-onizleme span { background: rgba(48,26,4,.82); color: #ffe6c2; }
+  /* v2.4.220 (kullanici istegi): harita sag kenarinda cevrimici cihaz listesi */
+  .hc-liste { position: absolute; right: 12px; top: 64px; z-index: 40; display: flex; flex-direction: column; gap: 4px;
+    align-items: flex-end; pointer-events: none; max-height: calc(100% - 120px); overflow: hidden; }
+  .hc-liste.bos { display: none; }
+  .hc-baslik { font: 700 9px/1.4 Consolas, monospace; letter-spacing: .12em; color: rgba(255,255,255,.75);
+    background: rgba(10,14,20,.45); padding: 3px 8px; border-radius: 3px; }
+  .hc-oge { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; cursor: pointer;
+    background: rgba(10,14,20,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 4px; color: rgba(255,255,255,.9);
+    font: 600 11px Consolas, monospace; letter-spacing: .04em; white-space: nowrap; max-width: 260px; opacity: .75; transition: opacity .15s, background .15s; }
+  .hc-oge span { overflow: hidden; text-overflow: ellipsis; }
+  .hc-oge:hover { opacity: 1; background: rgba(10,14,20,.9); border-color: #f0a830; }
+  .hc-oge.hc-dron i { color: #5cc8ff; } .hc-oge.hc-m50 i { color: #f0a830; } .hc-oge.hc-kamera i { color: #a78bfa; }
   /* v2.4.205: harita EO ikonu uzerinde mini canli onizleme */
   .eo-onizleme { position: fixed; z-index: 9000; width: 220px; background: rgba(10,14,20,.94);
     border: 1px solid #f0a830; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.6); pointer-events: none; overflow: hidden; }
@@ -1433,7 +1456,8 @@
   .m50-hedef-secim { position: absolute; display: none; border: 2px dashed #ffc94d; background: rgba(255,201,77,.12); pointer-events: none; }
   .m50-hedef-kutu { position: absolute; z-index: 4; border: 2px solid #ffc94d; box-shadow: 0 0 0 1px rgba(0,0,0,.6); pointer-events: none; }
   .m50-pc-video.kam-hata::after { content: "\26a0 YAYIN ALINAMIYOR"; position: absolute; inset: 0; display: flex; align-items: center;
-    justify-content: center; color: #ef4444; font-size: 11px; letter-spacing: .08em; background: rgba(0,0,0,.65); }
+    justify-content: center; color: #ef4444; font-size: 18px; font-weight: 700; letter-spacing: .1em; background: rgba(0,0,0,.7); }
+  .m50-pc-video.kam-hata[data-kam-hata]::after { content: "\26a0 " attr(data-kam-hata); }
   /* v2.4.202: dron duzenleme penceresinde renk secici */
   .dk-renk-sec { width: 64px; height: 30px; padding: 2px; cursor: pointer; }
   /* v2.4.192: Program Ayarlari acilir-kapanir bolumleri */
@@ -6751,14 +6775,17 @@ body.tam-ekran-modu #altOrtaPanel {
 .dk-kam-izleme.kam-hata[data-kam-hata]::after,
 .lok-kam-video-kutu.kam-hata[data-kam-hata]::after,
 .vd-govde.kam-hata[data-kam-hata]::after {
-  content: "\26a0 " attr(data-kam-hata);
+  content: "\26a0\00a0" attr(data-kam-hata);
   /* Uzun gerekceler (ffmpeg kurulum komutu) tasmadan sarilsin */
   padding: 10px 12px;
   text-align: center;
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.5;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  /* v2.4.219 (kullanici istegi): BUYUK, okunur baglanti-yok metni */
+  font-size: 16px;
+  font-weight: 700;
 }
 
 /* inset:0 konumlandirmasi icin kapsayicilar konumlandirilmis olmali.
@@ -10234,11 +10261,12 @@ body.tam-ekran-modu #altOrtaPanel {
 .kam-hedef-menu .dk-menu-item.secili i { color: var(--vurgu, #35a7ff); }
 .kam-blok .kam-konsol { margin: 0 2px 4px; }
 .kam-blok .kam-konsol .dk-konsol-govde { max-height: 180px; }
-.kam-hedef-secici { display: inline-flex; gap: 2px; margin-left: 4px;
+.kam-hedef-secici { display: inline-flex; gap: 2px; margin: 0 6px;
   border: 1px solid var(--cizgi, #2a3542); border-radius: 6px; overflow: hidden; }
+/* v2.4.219 (kullanici bildirimi): mavi goruntu-konumu dugmesi bitisikti; yanal ic bosluk */
 .kam-hedef-btn {
   border: 0; background: transparent; color: var(--soluk, #95a9b8);
-  padding: 3px 6px; cursor: pointer; font-size: 12px; line-height: 1;
+  padding: 4px 10px; cursor: pointer; font-size: 12px; line-height: 1;
 }
 .kam-hedef-btn:hover { color: var(--metin, #e6edf3); background: rgba(255,255,255,.06); }
 .kam-hedef-btn.secili { background: var(--interceptor, #3b82f6); color: #fff; }

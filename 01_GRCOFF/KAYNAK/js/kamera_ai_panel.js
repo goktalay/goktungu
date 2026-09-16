@@ -315,7 +315,8 @@
     function ciz() {
       var h = HEDEFLER.find(function (x) { return x[0] === aktif; }) || HEDEFLER[1];
       b.title = (t.kaiHedefBaslik || "Görüntü konumu") + ": " + (t["kaiHedef_" + h[0]] || h[1]);
-      b.innerHTML = "<i class='fa-solid " + h[2] + "'></i><i class='fa-solid fa-caret-down kam-hedef-ok'></i>";
+      // v2.4.219: <span> tasir — dugme_birlik.css yalniz-ikon kare kurali (26px, padding 0) uygulanmasin
+      b.innerHTML = "<i class='fa-solid " + h[2] + "'></i><span class='kam-hedef-ok'><i class='fa-solid fa-caret-down'></i></span>";
       dd.querySelectorAll(".dk-menu-item").forEach(function (it) {
         it.classList.toggle("secili", it.dataset.hedef === aktif);
       });

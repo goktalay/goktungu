@@ -751,6 +751,12 @@ class VideoProxy:
                             % (kamera_id, _re.sub(r"//[^/@]+@", "//***:***@", str(url))))
             return y
 
+    def canli_kimlikler(self):
+        """v2.4.220: kare ureten (calisan, en az bir karesi olan) kamera kimlikleri."""
+        with self._kilit:
+            return sorted(int(k) for k, y in self.yayinlar.items()
+                          if getattr(y, "calisiyor", False) and getattr(y, "kare_no", 0) > 0)
+
     def _hata_yaz(self, kamera_id, gerekce):
         with self._kilit:
             self._son_hatalar[int(kamera_id)] = gerekce

@@ -90,6 +90,10 @@
       if (!k) return;
       k.classList.remove("kam-baglaniyor");
       k.classList.add("kam-hata");
+      // v2.4.219 (kullanici istegi): kirik resim simgesi yerine BUYUK, dile
+      // gore "BAGLANTI YOK" metni; sunucu gerekcesi gelirse onunla degisir.
+      if (!k.getAttribute("data-kam-hata"))
+        k.setAttribute("data-kam-hata", (typeof D === "function" && D().kamBaglantiYok) || "BAĞLANTI YOK");
       gerekceSor(k);
     }
 

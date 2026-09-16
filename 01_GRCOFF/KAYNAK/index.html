@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24215">
+<link rel="stylesheet" href="css/stil.css?v=v24220">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -109,7 +109,8 @@
         <div class="mb-dropdown">
           <div class="mb-oge" id="mbYeniKamera" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></div>
           <div class="mb-oge" id="mbTumKamera" data-hizli="t"><i class="fa-solid fa-circle-play"></i><span data-i18n="mbTumKamera">Tüm Kameralara Bağlan</span></div>
-          <div class="mb-oge" id="mbKamGorunum" data-hizli="o"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="mbOnizleme">Önizleme Görünümü</span></div>
+          <!-- v2.4.220: "Önizleme Görünümü" kaldırıldı (kullanıcı isteği: tek liste görünümü);
+               "Kameralar Paneli" geri geldi — 2.4.219'da yanlışlıkla kaldırılmıştı. -->
           <div class="mb-ayrac"></div>
           <div class="mb-oge" id="mbVideoDuvar" data-hizli="v"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></div>
           <div class="mb-ayrac"></div>
@@ -949,7 +950,6 @@
     <span class="tb-etiket" data-i18n="tbEtiketKameralar">KAMERA YÖNETİMİ</span>
     <span class="tb-bosluk"></span>
     <button id="tbVideoDuvar" class="tb-btn tb-btn-metin" data-i18n-title="kamVideoDuvar" title="Video Duvarı"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></button>
-    <button id="tbKamGorunum" class="tb-btn tb-btn-metin" data-i18n-title="kamGorunumOnizleme" title="Önizleme Görünümü"><i class="fa-solid fa-table-cells-large"></i><span data-i18n="mbOnizleme">Önizleme</span></button>
     <button id="tbYeniKamera" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="kamYeni" title="Yeni Kamera"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></button>
   </div>
   <div class="sabit-icerik" id="kameralarIcerik">
@@ -2045,7 +2045,7 @@
 <script src="lib/flightindicators/jquery.flightindicators.min.js"></script>
 <script src="js/bolum_resize.js?v=v24127"></script>
 <script src="js/popup_tasima.js?v=v24213"></script>
-<script src="js/kamera_ai_panel.js?v=v24189"></script>
+<script src="js/kamera_ai_panel.js?v=v24219"></script>
 <script src="js/dok_temizlik.js?v=v24127"></script>
 <script src="js/panel_acilis.js?v=v24127"></script>
 <!-- FAZ18/IS7: ortak bos durum yardimcisi. ai_* modullerinden ONCE
@@ -2053,7 +2053,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24127"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24215"></script>
+<script src="js/i18n.js?v=v24220"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -2064,7 +2064,7 @@
 <!-- FAZ18-IS5-PILOT-KONUM: pilot bazli harita konumu + Gokkubbe adres isareti.
      harita.js SONRASINDA yuklenir: viewer koprusu orada
      tanimlanir. -->
-<script src="js/harita_pilot_konum.js?v=v24127"></script>
+<script src="js/harita_pilot_konum.js?v=v24219"></script>
 <!-- v2.4.29: prizma ikon + arazi yukseklik referansi (dronlar/hedefler/radar_gorsel ONCESINDE yuklenmeli) -->
 <script src="js/prizma_ikon.js?v=v24127"></script>
 <script src="js/tema.js?v=v24127"></script>
@@ -2073,7 +2073,7 @@
 <script src="js/param_meta.js?v=v24127"></script>
 <!-- v2.4.19: ArduPilot parametre deger secenekleri (combo box/bitmask) -->
 <script src="js/param_secenek.js?v=v24127"></script>
-<script src="js/dronlar.js?v=v24202"></script>
+<script src="js/dronlar.js?v=v24219"></script>
   <script src="js/dron_ekran_disi.js?v=v24127"></script>
 <!-- v2.4.42: HOME (kalkis/donus) noktasi harita ikonu. dronlar.js
      SONRASINDA yuklenmeli: dronRengi() ve sonVeri global'lerini kullanir
@@ -2119,12 +2119,13 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24208"></script>
+<script src="js/radar_gorsel.js?v=v24220"></script>
 <script src="js/radar_panel.js?v=v24198"></script>
 <script src="js/m50_panel.js?v=v24212"></script>
 <script src="js/kayit.js?v=v24127"></script>
 <script src="js/hedefler.js?v=v24202"></script>
 <script src="js/harita_hover.js?v=v24207"></script>
+<script src="js/harita_cevrimici.js?v=v24220"></script>
 <script src="js/filtreler.js?v=v24127"></script>
 <script src="js/grafik.js?v=v24127"></script>
 <script src="js/konsol.js?v=v24127"></script>
@@ -2132,7 +2133,7 @@
 <script src="js/lokasyonlar.js?v=v24127"></script>
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
-<script src="js/mjpeg_yeniden.js?v=v2519"></script>
+<script src="js/mjpeg_yeniden.js?v=v24219"></script>
 <script src="js/kameralar.js?v=v24210"></script>
 <script src="js/m50_pencere.js?v=v24215"></script>
 <script src="js/kamera_takip.js?v=v24209"></script>
@@ -2192,7 +2193,7 @@
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24183"></script>
-<script src="js/ws.js?v=v24210"></script>
+<script src="js/ws.js?v=v24220"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>
