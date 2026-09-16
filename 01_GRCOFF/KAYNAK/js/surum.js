@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.220";
+const GCS_SURUM = "2.4.221";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.221",
+    tarih: "2026-09-16",
+    baslik: "DÜZELTME: Kameralar modülü yüklenmiyordu (Yeni Kamera çalışmıyordu) — önbellek etiketi (paket 2.5.91)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı konsolu: kameralar.js?v=v24210:559 'Cannot read properties of null (addEventListener)'): 2.4.219'da kameralar.js değişti ama index.html'deki önbellek etiketi (?v=) güncellenmemişti; tarayıcı bir yıl önbelleklenen ESKİ kameralar.js'yi kullandı, yeni index.html'de kaldırılan görünüm düğmesini bulamayıp modül yüklenirken çöktü — Yeni Kamera, liste ve yüzen pencere çalışmadı. Etiket yükseltildi (v24221); tarayıcı yeni dosyayı alır. F5 yeterlidir, önbellek temizlemek gerekmez."
+    ]
+  },
   {
     surum: "2.4.220",
     tarih: "2026-09-16",
