@@ -134,6 +134,20 @@
   function doldur(kap) {
     var id = Number(kap.dataset.kameraId);
     var t = window.kameraTakipDurumu(id);
+    // v2.4.226 KOK NEDEN (kullanici: "uc dugme de calismiyor"): bu islev her
+    // `ai_takip` iletisinde (takip FPS, 10 Hz) ve her telemetri karesinde
+    // cagriliyor ve dugmeleri SIFIRDAN kuruyordu. Fare dugmeye basilirken
+    // eleman silinip yenisi geldigi icin mousedown/mouseup ayni elemanda
+    // olmuyor, tarayici `click` uretmiyordu (Birak'in "3-4 basista"
+    // calismasinin da asil sebebi). Durum IMZASI degismedikce DOM'a dokunulmaz.
+    var bkImza = bekleyenAl(id);
+    var ucusImza = (typeof window.angajmanKameraDurumu === "function") ? window.angajmanKameraDurumu(id) : null;
+    var imza = [t && t.aktif ? "aktif:" + (t.sinif || "") : "yok",
+                bkImza ? "bk:" + bkImza.islem : "",
+                secim[id] ? "secim" : "",
+                ucusImza ? "ucus:" + ucusImza.sysid + ":" + ucusImza.mod : ""].join("|");
+    if (kap.dataset.imza === imza && kap.childElementCount) return;
+    kap.dataset.imza = imza;
     kap.textContent = "";
     kap.style.cssText = "display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;";
     var bk = bekleyenAl(id);

@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.225";
+const GCS_SURUM = "2.4.226";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.226",
+    tarih: "2026-09-16",
+    baslik: "Angaje Ol / Takip Et / Bırak düğmeleri tıklanabilir (10 Hz yeniden çizim kaldırıldı) (paket 2.5.96)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: üç düğme de çalışmıyor): takip araç çubuğu her takip konumu iletisinde (takip FPS, 10 Hz) ve her telemetri karesinde sıfırdan kuruluyordu. Fare düğmeye basılıyken eleman silinip yenisi geldiği için mousedown ile mouseup aynı elemanda olmuyor, tarayıcı 'click' üretmiyordu; 'Bırak'ın 3-4 basışta çalışmasının asıl sebebi de buydu. Artık durum imzası (aktif/bekleyen/seçim/uçuş) değişmedikçe düğmelere dokunulmaz."
+    ]
+  },
   {
     surum: "2.4.225",
     tarih: "2026-09-16",
