@@ -73,7 +73,21 @@
   }
 
   // Kamera kaydını AI alanlarıyla günceller (diğer alanları korur).
+  // v2.4.224 (kullanici istegi): ayarlar ANINDA uygulanmaz — canli akista
+  // her kaydirici hareketi isciyi yeniden kuruyor ve tespit bozuluyordu.
+  // Degisiklikler bekletilir; "Uygula" dugmesi tek seferde gonderir (sunucu
+  // izlemeyi durdurup temiz baslatir). Panel kapanirsa uygulanmamis
+  // degisiklik ATILIR.
+  var bekleyenAyar = null;   // {kam, gorevSet, hassasiyet}
   function aiKaydet(kam, gorevSet, hassasiyet) {
+    bekleyenAyar = { kam: kam, gorevSet: new Set(gorevSet), hassasiyet: JSON.parse(JSON.stringify(hassasiyet)) };
+    if (acikPanel && acikPanel.uygulaDgm) {
+      acikPanel.uygulaDgm.disabled = false;
+      acikPanel.uygulaDgm.classList.add("kai-uygula-bekliyor");
+      if (acikPanel.uygulaNot) acikPanel.uygulaNot.textContent = (T().kaiUygulanmadi || "Uygulanmamış değişiklik var — 'Uygula'ya basın.");
+    }
+  }
+  function aiUygulaSimdi(kam, gorevSet, hassasiyet) {
     var gorevler = SINIFLAR.filter(function (c) { return gorevSet.has(c[0]); })
       .map(function (c) { return c[0]; }).join(",");
     var msg = {
@@ -85,15 +99,23 @@
       ai_gorevler: gorevler,
       ai_hassasiyet: JSON.stringify(hassasiyet)
     };
+    msg.ai_yeniden_baslat = true;   // v2.4.224: izleme aktifse durdur + temiz baslat
     if (typeof window.kameraWsGonder === "function") window.kameraWsGonder(msg);
     kam.ai_gorevler = gorevler;
     kam.ai_hassasiyet = JSON.stringify(hassasiyet);
+    bekleyenAyar = null;
+    if (acikPanel && acikPanel.uygulaDgm) {
+      acikPanel.uygulaDgm.disabled = true;
+      acikPanel.uygulaDgm.classList.remove("kai-uygula-bekliyor");
+      if (acikPanel.uygulaNot) acikPanel.uygulaNot.textContent = (T().kaiUygulandi || "Uygulandı; akış kısa süre yeniden kuruldu.");
+    }
   }
 
   // ---- AI ayar paneli (yüzen, açılır-kapanır) --------------------
   var acikPanel = null;  // {el, kameraId}
 
   function panelKapat() {
+    bekleyenAyar = null;   // v2.4.224: uygulanmamis degisiklik atilir
     if (acikPanel) { acikPanel.el.remove(); acikPanel = null; }
   }
 
@@ -263,6 +285,22 @@
     takipBolum.appendChild(takipIc);
     govde.appendChild(takipBolum);
 
+    // v2.4.224: UYGULA dugmesi — degisiklikler tek seferde gonderilir
+    var uygulaSatir = document.createElement("div");
+    uygulaSatir.className = "kai-uygula-satir";
+    var uygulaNot = document.createElement("span");
+    uygulaNot.className = "kai-uygula-not";
+    uygulaNot.textContent = t.kaiUygulaIpucu || "Değişiklikler 'Uygula' ile etkinleşir; uygulama sırasında AI akışı kısa süre yeniden kurulur.";
+    var uygulaDgm = document.createElement("button");
+    uygulaDgm.type = "button"; uygulaDgm.className = "kai-uygula-dgm"; uygulaDgm.disabled = true;
+    uygulaDgm.innerHTML = "<i class='fa-solid fa-check'></i><span>" + (t.kaiUygula || "Uygula") + "</span>";
+    uygulaDgm.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (!bekleyenAyar) return;
+      aiUygulaSimdi(bekleyenAyar.kam, bekleyenAyar.gorevSet, bekleyenAyar.hassasiyet);
+    });
+    uygulaSatir.append(uygulaNot, uygulaDgm);
+    govde.appendChild(uygulaSatir);
     var not = document.createElement("div");
     not.className = "kai-panel-not";
     not.textContent = t.kaiNot ||
@@ -281,7 +319,7 @@
     }
     if (typeof window.popupTasinabilirYap === "function")
       window.popupTasinabilirYap(el, bas, "kai_" + kam.id);
-    acikPanel = { el: el, kameraId: Number(kam.id) };
+    acikPanel = { el: el, kameraId: Number(kam.id) , uygulaDgm: uygulaDgm, uygulaNot: uygulaNot };
   };
 
   // Ortak "AI Ayarları" düğmesi (istenen yüzeye eklenir)

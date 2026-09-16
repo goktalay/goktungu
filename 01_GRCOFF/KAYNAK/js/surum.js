@@ -2,11 +2,32 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.222";
+const GCS_SURUM = "2.4.224";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.224",
+    tarih: "2026-09-16",
+    baslik: "AI ayarlarında 'Uygula'; kamera/dron listeleri yüzen pencerede de kalır; %80 tam ekran; dron paneli kapat/küçült; SITL uyarı tekrarı (paket 2.5.94)",
+    maddeler: [
+      "AI AYARLARI ARTIK ANINDA UYGULANMAZ (kullanıcı isteği: akış sırasında değişiklik yapılmasın): sınıf/hassasiyet/FPS değişiklikleri bekletilir, paneldeki 'Uygula' düğmesi tek seferde gönderir; sunucu izleme aktifse önce durdurur, sonra temiz başlatır. Uygulanmamış değişiklikte düğme nabız animasyonuyla uyarır; panel kapatılırsa değişiklik atılır.",
+      "KAMERALAR PANELİ (kullanıcı bildirimi): yüzen penceresi açılan kamera listeden ÇIKMAZ; satıra tekrar tıklanınca açık pencere öne alınır (odaklanır), ikinci akış açılmaz. Açık pencereli satırın ikonu mavi.",
+      "KAMERA YÜZEN PENCERE TAM EKRAN (kullanıcı isteği): ekranı kaplamaz; pencerenin %80 genişlik / %80 yükseklik, ortalı.",
+      "DRON KARTLARI (kullanıcı isteği, kameralarla aynı davranış): panelde 'ayrı pencerede büyüt' düğmesi yok; kart başlığına tıklamak yüzen paneli açar, kart listede GÖLGE satır olarak kalır (durum/irtifa canlı); gölgeye tıklamak açık pencereyi öne alır. Yüzen panelde 'panele küçült' yerine KAPAT (çarpı: paneli kapatır, kart panele döner) ve yanında KÜÇÜLT (yalnız başlık kalır; tekrar basınca geri gelir).",
+      "KÖK NEDEN (kullanıcı bildirimi: her yenilemede sağda SITL uyarıları): sunucu 200 satırlık konsol tamponunu her bağlantıda yeniden yollar ve açılıştaki uyarı satırları her seferinde bildirime dönüşüyordu. 30 sn'den eski satırlar konsola yazılır ama bildirim üretmez. Ayrıca SITL klasöründe ikililerden en az biri varsa (ör. yalnız ArduCopter) durum 'kısmen hazır' bilgi satırıdır, uyarı değil."
+    ]
+  },
+  {
+    surum: "2.4.223",
+    tarih: "2026-09-16",
+    baslik: "Kamera konsolu açılınca en az 300 px yükseklik; görüntü küçülmez (paket 2.5.93)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: pencere uzadı ama konsol değil, görüntü küçüldü): görüntü kutusu esnek (flex) olduğu için eklenen yükseklik görüntüye gidiyor, konsol gövdesi içerik kadar (tek satır) kalıyordu. Konsol gövdesi artık sabit en az 300 px (en çok ekranın %60'ı, kaydırılabilir); konsol açılınca pencere 340 px uzar, görüntü boyutu korunur.",
+      "BIRAK / HEDEF SEÇ DÜĞMELERİ (kullanıcı bildirimi: 3-4 basışta çalışıyor): sunucu 'Bırak' için arayüzü işçi HTTP çağrısını beklemeden hemen bilgilendirir (önceden saniyeler sürebiliyordu); işlem beklerken düğme kilitlenir ve dönen simgeyle 'Bırakılıyor…' / 'Takip başlatılıyor…' gösterilir; sunucu yanıtı gelince serbest kalır (en çok 6 sn)."
+    ]
+  },
   {
     surum: "2.4.222",
     tarih: "2026-09-16",

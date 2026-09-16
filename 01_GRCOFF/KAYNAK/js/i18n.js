@@ -913,7 +913,7 @@ const DILLER = {
     dkBuyult: "Ayrı Pencerede Büyült", dkKucult: "Panele Küçült",
     // v2.4.39: ayrik karttaki carpi dugmesinin ipucu. Kart YOK EDILMEZ;
     // pencere kapanir ve kart Baglanti Yoneticisi'ndeki grubuna doner.
-    dkPencereKapat: "Pencereyi Kapat (panele döner)",
+    dkPencereKapat: "Pencereyi Kapat (panele döner)", dkYalnizBaslik: "Küçült (yalnız başlık)", dkGeriBuyut: "Geri büyüt",
     // v2.4.35: baslik okunun ipucu (her iki modda ac/kapa yapar)
     dkPaneliAc: "Paneli aç", dkPaneliKapat: "Paneli kapat",
     gpsFix: ["YOK","YOK","2D","3D","DGPS","RTK-F","RTK"],
@@ -944,6 +944,7 @@ const DILLER = {
     m50PcCozunurluk: "Çözünürlük", m50PcAci: "Az/Eğ", m50PcKanal: "Kanal", m50PcDurum: "Durum", m50PcTakip: "Takip", m50PcKonum: "Konum",
     m50PcTakipYok: "yok", m50PcTakipVar: "etkin", m50PcHedefSec: "Hedef seç", m50PcDurdur: "Durdur",
     m50AiTanima: "Tanıma", m50AiAcik: "Açık", m50AiKapaliKisa: "Kapalı", m50AiAcIpucu: "Hava aracı tanımayı aç (tespit kutusuna çift tık: takip)", m50AiKapatIpucu: "Hava aracı tanımayı kapat",
+    kaiUygula: "Uygula", kaiUygulaIpucu: "Değişiklikler 'Uygula' ile etkinleşir; uygulama sırasında AI akışı kısa süre yeniden kurulur.", kaiUygulanmadi: "Uygulanmamış değişiklik var — 'Uygula'ya basın.", kaiUygulandi: "Uygulandı; akış kısa süre yeniden kuruldu.",
     kaiTespitFps: "Tespit FPS (AI)", kaiTakipFps: "Takip FPS", kamTamEkran: "Tam ekran", kamTamEkranKapat: "Tam ekrandan çık", kaiTakipAyarBaslik: "Takip Ayarları",
     hcBaslik: "ÇEVRİMİÇİ", hcZoomIpucu: "Haritada göster", kamBaglantiYok: "BAĞLANTI YOK", kamKonsolSekmeKamera: "Kamera", kamKonsolSekmeAi: "AI", kamSatirAc: "Yüzen pencerede aç",
     m50Hassasiyet: "Hassasiyet", m50OsdcBaslik: "Cihaz OSD'si", m50OsdcAd: "KANAL ADI", m50OsdcAdMetin: "Metin", m50OsdcKonumEtiket: "Konum", m50OsdcHiza: "Hizalama", m50OsdcSol: "Sol", m50OsdcSag: "Sağ",
@@ -3079,7 +3080,7 @@ const DILLER = {
     acParamYok: "Parameter cache is empty. Use <b>FETCH ALL</b> in the Parameters window to read from the drone.",
     dkAyir: "Detach Panel", dkYerlestir: "Dock Panel",
     dkBuyult: "Maximize to Window", dkKucult: "Minimize to Panel",
-    dkPencereKapat: "Close Window (returns to panel)",
+    dkPencereKapat: "Close Window (returns to panel)", dkYalnizBaslik: "Minimize (header only)", dkGeriBuyut: "Restore",
     dkPaneliAc: "Expand panel", dkPaneliKapat: "Collapse panel",
     gpsFix: ["NONE","NONE","2D","3D","DGPS","RTK-F","RTK"],
     dkKonumYok: "NO POSITION (waiting for EKF solution)",
@@ -3109,6 +3110,7 @@ const DILLER = {
     m50PcCozunurluk: "Resolution", m50PcAci: "Az/Tilt", m50PcKanal: "Channel", m50PcDurum: "Status", m50PcTakip: "Tracking", m50PcKonum: "Position",
     m50PcTakipYok: "none", m50PcTakipVar: "active", m50PcHedefSec: "Select target", m50PcDurdur: "Stop",
     m50AiTanima: "Detection", m50AiAcik: "On", m50AiKapaliKisa: "Off", m50AiAcIpucu: "Enable aircraft detection (double-click a box to track)", m50AiKapatIpucu: "Disable aircraft detection",
+    kaiUygula: "Apply", kaiUygulaIpucu: "Changes take effect with 'Apply'; the AI stream restarts briefly while applying.", kaiUygulanmadi: "Unapplied changes — press 'Apply'.", kaiUygulandi: "Applied; the stream was briefly restarted.",
     kaiTespitFps: "Detection FPS (AI)", kaiTakipFps: "Tracking FPS", kamTamEkran: "Full screen", kamTamEkranKapat: "Exit full screen", kaiTakipAyarBaslik: "Tracking Settings",
     hcBaslik: "ONLINE", hcZoomIpucu: "Show on map", kamBaglantiYok: "NO CONNECTION", kamKonsolSekmeKamera: "Camera", kamKonsolSekmeAi: "AI", kamSatirAc: "Open in floating window",
     m50Hassasiyet: "Sensitivity", m50OsdcBaslik: "Device OSD", m50OsdcAd: "CHANNEL NAME", m50OsdcAdMetin: "Text", m50OsdcKonumEtiket: "Position", m50OsdcHiza: "Alignment", m50OsdcSol: "Left", m50OsdcSag: "Right",

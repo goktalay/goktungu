@@ -942,7 +942,7 @@
       // sabit yukseklikli; konsol acilinca pencere KONSOL_YUK kadar uzar.
       const pw = kok.closest(".kam-pencere");
       if (pw && !pw.classList.contains("kam-pencere-tam")) {
-        const KONSOL_YUK = 190;
+        const KONSOL_YUK = 340;   // v2.4.223: 300px govde + sekmeler (goruntu kuculmesin)
         const h = parseFloat(getComputedStyle(pw).height) || 400;
         pw.style.height = Math.max(260, h + (k.acik ? KONSOL_YUK : -KONSOL_YUK)) + "px";
       }
@@ -1027,7 +1027,10 @@
     satir.append(sol, araclar);
     satir.classList.add("kam-satir-tikla");
     satir.title = t.kamSatirAc || "Yüzen pencerede aç";
+    if (ayrikler[kamera.id]) satir.classList.add("kam-satir-acik");
     satir.addEventListener("click", () => {
+      // v2.4.224: pencere zaten aciksa yalniz ONE AL (odakla); yeni akis yok.
+      if (ayrikler[kamera.id]) { ayrikAc(kamera.id); return; }
       if (typeof window.kameraGoruntuHedefiAyarla === "function") window.kameraGoruntuHedefiAyarla(kamera.id, "yuzen");
       else window.kameraIzlemeAc(kamera.id);
     });
@@ -1221,7 +1224,9 @@
     // yalniz vekil akisi icin tutulur; Kameralar panelinde LISTELENMEZ.
     // Elektro-optik cihazlar kendi listesinde ve kendi penceresindedir.
     const modulKameralari = kameralar.filter((k) => String(k.protokol || "").toLowerCase() !== "m50");
-    const panelKameralari = modulKameralari.filter((k) => !ayrikler[k.id]);
+    // v2.4.224 (kullanici istegi): yuzen penceresi acik kamera LISTEDEN
+    // CIKMAZ; satira tekrar tiklaninca acik pencere one alinir (ayrikAc).
+    const panelKameralari = modulKameralari;
     // v2.4.56: KOPRU BAZLI GRUPLAMA
     // Merkezde kameralar saha makinelerine baglidir. Duz liste hangi
     // kameranin hangi sahada oldugunu gizler. Yerel kurulumda gruplama
@@ -1296,7 +1301,8 @@
       if (tam) {
         pencere._eskiStil = pencere.getAttribute("style") || "";
         pencere.classList.add("kam-pencere-tam");
-        pencere.style.left = pencere.style.top = "0px"; pencere.style.width = "100vw"; pencere.style.height = "100vh";
+        // v2.4.224 (kullanici istegi): tam ekran ekrani KAPLAMAZ; %80 x %80, ortali
+        pencere.style.left = "10vw"; pencere.style.top = "10vh"; pencere.style.width = "80vw"; pencere.style.height = "80vh";
         btnTam.innerHTML = "<i class='fa-solid fa-compress'></i>"; btnTam.title = t.kamTamEkranKapat || "Tam ekrandan çık";
       } else {
         pencere.classList.remove("kam-pencere-tam");

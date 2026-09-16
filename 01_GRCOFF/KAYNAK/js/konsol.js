@@ -57,6 +57,13 @@ function konsolToastGonder(kaynak, mesaj, seviye){
 }
 window.konsolToastGonder = konsolToastGonder;
 
+// v2.4.224: sayfa yenilenince sunucu 200 satirlik tamponu yeniden yollar;
+// acilistaki uyarilar (orn. SITL) her yenilemede toast oluyordu. Zaman damgasi
+// 30 sn'den eski satir "gecmis" sayilir: konsolda gorunur, bildirim uretmez.
+function konsolGecmisMi(s){
+  const t = Number(s && s.t) || 0;
+  return t > 0 && (Date.now() / 1000 - t) > 30;
+}
 function konsolGuncelle(satirlar){
   const kutu = document.getElementById("konsolKutu");
   // v2.4.33: Konsol paneli KAPALI olsa bile bildirimler calismali.
@@ -68,6 +75,7 @@ function konsolGuncelle(satirlar){
     for (const s of satirlar){
       if (s.no <= sonKonsolNo) continue;
       sonKonsolNo = s.no;
+      if (konsolGecmisMi(s)) continue;
       konsolToastGonder(s.kaynak, s.mesaj, s.seviye || "bilgi");
     }
     return;
@@ -95,7 +103,9 @@ function konsolGuncelle(satirlar){
     kutu.appendChild(sat);
     eklendi = true;
     // v2.4.33: hata/uyari seviyeli her satir sag ust kosede bildirim olur
-    konsolToastGonder(s.kaynak, s.mesaj, s.seviye || "bilgi");
+    // v2.4.224 (kullanici: "ekrani her yeniledigimde ayni uyarilar"): sunucu
+    // tamponundaki ESKI satirlar konsola yazilir ama bildirim OLMAZ.
+    if (!konsolGecmisMi(s)) konsolToastGonder(s.kaynak, s.mesaj, s.seviye || "bilgi");
   }
   if (!eklendi) return;
   // DOM'da en fazla 200 satir tut

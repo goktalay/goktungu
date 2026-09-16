@@ -1275,6 +1275,11 @@ class WSSunucusu:
             # "acik" yazan bir gorevin gercekten calismasi beklenir.
             if kamera_id not in aktif and not gorevler:
                 return
+            # v2.4.224 (kullanici istegi: "Uygula"): panelden uygulanan ayar
+            # aktif izlemeyi once DURDURUR, sonra temiz baslatir — isci canli
+            # akista yeniden atanirken tespit bozulmasin.
+            if gorevler and kamera_id in aktif and getattr(self, "_ai_yeniden_baslat_iste", False):
+                await _db_is_parcasi(self.ai_yonetici.izleme_durdur, kamera_id)
             if gorevler:
                 await _db_is_parcasi(
                     self.ai_yonetici.izleme_baslat, kamera_id,
@@ -9635,7 +9640,9 @@ class WSSunucusu:
                     await self._kamera_listesi_duyur()
                     # v2.4.8: AI gorevlerine gore izlemeyi esitle
                     # (gorev secildiyse baslat/yenile, bosaldiysa durdur).
+                    self._ai_yeniden_baslat_iste = bool(k.get("ai_yeniden_baslat"))
                     await self._ai_izleme_esitle(kam_id)
+                    self._ai_yeniden_baslat_iste = False
                 else:
                     self.konsol("KAMERA",
                                 f"Kamera guncellenemedi: #{kam_id}",

@@ -30,6 +30,17 @@
   // korunmali — bayatlik esigi cömert tutulur.
   var TAKIP_BAYAT_MS = 8000;
   var kutular = {};   // kamera_id -> {ts, liste:[{x,y,w,h,tur,etiket,kaynak_w,kaynak_h}]}
+  // v2.4.223 (kullanici istegi): dugme islemi beklerken tekrar basilamaz,
+  // dugme uzerinde donen simge gosterilir. kamera_id -> {islem, ts}
+  var bekleyen = {};
+  var BEKLEME_MS = 6000;
+  function bekleyenAl(id) {
+    var b = bekleyen[Number(id)];
+    if (!b) return null;
+    if (Date.now() - b.ts > BEKLEME_MS) { delete bekleyen[Number(id)]; return null; }
+    return b;
+  }
+  function bekleyenKur(id, islem) { bekleyen[Number(id)] = { islem: islem, ts: Date.now() }; araclariTazele(Number(id)); }
   var takip = {};     // kamera_id -> son ai_takip mesajı (+ _ts)
 
   var TUR_AD = { hava_araci: "HAVA ARACI" };
@@ -86,9 +97,12 @@
     var id = Number(m && m.kamera_id);
     if (!isFinite(id)) return;
     if (m.tip === "ai_takip_sonuc") {
+      delete bekleyen[id];
+      araclariTazele(id);
       if (!m.tamam) bildir(id, "Takip başlatılamadı: " + (m.hata || "bilinmeyen hata"));
       return;
     }
+    delete bekleyen[id];   // v2.4.223: sunucu yanit verdi, dugmeler serbest
     var onceki = takip[id];
     if (m.aktif) {
       takip[id] = Object.assign({}, m, { _ts: Date.now() });
@@ -122,6 +136,17 @@
     var t = window.kameraTakipDurumu(id);
     kap.textContent = "";
     kap.style.cssText = "display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;";
+    var bk = bekleyenAl(id);
+    if (bk) {
+      // v2.4.223: islem sunucuda; tek kilitli dugme + donen simge, tekrar basilamaz
+      var bb = document.createElement("button");
+      bb.type = "button"; bb.disabled = true;
+      bb.className = "kam-takip-angaje kam-takip-bekliyor " + (bk.islem === "durdur" ? "kam-takip-birak" : "kam-hedef-sec");
+      bb.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i><span>" +
+        (bk.islem === "durdur" ? "Bırakılıyor…" : "Takip başlatılıyor…") + "</span>";
+      kap.appendChild(bb);
+      return;
+    }
     if (t && t.aktif) {
       // v2.4.173: "Görüntüye Angaje Ol" (çarp) + "Takip Et" (mesafeyi
       // koru, çarpma) — ikisi de aynı pasif piksel takibini kullanır.
@@ -369,6 +394,7 @@
         bildir(id, "Seçim çok küçük — hedefi saracak bir dikdörtgen çizin");
         return;
       }
+      bekleyenKur(id, "baslat");
       if (!wsGonder({ tip: "ai_track_baslat", kamera_id: id,
                       tur: "hava_araci", kutu: [x, y, w, h],
                       ts: Date.now() / 1000 })) {
@@ -426,7 +452,9 @@
   }
 
   function takipBirak(id) {
+    if (bekleyenAl(id)) return;   // islem zaten bekliyor
     wsGonder({ tip: "ai_track_durdur", kamera_id: Number(id) });
+    bekleyenKur(id, "durdur");
     bildir(id, "Takip bırakılıyor…");
   }
 
@@ -478,6 +506,7 @@
     });
     if (!aday) { bildir(id, "Tıklanan yerde hedef yok — kutunun üzerine çift tıklayın"); return; }
     var b = aday.b;
+    bekleyenKur(id, "baslat");
     wsGonder({ tip: "ai_track_baslat", kamera_id: id, tur: b.tur,
                kutu: [Math.round(b.x), Math.round(b.y), Math.round(b.w), Math.round(b.h)],
                ts: Date.now() / 1000 });

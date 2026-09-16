@@ -1040,6 +1040,15 @@ class AIYonetici:
         with self.kilit:
             sid = self.gorevler.get(kamera_id)
             self.takipler.pop(kamera_id, None)
+        # v2.4.223 (kullanici: "Birak dugmesi 3-4 basista calisiyor"): arayuz
+        # ONCE bilgilendirilir (isci HTTP cagrisi saniyeler surebilir);
+        # Merkez kaydi zaten silindi, gec gelen isci raporlari reddedilir.
+        if self.duyuru_cb:
+            try:
+                self.duyuru_cb({"tip": "ai_takip", "kamera_id": kamera_id,
+                                "aktif": False, "kayip": False})
+            except Exception:
+                pass
         if sid:
             kayit = self._sunucu_kaydi(sid)
             if kayit:

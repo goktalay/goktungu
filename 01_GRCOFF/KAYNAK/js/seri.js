@@ -778,7 +778,10 @@ function bagGruplariDoldur(){
   if (typeof dronKartlar !== "object" || !dronKartlar) return;
   for (const sysid of Object.keys(dronKartlar)){
     const kart = dronKartlar[sysid];
-    if (kart && kart.kok) dronKartiGrubaYerlestir(sysid, kart.kok);
+    if (!kart || !kart.kok) continue;
+    // v2.4.224: yuzen pencere acikken panelde GOLGE satir durur; grubuna o yerlesir
+    const el = (kart.kok.classList.contains("ayrik") && kart.golge) ? kart.golge : kart.kok;
+    dronKartiGrubaYerlestir(sysid, el);
   }
   // Bos gruplarin "dron yok" notunu ve sayaclarini guncelle
   bagListe.querySelectorAll("[data-bag-govde]").forEach(kap => {

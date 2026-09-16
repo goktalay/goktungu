@@ -710,8 +710,22 @@ def uygulama_kur():
                 "(SITL pilotun makinesinde kosar).")
         else:
             _hazir, _eksik, _ayrinti = _sitl_mod.hazir_mi()
+        # v2.4.224 (kullanici: "sitl klasoru var ama her acilista uyari"):
+        # ikililerden EN AZ BIRI calisir durumdaysa kurulum "kismen hazir"
+        # sayilir; eksik tip bilgi satiri olur, uyari/bildirim uretmez.
+        # Sihirbaz tipe ozgu olcumu zaten ayrica yapar (_sitl_durum).
+        _kismen = False
+        if not _hazir:
+            try:
+                _kismen = any(_sitl_mod.ikili_bul(_tp)[0]
+                              for _tp in ("multirotor", "sabit_kanat"))
+            except Exception:
+                _kismen = False
         if _hazir:
             konsol("SITL", _ayrinti)
+        elif _kismen:
+            konsol("SITL", "Kismen hazir - " + str(_ayrinti or "") +
+                   " (eksik tip icin sanal dron olusturulamaz; mevcut tip calisir)")
         else:
             konsol("SITL", _ayrinti, "uyari")
             # v2.4.46: Iki ayri eksiklik tipi var ve verilecek ogut
