@@ -19,10 +19,12 @@ import threading
 import time
 
 from .sabitler import (
-    C20_GETREG, C20_HEARTBEAT, C20_HEDEF_TIPLERI, C20_LOGIN,
-    C20_MOD_ADLARI, C20_MOD_KODLARI, C20_REQUEST_RTK, C20_SETREG,
-    C20_UPLOAD_RTK, C20_UPLOAD_TRACK_V3, RADAR_IZ_ZAMANASIMI,
-    RADAR_VARSAYILAN_IP, RADAR_VARSAYILAN_PORT, RTK_HEDEF_ORNEK,
+    C20_GETJSON, C20_GETREG, C20_GETSELECT, C20_HEARTBEAT,
+    C20_HEDEF_TIPLERI, C20_LOGIN, C20_MOD_ADLARI, C20_MOD_KODLARI,
+    C20_REQUEST_RTK, C20_SETJSON, C20_SETREG, C20_SETSELECT,
+    C20_UPLOAD_RTK, C20_UPLOAD_TARGET_V3, C20_UPLOAD_TRACK_V3,
+    RADAR_IZ_ZAMANASIMI, RADAR_VARSAYILAN_IP, RADAR_VARSAYILAN_PORT,
+    RTK_HEDEF_ORNEK,
 )
 
 
@@ -59,6 +61,9 @@ class RadarIstemcisi:
             "hb_gecikme_ms": None,     # heartbeat gidis-donus gecikmesi
             "crc_hata": 0,             # bozuk cerceve / senkron kaybi
             "toplam_mesaj": 0,         # alinan toplam gecerli mesaj
+            # v2.4.227: nokta izi (UPLOAD_TARGET_V3) — son karedeki ham
+            # tespit sayisi ve alinan kare sayisi (radar yonetim paneli)
+            "nokta_sayisi": 0, "nokta_kare": 0,
         }
         self.hedefler = {}   # target_id -> hedef verisi
         # Radar calisma ayarlari (USER_CFG0 + WORKING_MODE registerlari)
@@ -73,8 +78,14 @@ class RadarIstemcisi:
             "merkez_yonu": 0.0,   # derece; azimut ofseti (dosyada saklanir)
             "kaynak": "",         # "radar" (GETREG ile okundu) | ""
             "son_sonuc": "",      # son SETREG sonucu: "ok" | "hata: ..."
+            # v2.4.227: dokuman 2.3.5-2.3.8 — secili iz listesi ve JSON
+            # yapilandirma (radar yonetim paneli)
+            "secili_izler": [], "secim_sonuc": "",
+            "json_tip": None, "json_metin": "", "json_ts": 0, "json_sonuc": "",
         }
         self.ayar_kuyruk = []     # ("oku",) | ("yaz", {alanlar}) | ("rtk",)
+        # v2.4.227 ek kuyruk turleri: ("secim_yaz", [id,..]) | ("secim_oku",)
+        #   | ("json_oku", tip) | ("json_yaz", tip, metin)
         self._thread = None
         self._durdur = threading.Event()
         # Radar kesildiginde takipci izleri temizlenir (kanca main'de kurulur)
@@ -361,6 +372,26 @@ class RadarIstemcisi:
                             gonder(C20_REQUEST_RTK, struct.pack(">bb", 1, 0))
                             self.konsol("RADAR", "RTK konum istegi "
                                         "gonderildi, veriler bekleniyor...")
+                        # ---- v2.4.227: secili iz + JSON yapilandirma ----
+                        elif istek[0] == "secim_yaz":
+                            idler = [int(x) & 0xFFFFFFFF for x in (istek[1] or [])][:64]
+                            ek_ = struct.pack(">HH", len(idler), 0) + b"".join(
+                                struct.pack(">I", i) for i in idler)
+                            with self.kilit:
+                                self.radar_ayarlar["secim_sonuc"] = "gonderiliyor"
+                            gonder(C20_SETSELECT, ek_)
+                        elif istek[0] == "secim_oku":
+                            gonder(C20_GETSELECT, struct.pack(">II", 0, 0))
+                        elif istek[0] == "json_oku":
+                            with self.kilit:
+                                self.radar_ayarlar["json_sonuc"] = "okunuyor"
+                            gonder(C20_GETJSON, struct.pack(">HHI", int(istek[1]) & 1, 0, 0))
+                        elif istek[0] == "json_yaz":
+                            metin_ = str(istek[2] or "").encode("utf-8")[:60000]
+                            with self.kilit:
+                                self.radar_ayarlar["json_sonuc"] = "gonderiliyor"
+                            gonder(C20_SETJSON, struct.pack(">HHI", int(istek[1]) & 1,
+                                                            len(metin_), 0) + metin_)
                     except Exception as e:
                         with self.kilit:
                             self.radar_ayarlar["son_sonuc"] = f"hata: {e}"
@@ -546,6 +577,57 @@ class RadarIstemcisi:
                         ayar_registerlari_oku()
                     except Exception:
                         pass
+
+            # ---- v2.4.227: protokolun kalan yanitlari ----
+            elif komut == C20_SETSELECT:
+                kod = struct.unpack(">H", ek[:2])[0] if len(ek) >= 2 else 1
+                with self.kilit:
+                    self.radar_ayarlar["secim_sonuc"] = (
+                        "ok" if kod == 0 else f"hata: kod {kod}")
+                self.konsol("RADAR", "Secili iz listesi %s" % (
+                    "yazildi" if kod == 0 else "YAZILAMADI (kod %d)" % kod),
+                    "bilgi" if kod == 0 else "uyari")
+                if kod == 0:
+                    try:
+                        gonder(C20_GETSELECT, struct.pack(">II", 0, 0))
+                    except Exception:
+                        pass
+            elif komut == C20_GETSELECT and len(ek) >= 4:
+                n = struct.unpack(">H", ek[:2])[0]
+                idler = []
+                for i in range(min(n, 64)):
+                    o = 4 + 4 * i
+                    if o + 4 > len(ek):
+                        break
+                    idler.append(struct.unpack(">I", ek[o:o + 4])[0])
+                with self.kilit:
+                    self.radar_ayarlar["secili_izler"] = idler
+                    if self.radar_ayarlar.get("secim_sonuc") in ("", "gonderiliyor"):
+                        self.radar_ayarlar["secim_sonuc"] = "okundu"
+            elif komut == C20_SETJSON:
+                kod = struct.unpack(">H", ek[:2])[0] if len(ek) >= 2 else 1
+                with self.kilit:
+                    self.radar_ayarlar["json_sonuc"] = (
+                        "ok" if kod == 0 else f"hata: kod {kod}")
+                self.konsol("RADAR", "JSON yapilandirma %s" % (
+                    "yazildi" if kod == 0 else "YAZILAMADI (kod %d)" % kod),
+                    "basari" if kod == 0 else "uyari")
+            elif komut == C20_GETJSON and len(ek) >= 8:
+                jtip, n = struct.unpack(">HH", ek[:4])
+                metin = ek[8:8 + n].decode("utf-8", "replace")
+                with self.kilit:
+                    self.radar_ayarlar["json_tip"] = int(jtip)
+                    self.radar_ayarlar["json_metin"] = metin
+                    self.radar_ayarlar["json_ts"] = time.time()
+                    self.radar_ayarlar["json_sonuc"] = "okundu"
+                self.konsol("RADAR", "JSON yapilandirma okundu (tip %d, %d bayt)"
+                            % (jtip, n))
+            elif komut == C20_UPLOAD_TARGET_V3 and len(ek) >= 32:
+                # i64 utc, i64 frame, i32 bas_aci, i32 son_aci, i32 yon, i32 N
+                n = struct.unpack(">i", ek[28:32])[0]
+                with self.kilit:
+                    self.durum["nokta_sayisi"] = max(0, int(n))
+                    self.durum["nokta_kare"] = int(self.durum.get("nokta_kare") or 0) + 1
 
             # HEARTBEAT ve diger yanitlar: sessizce gec
 

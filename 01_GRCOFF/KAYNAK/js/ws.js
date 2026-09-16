@@ -108,9 +108,10 @@ function telemetriIsle(m){
     _guvenli("grafik",          () => grafikOrnekle((m.radar_izler || []).length));
   }
 
-  _guvenli("kayit_durum",     () => { if (m.kayit_durum) kayitDurumGuncelle(m.kayit_durum); });
-  _guvenli("replay_durum",    () => { if (m.replay_durum) replayDurumGuncelle(m.replay_durum); });
-  _guvenli("takipci_ayarlar", () => { if (m.takipci_ayarlar) takipciAyarSenkron(m.takipci_ayarlar); });
+  // v2.4.227: kayit/replay/filtre panelleri kaldirildi (kayit.js, filtreler.js yuklenmez)
+  _guvenli("kayit_durum",     () => { if (m.kayit_durum && typeof kayitDurumGuncelle === "function") kayitDurumGuncelle(m.kayit_durum); });
+  _guvenli("replay_durum",    () => { if (m.replay_durum && typeof replayDurumGuncelle === "function") replayDurumGuncelle(m.replay_durum); });
+  _guvenli("takipci_ayarlar", () => { if (m.takipci_ayarlar && typeof takipciAyarSenkron === "function") takipciAyarSenkron(m.takipci_ayarlar); });
   _guvenli("konsol",          () => { if (m.konsol) konsolGuncelle(m.konsol); });
 
   // DRONLAR — en kritik alt sistem.
@@ -222,7 +223,6 @@ function wsBaglan(){
     hicBaglanmadi = false;
     wsDurum.textContent = D().wsBagli(port);
     wsDurum.className = "f-iyi";
-    btnRadarBaglan.disabled = false;
     if (typeof siniflandirmaDurumSorgula === "function")
       siniflandirmaDurumSorgula();
     // v2.4.51: veritabani yapilandirmasini sor. Yanit (pg_durum)
@@ -243,7 +243,7 @@ function wsBaglan(){
   ws.onclose = () => {
     wsDurum.textContent = D().wsKoptu;
     wsDurum.className = "f-kotu";
-    btnRadarBaglan.disabled = true;
+    // v2.4.227: eski radar paneli dugmesi kaldirildi (radar_pencere.js kendi durumunu telemetriden okur)
     // Henuz hic baglanamadiysak siradaki aday portu dene,
     // once baglanip koptuysak ayni portta bekle
     if (hicBaglanmadi) wsPortIdx = (wsPortIdx + 1) % WS_PORTLAR.length;
@@ -641,14 +641,14 @@ function wsBaglan(){
       if (typeof window.hrtCacheIlerleme === "function")
         window.hrtCacheIlerleme(m);
     } else if (m.tip === "kayit_listesi"){
-      kayitListeCiz(m.kayitlar || []);
+      if (typeof kayitListeCiz === "function") kayitListeCiz(m.kayitlar || []);
     } else if (m.tip === "replay_bitti"){
-      replayDurumGuncelle({aktif: false});
+      if (typeof replayDurumGuncelle === "function") replayDurumGuncelle({aktif: false});
     } else if (m.tip === "siniflandirma_durum"){
       if (typeof siniflandirmaDurumUygula === "function")
         siniflandirmaDurumUygula(m.ayar);
     } else if (m.tip === "etiket_listesi"){
-      if (m.dosya === replayDosya){
+      if (typeof replayDosya !== "undefined" && m.dosya === replayDosya){
         etiketler = m.etiketler || {};
         if (typeof etiketRozetleriTazele === "function") etiketRozetleriTazele();
       }

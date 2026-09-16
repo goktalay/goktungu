@@ -196,8 +196,7 @@
   // 2 sol bolum de kapaliysa sol panel + tutamaci gizlenir.
   // =====================================================================
   const PANEL_BOLUM = {
-    tespit:    { taraf: "sol", eller: ["solToolbar", "hedefListeIcerik"] },
-    takip:     { taraf: "sol", eller: ["takipBaslik", "takipListeIcerik"] },
+    // v2.4.227 (kullanici istegi): Tespit/Takip sol dock bolumleri KALDIRILDI.
     // v2.4.33: ayri DRONLAR bolumu kaldirildi (kartlar Baglanti
     // Yoneticisi icinde). Kayit silindi; yoksa panelUygula() olmayan
     // ogeleri arar ve menu ogesi hicbir seyi degistirmez.
@@ -207,7 +206,7 @@
     kameralar: { taraf: "sag", eller: ["kameralarToolbar", "kameralarIcerik"] },
     rotalar:   { taraf: "sag", eller: ["rotalarToolbar", "rotalarIcerik"] },
   };
-  let panelDurum = { tespit:true, takip:true, kameralar:true, rotalar:true };
+  let panelDurum = { kameralar:true, rotalar:true };
   try {
     const k = JSON.parse(localStorage.getItem("gcs_panel_gorunum") || "{}");
     for (const ad in panelDurum) if (typeof k[ad] === "boolean") panelDurum[ad] = k[ad];

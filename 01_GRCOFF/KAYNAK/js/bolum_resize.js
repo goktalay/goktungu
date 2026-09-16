@@ -27,7 +27,7 @@
   // Tutamac, ardisik iki bolum ARASINA yerlestirilir; surukleme bu iki
   // bolumun flex-grow degerlerini degistirir (toplam sabit kalir).
   const PANELLER = [
-    { bolumler: ["hedefListeIcerik", "takipListeIcerik"] },
+    // v2.4.227: sol dock bolumleri kaldirildi
     // v2.4.33: dronlarIcerik KALDIRILDI (dron kartlari artik Baglanti
     // Yoneticisi grubunun icinde). Listede kalirsa ciftBul() olmayan
     // bir bolumu arar; zararsiz ama gereksiz.

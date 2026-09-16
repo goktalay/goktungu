@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.226";
+const GCS_SURUM = "2.4.227";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.227",
+    tarih: "2026-09-16",
+    baslik: "Radar yönetim penceresi (protokolün tüm yüzeyi); Hedef Filtresi / İz Ayarları / Sınıflandırma / Kayıt / Tüm Takibi Bırak / Tespit-Takip panelleri kaldırıldı (paket 2.5.97)",
+    maddeler: [
+      "RADARLAR MENÜSÜ (kullanıcı isteği): Hedef Filtresi, İz Ayarları, Hedef Sınıflandırma, Kayıt ve Tekrar Oynatma, Tüm Takibi Bırak, Tespit Edilen Hedefler Paneli ve Takip Edilen Hedefler Paneli menüden ve sistemden kaldırıldı (sol dock, ilgili yüzen paneller ve betikleri yüklenmez).",
+      "RADAR YÖNETİM PENCERESİ (kullanıcı isteği): Radarlar listesinde bir radara tıklanınca yalnız o radara özel, M50 penceresi gibi açılır-kapanır bölümlü pencere açılır; çoklu radar sekmeleri yok. Bölümler T serisi tarama radarı protokolü v3.0.0'ı kapsar: Bağlantı (LOGIN/HEARTBEAT, Bağlan/Kes), Çalışma (WORKING_MODE: Başlat/Durdur, tarama 1/2/4 sn), Tespit ayarları (USER_CFG0: frekans, tespit/hız/RCS eşiği, Uygula + Radardan oku), Konum ve yön (REQUEST_RTK/UPLOAD_RTK, merkez yönü), Seçili iz (SETSELECT/GETSELECT), JSON yapılandırma (SETJSON/GETJSON, koordinat/sistem dosyası), Hedefler (UPLOAD_TRACK_V3 canlı iz tablosu, UPLOAD_TARGET_V3 nokta sayısı, Seç ile iz seçimi, satıra tık haritada odak) ve Sağlık. IP/port yalnız kayıt (Düzenle) formundadır.",
+      "SUNUCU / KÖPRÜ: SETSELECT, GETSELECT, SETJSON, GETJSON komutları ve UPLOAD_TARGET_V3 nokta izi çözümü eklendi (yerel istemci ve saha köprüsü; köprü paketi 1.7.21 gerektirir). Yeni WS komutları: radar_secim_yaz / radar_secim_oku / radar_json_oku / radar_json_yaz (radar parametre izni).",
+      "HARİTA: radar tespit aşamasındaki yapı değişmedi — izler, iz geçmişi, kapsama halkaları ve radar ikonları aynen çalışır; sol liste kaldırıldığı için hedef kartları çizilmez, harita ve pencere tablosu kullanılır."
+    ]
+  },
   {
     surum: "2.4.226",
     tarih: "2026-09-16",

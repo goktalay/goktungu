@@ -355,7 +355,7 @@ function radarHedefleriGuncelle(hedefler){
   }
 
   // Panel ozeti
-  radarHedefOzet.textContent = radarBagli
+  if (radarHedefOzet) radarHedefOzet.textContent = radarBagli
     ? t.radarHedefSayi(sonRadarHedefler.length) : "";
 
   // Sol panel hedef kartlari
@@ -555,6 +555,8 @@ function _rhMenuAyrac() {
 }
 
 function radarHedefKartlariGuncelle(){
+  // v2.4.227: sol dock (Tespit/Takip listeleri) kaldirildi; kartlar cizilmez
+  if (!radarHedefListesi || !takipHedefListesi) return;
   const t = D();
   const canli = new Set();
   // Kart listesi: canli izler + canli olmayan ama takipte olan izler
@@ -908,7 +910,7 @@ function radarHedefleriTemizle(){
   }
   for (const id of Object.keys(yetimIzVarliklar)) viewer.entities.remove(yetimIzVarliklar[id]);
   yetimIzVarliklar = {};
-  radarHedefOzet.textContent = "";
+  if (radarHedefOzet) radarHedefOzet.textContent = "";
   if (radarHedefListesi) radarHedefListesi.innerHTML = "";
   radarHedefKartlariGuncelle();   // takip kartlarini SINYAL YOK durumuna gecir
 }

@@ -18,8 +18,7 @@
   // Bolum tanimlari: menubar.js PANEL_BOLUM ile ayni adlar.
   // bas: toolbar/baslik elemani, icer: icerik elemani, taraf: sol/sag
   const BOLUMLER = {
-    tespit:    { taraf: "sol", bas: "solToolbar",       icer: "hedefListeIcerik", pbaslik: "bpBaslikTespit" },
-    takip:     { taraf: "sol", bas: "takipBaslik",      icer: "takipListeIcerik" },
+    // v2.4.227: tespit/takip sol bolumleri kaldirildi (radar yonetim penceresi)
     // v2.4.33: ayri DRONLAR bolumu KALDIRILDI. Dron kartlari artik
     // Baglanti Yoneticisi grubunun icinde yasiyor. Kayit silinmezse
     // popupOlustur() olmayan ogeleri arar; sessizce null doner ama

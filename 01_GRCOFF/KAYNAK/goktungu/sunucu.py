@@ -5061,6 +5061,11 @@ class WSSunucusu:
         "radar_kes":        ("radar", "parametre", "radar"),
         "radar_ayar_yaz":   ("radar", "parametre", "radar"),
         "rtk_konum_al":     ("radar", "parametre", "radar"),
+        # v2.4.227: radar yonetim paneli — secili iz + JSON yapilandirma
+        "radar_secim_yaz":  ("radar", "parametre", "radar"),
+        "radar_secim_oku":  ("radar", "parametre", "radar"),
+        "radar_json_oku":   ("radar", "parametre", "radar"),
+        "radar_json_yaz":   ("radar", "parametre", "radar"),
         "radar_listesi":    ("radar", "parametre", "radar"),
         "radar_kaydet":     ("radar", "parametre", "radar"),
         "radar_sil":        ("radar", "parametre", "radar"),
@@ -6113,6 +6118,8 @@ class WSSunucusu:
         "radar_kes": "radar",
         "radar_ayar_yaz": "radar",
         "rtk_konum_al": "radar",
+        "radar_secim_yaz": "radar", "radar_secim_oku": "radar",
+        "radar_json_oku": "radar", "radar_json_yaz": "radar",
         "radar_listesi": "radar", "radar_kaydet": "radar", "radar_sil": "radar",
         "takipci_ayar": "radar",
         "filtre_ayar": "radar",
@@ -6653,6 +6660,53 @@ class WSSunucusu:
                 if _ist is not None:
                     with self.kilit:
                         _ist.ayar_kuyruk.append(("oku",))
+
+        # ---- v2.4.227: radar yonetim paneli — dokuman 2.3.5-2.3.8 ----
+        elif komut in ("radar_secim_yaz", "radar_secim_oku",
+                       "radar_json_oku", "radar_json_yaz"):
+            _rid = k.get("radar_id")
+            _veri = {}
+            _kuyruk = None
+            if komut == "radar_secim_yaz":
+                _idler = []
+                for _x in (k.get("izler") or [])[:64]:
+                    try:
+                        _idler.append(int(_x) & 0xFFFFFFFF)
+                    except (TypeError, ValueError):
+                        pass
+                _veri = {"izler": _idler}
+                _kuyruk = ("secim_yaz", _idler)
+            elif komut == "radar_secim_oku":
+                _kuyruk = ("secim_oku",)
+            elif komut == "radar_json_oku":
+                try:
+                    _jt = int(k.get("json_tip") or 0) & 1
+                except (TypeError, ValueError):
+                    _jt = 0
+                _veri = {"json_tip": _jt}
+                _kuyruk = ("json_oku", _jt)
+            else:
+                try:
+                    _jt = int(k.get("json_tip") or 0) & 1
+                except (TypeError, ValueError):
+                    _jt = 0
+                _metin = str(k.get("metin") or "")[:60000]
+                try:
+                    json.loads(_metin)
+                except Exception as _je:
+                    await self._uyari_gonder(
+                        websocket, "radar",
+                        "JSON gecersiz, radara gonderilmedi: %s" % _je)
+                    return
+                _veri = {"json_tip": _jt, "metin": _metin}
+                _kuyruk = ("json_yaz", _jt, _metin)
+            if self._merkez_kipinde():
+                await self._radar_kopruye(websocket, komut, _veri, k)
+            else:
+                _ist = self._radar_istemci(_rid)
+                if _ist is not None and hasattr(_ist, "ayar_kuyruk"):
+                    with self.kilit:
+                        _ist.ayar_kuyruk.append(_kuyruk)
 
         # ---- v2.4.191: coklu elektro-optik kayit yonetimi ----
         elif komut == "eo_listesi":

@@ -527,6 +527,29 @@ class RadarServisi(Servis):
             self.yaz("Panel istegi: radar %d RTK konumu alinacak" % rid)
             return {"radar_id": rid}
 
+        # ---- 1.7.21: radar yonetim paneli — secili iz + JSON yapilandirma ----
+        if eylem in ("secim_yaz", "secim_oku", "json_oku", "json_yaz"):
+            ist = self._istemci(rid)
+            if eylem == "secim_yaz":
+                idler = []
+                for x in (veri.get("izler") or [])[:64]:
+                    try:
+                        idler.append(int(x) & 0xFFFFFFFF)
+                    except (TypeError, ValueError):
+                        pass
+                istek = ("secim_yaz", idler)
+            elif eylem == "secim_oku":
+                istek = ("secim_oku",)
+            elif eylem == "json_oku":
+                istek = ("json_oku", int(veri.get("json_tip") or 0) & 1)
+            else:
+                istek = ("json_yaz", int(veri.get("json_tip") or 0) & 1,
+                         str(veri.get("metin") or "")[:60000])
+            with ist.kilit:
+                ist.ayar_kuyruk.append(istek)
+            self.yaz("Panel istegi: radar %d %s" % (rid, eylem))
+            return {"radar_id": rid}
+
         raise ValueError("bilinmeyen eylem: %s" % eylem)
 
     def _cihaz_listesi(self):

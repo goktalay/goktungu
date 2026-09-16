@@ -506,6 +506,23 @@ class Uygulama:
         def radar_rtk(v):
             return _radar("rtk", {"radar_id": _rid(v)})
 
+        # 1.7.21: radar yonetim paneli — secili iz listesi + JSON yapilandirma
+        def radar_secim_yaz(v):
+            return _radar("secim_yaz", {"radar_id": _rid(v),
+                                        "izler": list((v or {}).get("izler") or [])[:64]})
+
+        def radar_secim_oku(v):
+            return _radar("secim_oku", {"radar_id": _rid(v)})
+
+        def radar_json_oku(v):
+            return _radar("json_oku", {"radar_id": _rid(v),
+                                       "json_tip": (v or {}).get("json_tip") or 0})
+
+        def radar_json_yaz(v):
+            return _radar("json_yaz", {"radar_id": _rid(v),
+                                       "json_tip": (v or {}).get("json_tip") or 0,
+                                       "metin": str((v or {}).get("metin") or "")[:60000]})
+
         # -------------------------------------------------------------
         # M50 elektro-optik eylemleri: HVS DLL yalnız saha Köprüsündedir.
         # Merkezde hiçbir SDK yüklenmez. Genel bir aktarma kapısı yerine
@@ -735,6 +752,10 @@ class Uygulama:
             "radar_ayar_oku": radar_ayar_oku,
             "radar_ayar_yaz": radar_ayar_yaz,
             "radar_rtk": radar_rtk,
+            "radar_secim_yaz": radar_secim_yaz,
+            "radar_secim_oku": radar_secim_oku,
+            "radar_json_oku": radar_json_oku,
+            "radar_json_yaz": radar_json_yaz,
             "radar_cihazlar": radar_cihazlar,
             "m50_durum": m50_durum,
             "m50_cihazlar": m50_cihazlar,
