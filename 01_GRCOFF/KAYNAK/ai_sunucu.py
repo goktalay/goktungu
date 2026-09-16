@@ -307,7 +307,16 @@ def takip_ayar_coz(deger):
         tol = float(d.get("takip_tolerans"))
     except (TypeError, ValueError):
         tol = 5.0
-    return {"yontem": yontem, "tolerans_sn": min(30.0, max(1.0, tol))}
+    # v2.4.222 (kullanici istegi): tespit ve takip icin ayarlanabilir FPS
+    def _fps(ad, varsayilan, ust):
+        try:
+            v = float(d.get(ad))
+        except (TypeError, ValueError):
+            return varsayilan
+        return min(float(ust), max(1.0, v))
+    return {"yontem": yontem, "tolerans_sn": min(30.0, max(1.0, tol)),
+            "tespit_fps": _fps("tespit_fps", 5.0, 15.0),
+            "takip_fps": _fps("takip_fps", 10.0, 30.0)}
 
 
 class AkisIsleyici(threading.Thread):
@@ -684,8 +693,8 @@ class AkisIsleyici(threading.Thread):
                 # (kalici, sessiz kilitlenme). Tolerans icindeyken HICBIR
                 # SEY bildirilmez; son bilinen kutu/aktif durum korunur.
                 return
-            # bildirimi ~5 Hz ile sinirla
-            if ts - tk["son_ts"] < 0.2:
+            # bildirimi takip_fps ile sinirla (v2.4.222: ayarlanabilir)
+            if ts - tk["son_ts"] < 1.0 / float((self.takip_ayar or {}).get("takip_fps") or 10.0):
                 return
             tk["son_ts"] = ts
             x, y, gw, gh = tk["kutu"]
@@ -891,6 +900,12 @@ class AIIsci:
             return
         if "hava_araci" not in (akis.gorevler & IZINLI_SINIFLAR):
             return
+        # v2.4.222: tespit_fps tavani (kullanici ayari; CPU/GPU yukunu sinirlar)
+        fps = float((getattr(akis, "takip_ayar", None) or {}).get("tespit_fps") or 5.0)
+        son = getattr(akis, "_son_tespit_ts", 0.0)
+        if ts - son < 1.0 / fps:
+            return
+        akis._son_tespit_ts = ts
         self._yolo_kuyrukla(akis, kare, ts)
 
     def kare_analiz(self, akis, kare, ts):

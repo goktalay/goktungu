@@ -31,10 +31,9 @@
   window.kameraOnizlemeUrl = function (id) { return proxyUrl(Number(id)); };
   // Paylasimli AI paneli kamera kaydini bu kanaldan yollar.
   window.kameraWsGonder = function (obj) { wsGonder(obj); };
-  function hedef(id) {
-    return (typeof window.kameraGoruntuHedefi === "function")
-      ? window.kameraGoruntuHedefi(id) : "yuzen";
-  }
+  // v2.4.222 (kullanici istegi): goruntu konumu SECENEGI KALDIRILDI —
+  // oynayan kamera hem haritada (dron kucuk onizlemesi) hem yuzen pencerede.
+  function hedef(id) { return "yuzen"; }
 
   function wsGonder(obj) {
     if (typeof ws !== "undefined" && ws && ws.readyState === 1)
@@ -783,25 +782,12 @@
       }
     });
 
-    const bAyir = document.createElement("button");
-    bAyir.className = "kam-btn";
-    bAyir.title = ayrikler[kamera.id]
-      ? (t.kamYerlestir || "Panele Yerleştir") : (t.kamAyir || "Ayrı Pencere");
-    bAyir.innerHTML = ayrikler[kamera.id]
-      ? "<i class='fa-solid fa-down-left-and-up-right-to-center'></i>"
-      : "<i class='fa-solid fa-up-right-from-square'></i>";
-    bAyir.addEventListener("click", (e) => {
-      e.stopPropagation();
-      ayrikToggle(kamera.id);
-    });
+    // v2.4.222: "Panele yerlestir" ve goruntu-konumu secici kaldirildi.
 
     // v2.4.189: Kullanici istegi — "cok fazla dugme oldu": duzenle / AI /
     // (M50: Elektro-Optik paneli, kanal) / sil TEK "..." menusune; goruntu
     // konumu (4 dugme) TEK acilir dugmeye indi (kamera_ai_panel.js).
-    kutu.append(bPlay, bAyir);
-    if (typeof window.kameraGoruntuHedefSecici === "function") {
-      kutu.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
-    }
+    kutu.append(bPlay);
 
     const bMenu = document.createElement("button");
     bMenu.className = "kam-btn kam-menu-btn";
@@ -952,6 +938,14 @@
       bas.classList.toggle("kapali", !k.acik);
       sekmeler.classList.toggle("gizli", !k.acik);
       sekmeSec(k.sekme);
+      // v2.4.222 (kullanici bildirimi: konsol gorunmuyordu): yuzen pencere
+      // sabit yukseklikli; konsol acilinca pencere KONSOL_YUK kadar uzar.
+      const pw = kok.closest(".kam-pencere");
+      if (pw && !pw.classList.contains("kam-pencere-tam")) {
+        const KONSOL_YUK = 190;
+        const h = parseFloat(getComputedStyle(pw).height) || 400;
+        pw.style.height = Math.max(260, h + (k.acik ? KONSOL_YUK : -KONSOL_YUK)) + "px";
+      }
       if (k.acik) {
         if (!k.gecmisIstendi) { k.gecmisIstendi = true; wsGonder({ tip: "kamera_konsol_gecmis", id }); }
       }
@@ -1290,6 +1284,26 @@
     baslik.className = "kam-pencere-baslik";
     const ad = document.createElement("span");
     ad.innerHTML = "<i class='fa-solid fa-video'></i> " + kamera.isim;
+    // v2.4.222 (kullanici istegi): standart pencere yonetimi — kapatma
+    // carpisinin yaninda TAM EKRAN dugmesi (pencere ekrani kaplar).
+    const btnTam = document.createElement("button");
+    btnTam.className = "kam-btn kam-btn-tam";
+    btnTam.title = t.kamTamEkran || "Tam ekran";
+    btnTam.innerHTML = "<i class='fa-solid fa-expand'></i>";
+    btnTam.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const tam = !pencere.classList.contains("kam-pencere-tam");
+      if (tam) {
+        pencere._eskiStil = pencere.getAttribute("style") || "";
+        pencere.classList.add("kam-pencere-tam");
+        pencere.style.left = pencere.style.top = "0px"; pencere.style.width = "100vw"; pencere.style.height = "100vh";
+        btnTam.innerHTML = "<i class='fa-solid fa-compress'></i>"; btnTam.title = t.kamTamEkranKapat || "Tam ekrandan çık";
+      } else {
+        pencere.classList.remove("kam-pencere-tam");
+        pencere.setAttribute("style", pencere._eskiStil || "");
+        btnTam.innerHTML = "<i class='fa-solid fa-expand'></i>"; btnTam.title = t.kamTamEkran || "Tam ekran";
+      }
+    });
     const btnKapat = document.createElement("button");
     btnKapat.className = "kam-btn";
     btnKapat.title = "Görüntüyü kapat";
@@ -1300,7 +1314,9 @@
       ayrikKapat(id);
       listeCiz();
     });
-    baslik.append(ad, btnKapat);
+    const baslikDgm = document.createElement("span"); baslikDgm.className = "kam-pencere-baslik-dgm";
+    baslikDgm.append(btnTam, btnKapat);
+    baslik.append(ad, baslikDgm);
     const kutu = document.createElement("div");
     kutu.className = "kam-video-kutu kam-pencere-video";
     const altBar = document.createElement("div");
@@ -1318,8 +1334,7 @@
     bDuzenleP.innerHTML = "<i class='fa-solid fa-pen'></i>";
     bDuzenleP.addEventListener("click", (e) => { e.stopPropagation(); modalAc(kamera); });
     araclar.appendChild(bDuzenleP);
-    if (typeof window.kameraGoruntuHedefSecici === "function")
-      araclar.appendChild(window.kameraGoruntuHedefSecici(kamera.id));
+    // v2.4.222: goruntu-konumu secici kaldirildi
     altBar.appendChild(araclar);
     pencere.append(baslik, kutu, altBar);
     // v2.4.206 (kullanici istegi): en altta DURUM CUBUGU — kameranin
@@ -1348,6 +1363,7 @@
       let ilk = true;
       const ro = new ResizeObserver(() => {
         if (ilk) { ilk = false; return; }
+        if (pencere.classList.contains("kam-pencere-tam")) return;
         window.pencereKonumKaydet("kam_" + id, pencere, true);
       });
       ro.observe(pencere);
@@ -1377,12 +1393,8 @@
   function hedefeGore(id) {
     const h = hedef(id);
     // yüzen değilse açık pencereyi kapat
-    if (h !== "yuzen" && ayrikler[id]) ayrikKapat(id);
-    // tam ekran değilse tam ekranı kapat
-    if (h !== "tam" && tamEkranId === id) tamEkranKapat();
     if (!oynayanlar.has(id)) { listeCiz(); return; }
-    if (h === "yuzen") ayrikAc(id);
-    else if (h === "tam") tamEkranAc(id);
+    ayrikAc(id);
     // 'panel' ve 'harita' listeCiz()/harita tazeleme ile çizilir
     listeCiz();
     if (typeof window.dronKameraHaritaOnizlemeTazele === "function")

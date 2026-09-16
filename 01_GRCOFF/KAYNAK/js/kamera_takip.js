@@ -203,7 +203,7 @@
         (t.hedef_id ? " · konum çözüldü"
                     : " · konum: " + (t.konum_gerekce || "bekleniyor"));
     } else {
-      sol = "Takip: tespit kutusuna çift tıklayın veya Hedef Seç ile çizin";
+      sol = "";   // v2.4.222 (kullanici istegi): bosta ipucu metni yok
     }
     // v2.4.173: ucus-seviyesi angajman/takip durumu (mesafe/ETA)
     var ucus = (typeof window.angajmanKameraDurumu === "function")
@@ -220,6 +220,7 @@
     el.textContent = "";
     var s1 = document.createElement("span");
     s1.textContent = sol;
+    el.style.display = (sol || durumMetni(id)) ? "" : "none";
     var s2 = document.createElement("span");
     s2.style.cssText = "opacity:.85;white-space:nowrap;";
     var dm = durumMetni(id);

@@ -2,11 +2,25 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.221";
+const GCS_SURUM = "2.4.222";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.222",
+    tarih: "2026-09-16",
+    baslik: "Kamera penceresi: konsol için otomatik yükseklik, görüntü-konumu seçeneği kalktı, tam ekran düğmesi; takip AI'dan bağımsız; AI/takip FPS ayarı; tek Hava Aracı sınıfı (paket 2.5.92)",
+    maddeler: [
+      "KONSOL (kullanıcı bildirimi: görünmüyordu): yüzen pencere sabit yükseklikliydi; konsol açılınca pencere 190 px uzar, kapanınca kısalır; konsol gövdesi en çok 150 px kayar.",
+      "GÖRÜNTÜ KONUMU (kullanıcı isteği): mavi görüntü-konumu düğmesi ve 'Panele yerleştir' kaldırıldı; oynayan kamera hem haritada (dron küçük önizlemesi) hem yüzen pencerede görünür.",
+      "TAKİP AI'DAN BAĞIMSIZ (kullanıcı bildirimi: 'AI açık olmasına rağmen izlemede değil' / 'track bir AI seçeneği değil'): 'Hedef Seç' ile çizim AI izlemesi gerektirmez — işçi akışı yalnız 'takip' göreviyle kendiliğinden açılır, ilk kare gelince takip kurulur. Ayrıca AI ayarlarında görev AÇIK ise izleme artık kendiliğinden başlar (önceden yalnız çalışan izleme güncelleniyordu).",
+      "İPUCU: 'Takip: tespit kutusuna çift tıklayın…' boşta metni kaldırıldı.",
+      "FPS (kullanıcı isteği): AI ayarlarında 'Tespit FPS (AI)' (1–15, varsayılan 5) ve 'Takip FPS' (1–30, varsayılan 10) kaydırıcıları; işçi tespit ve takip güncellemesini bu tavanlarla sınırlar.",
+      "AI SINIFLARI (kullanıcı isteği): Drone/Uçak/Helikopter/Kuş alt kırılımı kaldırıldı; tek 'Hava Aracı' anahtarı + hassasiyet ve 'Takip Ayarları' kaldı.",
+      "TAM EKRAN (kullanıcı isteği): yüzen pencere başlığında kapatma çarpısının yanında tam ekran düğmesi (pencere ekranı kaplar, tekrar basınca eski boyut/konum)."
+    ]
+  },
   {
     surum: "2.4.221",
     tarih: "2026-09-16",

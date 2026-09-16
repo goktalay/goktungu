@@ -40,7 +40,9 @@ def _izinli_sinif(tur):
 # v2.4.162: Izleme GOREVLERI (tespit siniflarindan ayri): "yuz" yakin cekim
 # yuz tespiti gorevidir; tespit yine "insan" bildirilir.
 IZINLI_GOREVLER = frozenset(("hava_araci", "drone", "ucak", "helikopter",
-                             "kus"))
+                             "kus",
+                             # v2.4.222: yalniz piksel takibi (AI tespiti olmadan)
+                             "takip"))
 
 
 def _gorevleri_sinirla(gorevler):
@@ -978,8 +980,13 @@ class AIYonetici:
         onbellek[kamera_id] = (sonuc, simdi)
         return sonuc
 
-    def track_baslat(self, kamera_id, tur="", kutu=None, ts=None):
-        """Manuel seçilmiş hedef için yalnız pasif görüntü takibini başlatır."""
+    def track_baslat(self, kamera_id, tur="", kutu=None, ts=None, hassasiyet=""):
+        """Manuel seçilmiş hedef için yalnız pasif görüntü takibini başlatır.
+
+        v2.4.222 (kullanici: "track etmek bir AI secenegi degil"): kamera AI
+        izlemesinde DEGILSE izleme yalniz 'takip' goreviyle (tespit modeli
+        calismadan) kendiliginden baslatilir; isci akisi acinca takip kurulur.
+        """
         kamera_id = int(kamera_id)
         tur = _izinli_sinif(tur)
         if not tur:
@@ -988,16 +995,35 @@ class AIYonetici:
         with self.kilit:
             sid = self.gorevler.get(kamera_id)
         if not sid:
-            return {"tamam": False, "hata": "kamera AI izlemesinde degil"}
+            s = self.izleme_baslat(kamera_id, "/kamera/%d" % kamera_id, "gcs_proxy",
+                                   gorevler=["takip"], hassasiyet=hassasiyet or "")
+            if not s.get("tamam"):
+                return {"tamam": False, "hata": "takip icin akis acilamadi: %s"
+                        % (s.get("hata") or "isci yok")}
+            with self.kilit:
+                sid = self.gorevler.get(kamera_id)
+            if not sid:
+                return {"tamam": False, "hata": "kamera AI izlemesinde degil"}
+            self._takip_icin_bekle = True
         kayit = self._sunucu_kaydi(sid)
         if not kayit:
             return {"tamam": False, "hata": "isci sunucu bulunamadi"}
-        try:
-            sonuc = self._http(kayit, "/takip_baslat",
-                               {"kamera_id": kamera_id, "tur": tur,
-                                "kutu": kutu, "ts": ts})
-        except Exception as e:
-            return {"tamam": False, "hata": str(e)[:150]}
+        sonuc = {}
+        for deneme in range(8):
+            try:
+                sonuc = self._http(kayit, "/takip_baslat",
+                                   {"kamera_id": kamera_id, "tur": tur,
+                                    "kutu": kutu, "ts": ts})
+            except Exception as e:
+                sonuc = {"tamam": False, "hata": str(e)[:150]}
+            if sonuc.get("tamam"):
+                break
+            # v2.4.222: akis yeni acildiysa ilk kare 1-3 sn sonra gelir
+            h = str(sonuc.get("hata") or "")
+            if "kare yok" in h or "akis" in h.lower() or "izlenmiyor" in h:
+                time.sleep(0.6)
+                continue
+            break
         if sonuc.get("tamam"):
             with self.kilit:
                 self.takipler[kamera_id] = {

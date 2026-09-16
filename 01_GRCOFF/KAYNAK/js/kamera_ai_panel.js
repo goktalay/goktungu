@@ -20,12 +20,11 @@
   // v2.4.169: Alt sınıflar (3. eleman=1): çok sınıflı YOLO modeliyle
   // sınıf bazlı aç/kapat + hassasiyet. Hiç alt sınıf seçilmemişse tümü
   // açık sayılır (tek sınıflı model / MOG2 ile geriye uyumlu).
+  // v2.4.222 (kullanici istegi): alt kirilim (Drone/Ucak/Helikopter/Kus)
+  // kaldirildi — TEK "Hava Araci" anahtari + hassasiyet; model tum
+  // siniflari ayni gorevle tanir.
   var SINIFLAR = [
-    ["hava_araci", "Hava Aracı (ana anahtar)"],
-    ["drone", "Drone / İHA", 1],
-    ["ucak", "Uçak (sabit kanat)", 1],
-    ["helikopter", "Helikopter", 1],
-    ["kus", "Kuş (ayırt etme)", 1]
+    ["hava_araci", "Hava Aracı"]
   ];
   var HEDEFLER = [
     ["harita", "Harita", "fa-map-location-dot"],
@@ -61,6 +60,8 @@
       if (ham.takip_yontem) h.takip_yontem = String(ham.takip_yontem);
       var tt = Number(ham.takip_tolerans);
       if (isFinite(tt) && tt >= 1 && tt <= 30) h.takip_tolerans = tt;
+      var tf = Number(ham.tespit_fps); if (isFinite(tf) && tf >= 1 && tf <= 15) h.tespit_fps = tf;
+      var kf = Number(ham.takip_fps); if (isFinite(kf) && kf >= 1 && kf <= 30) h.takip_fps = kf;
       SINIFLAR.forEach(function (c) {
         var v = Number(ham[c[0]]);
         h[c[0]] = (isFinite(v) && v >= 10 && v <= 90) ? v : VARSAYILAN_HASSASIYET;
@@ -194,7 +195,7 @@
     var takipOzet = document.createElement("summary");
     var takipBaslikSpan = document.createElement("span");
     takipBaslikSpan.className = "kai-sinif-ad";
-    takipBaslikSpan.textContent = t.kaiTakipAyarBaslik || "Piksel Takip Ayarları";
+    takipBaslikSpan.textContent = t.kaiTakipAyarBaslik || "Takip Ayarları";
     takipOzet.appendChild(takipBaslikSpan);
     takipBolum.appendChild(takipOzet);
     var takipIc = document.createElement("div");
@@ -241,7 +242,24 @@
     takipYardim.textContent = t.kaiTakipYardim ||
       "CSRT en hassas ama en yavaştır (önerilir); KCF hızlı CPU'larda daha " +
       "akıcıdır. Kayıp toleransı: hedef bu süre görünmezse takip bırakılır.";
-    takipIc.append(yontemSatir, tolSatir, takipYardim);
+    // v2.4.222: tespit ve takip FPS tavanlari (kullanici istegi)
+    function fpsSatirYap(ad, etiket, ust, varsayilan) {
+      var satir = document.createElement("label");
+      satir.className = "kai-hassas-satir";
+      satir.textContent = etiket;
+      var sl = document.createElement("input");
+      sl.type = "range"; sl.min = "1"; sl.max = String(ust); sl.step = "1";
+      sl.value = String(hassasiyet[ad] || varsayilan);
+      sl.className = "kai-hassas";
+      var dg = document.createElement("span"); dg.className = "kai-hassas-deger"; dg.textContent = sl.value;
+      sl.addEventListener("input", function () { dg.textContent = sl.value; });
+      sl.addEventListener("change", function () { hassasiyet[ad] = Number(sl.value); aiKaydet(kam, gorevler, hassasiyet); });
+      satir.appendChild(sl); satir.appendChild(dg);
+      return satir;
+    }
+    var tespitFpsSatir = fpsSatirYap("tespit_fps", t.kaiTespitFps || "Tespit FPS (AI)", 15, 5);
+    var takipFpsSatir = fpsSatirYap("takip_fps", t.kaiTakipFps || "Takip FPS", 30, 10);
+    takipIc.append(yontemSatir, tolSatir, tespitFpsSatir, takipFpsSatir, takipYardim);
     takipBolum.appendChild(takipIc);
     govde.appendChild(takipBolum);
 

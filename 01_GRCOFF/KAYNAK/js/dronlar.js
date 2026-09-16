@@ -124,8 +124,8 @@ function dronKameraOnizlemeTazele(d){
     window.kameraIzlemeAktifMi(kam.id);
   // v2.5.24: Harita küçük önizlemesi yalnız görüntü hedefi 'harita' iken
   // (tek konumda gösterim; yüzen/panel/tam ekran seçiliyse haritada çizilmez).
-  const haritaHedef = kam && typeof window.kameraGoruntuHedefi === "function" &&
-    window.kameraGoruntuHedefi(kam.id) === "harita";
+  // v2.4.222: goruntu konumu secenegi kalkti; oynayan kamera haritada DA gosterilir
+  const haritaHedef = !!kam;
   if (!sid || !d || !d.baglanti || !kam || !aktif || !haritaHedef || !varliklar[sid]){
     dronKameraOnizlemeSil(sid);
     return;

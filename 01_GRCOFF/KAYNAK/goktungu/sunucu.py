@@ -1270,7 +1270,10 @@ class WSSunucusu:
         try:
             aktif = {iz["kamera_id"]
                      for iz in self.ai_yonetici.izleme_listesi()}
-            if kamera_id not in aktif:
+            # v2.4.222 (kullanici: "AI acik olmasina ragmen izlemede degil"):
+            # gorev ACIK ise izleme calismiyorsa da BASLATILIR; panelde
+            # "acik" yazan bir gorevin gercekten calismasi beklenir.
+            if kamera_id not in aktif and not gorevler:
                 return
             if gorevler:
                 await _db_is_parcasi(
@@ -9984,8 +9987,13 @@ class WSSunucusu:
             # ediyordu; isci yavas cevap verirse (CSRT sarma, meşgul CPU)
             # TUM istemcilerin telemetri/WS trafigi donuyordu. Ayri
             # is parcacigina alindi; sunucu artik hicbir sekilde kilitlenmez.
+            _kam_h = ""
+            try:
+                _kam_h = (self.kameralar.bul(kamera_id) or {}).get("ai_hassasiyet") or ""
+            except Exception:
+                _kam_h = ""
             sonuc = await asyncio.to_thread(
-                self.ai_yonetici.track_baslat, kamera_id, tur, kutu, sec_ts)
+                self.ai_yonetici.track_baslat, kamera_id, tur, kutu, sec_ts, _kam_h)
             if sonuc.get("tamam"):
                 self._pilot_log(websocket, "ai", "ai_track_baslat",
                                 f"kamera #{kamera_id} tur={tur}"
