@@ -48,18 +48,24 @@ jobs:
           DJI_API_ANAHTARI: ${{ secrets.DJI_API_ANAHTARI }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon --console=plain assembleRelease
+          mkdir -p "$GITHUB_WORKSPACE/cikti"
+          set -o pipefail
+          ./gradlew --no-daemon --console=plain --stacktrace assembleRelease 2>&1 | tee "$GITHUB_WORKSPACE/cikti/${{ matrix.ad }}-gradle.log"
           S=$(grep -oP "versionName '\K[^']+" app/build.gradle)
           mkdir -p "$GITHUB_WORKSPACE/cikti"
           cp app/build/outputs/apk/release/*.apk "$GITHUB_WORKSPACE/cikti/${{ matrix.ad }}-${S}-unsigned.apk"
           ls -la "$GITHUB_WORKSPACE/cikti"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ${{ matrix.ad }}
-          path: cikti/*.apk
+          path: |
+            cikti/*.apk
+            cikti/*.log
           retention-days: 30
   yaz:
     needs: derle
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +83,9 @@ jobs:
           git rm -rfq . || true
           mkdir -p apk
           find indirilen -name "*.apk" -exec cp {} apk/ \;
+          find indirilen -name "*.log" -exec cp {} apk/ \;
           rm -rf indirilen
-          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) main@${GITHUB_SHA}" > apk/KAYNAK_SHA.txt
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) main@${GITHUB_SHA} derle=${{ needs.derle.result }}" > apk/KAYNAK_SHA.txt
           ls -la apk
           git add apk
           git commit -qm "Android köprü APK'ları (imzasız) — main@${GITHUB_SHA::7}"
