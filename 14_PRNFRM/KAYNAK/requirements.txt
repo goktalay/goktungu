@@ -1,0 +1,3 @@
+# PRNFRM — GÖKKUBBE Yazıcı Filo Merkezi
+# Kurulum: pip3 install -r requirements.txt
+aiohttp>=3.10       # web sunucusu + yazıcı WebSocket istemcisi

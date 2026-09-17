@@ -17,6 +17,7 @@ GÖKTUNGU, dron komuta-kontrol ekosistemidir: yer kontrol istasyonu, çevrimiçi
 | **GRCCMP** | Kurumsal/Müşteri Paneli | Lisanslı müşteri, paket ve kurum yüzü | `07_GRCCMP/KAYNAK/` |
 | **GRCADM** | Yönetim Paneli | Operasyon ve katalog yönetimi | `08_GRCADM/KAYNAK/` |
 | **GRCWEB** | Tanıtım Sitesi | Açık tanıtım, yardım ve yasal sayfalar | `09_GRCWEB/KAYNAK/` |
+| **PRNFRM** | Yazıcı Filo Merkezi | Creality K2 Plus 3D yazıcı filosunu yerel ağdan izleyen web merkezi (Gökkubbe Teknoloji A.Ş.) | `14_PRNFRM/KAYNAK/` |
 
 Bu ürün kodları dosya, klasör, sürüm notu ve teknik iletişimde değişmeden kullanılır.
 
@@ -26,6 +27,7 @@ Bu ürün kodları dosya, klasör, sürüm notu ve teknik iletişimde değişmed
 - **GRCOFF — çevrimdışı merkez.** Kendi makinesinde çalışır; **köprü gerektirmeden** yerel kamera, görüntüleme ve **yerel AI** çalıştırır. Merkez'in kendisi aynı zamanda AI sunucusudur: yerel AI işçisi Merkez ile birlikte başlar ve canlı görüntüye AI'ı doğrudan uygular (İnsan, Kara Aracı, Hava Aracı tespiti).
 - **BRDIMG + BRDTLM** ortak köprü çekirdeğini paylaşır; birindeki değişiklik diğerinde regresyon riski taşır.
 - **GRCCMP / GRCADM / GRCWEB** aynı web ağacından ayrıştırılmış yüzlerdir; ortak CSS/JS bağımlılıklarına dikkat edin.
+- **PRNFRM** dron ekosisteminden bağımsız, kendi başına çalışan bir üründür (3D yazıcı filosu). Diğer ürünlerle kod paylaşmaz; ayrıntı: [`14_PRNFRM/README.md`](14_PRNFRM/README.md).
 
 Ayrıntı: [`13_DOKUMANTASYON/SISTEM_DEVIR_REHBERI.md`](13_DOKUMANTASYON/SISTEM_DEVIR_REHBERI.md).
 
