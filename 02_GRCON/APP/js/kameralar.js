@@ -1024,6 +1024,9 @@
       });
     });
     araclar.append(bDuzenle, bSil);
+    // v2.4.239: baglanti diyagrami
+    if (typeof window.diyagramDugmesi === "function")
+      araclar.appendChild(window.diyagramDugmesi("kamera", kamera.id, () => ({ oynuyor: oynayanlar.has(kamera.id) })));
     satir.append(sol, araclar);
     // v2.4.232: en sagda bagli oldugu kopru
     if (kamera.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {
@@ -1058,6 +1061,9 @@
     ad.textContent = kamera.isim;
     ad.title = kamera.url;
     baslik.append(ad, protokolRozet(kamera.protokol));
+    // v2.4.239: kartta da diyagram dugmesi
+    if (typeof window.diyagramDugmesi === "function")
+      baslik.appendChild(window.diyagramDugmesi("kamera", kamera.id, () => ({ oynuyor: oynayanlar.has(kamera.id) })));
     // v2.4.232: kartta da bagli oldugu kopru
     if (kamera.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {
       const krK = window.kopruRozetOlustur(kamera.kopru_ornek_id);

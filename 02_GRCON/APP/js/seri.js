@@ -1013,6 +1013,8 @@ function bagListeCiz(){
     satir.appendChild(btnPS);
     satir.appendChild(btnDuz);
     satir.appendChild(btnSil);
+    // v2.4.239: baglanti diyagrami (ortak kucuk dugme, listenin sonunda)
+    if (typeof window.diyagramDugmesi === "function") satir.appendChild(window.diyagramDugmesi("baglanti", b.id));
     // v2.4.232: en sagda bagli oldugu kopru (merkezde kopru_ornek_id dolu)
     if (b.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function"){
       const kr = window.kopruRozetOlustur(b.kopru_ornek_id);

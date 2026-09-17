@@ -354,6 +354,9 @@ function wsBaglan(){
       // kod yenile yanitlari; kip bagimsiz).
       if (typeof window.koprulerPanelIsle === "function")
         window.koprulerPanelIsle(m);
+    } else if (m.tip === "diyagram_bilgi"){
+      // v2.4.239: baglanti diyagrami paneli.
+      if (typeof window.diyagramIsle === "function") window.diyagramIsle(m);
     } else if (m.tip === "kopru_liste"){
       // v2.4.53 Faz 7: merkezde calisan ornekte firmaya ait KOPRU
       // (saha makinesi) listesi. Baglanti Yoneticisi gruplarini ve

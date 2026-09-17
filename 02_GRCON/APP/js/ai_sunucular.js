@@ -424,6 +424,8 @@
     });
     btnlar.appendChild(bp); btnlar.appendChild(bk);
     btnlar.appendChild(bd); btnlar.appendChild(bs);
+    // v2.4.239: baglanti diyagrami
+    if (typeof window.diyagramDugmesi === "function") btnlar.appendChild(window.diyagramDugmesi("ai", s.id));
     sat.appendChild(btnlar);
     // v2.4.232: en sagda bagli oldugu kopru
     if (s.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {

@@ -218,6 +218,8 @@ function radarRtkUygula(r){
           "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
         "</div>";
       sat.querySelector(".cl-ad").textContent = r.isim || ("Radar " + r.radar_id);
+      // v2.4.239: baglanti diyagrami
+      if (typeof window.diyagramDugmesi === "function") sat.querySelector(".cl-dgm").appendChild(window.diyagramDugmesi("radar", r.radar_id));
       const kopruAd = (() => { if (!r.kopru_ornek_id || typeof window.kopruListesiAl !== "function") return "";
         const kk = window.kopruListesiAl().find(x => Number(x.ornek_id) === Number(r.kopru_ornek_id)); return kk ? (kk.ad || ("#" + r.kopru_ornek_id)) : ("#" + r.kopru_ornek_id); })();
       sat.querySelector(".cl-alt").textContent =

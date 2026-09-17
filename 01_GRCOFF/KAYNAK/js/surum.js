@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.238";
+const GCS_SURUM = "2.4.239";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.239",
+    tarih: "2026-09-17",
+    baslik: "Bağlantı diyagramı: her cihaz listesinde ortak 'Diyagram' düğmesi; SITL uçuş kaydı kapatıldı (paket 2.5.109)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: Bağlantı Yöneticisi, Kameralar, AI Sunucuları, Radarlar ve Elektro-Optik listelerinde her kaydın sonunda küçük bir 'Diyagram' düğmesi. Düğme, kaydın bağlantı zincirini kutular hâlinde çizer: bu yazılım (GRCON/GRCOFF, IP) → köprü (IP, açık dinleyiciler) → cihaz (bağlantı bilgileri). Köprüsüz kayıtta iki kutu, köprülü kayıtta üç; köprü içindeki dinleyici ve cihaz alt kutularıyla beşe kadar seviye.",
+      "Kutular arası çizgiler bağlantı durumuna göre renklenir: yeşil bağlı, sarı bekliyor/yeniden bağlanıyor, kırmızı kopuk, gri tanımsız. Diyagram açıkken durum 3 saniyede bir tazelenir.",
+      "HATA (kök neden, GRCON sunucusu 2026-09-17): sanal dron (SITL) çalışma dizininde dataflash kaydı 43 GB'a ulaştı, disk doldu, PostgreSQL kurtarma döngüsüne girdi. SITL artık LOG_BACKEND_TYPE 0 ile başlar (kayıt yok) ve başlangıçta o örneğin eski logs/*.BIN dosyaları silinir.",
+    ],
+  },
   {
     surum: "2.4.238",
     tarih: "2026-09-17",

@@ -2787,6 +2787,324 @@ class WSSunucusu:
         baglam["hedef_id"] = "%d:%d:%d" % (oid, kid, iz)
         return baglam, ""
 
+    # ------------------------------------------------------------------
+    # v2.4.239: BAGLANTI DIYAGRAMI (kullanici: "tum cihazlar icin ortak
+    # bir diagram dugmesi ... kutular arasi cizgiler baglanti durumuna
+    # gore renk")
+    # ------------------------------------------------------------------
+    # Zincir: [bu yazilim] -> [kopru] -> [kanal/servis] -> [cihaz]
+    # Koprusuz kayitta iki kutu, koprulu kayitta dort. Kutular ve
+    # baglar sunucuda kurulur; arayuz yalniz cizer. Hicbir sifre veya
+    # kimlik bilgisi (kamera URL'sindeki kullanici:sifre, SSH sifresi,
+    # M50 sifresi) kutulara YAZILMAZ.
+    _DYG_DURUM_ESLEM = {
+        "bagli": "bagli", "etkin": "bagli", "acik": "bagli",
+        "calisiyor": "bagli", "cevrimici": "bagli", "hazir": "bagli",
+        "baglaniyor": "bekliyor", "bekliyor": "bekliyor",
+        "yeniden": "bekliyor", "baslatiliyor": "bekliyor",
+        "hata": "kopuk", "kopuk": "kopuk", "cevrimdisi": "kopuk",
+        "kapali": "kapali", "yok": "kapali", "": "kapali",
+    }
+
+    @classmethod
+    def _dyg_durum(cls, d):
+        if isinstance(d, bool):
+            return "bagli" if d else "kopuk"
+        return cls._DYG_DURUM_ESLEM.get(str(d or "").strip().lower(), "kapali")
+
+    @staticmethod
+    def _dyg_kutu(kid, tur, baslik, alt="", satirlar=None, durum="kapali",
+                  liste=None, liste_baslik=""):
+        sat = []
+        for a, d in (satirlar or []):
+            if d is None or d == "":
+                continue
+            sat.append({"ad": str(a), "deger": str(d)})
+        return {"id": kid, "tur": tur, "baslik": str(baslik or ""),
+                "alt": str(alt or ""), "satirlar": sat, "durum": durum,
+                "liste": list(liste or []), "liste_baslik": liste_baslik}
+
+    @staticmethod
+    def _dyg_url_maskele(url):
+        """rtsp://ad:sifre@host/... -> rtsp://host/... (sifre asla)."""
+        try:
+            u = str(url or "")
+            if "@" in u and "://" in u:
+                sema, geri = u.split("://", 1)
+                geri = geri.split("@", 1)[1]
+                return sema + "://" + geri
+            return u
+        except Exception:
+            return ""
+
+    async def _dyg_kopru_kutusu(self, oid, firma_id):
+        """Kopru kutusu + o kopruye acik dinleyiciler (kanallar) ve
+        calisan servisler. (kutu, kanallar) dondurur."""
+        from . import merkez_kimlik as _mk
+        kopru = None
+        for k in self._kopru_listesi_birlesik(firma_id) or []:
+            try:
+                if int(k.get("ornek_id") or 0) == int(oid):
+                    kopru = dict(k)
+                    break
+            except (TypeError, ValueError):
+                continue
+        if kopru is None:
+            return self._dyg_kutu("kopru", "kopru", "Kopru #%s" % oid, "",
+                                  [("Durum", "kayit bulunamadi")], "kopuk"), []
+        kopru.pop("api_kodu", None)
+        try:
+            await self._kopru_servisleri_doldur([kopru], firma_id)
+        except Exception:
+            pass
+        kanallar = []
+        try:
+            if _mk.etkin():
+                g, _h = _mk.akis_durum(oid, firma_id)
+                kanallar = list((g or {}).get("kanallar") or [])
+            else:
+                from . import kopru_kabul
+                kanallar = [k for k in kopru_kabul.AKIS.durum()
+                            if int(k.get("ornek_id") or 0) == int(oid)]
+        except Exception:
+            kanallar = []
+        dinleyiciler = []
+        for k in kanallar:
+            t = k.get("tanim") or {}
+            hedef = t.get("port") or t.get("host") or ""
+            etiket = "%s %s" % (t.get("tur") or "", hedef)
+            dinleyiciler.append({
+                "ad": "Kanal #%s %s" % (k.get("kanal_id"), etiket.strip()),
+                "deger": "127.0.0.1:%s  %s/%s B" % (
+                    k.get("port") or k.get("gcs_port") or "?",
+                    k.get("kopruden_byte", k.get("gelen_byte", 0)),
+                    k.get("gcsden_byte", k.get("giden_byte", 0))),
+                "durum": "kopuk" if k.get("son_hata") else "bagli"})
+        for sv in (kopru.get("servisler") or []):
+            if not isinstance(sv, dict):
+                continue
+            dinleyiciler.append({
+                "ad": "Servis: %s" % (sv.get("baslik") or sv.get("ad") or "?"),
+                "deger": "calisiyor" if sv.get("calisiyor") else "durdu",
+                "durum": "bagli" if sv.get("calisiyor") else "kapali"})
+        son = kopru.get("son_gorulme_ts")
+        son_sn = ""
+        try:
+            if son:
+                son_sn = "%d sn once" % max(0, int(time.time() - float(son)))
+        except (TypeError, ValueError):
+            pass
+        cevrimici = bool(kopru.get("cevrimici"))
+        kutu = self._dyg_kutu(
+            "kopru", "kopru", kopru.get("ad") or ("Kopru #%s" % oid),
+            kopru.get("makine_adi") or "",
+            [("IP", kopru.get("ip")), ("Platform", kopru.get("platform")),
+             ("Surum", kopru.get("surum")), ("Son gorulme", son_sn),
+             ("Dron", kopru.get("dron_sayisi")),
+             ("Servis hatasi", kopru.get("servis_hata"))],
+            "bagli" if cevrimici else "kopuk",
+            dinleyiciler, "Acik dinleyiciler")
+        return kutu, kanallar
+
+    async def _diyagram_bilgi(self, websocket, k):
+        """`diyagram_bilgi {tur, id, ek}` -> `{tip:"diyagram_bilgi", kutular, baglar}`."""
+        from . import merkez_kimlik as _mk
+        from .paket_surum import UYGULAMA_SURUM as _SURUM
+        tur = str(k.get("tur") or "")
+        ek = k.get("ek") if isinstance(k.get("ek"), dict) else {}
+        try:
+            kid = int(k.get("id") or 0)
+        except (TypeError, ValueError):
+            kid = 0
+        fid = self._ws_firma_id(websocket)
+        merkez = self._merkez_kipinde()
+        yanit = {"tip": "diyagram_bilgi", "tur": tur, "id": kid,
+                 "kutular": [], "baglar": [], "hata": ""}
+        try:
+            makine = ""
+            platform = ""
+            try:
+                import socket as _sk
+                import platform as _pf
+                makine = _sk.gethostname()
+                platform = ("%s %s" % (_pf.system(), _pf.release())).strip()
+            except Exception:
+                pass
+            kendi = self._dyg_kutu(
+                "kendi", "yazilim", "GRCON" if merkez else "GRCOFF", makine,
+                [("IP", self._yerel_lan_ip()), ("Platform", platform),
+                 ("Surum", _SURUM),
+                 ("Kip", "Merkez Sunucu" if merkez else "Yerel kurulum")],
+                "bagli")
+            kayit = None
+            cihaz = None
+            kanal_kutu = None
+            oid = 0
+            if tur == "baglanti":
+                kayit = self.baglantilar.bul(kid) if self.baglantilar else None
+                if not kayit:
+                    raise ValueError("Baglanti kaydi bulunamadi: #%d" % kid)
+                d = {}
+                try:
+                    dl = self._baglanti_durumlari() or {}
+                    d = dl.get(str(kid)) or dl.get(kid) or {}
+                except Exception:
+                    d = {}
+                oid = int(kayit.get("kopru_ornek_id") or 0)
+                t = kayit.get("tur") or ""
+                cihaz = self._dyg_kutu(
+                    "cihaz", "dron", kayit.get("isim") or ("Baglanti #%d" % kid),
+                    "Dron / otopilot",
+                    [("Tur", t),
+                     ("Port", kayit.get("port") if t in ("seri", "udp", "tcp", "sanal") else ""),
+                     ("Host", kayit.get("host") if t in ("tcp", "udp", "dji") else ""),
+                     ("Baud", kayit.get("baud") if t == "seri" else ""),
+                     ("Ucus yazilimi", d.get("algilanan_ucus_yazilimi") or kayit.get("ucus_yazilimi")),
+                     ("Durum", d.get("durum") or "kapali"), ("Hata", d.get("hata"))],
+                    self._dyg_durum(d.get("durum")))
+                if oid:
+                    ak = dict(self._akis_kanallari.get(kid) or {})
+                    tn = ak.get("tanim") or {}
+                    kanal_kutu = self._dyg_kutu(
+                        "kanal", "kanal", "Akis kanali #%d" % kid, "Kopru dinleyicisi",
+                        [("Kopru tarafi", ("%s %s" % (tn.get("tur") or "", tn.get("port") or tn.get("host") or "")).strip() if ak else "kanal acik degil"),
+                         ("GCS tarafi", ("udpin:127.0.0.1:%s" % ak.get("port")) if ak else ""),
+                         ("Baud", tn.get("baud"))],
+                        "bagli" if ak else "kapali")
+            elif tur == "radar":
+                kayit = self.radar.kayitlar.bul(kid) if hasattr(self.radar, "kayitlar") else None
+                if not kayit:
+                    raise ValueError("Radar kaydi bulunamadi: #%d" % kid)
+                d = {}
+                try:
+                    for r in self.radar.durumlar() or []:
+                        if int(r.get("radar_id") or 0) == kid:
+                            d = r
+                            break
+                except Exception:
+                    d = {}
+                oid = int(kayit.get("kopru_ornek_id") or 0)
+                cihaz = self._dyg_kutu(
+                    "cihaz", "radar", kayit.get("isim") or ("Radar #%d" % kid), "Radar",
+                    [("Adres", "%s:%s" % (kayit.get("ip") or "", kayit.get("port") or "")),
+                     ("Durum", d.get("durum") or "kapali"),
+                     ("Veri hizi", d.get("veri_hizi")), ("Nokta", d.get("nokta_sayisi")),
+                     ("RTK", d.get("rtk_durum")), ("Hata", d.get("hata"))],
+                    self._dyg_durum(d.get("durum")))
+                if oid:
+                    kanal_kutu = self._dyg_kutu(
+                        "kanal", "servis", "Radar servisi", "Kopru servisi",
+                        [("Yol", "kopru -> radar TCP %s:%s" % (kayit.get("ip") or "", kayit.get("port") or ""))],
+                        "bagli" if d.get("durum") in ("bagli", "baglaniyor") else "kapali")
+            elif tur == "eo":
+                _eo = getattr(self, "eo", None)
+                kayit = _eo.kayitlar.bul(kid) if _eo and hasattr(_eo, "kayitlar") else None
+                if not kayit:
+                    raise ValueError("Elektro-optik kaydi bulunamadi: #%d" % kid)
+                p = {}
+                try:
+                    for r in _eo.paketler() or []:
+                        if int(r.get("eo_id") or 0) == kid:
+                            p = r
+                            break
+                except Exception:
+                    p = {}
+                md = p.get("m50_durum") or {}
+                oid = int(kayit.get("kopru_ornek_id") or 0)
+                cihaz = self._dyg_kutu(
+                    "cihaz", "eo", kayit.get("isim") or ("EO #%d" % kid),
+                    (kayit.get("tur") or "M50").upper(),
+                    [("Adres", "%s:%s" % (kayit.get("ip") or "", kayit.get("port") or "")),
+                     ("Durum", md.get("durum") or "kapali"),
+                     ("SDK", md.get("sdk_surumu")), ("Azimut/Egim", "%s / %s" % (md.get("azimut"), md.get("egim")) if md.get("azimut") is not None else ""),
+                     ("Hata", md.get("hata"))],
+                    self._dyg_durum(md.get("durum") if md.get("durum") else ("bagli" if md.get("bagli") else "kapali")))
+                if oid:
+                    kanal_kutu = self._dyg_kutu(
+                        "kanal", "servis", "M50 servisi", "Kopru servisi",
+                        [("SDK hazir", "evet" if md.get("sdk_hazir") else "hayir")],
+                        "bagli" if md.get("bagli") else "kapali")
+                elif p.get("yerel_sdk") is False:
+                    cihaz["satirlar"].append({"ad": "Yerel SDK", "deger": "yok"})
+            elif tur == "ai":
+                s = None
+                try:
+                    for r in self.ai_yonetici.listele(fid) or []:
+                        if int(r.get("id") or 0) == kid:
+                            s = r
+                            break
+                except Exception:
+                    s = None
+                if not s:
+                    raise ValueError("AI sunucu kaydi bulunamadi: #%d" % kid)
+                kayit = s
+                oid = int(s.get("kopru_ornek_id") or 0)
+                cihaz = self._dyg_kutu(
+                    "cihaz", "ai", s.get("ad") or ("AI #%d" % kid),
+                    "AI sunucusu (%s)" % (s.get("tip") or ""),
+                    [("Adres", "%s:%s" % (s.get("host") or "", s.get("port") or "")),
+                     ("Durum", "cevrimici" if s.get("cevrimici") else "cevrimdisi"),
+                     ("Yuk", s.get("yuk")), ("Akis", len(s.get("akislar") or [])),
+                     ("SSH", ("%s@%s" % (s.get("ssh_kullanici"), s.get("ssh_port") or 22)) if s.get("ssh_kullanici") else "")],
+                    "bagli" if s.get("cevrimici") else "kopuk")
+                if oid:
+                    kanal_kutu = self._dyg_kutu(
+                        "kanal", "servis", "SSH / HTTP kopru yolu", "Kopru uzerinden",
+                        [("Yol", "kopru -> %s:%s" % (s.get("host") or "", s.get("port") or ""))],
+                        "bagli" if s.get("cevrimici") else "kapali")
+            elif tur == "kamera":
+                km = None
+                try:
+                    for r in self.kameralar.listele(fid) or []:
+                        if int(r.get("id") or 0) == kid:
+                            km = r
+                            break
+                except Exception:
+                    km = None
+                if not km:
+                    raise ValueError("Kamera kaydi bulunamadi: #%d" % kid)
+                kayit = km
+                oid = int(km.get("kopru_ornek_id") or 0)
+                oynuyor = bool(ek.get("oynuyor"))
+                cihaz = self._dyg_kutu(
+                    "cihaz", "kamera", km.get("isim") or ("Kamera #%d" % kid),
+                    (km.get("protokol") or "").upper(),
+                    [("URL", self._dyg_url_maskele(km.get("url"))),
+                     ("FPS", km.get("fps")), ("Genislik", km.get("genislik")),
+                     ("Yayin", "acik" if oynuyor else "kapali"),
+                     ("AI", km.get("ai_gorevler"))],
+                    "bagli" if oynuyor else "kapali")
+                if oid:
+                    kanal_kutu = self._dyg_kutu(
+                        "kanal", "servis", "Video servisi", "Kopru servisi",
+                        [("Yol", "kopru -> kamera (RTSP/RTP)")],
+                        "bagli" if oynuyor else "kapali")
+            else:
+                raise ValueError("Bilinmeyen diyagram turu: %s" % tur)
+
+            kutular = [kendi]
+            baglar = []
+            if oid:
+                kopru_kutu, _kanallar = await self._dyg_kopru_kutusu(oid, fid)
+                kutular.append(kopru_kutu)
+                baglar.append({"kaynak": "kendi", "hedef": "kopru", "durum": kopru_kutu["durum"]})
+                if kanal_kutu is not None:
+                    kutular.append(kanal_kutu)
+                    baglar.append({"kaynak": "kopru", "hedef": "kanal",
+                                   "durum": kanal_kutu["durum"] if kopru_kutu["durum"] == "bagli" else "kopuk"})
+                    baglar.append({"kaynak": "kanal", "hedef": "cihaz", "durum": cihaz["durum"]})
+                else:
+                    baglar.append({"kaynak": "kopru", "hedef": "cihaz", "durum": cihaz["durum"]})
+            else:
+                cihaz["alt"] = (cihaz.get("alt") or "") + " (dogrudan)"
+                baglar.append({"kaynak": "kendi", "hedef": "cihaz", "durum": cihaz["durum"]})
+            kutular.append(cihaz)
+            yanit["kutular"] = kutular
+            yanit["baglar"] = baglar
+        except Exception as e:
+            yanit["hata"] = str(e)
+        await websocket.send(json.dumps(yanit))
+
     def _kopru_listesi_birlesik(self, firma_id=None):
         """Kopru listesini kipten BAGIMSIZ dondurur.
 
@@ -9410,6 +9728,10 @@ class WSSunucusu:
                     {"tip": "pilot_liste",
                      "ben": _ben,
                      "pilotlar": self._pilot_listesi(_ben)}))
+
+        elif komut == "diyagram_bilgi":
+            # v2.4.239: baglanti diyagrami (tum cihaz listeleri).
+            await self._diyagram_bilgi(websocket, k)
 
         elif komut == "kopru_liste":
             # v2.4.53 Faz 7: Baglanti Yoneticisi dron/AI/video

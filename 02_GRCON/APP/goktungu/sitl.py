@@ -1248,8 +1248,35 @@ class SitlYoneticisi:
                 # parametreleri otopilotun kendi eepromundan gelir ve bu
                 # dosya hic kullanilmaz.
                 f.write("ARMING_SKIPCHK 16\n")
+                # ------------------------------------------------------
+                # v2.4.239: SITL DATAFLASH KAYDI KAPALI
+                # ------------------------------------------------------
+                # Olcum (2026-09-17, GRCON sunucusu): sanal dron 26'nin
+                # calisma dizininde logs/00000010.BIN 43 GB'a ulasti;
+                # disk (138 GB) doldu, PostgreSQL "No space left on
+                # device" PANIC ile kurtarma dongusune girdi. SITL'in
+                # .BIN uretmesi urun icin degersizdir (analiz icin GCS'in
+                # kendi telemetri kaydi var); backend tipi 0 = kayit yok.
+                # LOG_DISARMED 0 ayrica motor kapaliyken yazimi keser
+                # (varsayilan zaten 0, kalici eeprom'a karsi sabitlenir).
+                f.write("LOG_BACKEND_TYPE 0\n")
+                f.write("LOG_DISARMED 0\n")
         except OSError as e:
             return None, f"SITL varsayilan parametre dosyasi yazilamadi: {e}"
+        # v2.4.239: onceki calistirmalardan kalan dataflash kayitlari
+        # (logs/*.BIN) baslangicta silinir; eski surumlerde uretilmis
+        # dosyalar aksi halde diskte sonsuza dek kalir.
+        try:
+            _logs = os.path.join(dizin, "logs")
+            if os.path.isdir(_logs):
+                for _ad in os.listdir(_logs):
+                    if _ad.upper().endswith(".BIN"):
+                        try:
+                            os.remove(os.path.join(_logs, _ad))
+                        except OSError:
+                            pass
+        except OSError:
+            pass
 
         yuk = float(irtifa if irtifa is not None else 100.0)
         komut = [

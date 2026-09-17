@@ -912,6 +912,8 @@ m50AlanlariEtkinlestir();
           "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
         "</div>";
       sat.querySelector(".cl-ad").textContent = c.isim || ("M50 " + c.eo_id);
+      // v2.4.239: baglanti diyagrami
+      if (typeof window.diyagramDugmesi === "function") sat.querySelector(".cl-dgm").appendChild(window.diyagramDugmesi("eo", c.eo_id));
       const adres = c.kayit_ip || (c.m50_ayarlar && c.m50_ayarlar.ip) || "";
       sat.querySelector(".cl-alt").textContent =
         (adres ? adres + ":" + (c.kayit_port || (c.m50_ayarlar && c.m50_ayarlar.port) || 39020) : (t.clAdresYok || "adres yok")) +
