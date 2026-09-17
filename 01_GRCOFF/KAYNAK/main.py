@@ -686,7 +686,13 @@ def uygulama_kur():
         "bilgi" if os.environ.get("GOKTUNGU_VERI_KOKU") else "uyari")
     ws_sunucu.guncelleme = DosyaGuncellemeYoneticisi(
         "gcs", UYGULAMA_SURUM, VERI_KOKU, kok=PROJE_KOKU, gunluk=konsol)
-    ws_sunucu.guncelleme.denetle_arka_planda()
+    # 2.4.234 (kullanici istegi): GRCON'da (merkez kipi) guncelleme
+    # arayuzu ve arka plan surum denetimi YOKTUR; merkez yalniz yayin
+    # zinciriyle guncellenir.
+    if os.environ.get("GOKTUNGU_MERKEZ_KIMLIK"):
+        konsol("GUNCELLEME", "Merkez kipi: uygulama ici guncelleme kapali", "bilgi")
+    else:
+        ws_sunucu.guncelleme.denetle_arka_planda()
     ws_sunucu.betaflight = betaflight
     # Onceki oturumdan kalmis SITL surecleri portlari tutmaya devam eder
     # ve yeni baslatmalar "port dolu" diye basarisiz olur. Kayitli sanal

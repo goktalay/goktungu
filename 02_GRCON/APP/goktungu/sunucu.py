@@ -9821,6 +9821,16 @@ class WSSunucusu:
             else:
                 self.gorev.yukle_ve_baslat(sysid, rota)
 
+        elif komut in ("guncelleme_durum", "guncelleme_denete",
+                       "guncelleme_servis_yenile", "guncelleme_uygula",
+                       "guncelleme_indir", "guncelleme_kur") and self._merkez_kipinde():
+            # 2.4.234 (kullanici istegi): GRCON'da (merkez kipi) guncelleme
+            # arayuzu YOKTUR. Merkez sunucu yayin zinciriyle guncellenir;
+            # tarayicidan surum denetimi/guncelleme tetiklenemez. Arayuz
+            # `kapali` bayragiyla seridi, pencereyi ve menu ogesini gizler.
+            await websocket.send(json.dumps(
+                {"tip": "guncelleme_durum", "kapali": True,
+                 "merkez_kipi": True, "durum": {}}))
         elif komut == "guncelleme_durum":
             # v2.5.18: Durum alma yalniz salt-okunur ozet doner.
             # Uzak denetim hicbir zaman UI/telemetri dongusunu bekletmez.

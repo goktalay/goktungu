@@ -156,6 +156,7 @@
   if (mbGunc) {
     mbGunc.addEventListener("click", () => {
       if (typeof menubarKapat === "function") menubarKapat();
+      if (typeof window.guncellemeKapaliMi === "function" && window.guncellemeKapaliMi()) return;
       if (typeof window.guncellemePenceresiAc === "function")
         window.guncellemePenceresiAc();
     });

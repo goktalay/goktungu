@@ -310,7 +310,27 @@
     }, 600);
   }
 
+  // 2.4.234: merkez kipinde (GRCON) guncelleme arayuzu kapali. Sunucu
+  // `kapali:true` dondurur; serit, pencere ve Destek menusu ogesi
+  // gizlenir, yoklama durur.
+  let kapali = false;
+  function kapat(){
+    kapali = true;
+    const serit = document.getElementById('guncellemeSerit');
+    if (serit) serit.remove();
+    const perde = document.getElementById('gu-perde');
+    if (perde) perde.remove();
+    const mb = document.getElementById('mbGuncelleme');
+    if (mb) mb.style.display = 'none';
+    if (hizliZaman){ window.clearInterval(hizliZaman); hizliZaman = null; }
+    if (yavasZaman){ window.clearInterval(yavasZaman); yavasZaman = null; }
+  }
+  window.guncellemeKapaliMi = function(){ return kapali; };
+  let yavasZaman = null;
+
   window.guncellemeDurumIsle = function(zarf){
+    if (zarf && zarf.kapali){ kapat(); return; }
+    if (kapali) return;
     sonDurum = (zarf && zarf.durum) ? zarf.durum : (zarf || {});
     const il = ilerlemeGecerli(sonDurum);
     // Otomatik ya da baska ekrandan baslatilan guncelleme: pencereyi kendiliginden ac
@@ -324,6 +344,7 @@
     ciz();
   };
   window.guncellemeSonucIsle = function(zarf){
+    if (kapali) return;
     if (zarf && zarf.islem === 'servis' && zarf.bilgi){
       const m = document.getElementById('gu-mesaj');
       if (m) m.textContent = zarf.bilgi;
@@ -334,6 +355,7 @@
   window.guncellemeDurumSor = function(){ wsGonder('guncelleme_durum'); };
   window.guncellemeDilTazele = function(){ ciz(); };
   window.guncellemePenceresiAc = function(){
+    if (kapali) return;
     domKur();
     if (wsGonder('guncelleme_denete')) hizliBaslat();
     pencereAc();
@@ -344,7 +366,7 @@
   document.addEventListener('DOMContentLoaded', function(){
     domKur();
     // Yavas arka plan yoklamasi: otomatik guncellemeler de gorunsun
-    window.setInterval(function(){ if (!hizliZaman) wsGonder('guncelleme_durum'); }, 4000);
-    window.setTimeout(function(){ wsGonder('guncelleme_durum'); }, 1500);
+    yavasZaman = window.setInterval(function(){ if (!hizliZaman && !kapali) wsGonder('guncelleme_durum'); }, 4000);
+    window.setTimeout(function(){ if (!kapali) wsGonder('guncelleme_durum'); }, 1500);
   });
 })();

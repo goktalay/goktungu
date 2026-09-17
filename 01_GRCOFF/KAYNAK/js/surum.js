@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.233";
+const GCS_SURUM = "2.4.234";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.234",
+    tarih: "2026-09-17",
+    baslik: "GRCON'da güncelleme arayüzü kaldırıldı (paket 2.5.104)",
+    maddeler: [
+      "GRCON (merkez kipi) KURALI (kullanıcı isteği): merkezde çalışan uygulamada yazılım güncelleme arayüzü yoktur. Sunucu, merkez kipinde tüm güncelleme komutlarına 'kapalı' yanıtı verir; üst şerit, güncelleme penceresi ve Destek > Güncellemeleri Denetle öğesi gizlenir, arka plan sürüm yoklaması durur. Merkez sunucu yalnız yayın zinciriyle güncellenir. Yerel kurulum (GRCOFF) davranışı değişmedi.",
+    ]
+  },
   {
     surum: "2.4.233",
     tarih: "2026-09-17",
