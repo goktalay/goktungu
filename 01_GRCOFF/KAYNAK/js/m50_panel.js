@@ -875,11 +875,13 @@ m50AlanlariEtkinlestir();
       const sar = document.getElementById("efKopruSar"), sec = document.getElementById("efKopru");
       if (!sar || !sec) return;
       const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
-      sar.style.display = merkez ? "" : "none";
-      if (!merkez) return;
+      // 2.4.238: yerel kipte de gorunur; varsayilan "Merkez baglantisi" (koprusuz).
+      sar.style.display = "";
       const liste = (typeof window.kopruListesiAl === "function") ? window.kopruListesiAl() : [];
       sec.innerHTML = "";
-      const bos = document.createElement("option"); bos.value = ""; bos.textContent = t.raKopruSec || "Saha makinesi seç..."; sec.appendChild(bos);
+      const bos = document.createElement("option"); bos.value = "";
+      bos.textContent = merkez ? (t.raKopruSec || "Saha makinesi seç...")
+                               : (t.bagKopruYerel || "Merkez bağlantısı (bu bilgisayar, köprüsüz)"); sec.appendChild(bos);
       for (const k of liste){ const o = document.createElement("option"); o.value = String(k.ornek_id);
         o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")"); sec.appendChild(o); }
       sec.value = (c && c.kopru_ornek_id) ? String(c.kopru_ornek_id) : "";
@@ -940,11 +942,13 @@ m50AlanlariEtkinlestir();
     if (ku) paket.kullanici = ku;
     if (pa && pa !== EF_PAROLA_NOBETCI) paket.parola = pa;
     if (!paket.isim){ efIsim.focus(); return; }
-    if (typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi()){
+    {
+      const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
       const sec = document.getElementById("efKopru");
       const kid = parseInt((sec && sec.value) || "0", 10);
-      if (!kid){ if (sec) sec.focus(); return; }
-      paket.kopru_ornek_id = kid;
+      if (merkez && !kid){ if (sec) sec.focus(); return; }
+      // 2.4.238: yerel kipte kopru secilmediyse null -> koprusuz (dogrudan SDK).
+      paket.kopru_ornek_id = kid || null;
     }
     // v2.4.205: konum (bos = kayitli konumu sil; gecersiz = kaydetme)
     const kn = konumOku();

@@ -478,7 +478,17 @@ def uygulama_kur():
                         "kurulur; merkezde yerel baglanti denenmez.",
                "bilgi")
     else:
+        from goktungu.radar_vekil import RadarVekili as _RadarVekiliYerel
+
         def _radar_fabrika(kayit):
+            # 2.4.238 (kullanici istegi): yerel kipte kayit bir kopruye
+            # bagliysa radar oturumu koprude kurulur (vekil); "Merkez
+            # baglantisi" ise dogrudan TCP istemcisi (koprusuz).
+            if kayit.get("kopru_ornek_id"):
+                v = _RadarVekiliYerel(konsol, ayarlar, kilit)
+                v.radar_id = int(kayit["id"]); v.isim = kayit.get("isim") or ""
+                v.konum_yedek = (kayit.get("lat"), kayit.get("lon"))
+                return v
             return RadarIstemcisi(konsol, ayarlar, kilit,
                                   radar_id=int(kayit["id"]),
                                   konum_yedek=(kayit.get("lat"), kayit.get("lon")),

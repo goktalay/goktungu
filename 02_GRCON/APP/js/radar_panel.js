@@ -163,12 +163,14 @@ function radarRtkUygula(r){
   function kopruSeciciDoldur(secili){
     if (!rfKopruSar || !rfKopru) return;
     const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
-    rfKopruSar.style.display = merkez ? "" : "none";
-    if (!merkez) return;
+    // 2.4.238: yerel kipte de gorunur; varsayilan "Merkez baglantisi" (koprusuz).
+    rfKopruSar.style.display = "";
     const liste = (typeof window.kopruListesiAl === "function") ? window.kopruListesiAl() : [];
     const t = D();
     rfKopru.innerHTML = "";
-    const bos = document.createElement("option"); bos.value = ""; bos.textContent = t.raKopruSec || "Saha makinesi seç..."; rfKopru.appendChild(bos);
+    const bos = document.createElement("option"); bos.value = "";
+    bos.textContent = merkez ? (t.raKopruSec || "Saha makinesi seç...")
+                             : (t.bagKopruYerel || "Merkez bağlantısı (bu bilgisayar, köprüsüz)"); rfKopru.appendChild(bos);
     for (const k of liste){
       const o = document.createElement("option"); o.value = String(k.ornek_id);
       o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")");
@@ -249,10 +251,12 @@ function radarRtkUygula(r){
     const lat = parseFloat(rfLat.value), lon = parseFloat(rfLon.value);
     paket.lat = isNaN(lat) ? "" : lat; paket.lon = isNaN(lon) ? "" : lon;
     if (!paket.isim){ rfIsim.focus(); return; }
-    if (typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi()){
+    {
+      const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
       const kid = parseInt((rfKopru && rfKopru.value) || "0", 10);
-      if (!kid){ if (rfKopru) rfKopru.focus(); return; }
-      paket.kopru_ornek_id = kid;
+      if (merkez && !kid){ if (rfKopru) rfKopru.focus(); return; }
+      // 2.4.238: yerel kipte kopru secilmediyse null -> koprusuz (dogrudan TCP).
+      paket.kopru_ornek_id = kid || null;
     }
     if (radarGonder(paket)) kapat("yzRadarForm");
   });

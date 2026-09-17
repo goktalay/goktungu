@@ -465,7 +465,9 @@ class WSSunucusu:
         # `RadarVekili` kendi basina kopruyu bulamaz: firma baglami
         # (hangi kiracinin radari) ve ic uc anahtari burada yasar.
         # Vekil degilse (lokal kurulum) hicbir sey yapilmaz.
-        if getattr(self.radar, "_cek", "YOK") is None:
+        if getattr(self.radar, "_cek", "YOK") is None or hasattr(self.radar, "_cek_dagit"):
+            # 2.4.238: yerel kipte sonradan eklenen kopru radarlari
+            # (RadarVekili) da beslensin diye yonetici duzeyinde baglanir.
             self.radar._cek = self._radar_kopru_durum_cek
         # M50 vekili yalnız `m50_durum` Köprü eylemini çeker; bağlantı
         # kimlik bilgileri bu süreçte tutulmaz.
@@ -2997,6 +2999,29 @@ class WSSunucusu:
         sonuc["kopru_ornek_id"] = oid
         return sonuc, ""
 
+    def _radar_kopruden_mi(self, k=None):
+        """2.4.238: radar komutu kopru uzerinden mi yurutulur?
+
+        Merkez kipinde (GRCON) her zaman evet -- davranis degismedi.
+        Yerel kipte (GRCOFF) yalniz hedef radar kaydi bir kopruye
+        bagliysa (kopru_ornek_id) evet; "Merkez baglantisi" secili
+        kayitlar koprusuz, dogrudan TCP istemcisiyle calisir.
+        """
+        if self._merkez_kipinde():
+            return True
+        try:
+            if isinstance(k, dict) and k.get("kopru_ornek_id"):
+                return True
+            rid = k.get("radar_id") if isinstance(k, dict) else None
+            ist = self._radar_istemci(rid)
+            rid_int = int(getattr(ist, "radar_id", None) or rid or 0)
+            if rid_int and hasattr(self.radar, "kayitlar"):
+                kayit = self.radar.kayitlar.bul(rid_int) or {}
+                return bool(kayit.get("kopru_ornek_id"))
+        except Exception:
+            pass
+        return False
+
     async def _radar_kopruye(self, websocket, eylem, veri, k=None):
         """Radar eylemini kopruye gonderir ve sonucu panele bildirir.
 
@@ -3228,7 +3253,22 @@ class WSSunucusu:
         halde saha Köprüsünü seçer. Sır içeren veriyi hiçbir durumda
         günlüğe/duruma yazmaz."""
         yerel = self._eo_yerel(k)
-        if yerel is not None and yerel.kullanilabilir():
+        # 2.4.238: kayit bir kopruye bagliysa (kopru_ornek_id) yerel SDK
+        # olsa bile KOPRU secilir; "Merkez baglantisi" (kopru yok) ise
+        # koprusuz calisir (kullanici kurali).
+        _kopru_kayit = False
+        _eo = getattr(self, "eo", None)
+        if _eo is not None:
+            try:
+                _hedef = self._eo_vekil(k)
+                _eid = int(getattr(_hedef, "eo_id", None) or 0)
+                if not _eid and isinstance(k, dict):
+                    _eid = int(k.get("eo_id") or 0)
+                if _eid:
+                    _kopru_kayit = bool((_eo.kayitlar.bul(_eid) or {}).get("kopru_ornek_id"))
+            except Exception:
+                _kopru_kayit = False
+        if yerel is not None and yerel.kullanilabilir() and not _kopru_kayit:
             return await self._m50_yerelden(websocket, eylem, veri, k)
         if eylem in self._M50_YEREL_EK_EYLEMLER:
             await self._uyari_gonder(
@@ -7110,7 +7150,7 @@ class WSSunucusu:
             # ulasamaz ve panel "timed out" gosterirdi.
             # v2.4.190: radar_id ile hedeflenir; verilmezse birincil radar.
             _rid = k.get("radar_id")
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 # Faz C: adres KAYDA da yazilir; kopru yeniden baslasa
                 # bile panel dogru IP'yi gosterir ve kopru kendi kalici
                 # kaydindan ayni radara baglanir.
@@ -7135,7 +7175,7 @@ class WSSunucusu:
 
         elif komut == "radar_kes":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 await self._radar_kopruye(websocket, "radar_kes", {}, k)
             elif hasattr(self.radar, "istemciler"):
                 self.radar.kes(_rid)
@@ -7144,7 +7184,7 @@ class WSSunucusu:
 
         elif komut == "radar_ayar_oku":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 await self._radar_kopruye(websocket, "radar_ayar_oku",
                                           {}, k)
             else:
@@ -7192,7 +7232,7 @@ class WSSunucusu:
                     return
                 _veri = {"json_tip": _jt, "metin": _metin}
                 _kuyruk = ("json_yaz", _jt, _metin)
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 await self._radar_kopruye(websocket, komut, _veri, k)
             else:
                 _ist = self._radar_istemci(_rid)
@@ -7352,7 +7392,7 @@ class WSSunucusu:
             except (TypeError, ValueError):
                 a = {}
             _rid = k.get("radar_id")
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 # Merkez yonu de KOPRUYE gider: kalibrasyon radarin
                 # bulundugu makinede saklanir, cunku izleri cografi
                 # konuma ceviren kod artik orada kosuyor. Merkezde
@@ -7387,7 +7427,7 @@ class WSSunucusu:
 
         elif komut == "rtk_konum_al":
             _rid = k.get("radar_id")
-            if self._merkez_kipinde():
+            if self._radar_kopruden_mi(k):
                 # "Radar bagli mi" denetimi de SAHADA yapilir: bagli olup
                 # olmadigini bilen taraf oradaki C20 istemcisidir.
                 await self._radar_kopruye(websocket, "radar_rtk", {}, k)
@@ -9402,9 +9442,17 @@ class WSSunucusu:
                         # (Kopruler paneli de ayni yolu kullanir).
                         await self._kopru_servisleri_doldur(_kopruler, _fid)
                     else:
-                        # Yerel kurulumda kopru kavrami yoktur:
-                        # bos liste doner, arayuz grup cizmez.
-                        _kopruler = []
+                        # 2.4.238 (kullanici istegi: "GRCOFF icin tum
+                        # sistemlerde kopru secimi olmali"): yerel kipte
+                        # de Destek > Kopruler'de tanimli kopruler doner;
+                        # formlar "Merkez baglantisi" varsayilaniyla birlikte
+                        # bunlari sunar.
+                        from . import kopru_kabul as _kk2
+                        _kopruler = await _db_is_parcasi(
+                            _db_iade_ederek, _kk2.kopru_listesi)
+                        for _k in _kopruler:
+                            _k.pop("api_kodu", None)
+                        await self._kopru_servisleri_doldur(_kopruler, None)
                 except Exception as _e:
                     _hata = str(_e)
                     print(f"[KOPRU] Liste okunamadi: {_e}")

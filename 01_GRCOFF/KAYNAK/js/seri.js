@@ -113,14 +113,17 @@ window.kopruSeciciDoldur = function(alan, secEl, secili){
   const sec = (secili == null) ? "" : String(secili);
   secEl.innerHTML = "";
   const acik = (bagKopruler || []).filter(k => k.cevrimici);
-  // Yerel kurulumda kopru kavrami yok: secim gizli kalir ve kayit
-  // eskisi gibi programin kendi makinesinde calisir (v2.4.24 davranisi).
-  if (!bagMerkezKipi){
-    if (alan) alan.style.display = "none";
-    return;
-  }
+  // 2.4.238 (kullanici istegi): yerel kipte (GRCOFF) de secici gorunur.
+  // Varsayilan "Merkez baglantisi (bu bilgisayar)" = koprusuz; Destek >
+  // Kopruler'de tanimli kopruler varsa onlar da secilebilir. Merkez
+  // kipinde varsayilan secenek YOKTUR (kopru zorunlu).
   if (alan) alan.style.display = "";
-  if (!acik.length){
+  if (!bagMerkezKipi){
+    const o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = t.bagKopruYerel || "Merkez ba\u011flant\u0131s\u0131 (bu bilgisayar, k\u00f6pr\u00fcs\u00fcz)";
+    secEl.appendChild(o0);
+  } else if (!acik.length){
     const o = document.createElement("option");
     o.value = "";
     o.textContent = t.bagKopruYok || "\u00c7evrimi\u00e7i k\u00f6pr\u00fc yok";

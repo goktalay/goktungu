@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.237";
+const GCS_SURUM = "2.4.238";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.238",
+    tarih: "2026-09-17",
+    baslik: "GRCOFF'ta her kayıtta köprü seçimi: varsayılan Merkez bağlantısı (köprüsüz), tanımlı köprü seçilebilir (paket 2.5.108)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: yerel kurulumda (GRCOFF) Bağlantı Yöneticisi, Kameralar, AI Sunucuları, Radarlar ve Elektro-Optik formlarında 'Köprü' seçimi artık görünür. Varsayılan 'Merkez bağlantısı (bu bilgisayar, köprüsüz)'; Destek > Köprüler'de tanımlı köprüler listelenir ve seçilebilir. Merkez kipinde (GRCON) köprü zorunluluğu değişmedi.",
+      "MERKEZ BAĞLANTISI SEÇİLİYSE KÖPRÜSÜZ: dron bağlantısı, radar (doğrudan TCP) ve M50 (gömülü SDK) bu bilgisayarda kurulur. Köprü seçiliyse dron akışı yerel röleden, radar oturumu köprüdeki radar servisinden (RadarVekili), M50 oturumu köprüdeki M50 servisinden yürütülür; yerel SDK olsa bile köprü tercih edilir.",
+      "Yerel kipte 'kopru_liste' artık Destek > Köprüler kayıtlarını (çevrimiçi servisleriyle) döndürür; önceden boş liste dönüyordu.",
+      "Not: canlı kamera görüntüsünün köprü üzerinden aktarımı (video rölesi) IS71 ile ayrı altyapıya alındı; kamera kaydında köprü seçilebilir ama görüntü yerelden açılır.",
+    ]
+  },
   {
     surum: "2.4.237",
     tarih: "2026-09-17",
