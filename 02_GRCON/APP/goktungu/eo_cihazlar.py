@@ -53,10 +53,23 @@ class EOKayitlari:
         s["otomatik_baglan"] = 1 if kayit.get("otomatik_baglan", 1) else 0
         return s
 
-    def listele(self):
+    def listele(self, firma_id=None):
+        """v2.4.231: merkez kipinde firma izolasyonu (bkz. radarlar.py)."""
         with baglanti() as con:
-            rows = con.execute("SELECT * FROM eo_cihazlar ORDER BY id").fetchall()
+            if firma_id:
+                rows = con.execute(
+                    "SELECT * FROM eo_cihazlar WHERE (firma_id = ? OR firma_id IS NULL) "
+                    "ORDER BY id", (int(firma_id),)).fetchall()
+            else:
+                rows = con.execute("SELECT * FROM eo_cihazlar ORDER BY id").fetchall()
         return [dict(r) for r in rows]
+
+    def firma_ata(self, eo_id, firma_id) -> None:
+        if not firma_id:
+            return
+        with baglanti() as con:
+            con.execute("UPDATE eo_cihazlar SET firma_id=? WHERE id=?",
+                        (int(firma_id), int(eo_id)))
 
     def bul(self, eo_id):
         with baglanti() as con:
@@ -307,6 +320,7 @@ class EOYoneticisi:
                       "kayit_ip": k.get("ip") or "", "kayit_port": k.get("port") or 39020,
                       "kayit_lat": k.get("lat"), "kayit_lon": k.get("lon"),
                       "konum": konum, "kopru_ornek_id": k.get("kopru_ornek_id"),
+                      "firma_id": k.get("firma_id"),   # v2.4.231: telemetri firma suzgeci
                       "otomatik_baglan": bool(k.get("otomatik_baglan")),
                       # v2.4.199: arayuz Elektro-Optik menusunu bu bayrakla
                       # acar. Onceden menu yalniz "bir Kopru'de m50 servisi

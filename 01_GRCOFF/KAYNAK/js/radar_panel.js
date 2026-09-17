@@ -158,6 +158,24 @@ function radarRtkUygula(r){
   const rfIp = document.getElementById("rfIp"), rfPort = document.getElementById("rfPort");
   const rfLat = document.getElementById("rfLat"), rfLon = document.getElementById("rfLon");
   const baslik = document.getElementById("radarFormBaslik");
+  const rfKopruSar = document.getElementById("rfKopruSar"), rfKopru = document.getElementById("rfKopru");
+  // v2.4.231: merkez kipinde saha koprusu secimi zorunlu (GRCON'da radar yalniz kopruden)
+  function kopruSeciciDoldur(secili){
+    if (!rfKopruSar || !rfKopru) return;
+    const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
+    rfKopruSar.style.display = merkez ? "" : "none";
+    if (!merkez) return;
+    const liste = (typeof window.kopruListesiAl === "function") ? window.kopruListesiAl() : [];
+    const t = D();
+    rfKopru.innerHTML = "";
+    const bos = document.createElement("option"); bos.value = ""; bos.textContent = t.raKopruSec || "Saha makinesi seç..."; rfKopru.appendChild(bos);
+    for (const k of liste){
+      const o = document.createElement("option"); o.value = String(k.ornek_id);
+      o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")");
+      rfKopru.appendChild(o);
+    }
+    rfKopru.value = secili ? String(secili) : "";
+  }
   const ac = id => { if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc(id); };
   const kapat = id => { const p = document.getElementById(id); if (p) p.classList.add("yuzen-gizli"); };
 
@@ -171,6 +189,7 @@ function radarRtkUygula(r){
     rfLat.value = r && r.kayit_lat != null ? Number(r.kayit_lat).toFixed(6) : "";
     rfLon.value = r && r.kayit_lon != null ? Number(r.kayit_lon).toFixed(6) : "";
     if (baslik) baslik.textContent = r ? (t.panelRadarFormDuzenle || "RADARI DÜZENLE") : (t.panelRadarFormYeni || "YENİ RADAR");
+    kopruSeciciDoldur(r ? r.kopru_ornek_id : null);
     ac("yzRadarForm");
     setTimeout(() => rfIsim.focus(), 50);
   };
@@ -197,9 +216,11 @@ function radarRtkUygula(r){
           "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
         "</div>";
       sat.querySelector(".cl-ad").textContent = r.isim || ("Radar " + r.radar_id);
+      const kopruAd = (() => { if (!r.kopru_ornek_id || typeof window.kopruListesiAl !== "function") return "";
+        const kk = window.kopruListesiAl().find(x => Number(x.ornek_id) === Number(r.kopru_ornek_id)); return kk ? (kk.ad || ("#" + r.kopru_ornek_id)) : ("#" + r.kopru_ornek_id); })();
       sat.querySelector(".cl-alt").textContent =
         (r.kayit_ip ? r.kayit_ip + ":" + (r.kayit_port || 5001) : (t.clAdresYok || "adres yok")) +
-        "  ·  " + (t["raDurum_" + d] || d);
+        "  ·  " + (t["raDurum_" + d] || d) + (kopruAd ? "  ·  " + (t.bagKopruEtiket || "KÖPRÜ") + ": " + kopruAd : "");
       sat.title = t.rpSatirIpucu || "Radar yönetim penceresini aç";
       // v2.4.227: satira tik -> o radara OZEL yonetim penceresi
       sat.addEventListener("click", () => {
@@ -228,6 +249,11 @@ function radarRtkUygula(r){
     const lat = parseFloat(rfLat.value), lon = parseFloat(rfLon.value);
     paket.lat = isNaN(lat) ? "" : lat; paket.lon = isNaN(lon) ? "" : lon;
     if (!paket.isim){ rfIsim.focus(); return; }
+    if (typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi()){
+      const kid = parseInt((rfKopru && rfKopru.value) || "0", 10);
+      if (!kid){ if (rfKopru) rfKopru.focus(); return; }
+      paket.kopru_ornek_id = kid;
+    }
     if (radarGonder(paket)) kapat("yzRadarForm");
   });
   const iptal = document.getElementById("btnRadarFormIptal");

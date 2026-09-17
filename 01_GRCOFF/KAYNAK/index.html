@@ -418,6 +418,11 @@
       <div style="flex:2"><label for="rfIp" data-i18n="lblRadarIp">Radar IP</label><input type="text" id="rfIp" placeholder="192.168.1.50" spellcheck="false" autocomplete="off"></div>
       <div style="flex:1"><label for="rfPort" data-i18n="lblRadarPort">Port</label><input type="text" id="rfPort" value="5001" spellcheck="false" autocomplete="off"></div>
     </div>
+    <!-- v2.4.231: merkezde radar yalniz saha koprusu uzerinden; yerel kipte gizli -->
+    <div class="alan" id="rfKopruSar" style="display:none">
+      <label for="rfKopru" data-i18n="raKopruEtiket">Saha makinesi</label>
+      <select id="rfKopru" style="width:100%"></select>
+    </div>
     <div class="satir">
       <div style="flex:1"><label for="rfLat" data-i18n="lblRaKayitLat">Enlem</label><input type="text" id="rfLat" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
       <div style="flex:1"><label for="rfLon" data-i18n="lblRaKayitLon">Boylam</label><input type="text" id="rfLon" placeholder="RTK/elle" spellcheck="false" autocomplete="off"></div>
@@ -459,6 +464,11 @@
     <div class="satir">
       <div style="flex:1"><label for="efKullanici" data-i18n="m50Kullanici">Kullanıcı adı</label><input type="text" id="efKullanici" autocomplete="off" spellcheck="false"></div>
       <div style="flex:1"><label for="efParola" data-i18n="m50Parola">Parola</label><input type="password" id="efParola" autocomplete="new-password"></div>
+    </div>
+    <!-- v2.4.231: merkezde elektro-optik yalniz saha koprusu uzerinden; yerel kipte gizli -->
+    <div class="alan" id="efKopruSar" style="display:none">
+      <label for="efKopru" data-i18n="m50SahaMakinesi">Saha makinesi</label>
+      <select id="efKopru" style="width:100%"></select>
     </div>
     <p class="aciklama" id="efNot" data-i18n="efNot">Parola sunucuda cihaz kaydıyla saklanır; düzenlerken boş bırakılırsa değişmez.</p>
     <!-- v2.4.205 (kullanici istegi): cihaz konumu. RTK varsa "Konum al"
@@ -1763,9 +1773,9 @@
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24225"></script>
-<script src="js/radar_panel.js?v=v24227"></script>
+<script src="js/radar_panel.js?v=v24231"></script>
 <script src="js/radar_pencere.js?v=v24227"></script>
-<script src="js/m50_panel.js?v=v24212"></script>
+<script src="js/m50_panel.js?v=v24231"></script>
 <script src="js/hedefler.js?v=v24227"></script>
 <script src="js/harita_hover.js?v=v24225"></script>
 <script src="js/harita_cevrimici.js?v=v24220"></script>
@@ -1828,7 +1838,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24230"></script>
+<script src="js/surum.js?v=v24231"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24227"></script>

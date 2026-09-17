@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.230";
+const GCS_SURUM = "2.4.231";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.231",
+    tarih: "2026-09-17",
+    baslik: "Merkez kipi: radar/EO kayıtları yalnız saha köprüsüne bağlı ve firmaya özel, varsayılan kayıt yok, son kayıt silinebilir (paket 2.5.101)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı bildirimi: GRCON'da 'Radar 1' / 'M50 1' kayıtları görünüyor ve silinemiyor): uygulama ilk çalışmada eski tek-cihaz kurulumları için varsayılan kayıt üretiyor, 'son kayıt silinemez' koruması da bunları kalıcı kılıyordu. Merkez kipinde varsayılan kayıt üretilmez; son kayıt da silinebilir (yerel kip dahil).",
+      "GRCON'DA YALNIZ KÖPRÜ (kullanıcı kuralı): merkez kipinde radar ve elektro-optik kaydı bir saha köprüsüne bağlanmadan kaydedilemez (formlarda 'Saha makinesi' seçimi zorunlu; yerel kipte alan gizli). Cihazlara merkezden doğrudan bağlantı denenmez.",
+      "FİRMA İZOLASYONU: merkez kipinde radar/EO kayıtları oluşturan firmaya yazılır; listeler ve telemetri alıcının firmasına göre süzülür (sahipsiz eski kayıtlar herkese görünür). Radar listesinde köprü adı gösterilir."
+    ]
+  },
   {
     surum: "2.4.230",
     tarih: "2026-09-17",

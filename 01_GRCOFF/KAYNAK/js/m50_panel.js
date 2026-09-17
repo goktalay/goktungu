@@ -870,6 +870,20 @@ m50AlanlariEtkinlestir();
     if (efKonumRozet) efKonumRozet.textContent = rtk ? "RTK" : ((c && c.kayit_lat != null) ? (t.efKonumKayitli || "kayıtlı") : (t.efKonumYok || "konum yok"));
     if (efKonumBolum && !c) efKonumBolum.open = true;
     if (baslik) baslik.textContent = c ? (t.panelEoFormDuzenle || "CİHAZI DÜZENLE") : (t.panelEoFormYeni || "YENİ ELEKTRO OPTİK");
+    // v2.4.231: merkez kipinde saha koprusu secimi zorunlu (GRCON'da M50 yalniz kopruden)
+    (function(){
+      const sar = document.getElementById("efKopruSar"), sec = document.getElementById("efKopru");
+      if (!sar || !sec) return;
+      const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
+      sar.style.display = merkez ? "" : "none";
+      if (!merkez) return;
+      const liste = (typeof window.kopruListesiAl === "function") ? window.kopruListesiAl() : [];
+      sec.innerHTML = "";
+      const bos = document.createElement("option"); bos.value = ""; bos.textContent = t.raKopruSec || "Saha makinesi seç..."; sec.appendChild(bos);
+      for (const k of liste){ const o = document.createElement("option"); o.value = String(k.ornek_id);
+        o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")"); sec.appendChild(o); }
+      sec.value = (c && c.kopru_ornek_id) ? String(c.kopru_ornek_id) : "";
+    })();
     ac("yzEoForm");
     setTimeout(() => efIsim.focus(), 50);
   };
@@ -926,6 +940,12 @@ m50AlanlariEtkinlestir();
     if (ku) paket.kullanici = ku;
     if (pa && pa !== EF_PAROLA_NOBETCI) paket.parola = pa;
     if (!paket.isim){ efIsim.focus(); return; }
+    if (typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi()){
+      const sec = document.getElementById("efKopru");
+      const kid = parseInt((sec && sec.value) || "0", 10);
+      if (!kid){ if (sec) sec.focus(); return; }
+      paket.kopru_ornek_id = kid;
+    }
     // v2.4.205: konum (bos = kayitli konumu sil; gecersiz = kaydetme)
     const kn = konumOku();
     if (kn === null){

@@ -452,7 +452,11 @@ def uygulama_kur():
     # ayrica kayit basina istemci ve merkez-orijinli fuzyon saglar.
     from goktungu.radarlar import RadarKayitlari, RadarYoneticisi
     _radar_kayitlar = RadarKayitlari()
-    _radar_kayitlar.eski_ayardan_goc(ayarlar)
+    # v2.4.231 (kullanici: "GRCON'da kopru disinda hicbir cihaz dogrudan
+    # baglanamaz"): merkez kipinde varsayilan 'Radar 1' kaydi URETILMEZ;
+    # radar kayitlari firma tarafindan, bir saha koprusune bagli olarak acilir.
+    if not _radar_merkez:
+        _radar_kayitlar.eski_ayardan_goc(ayarlar)
     if _radar_merkez:
         from goktungu.radar_vekil import RadarVekili
         # `cek` geri cagrisi WSSunucusu kuruldugunda baglanir: kopru
@@ -498,7 +502,14 @@ def uygulama_kur():
     # birincil cihazin nesneleridir (geriye uyum).
     from goktungu.eo_cihazlar import EOKayitlari, EOYoneticisi
     _eo_kayitlar = EOKayitlari()
-    _eo_kayitlar.ilk_kaydi_garanti_et()
+    # v2.4.231: merkez kipinde varsayilan 'M50 1' kaydi uretilmez (bkz. radar).
+    try:
+        from goktungu import merkez_kimlik as _mk_eo
+        _eo_merkez = _mk_eo.merkez_kipinde()
+    except Exception:
+        _eo_merkez = False
+    if not _eo_merkez:
+        _eo_kayitlar.ilk_kaydi_garanti_et()
     eo = EOYoneticisi(
         konsol, ayarlar, kilit, _eo_kayitlar,
         vekil_fabrikasi=lambda k: M50Vekili(konsol, kilit),

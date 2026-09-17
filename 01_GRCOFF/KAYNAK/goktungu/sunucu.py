@@ -1657,6 +1657,38 @@ class WSSunucusu:
         if gorevler:
             await asyncio.gather(*gorevler, return_exceptions=True)
 
+    def _telemetri_firma_gruplari(self, veri, veri_d, alicilar):
+        """Telemetri paketini alici firmasina gore boler.
+
+        v2.4.231: yerel kipte tek grup (paket aynen). Merkez kipinde
+        `radarlar` ve `eo_cihazlar` listeleri kaydin `firma_id` alanina gore
+        suzulur; firma_id None olan (eski/sahipsiz) kayitlar herkese gider.
+        Donus: [(json_metin, [websocket, ...]), ...]
+        """
+        try:
+            if not self._merkez_kipinde():
+                return [(veri, list(alicilar))]
+            if not (veri_d.get("radarlar") or veri_d.get("eo_cihazlar")):
+                return [(veri, list(alicilar))]
+            gruplar = {}
+            for ws in alicilar:
+                fid = self._ws_firma_id(ws)
+                gruplar.setdefault(fid, []).append(ws)
+            cikti = []
+            for fid, wl in gruplar.items():
+                def _suz(liste):
+                    return [x for x in (liste or [])
+                            if not isinstance(x, dict) or x.get("firma_id") in (None, fid)]
+                v = dict(veri_d)
+                if "radarlar" in v:
+                    v["radarlar"] = _suz(v.get("radarlar"))
+                if "eo_cihazlar" in v:
+                    v["eo_cihazlar"] = _suz(v.get("eo_cihazlar"))
+                cikti.append((json.dumps(v), wl))
+            return cikti
+        except Exception:
+            return [(veri, list(alicilar))]
+
     async def _firma_bazli_duyur(self, tip, alan, uretici, ek=None):
         """Firma basina ayri uretilen liste mesajini yayinlar.
 
@@ -6713,17 +6745,27 @@ class WSSunucusu:
             _eo = getattr(self, "eo", None)
             if _eo is not None:
                 await websocket.send(json.dumps({
-                    "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+                    "tip": "eo_listesi",
+                    "cihazlar": _eo.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
 
         elif komut == "eo_kaydet":
             _eo = getattr(self, "eo", None)
             if _eo is not None:
                 try:
                     _eid = k.get("eo_id") or k.get("id")
+                    # v2.4.231 (kullanici: GRCON'da cihazlar YALNIZ kopruden):
+                    # merkez kipinde kayit bir saha koprusune bagli olmalidir.
+                    if self._merkez_kipinde() and not k.get("kopru_ornek_id"):
+                        await self._uyari_gonder(
+                            websocket, "M50",
+                            "Merkezde elektro-optik cihaz yalniz saha koprusu "
+                            "uzerinden baglanir; kayit icin saha koprusu secin.")
+                        return
                     if _eid:
                         _eo.kayitlar.guncelle(int(_eid), k)
                     else:
                         _eid = _eo.kayitlar.ekle(k)
+                    _eo.kayitlar.firma_ata(int(_eid), self._ws_firma_id(websocket))
                     _eo.tazele()
                     # v2.4.194 (kullanici istegi): kimlik (IP, port,
                     # kullanici adi, parola) CIHAZ KAYDIYLA BIRLIKTE
@@ -6746,7 +6788,8 @@ class WSSunucusu:
                     self.konsol("M50", "Elektro-optik kaydi guncellendi: #%s %s"
                                 % (_eid, k.get("isim") or ""), "basari")
                     await websocket.send(json.dumps({
-                        "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+                        "tip": "eo_listesi",
+                        "cihazlar": _eo.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
                 except Exception as _e:
                     await self._uyari_gonder(websocket, "M50",
                                              "EO kaydi yazilamadi: %s" % _e, "hata")
@@ -6758,7 +6801,9 @@ class WSSunucusu:
                     _eid = int(k.get("eo_id") or k.get("id") or 0)
                 except (TypeError, ValueError):
                     _eid = 0
-                if _eid and len(_eo.kayitlar.listele()) > 1:
+                # v2.4.231 (kullanici: "kayitlari silemiyorum"): son kayit da
+                # silinebilir; yonetici bos liste ile calisabilir.
+                if _eid:
                     _y = _eo.yereller.get(_eid)
                     if _y is not None:
                         try:
@@ -6769,32 +6814,45 @@ class WSSunucusu:
                     _eo.tazele()
                     self.konsol("M50", "Elektro-optik kaydi silindi: #%d" % _eid)
                     await websocket.send(json.dumps({
-                        "tip": "eo_listesi", "cihazlar": _eo.kayitlar.listele()}))
+                        "tip": "eo_listesi",
+                        "cihazlar": _eo.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
                 else:
                     await self._uyari_gonder(websocket, "M50",
-                                             "Son elektro-optik kaydi silinemez.", "hata")
+                                             "Elektro-optik kaydi belirtilmedi.", "hata")
 
         # ---- v2.4.190: coklu radar kayit yonetimi ----
         elif komut == "radar_listesi":
             if hasattr(self.radar, "kayitlar"):
                 await websocket.send(json.dumps({
                     "tip": "radar_listesi",
-                    "radarlar": self.radar.kayitlar.listele()}))
+                    "radarlar": self.radar.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
 
         elif komut == "radar_kaydet":
             if hasattr(self.radar, "kayitlar"):
                 try:
                     _rid = k.get("radar_id") or k.get("id")
+                    # v2.4.231 (kullanici: GRCON'da radar YALNIZ kopruden):
+                    # merkez kipinde yeni/duzenlenen kayit bir saha koprusune
+                    # bagli olmalidir (RTK konum guncellemesi haric: lat/lon).
+                    _yalniz_konum = set(k.keys()) <= {"tip", "radar_id", "id", "lat", "lon", "kopru_ornek_id"}
+                    if (self._merkez_kipinde() and not k.get("kopru_ornek_id")
+                            and not (_rid and _yalniz_konum)):
+                        await self._uyari_gonder(
+                            websocket, "radar",
+                            "Merkezde radar yalniz saha koprusu uzerinden baglanir; "
+                            "kayit icin saha koprusu secin.")
+                        return
                     if _rid:
                         self.radar.kayitlar.guncelle(int(_rid), k)
                     else:
                         _rid = self.radar.kayitlar.ekle(k)
+                    self.radar.kayitlar.firma_ata(int(_rid), self._ws_firma_id(websocket))
                     self.radar.tazele()
                     self.konsol("RADAR", "Radar kaydi guncellendi: #%s %s"
                                 % (_rid, k.get("isim") or ""), "basari")
                     await websocket.send(json.dumps({
                         "tip": "radar_listesi",
-                        "radarlar": self.radar.kayitlar.listele()}))
+                        "radarlar": self.radar.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
                 except Exception as _e:
                     await self._uyari_gonder(websocket, "radar",
                                              "Radar kaydi yazilamadi: %s" % _e)
@@ -6805,17 +6863,18 @@ class WSSunucusu:
                     _rid = int(k.get("radar_id") or k.get("id") or 0)
                 except (TypeError, ValueError):
                     _rid = 0
-                if _rid and len(self.radar.kayitlar.listele()) > 1:
+                # v2.4.231 (kullanici: "kayitlari silemiyorum"): son kayit da silinebilir.
+                if _rid:
                     self.radar.kes(_rid)
                     self.radar.kayitlar.sil(_rid)
                     self.radar.tazele()
                     self.konsol("RADAR", "Radar kaydi silindi: #%d" % _rid)
                     await websocket.send(json.dumps({
                         "tip": "radar_listesi",
-                        "radarlar": self.radar.kayitlar.listele()}))
+                        "radarlar": self.radar.kayitlar.listele(firma_id=self._ws_firma_id(websocket))}))
                 else:
                     await self._uyari_gonder(websocket, "radar",
-                                             "Son radar kaydi silinemez.")
+                                             "Radar kaydi belirtilmedi.")
 
         elif komut == "radar_ayar_yaz":
             a = {}
@@ -11187,7 +11246,7 @@ class WSSunucusu:
                 suru_durum = self.suru.durum() if self.suru else None
                 angajman_durum = self.angajman.durum_paketi()
                 if self.kayit.replay_durum["aktif"]:
-                    veri = json.dumps({
+                    veri_d = {
                         "tip": "telemetri",
                         "dronlar": paket,
                         "dron_renkler": dron_renkler,
@@ -11204,9 +11263,9 @@ class WSSunucusu:
                         "m50": m50,
                         "eo_cihazlar": eo_cihazlar,
                         "kamera_canli": kamera_canli,   # v2.4.220
-                    })
+                    }
                 else:
-                    veri = json.dumps({
+                    veri_d = {
                         "tip": "telemetri",
                         "dronlar": paket,
                         "dron_renkler": dron_renkler,
@@ -11227,7 +11286,8 @@ class WSSunucusu:
                         "m50": m50,
                         "eo_cihazlar": eo_cihazlar,
                         "kamera_canli": kamera_canli,   # v2.4.220
-                    })
+                    }
+                veri = json.dumps(veri_d)
                 # ---- IS94_TELEMETRI_KISMA ----------------------
                 # OLCULEN KUSUR: paket bosta TAMAMEN SABIT (0/141
                 # degisim, 30 sn'de 866 KB). Tuketmeyen istemcide bu
@@ -11260,8 +11320,12 @@ class WSSunucusu:
                 else:
                     _alicilar = _yeni
                 if _alicilar:
+                    # v2.4.231 (kullanici: GRCON'da kayitlar firmaya ozel):
+                    # merkez kipinde radar/EO kayit listeleri alicinin
+                    # firmasina gore suzulur (sahipsiz eski kayitlar herkese).
+                    _gruplar = self._telemetri_firma_gruplari(veri, veri_d, _alicilar)
                     await asyncio.gather(
-                        *(ws.send(veri) for ws in _alicilar),
+                        *(ws.send(v) for v, wl in _gruplar for ws in wl),
                         return_exceptions=True)
                 self._IS94_SON_VERI = veri
                 # Ayrilan istemcileri kumeden dus: `id()` yeniden
