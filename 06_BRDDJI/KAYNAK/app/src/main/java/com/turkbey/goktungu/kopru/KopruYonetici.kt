@@ -1,6 +1,9 @@
 package com.turkbey.goktungu.kopru
 
 import android.content.Context
+import android.os.Build
+import android.util.Base64
+import com.turkbey.goktungu.BuildConfig
 import com.turkbey.goktungu.dji.DjiKopru
 import com.turkbey.goktungu.dji.GorevYonetici
 import com.turkbey.goktungu.veri.Ayarlar
@@ -10,151 +13,148 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
- * Kopru cekirdegi: DJI MSDK ile GDP sunucusunu birlestirir.
- *
- * Tek ornek (singleton) olarak tutulur cunku MSDK de tek ornektir;
- * ikinci bir kayit denemesi hataya yol acar.
+ * Kopru cekirdegi (1.1.0): DJI MSDK + KOPRU AJANI.
  *
  * ## Akis
  *
  * ```
  * DJI arac --(MSDK anahtar dinleme)--> DjiKopru.telemetri
- *          --(periyodik ornekleme)--> GdpIstemci --(NDJSON/TCP)--> merkez
- * merkez --(komut)--> KomutIsleyici --> DjiKopru / GorevYonetici
+ *          --(periyodik ornekleme)--> GdpKanal --{"tur":"akis"}--> merkez role
+ * merkez --{"tur":"akis"}(komut satiri)--> GdpKanal --> KomutIsleyici --> DjiKopru
  * ```
+ *
+ * Merkez dogrudan TCP ile ARANMAZ; kanal merkezin Baglanti Yoneticisi'nden
+ * (`akis_ac`, tur "dji") acilir. Telefon merkezde bir kopru olarak,
+ * "Dron" servisi cevrimici gorunur. Tek ornek: MSDK de tek ornektir.
  */
 object KopruYonetici {
 
-    /** Telemetri gonderim araligi (ms).  Merkez 5 Hz bekliyor. */
+    /** Telemetri gonderim araligi (ms). Merkez 5 Hz bekliyor. */
     const val TELEMETRI_ARALIK_MS = 200L
 
-    private var kapsam: CoroutineScope? = null
-    private var telemetriIsi: Job? = null
+    private lateinit var baglam: Context
 
     private var _dji: DjiKopru? = null
     val dji: DjiKopru? get() = _dji
 
-    private var _istemci: GdpIstemci? = null
-    val istemci: GdpIstemci? get() = _istemci
-
     private var gorev: GorevYonetici? = null
     private var isleyici: KomutIsleyici? = null
 
-    private val _calisiyor = MutableStateFlow(false)
-    val calisiyor: StateFlow<Boolean> = _calisiyor.asStateFlow()
+    private var _kanallar: GdpKanal? = null
+    val kanallar: GdpKanal? get() = _kanallar
 
-    /** Sunucuya gonderilen telemetri ornegi sayisi (tanisal). */
+    private var _ajan: KopruAjan? = null
+    val ajan: KopruAjan? get() = _ajan
+
+    private var kapsam: CoroutineScope? = null
+    private var telemetriIsi: Job? = null
+
     private val _ornekSayisi = MutableStateFlow(0L)
     val ornekSayisi: StateFlow<Long> = _ornekSayisi.asStateFlow()
+
+    private val baslamaTs = System.currentTimeMillis()
 
     @Volatile
     private var kuruldu = false
 
-    /**
-     * MSDK'yi baslatir.  Uygulama acilisinda bir kez cagrilir.
-     */
-    fun kur(baglam: Context) {
+    /** MSDK'yi ve ajani kurar. Uygulama acilisinda bir kez cagrilir. */
+    fun kur(b: Context) {
         if (kuruldu) return
         kuruldu = true
-        val d = DjiKopru(baglam.applicationContext)
+        baglam = b.applicationContext
+        val d = DjiKopru(baglam)
         _dji = d
-        gorev = GorevYonetici(
-            baglam.applicationContext,
-            durumBildir = { durum, nokta ->
-                _istemci?.gonder(GdpMesaj.gorevDurum(durum, nokta))
+        val kn = GdpKanal(
+            gonder = { kid, v -> _ajan?.akisGonder(kid, v) ?: false },
+            merhabaUretici = {
+                GdpMesaj.merhaba(
+                    sn = d.seriNo() ?: Ayarlar.oku(baglam).cihazKimlik,
+                    model = d.urunModeli(),
+                    fw = d.yazilimSurumu(),
+                    videoUrl = null
+                )
             },
+            komutIsle = { komut, _ -> isleyici?.isle(komut) },
+            urunBagli = { d.urunBagli.value }
+        )
+        _kanallar = kn
+        gorev = GorevYonetici(
+            baglam,
+            durumBildir = { durum, nokta -> kn.yayinla(GdpMesaj.gorevDurum(durum, nokta)) },
             yuklemeBildir = { y, t, durum, mesaj ->
-                _istemci?.gonder(GdpMesaj.gorevYukleme(y, t, durum, mesaj))
+                kn.yayinla(GdpMesaj.gorevYukleme(y, t, durum, mesaj))
+            }
+        )
+        // Komut yanitlari acik GDP oturumlarina yayinlanir (normalde tek).
+        isleyici = KomutIsleyici(d, gorev!!) { m -> kn.yayinla(m) }
+        _ajan = KopruAjan(
+            kimlikOku = { KopruKimlik.oku(baglam) },
+            surum = BuildConfig.VERSION_NAME,
+            platform = "android-" + Build.VERSION.RELEASE,
+            makineAdi = (Build.MANUFACTURER + " " + Build.MODEL).trim(),
+            islevler = islevler(kn, d),
+            akisYaz = { kid, v -> kn.yaz(kid, v) },
+            yetenekler = ::yetenekler,
+            dronSayisi = { if (d.urunBagli.value && kn.etkinSayi() > 0) 1 else 0 },
+            nabizEk = {
+                JSONObject().put("servisler", servisler(kn, d)).put("kanallar", kn.durum())
             }
         )
         d.baslat()
+        Gunluk.yaz("KOPRU", "Kopru cekirdegi kuruldu (ajan 1.1.0)")
     }
 
-    /**
-     * Merkeze baglanir ve telemetri akisini baslatir.
-     */
-    fun baglan(baglam: Context, ayarlar: Ayarlar.Deger) {
-        val d = _dji ?: run {
-            Gunluk.hata("KOPRU", "MSDK kurulmadan baglanti denendi")
-            return
+    /** Ajani ve telemetri dongusunu baslatir; kimlik yoksa `false`. */
+    fun baslat(): Boolean {
+        if (!KopruKimlik.var_(baglam)) {
+            Gunluk.uyari("KOPRU", "Kurulum kimligi yok; once API kodu girin")
+            return false
         }
-        kes()
-
-        val k = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        kapsam = k
-
-        val g = gorev
-        if (g != null) g.baslatModulu()
-
-        val ist = GdpIstemci(k)
-        _istemci = ist
-
-        val isl = KomutIsleyici(d, g!!) { m -> ist.gonder(m) }
-        isleyici = isl
-
-        ist.komutIsleyici = { komut -> isl.isle(komut) }
-        ist.merhabaUretici = {
-            GdpMesaj.merhaba(
-                sn = d.seriNo() ?: ayarlar.cihazKimlik,
-                model = d.urunModeli(),
-                fw = d.yazilimSurumu(),
-                videoUrl = null,
-                // BULGU_07: belirtec el sikismada gonderilir.
-                belirtec = ayarlar.belirtec
-            )
+        gorev?.baslatModulu()
+        _ajan?.baslat()
+        if (telemetriIsi == null) {
+            val k = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            kapsam = k
+            telemetriIsi = k.launch { telemetriDongusu() }
         }
-
-        ist.baslat(ayarlar.sunucu, ayarlar.port, ayarlar.tls)
-        telemetriIsi = k.launch { telemetriDongusu() }
-        _calisiyor.value = true
-        Gunluk.yaz("KOPRU", "Kopru baslatildi -> " +
-            "${ayarlar.sunucu}:${ayarlar.port}")
+        return true
     }
 
-    fun kes() {
+    fun durdur() {
         telemetriIsi?.cancel()
         telemetriIsi = null
-        _istemci?.durdur()
-        _istemci = null
-        isleyici = null
+        kapsam?.cancel()
         kapsam = null
-        _calisiyor.value = false
+        _kanallar?.tumunuKapat()
+        _ajan?.durdur()
     }
 
+    fun calisiyorMu(): Boolean = _ajan?.calisiyorMu() == true
+
     /**
-     * Telemetri gonderim dongusu.
-     *
-     * ## Neden ornekleme, itme degil
-     *
-     * MSDK anahtarlari bagimsiz olarak ve cok sik tetiklenir; her
-     * degisimde mesaj gondermek agi gereksiz doldurur.  Bunun yerine
-     * en son durum sabit araliklarla orneklenir.
-     *
-     * ## Konum yoksa gonderilmez
-     *
-     * `konum == null` ise (GPS kilidi yok veya (0,0)) telemetri
-     * GONDERILMEZ.  Sifir gondermek araci Gine Korfezi'nde gosterirdi.
+     * Telemetri ornekleme dongusu. Konum yoksa GONDERILMEZ: sifir
+     * gondermek araci Gine Korfezi'nde gosterirdi.
      */
     private suspend fun telemetriDongusu() {
         val d = _dji ?: return
         while (true) {
             try {
-                val ist = _istemci
-                if (ist == null) return
-                ist.urunBagli = d.urunBagli.value
-
-                if (ist.durum.value == GdpIstemci.Durum.BAGLI) {
+                val kn = _kanallar
+                if (kn != null && kn.etkinSayi() > 0) {
                     val t = d.telemetri.value
                     val konum = t.konum
                     if (konum != null) {
-                        ist.gonder(
+                        val n = kn.yayinla(
                             GdpMesaj.telemetri(
                                 konum = konum,
                                 altMsl = t.altMsl,
@@ -174,7 +174,7 @@ object KopruYonetici {
                                 ev = t.ev
                             )
                         )
-                        _ornekSayisi.value = _ornekSayisi.value + 1
+                        if (n > 0) _ornekSayisi.value = _ornekSayisi.value + 1
                     }
                 }
             } catch (e: Exception) {
@@ -182,5 +182,123 @@ object KopruYonetici {
             }
             delay(TELEMETRI_ARALIK_MS)
         }
+    }
+
+    // ------------------------------------------------------------------
+    private fun yetenekler(): JSONObject = JSONObject()
+        .put("urun", "kopru")
+        .put("platform", "android")
+        .put("dji", true)
+        .put("servis", true)
+        .put("konsol", true)
+        .put("telemetri", false)
+
+    private fun servisler(kn: GdpKanal, d: DjiKopru): JSONArray {
+        val dron = JSONObject()
+            .put("ad", "dron")
+            .put("baslik", "Dron Servisi (DJI MSDK)")
+            .put("aciklama", "DJI araci: GDP telemetri ve komut")
+            .put("calisiyor", calisiyorMu())
+            .put("pid", JSONObject.NULL)
+            .put("baslama_ts", baslamaTs / 1000.0)
+            .put("bitis_ts", JSONObject.NULL)
+            .put("cikis_kodu", JSONObject.NULL)
+            .put("son_hata", d.kayitHata.value)
+            .put("konsol_satir", Gunluk.kayitlar.value.size)
+            .put(
+                "olcumler",
+                JSONObject()
+                    .put("sdk_kayitli", d.kayit.value == DjiKopru.KayitDurum.KAYITLI)
+                    .put("arac_bagli", d.urunBagli.value)
+                    .put("model", d.urunModeli())
+                    .put("kanal", kn.etkinSayi())
+                    .put("etkin_kanal", kn.etkinSayi())
+            )
+            .put("surum", BuildConfig.VERSION_NAME)
+        return JSONArray().put(dron)
+    }
+
+    private fun sistemBilgi(): JSONObject = JSONObject()
+        .put("surum", BuildConfig.VERSION_NAME)
+        .put("platform", "android-" + Build.VERSION.RELEASE)
+        .put("makine_adi", (Build.MANUFACTURER + " " + Build.MODEL).trim())
+        .put("urun", "kopru")
+        .put("calisma_sn", (System.currentTimeMillis() - baslamaTs) / 1000)
+        .put("panel_port", JSONObject.NULL)
+
+    private fun islevler(kn: GdpKanal, d: DjiKopru): Map<String, (JSONObject) -> JSONObject> {
+        val servisDurum: (JSONObject) -> JSONObject = { _ ->
+            JSONObject().put("servisler", servisler(kn, d)).put("kanallar", kn.durum())
+        }
+        return mapOf(
+            "sistem_bilgi" to { _ -> sistemBilgi() },
+            "servis_durum" to servisDurum,
+            "durum" to servisDurum,
+            "yetenekler" to { _ -> yetenekler() },
+            "dron_sayisi" to { _ ->
+                JSONObject().put("sonuc", if (d.urunBagli.value && kn.etkinSayi() > 0) 1 else 0)
+            },
+            "konsol" to { v ->
+                val ad = v.optString("servis")
+                if (ad != "dron") {
+                    JSONObject().put("hata", "Bilinmeyen servis: $ad")
+                } else {
+                    val sonrasi = v.optInt("sonrasi", 0)
+                    val satirlar = JSONArray()
+                    Gunluk.kayitlar.value.forEachIndexed { i, s ->
+                        val no = i + 1
+                        if (no > sonrasi) {
+                            satirlar.put(
+                                JSONObject()
+                                    .put("no", no)
+                                    .put("ts", s.zaman / 1000.0)
+                                    .put("kaynak", s.etiket)
+                                    .put("metin", "[${s.etiket}] ${s.ileti}")
+                            )
+                        }
+                    }
+                    JSONObject().put("servis", "dron").put("satirlar", satirlar)
+                }
+            },
+            "servis_baslat" to { v ->
+                if (v.optString("servis") == "dron") JSONObject().put("tamam", true).put("hata", "")
+                else JSONObject().put("tamam", false).put("hata", "Bilinmeyen servis")
+            },
+            "servis_durdur" to { v ->
+                if (v.optString("servis") == "dron") {
+                    kn.tumunuKapat()
+                    JSONObject().put("tamam", true).put("hata", "")
+                } else JSONObject().put("tamam", false).put("hata", "Bilinmeyen servis")
+            },
+            "seri_portlar" to { _ ->
+                // DJI koprusunde seri port yoktur; bos liste (hata degil).
+                JSONObject().put("portlar", JSONArray())
+            },
+            "akis_ac" to { v ->
+                val (ozet, hata) = kn.ac(
+                    v.optInt("kanal_id", 0), v.optJSONObject("tanim") ?: JSONObject()
+                )
+                if (hata != null) JSONObject().put("tamam", false).put("hata", hata)
+                else JSONObject().put("tamam", true).put("kanal", ozet)
+            },
+            "akis_kapat" to { v ->
+                JSONObject().put("tamam", true).put("vardi", kn.kapat(v.optInt("kanal_id", 0)))
+            },
+            "akis_yaz" to { v ->
+                val veri = try {
+                    Base64.decode(v.optString("veri"), Base64.DEFAULT)
+                } catch (e: Exception) {
+                    ByteArray(0)
+                }
+                if (veri.isEmpty()) JSONObject().put("yazilan", 0)
+                else JSONObject().put("yazilan", kn.yaz(v.optInt("kanal_id", 0), veri))
+            },
+            "akis_durum" to { _ -> JSONObject().put("kanallar", kn.durum()) },
+            "protokol_algila" to { _ ->
+                JSONObject()
+                    .put("tamam", false)
+                    .put("hata", "DJI koprusu MAVLink/MSP tasimaz; Baglanti Yoneticisi'nde DJI turu kayit kullanin.")
+            }
+        )
     }
 }

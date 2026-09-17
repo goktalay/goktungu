@@ -426,6 +426,8 @@ class WSSunucusu:
         # baglanti kaydindan TEKRAR cozmek guvenilmez (kayit silinmis
         # veya kopru degismis olabilir) — o zaman merkezde port sizar.
         self._akis_kanallari = {}
+        # v2.4.233: bid -> DjiRoleAdaptoru (DJI Android koprusu role)
+        self._dji_roleler = {}
         # v2.4.142: Betaflight MSP, MAVLink akis/komut hattindan tamamen
         # ayridir. `main.py` yerel salt-okunur yoneticiyi buraya enjekte
         # eder; merkez-kopru oturumlari ayri defterde tutulur.
@@ -1977,6 +1979,9 @@ class WSSunucusu:
     def _k_yetenekler(self, veri=None):
         """Merkeze bildirilen yetenek bayraklari (panelde rozet olur)."""
         return {
+            # 2026-09-17: bu ajan bir Merkezi Yazilim (GRCOFF) kurulumudur;
+            # merkez, kopru kaydiyla GRCOFF baglanmasini bu alanla ayirir.
+            "urun": "gcs",
             "dron": self.dron is not None,
             "video": bool(self.kameralar),
             "ai": self.ai_yonetici is not None,
@@ -4296,25 +4301,72 @@ class WSSunucusu:
         except Exception as e:
             return None, "Yerel UDP portu ayrilamadi: %s" % e
 
-        def _isle():
-            return _mk.akis_ac(oid, int(firma_id), bid, tanim,
-                              gcs_port=gcs_port)
+        if not _mk.etkin():
+            # v2.4.233: YEREL KIP — kanal bu surecte rolelenir
+            # (kopru_kabul.AKIS). Onceki surumde merkez ic ucu
+            # cagrildigi icin kapali devre kurulumda kopru uzerinden
+            # dron baglantisi hic acilamiyordu.
+            from . import kopru_kabul as _kk
+            o = _kk.ROLE.ornek_ile(oid)
+            if o is None:
+                return None, ("Kopru cevrimdisi. Kopru yazilimini "
+                              "baslatip yerel merkeze baglandigini "
+                              "dogrulayin.")
+            ozet, hata = _kk.AKIS.kanal_ac(oid, bid, tanim, gcs_port)
+            if hata:
+                return None, hata
+            try:
+                veri = await _kk.kopruden_iste(
+                    o, "akis_ac", {"kanal_id": bid, "tanim": tanim},
+                    zaman_asimi=12.0)
+            except Exception as e:
+                _kk.AKIS.kanal_kapat(oid, bid)
+                return None, "%s: %s" % (type(e).__name__, e)
+            if not (veri or {}).get("tamam"):
+                _kk.AKIS.kanal_kapat(oid, bid)
+                return None, str((veri or {}).get("hata")
+                                 or "Kopru kanali acamadi")
+            port = gcs_port
+        else:
+            def _isle():
+                return _mk.akis_ac(oid, int(firma_id), bid, tanim,
+                                  gcs_port=gcs_port)
 
-        try:
-            port, hata = await _db_is_parcasi(_isle)
-        except Exception as e:
-            return None, "%s: %s" % (type(e).__name__, e)
-        if hata or not port:
-            return None, hata or "Merkez port bildirmedi"
+            try:
+                port, hata = await _db_is_parcasi(_isle)
+            except Exception as e:
+                return None, "%s: %s" % (type(e).__name__, e)
+            if hata or not port:
+                return None, hata or "Merkez port bildirmedi"
         with self.kilit:
             self._akis_kanallari[bid] = {
-                "ornek_id": int(oid), "firma_id": int(firma_id),
+                "ornek_id": int(oid), "firma_id": int(firma_id or 0),
                 "port": int(port), "tanim": tanim,
+                "yerel": not _mk.etkin(),
             }
         self.konsol("AKIS",
                     f"Kanal acildi: {tanim['isim'] or bid} -> "
                     f"udpin:127.0.0.1:{port} (ornek {oid})", "basari")
         return "udpin:127.0.0.1:%d" % int(port), None
+
+    def _dji_role_baslat(self, bid, udp_port, tcp_port, etiket=""):
+        """v2.4.233: DJI role adaptorunu acar; hata metni doner."""
+        from . import dji_role as _dr
+        self._dji_role_durdur(bid)
+        a = _dr.DjiRoleAdaptoru(bid, udp_port, tcp_port, self.konsol, etiket)
+        hata = a.baslat()
+        if hata:
+            return hata
+        with self.kilit:
+            self._dji_roleler[int(bid)] = a
+        return None
+
+    def _dji_role_durdur(self, bid):
+        with self.kilit:
+            a = self._dji_roleler.pop(int(bid), None)
+        if a is not None:
+            with contextlib.suppress(Exception):
+                a.durdur()
 
     async def _akis_kanali_kapat(self, bid):
         """Baglantinin akis kanalini kapatir (yoksa sessizce doner).
@@ -4325,12 +4377,34 @@ class WSSunucusu:
         `_nabiz_goktungusu` temizligine takilir.
         """
         bid = int(bid)
+        # v2.4.233: DJI role adaptoru (varsa) kanaldan ONCE kapanir.
+        self._dji_role_durdur(bid)
         with self.kilit:
             k = self._akis_kanallari.pop(bid, None)
         if not k:
             return
         try:
             from . import merkez_kimlik as _mk
+            if k.get("yerel"):
+                from . import kopru_kabul as _kk
+                _kk.AKIS.kanal_kapat(k["ornek_id"], bid)
+                o = _kk.ROLE.ornek_ile(k["ornek_id"])
+                hata = None
+                if o is not None:
+                    try:
+                        await _kk.kopruden_iste(
+                            o, "akis_kapat", {"kanal_id": bid},
+                            zaman_asimi=8.0)
+                    except Exception as e:
+                        hata = str(e)
+                if hata:
+                    self.konsol("AKIS",
+                                f"Kanal kapatma uyarisi (id={bid}): {hata}",
+                                "uyari")
+                else:
+                    self.konsol("AKIS", f"Kanal kapatildi (id={bid})",
+                                "bilgi")
+                return
 
             def _isle():
                 return _mk.akis_kapat(k["ornek_id"], k["firma_id"], bid)
@@ -4410,6 +4484,31 @@ class WSSunucusu:
             return False, "Algilanan ucus yazilimi desteklenmiyor."
         if calisan.get("tur") == "dji" and self.dji_kopru:
             self.dji_kopru.dinle(calisan)
+            if self._kopru_uzerinde_mi(calisan):
+                # v2.4.233: DJI Android koprusu (1.1.0) gercek kopru
+                # ajanidir; GDP satirlari role kanalindan gelir ve
+                # yerel DJI TCP dinleyicisine adaptorle aktarilir
+                # (dji_role.py). GRCON'a dogrudan TCP baglantisi YOK.
+                bid = int(calisan.get("id") or 0)
+                url, hata = await self._akis_kanali_ac(calisan, firma_id)
+                if hata:
+                    self.dji_kopru.durdur(bid)
+                    self.konsol("DJI", "Role kanali acilamadi (%s): %s" % (
+                        calisan.get("isim") or bid, hata), "hata")
+                    return False, hata
+                try:
+                    udp_port = int(str(url).rsplit(":", 1)[1])
+                except (ValueError, IndexError):
+                    await self._akis_kanali_kapat(bid)
+                    self.dji_kopru.durdur(bid)
+                    return False, "Role portu cozulemedi: %s" % url
+                hata = self._dji_role_baslat(
+                    bid, udp_port, int(calisan.get("port") or 8790),
+                    str(calisan.get("isim") or bid))
+                if hata:
+                    await self._akis_kanali_kapat(bid)
+                    self.dji_kopru.durdur(bid)
+                    return False, hata
             return True, None
         if calisan.get("tur") == "sanal":
             await self._sanal_baslat(websocket, calisan)
@@ -5870,6 +5969,116 @@ class WSSunucusu:
         await websocket.send(json.dumps(
             {"tip": "lisans_yenile_sonuc", "basarili": True, "hata": "",
              "lisans": ozet}))
+
+    async def _merkez_kod_kur(self, websocket, k):
+        """API koduyla merkeze eslesme + kurum bilgisi/logo aktarimi.
+
+        Istek : {"tip":"pg_merkez_kod","kod":"GTK1...","adres":"goktungu.com"}
+        Yanit : {"tip":"pg_merkez_kod_sonuc","basarili":bool,"hata":str,
+                 "firma_unvan":str,"logo_var":bool,"ad":str,"adres":str}
+
+        Adimlar: kod cozulur (p="gcs" zorunlu) -> merkezin
+        /api/istemci/kurulum_bilgi ucu uid+gizli ile cagrilir -> kimlik
+        veri/kopru.json'a yazilir -> ayarlara merkez adresi + etkin +
+        sirket bilgisi (logo dahil) yazilir -> kopru ajani kurulur.
+        """
+        from . import kopru_kabul as _kk
+        from . import merkez as _merkez
+        kod = str(k.get("kod") or "")
+        d, hata = _kk.api_kodu_coz(kod)
+        if hata:
+            await websocket.send(json.dumps(
+                {"tip": "pg_merkez_kod_sonuc", "basarili": False, "hata": hata}))
+            return
+        if str(d.get("p") or "kopru") != "gcs":
+            await websocket.send(json.dumps(
+                {"tip": "pg_merkez_kod_sonuc", "basarili": False,
+                 "hata": "Bu API kodu bir kopru kaydina ait. Kurumsal panelde "
+                         "'Merkezi Yazilimlar' altinda kayit olusturup o kodu girin."}))
+            return
+        # Merkez HTTP adresi: kullanici yazdiysa o; yoksa kodun `h`/`m`
+        # alanindan turetilir (goktungu.com, 192.168.1.50:8443 gibi).
+        adres = str(k.get("adres") or "").strip()
+        if not adres:
+            h = str(d.get("h") or "")
+            if h:
+                adres = h
+            else:
+                m = str(d.get("m") or "")
+                adres = m.replace("wss://", "https://").replace("ws://", "http://")
+                adres = adres.split("/kopru", 1)[0]
+        loop = asyncio.get_event_loop()
+
+        def _cek():
+            return _merkez._istek(adres, "/api/istemci/kurulum_bilgi",
+                                  {"kurulum_uid": d["u"], "gizli": d["g"]})
+
+        try:
+            veri, hata = await loop.run_in_executor(None, _cek)
+        except Exception as e:
+            veri, hata = None, "%s: %s" % (type(e).__name__, e)
+        if hata or not (veri or {}).get("tamam"):
+            await websocket.send(json.dumps(
+                {"tip": "pg_merkez_kod_sonuc", "basarili": False,
+                 "hata": hata or str((veri or {}).get("hata") or "Merkez kabul etmedi")}))
+            return
+        firma = dict((veri or {}).get("firma") or {})
+        # Kopru ajani kimligi (veri/kopru.json). merkez_adres kodun WS
+        # adresidir; ajan onu okur (kopru.py `adres`).
+        kimlik = {
+            "kurulum_uid": str(d["u"]), "gizli": str(d["g"]),
+            "ornek_id": (veri or {}).get("ornek_id") or d.get("o"),
+            "ad": str((veri or {}).get("ad") or d.get("a") or _merkez.makine_adi()),
+            "firma_id": (veri or {}).get("firma_id"),
+            "merkez_adres": str(d.get("m") or ""),
+            "adres": adres, "urun": "gcs",
+            "platform": _merkez.platform_adi(), "makine_adi": _merkez.makine_adi(),
+            "kayit_ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        yol, hata = _merkez.kimlik_yaz(kimlik)
+        if hata:
+            await websocket.send(json.dumps(
+                {"tip": "pg_merkez_kod_sonuc", "basarili": False, "hata": hata}))
+            return
+        # Sirket bilgisi: antetli rapor + kilit sihirbazi bu kaydi okur.
+        logo_veri = ""
+        if (veri or {}).get("logo_b64"):
+            logo_veri = "data:%s;base64,%s" % (
+                (veri or {}).get("logo_tur") or "image/png", veri["logo_b64"])
+            if len(logo_veri) > 512 * 1024:
+                logo_veri = ""   # ayar tablosu siniri (sirket_kaydet ile ayni)
+        mevcut = (self.ayarlar.yukle().get("sirket") or {})
+        sirket = {
+            "unvan": str(firma.get("unvan") or "")[:200],
+            "adres": str(firma.get("adres") or "")[:400],
+            "telefon": str(firma.get("telefon") or "")[:60],
+            "eposta": str(firma.get("eposta") or "")[:120],
+            "vergi_no": str(firma.get("vergi_no") or "")[:40],
+            "web": str(firma.get("web") or "")[:120],
+            "logo_veri": logo_veri or mevcut.get("logo_veri", ""),
+            "kurulum_ts": mevcut.get("kurulum_ts") or time.time(),
+            "guncelleme_ts": time.time(),
+            "kuran": mevcut.get("kuran") or "merkez_api_kodu",
+            "guncelleyen": "merkez_api_kodu",
+            "kaynak": "merkez",
+        }
+        yeni = self.ayarlar.kaydet({
+            "sirket": sirket, "merkez_adres": adres, "merkez_etkin": True,
+            "merkez_secim_tur": "grcon", "merkez_api_kodu_ts": time.time(),
+        })
+        self.konsol("MERKEZ", "API kodu ile merkeze eslesildi: %s (ornek %s), "
+                    "kurum: %s" % (kimlik["ad"], kimlik["ornek_id"],
+                                   sirket["unvan"] or "?"), "basari")
+        try:
+            await self._kopru_yeniden_kur()
+        except Exception as e:
+            self.konsol("KOPRU", "Ajan baslatilamadi: %s" % e, "uyari")
+        await self._duyur({"tip": "ayarlar", "ayarlar": self.ayarlar.yayin(yeni)})
+        await websocket.send(json.dumps(
+            {"tip": "pg_merkez_kod_sonuc", "basarili": True, "hata": "",
+             "firma_unvan": sirket["unvan"], "logo_var": bool(logo_veri),
+             "ad": kimlik["ad"], "adres": adres,
+             "kimlik": _merkez.kimlik_ozet()}))
 
     async def _merkez_esitle(self, websocket, k):
         """Merkezden firma kullanicilarini cekip yerel tabloya yazar.
@@ -11061,6 +11270,15 @@ class WSSunucusu:
                      "kapali": True}))
         elif komut == "lisans_yenile":
             await self._lisans_yenile(websocket, k)
+        elif komut == "pg_merkez_kod":
+            # 2026-09-17 (kullanici istegi): KURULUM SIHIRBAZI — MERKEZ
+            # SUNUCU + API KODU. E-posta/sifre ve sirket bilgisi formu
+            # yerine kurumsal paneldeki "Merkezi Yazilimlar" kaydinin
+            # API kodu girilir; kurum bilgileri ve logo merkezden BIR KEZ
+            # cekilir. Giris oncesi erisilebilir (merkez_esitle ile ayni
+            # gerekce: kapi merkezdedir — kod dogrulanmadan hicbir sey
+            # yazilmaz).
+            await self._merkez_kod_kur(websocket, k)
         elif komut == "merkez_esitle":
             # v2.4.66: MERKEZ KULLANICI ESITLEMESI
             #

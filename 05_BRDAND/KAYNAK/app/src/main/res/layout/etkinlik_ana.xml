@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GOKTUNGU MAVLink Koprusu — ana ekran.
+  GOKTUNGU MAVLink Koprusu — ana ekran (1.1.0: kopru ajani).
 
   Tasarim v3 taktik temaya baglidir (merkez arayuzle ayni palet):
   zemin #04070C, siyan #5CC8FF, kehribar #F2B24A, vurgu #B91C1C.
   Basliklar baslik_renk kullanir; #ffffff sabiti YAZILMAZ.
   Tum dokunma hedefleri en az 48dp (WCAG / Play erisilebilirlik).
+
+  Iki hal: kartKurulum (kimlik yok: GRCON/GRCOFF + API kodu) ve
+  kartKimlik (kimlik var: baslat/durdur, USB izni). Gorunurlugu
+  AnaEtkinlik.gorunumTazele() yonetir.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -83,6 +87,14 @@
                 android:paddingBottom="8dp" />
 
             <TextView
+                android:id="@+id/etiketMerkez"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/durum_merkez_kopuk"
+                android:textAppearance="@style/Metin.Govde"
+                android:paddingBottom="4dp" />
+
+            <TextView
                 android:id="@+id/etiketUsb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -91,18 +103,18 @@
                 android:paddingBottom="4dp" />
 
             <TextView
-                android:id="@+id/etiketArac"
+                android:id="@+id/etiketKanal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/durum_arac_yok"
+                android:text="@string/durum_kanal_yok"
                 android:textAppearance="@style/Metin.Govde"
                 android:paddingBottom="4dp" />
 
             <TextView
-                android:id="@+id/etiketMerkez"
+                android:id="@+id/etiketArac"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/durum_merkez_kopuk"
+                android:text="@string/durum_arac_yok"
                 android:textAppearance="@style/Metin.Govde"
                 android:paddingBottom="4dp" />
 
@@ -116,8 +128,9 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Yapilandirma karti -->
+        <!-- KURULUM karti (kimlik yokken) -->
         <LinearLayout
+            android:id="@+id/kartKurulum"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -128,7 +141,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/yapilandirma_baslik"
+                android:text="@string/kurulum_baslik"
                 android:textAppearance="@style/Metin.Mono"
                 android:textColor="@color/kehribar"
                 android:textSize="11sp"
@@ -136,12 +149,153 @@
                 android:paddingBottom="8dp" />
 
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/kurulum_aciklama"
+                android:textAppearance="@style/Metin.Govde"
+                android:textColor="@color/govde_renk"
+                android:textSize="13sp"
+                android:paddingBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/grupSecim"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/radioGrcon"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:checked="true"
+                    android:text="@string/kurulum_grcon"
+                    android:textColor="@color/govde_renk" />
+
+                <RadioButton
+                    android:id="@+id/radioGrcoff"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/kurulum_grcoff"
+                    android:textColor="@color/govde_renk" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/alan_kod"
+                android:textAppearance="@style/Metin.Govde"
+                android:textColor="@color/soluk"
+                android:textSize="12sp"
+                android:paddingTop="6dp" />
+
+            <EditText
+                android:id="@+id/girisKod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="96dp"
+                android:gravity="top|start"
+                android:hint="@string/ipucu_kod"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:textColor="@color/govde_renk"
+                android:textColorHint="@color/soluk"
+                android:fontFamily="monospace"
+                android:textSize="12sp"
+                android:autofillHints=""
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/etiketKurulumNot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/kurulum_not_grcon"
+                android:textColor="@color/soluk"
+                android:textSize="11sp"
+                android:paddingBottom="8dp" />
+
+            <Button
+                android:id="@+id/dgKur"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="@string/dg_kur"
+                android:textStyle="bold"
+                android:textColor="@color/baslik_renk"
+                android:backgroundTint="@color/vurgu" />
+        </LinearLayout>
+
+        <!-- KIMLIK / denetim karti (kimlik varken) -->
+        <LinearLayout
+            android:id="@+id/kartKimlik"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/kart_zemin"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/kimlik_baslik"
+                android:textAppearance="@style/Metin.Mono"
+                android:textColor="@color/kehribar"
+                android:textSize="11sp"
+                android:letterSpacing="0.12"
+                android:paddingBottom="8dp" />
+
+            <TextView
+                android:id="@+id/etiketKimlik"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/tel_deger_yok"
+                android:textAppearance="@style/Metin.Mono"
+                android:textSize="12sp"
+                android:paddingBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/dgBaslat"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/dg_baglan"
+                    android:textStyle="bold"
+                    android:textColor="@color/baslik_renk"
+                    android:backgroundTint="@color/vurgu" />
+
+                <Button
+                    android:id="@+id/dgKes"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="@string/dg_kes"
+                    android:textColor="@color/govde_renk" />
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/kutuOto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/alan_oto_baslat"
+                android:textColor="@color/govde_renk" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/alan_cihaz"
                 android:textAppearance="@style/Metin.Govde"
                 android:textColor="@color/soluk"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:paddingTop="6dp" />
 
             <Spinner
                 android:id="@+id/secimCihaz"
@@ -154,115 +308,44 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginEnd="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/alan_hiz"
-                        android:textAppearance="@style/Metin.Govde"
-                        android:textColor="@color/soluk"
-                        android:textSize="12sp" />
-
-                    <Spinner
-                        android:id="@+id/secimHiz"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:popupBackground="@color/zemin_yukseltilmis" />
-                </LinearLayout>
+                android:layout_marginBottom="4dp">
 
                 <Button
                     android:id="@+id/dgTara"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_gravity="bottom"
-                    android:minWidth="88dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
                     android:text="@string/dg_tara"
+                    android:textColor="@color/siyan"
+                    style="?android:attr/buttonStyle" />
+
+                <Button
+                    android:id="@+id/dgUsbIzin"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/dg_usb_izin"
                     android:textColor="@color/siyan"
                     style="?android:attr/buttonStyle" />
             </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/alan_adres"
-                android:textAppearance="@style/Metin.Govde"
+                android:text="@string/usb_izin_not"
                 android:textColor="@color/soluk"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/girisAdres"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="@string/ipucu_adres"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                android:textColor="@color/govde_renk"
-                android:textColorHint="@color/soluk"
-                android:autofillHints=""
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/alan_port"
-                android:textAppearance="@style/Metin.Govde"
-                android:textColor="@color/soluk"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/girisPort"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="@string/ipucu_port"
-                android:importantForAutofill="no"
-                android:inputType="number"
-                android:textColor="@color/govde_renk"
-                android:textColorHint="@color/soluk"
-                android:autofillHints=""
-                android:layout_marginBottom="8dp" />
-
-            <CheckBox
-                android:id="@+id/kutuOto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/alan_oto_baglan"
-                android:textColor="@color/govde_renk" />
-        </LinearLayout>
-
-        <!-- Denetim dugmeleri -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+                android:textSize="11sp"
+                android:paddingBottom="8dp" />
 
             <Button
-                android:id="@+id/dgBaglan"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="@string/dg_baglan"
-                android:textStyle="bold"
-                android:textColor="@color/baslik_renk"
-                android:backgroundTint="@color/vurgu" />
-
-            <Button
-                android:id="@+id/dgKes"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="@string/dg_kes"
-                android:textColor="@color/govde_renk" />
+                android:id="@+id/dgKimlikSil"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="@string/dg_kimlik_sil"
+                android:textColor="@color/kotu"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Telemetri karti -->

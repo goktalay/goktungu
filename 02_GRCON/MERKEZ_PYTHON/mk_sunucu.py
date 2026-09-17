@@ -4185,6 +4185,180 @@ def _u_ic_kopru_kod_yenile(h, istek, oturum):
     h.json_yaz({"basarili": True, "kopru": veri})
 
 
+# ----------------------------------------------------------------------
+# 2026-09-17 (kullanici istegi): KURUMSAL PANELDE "KOPRULER" VE "MERKEZI
+# YAZILIMLAR" — sunucu ornekleri urune gore listelenir; yeni kayit
+# yalniz AD ister, API kodu uretilir (kopru/GRCOFF kurulumunda girilir).
+# ----------------------------------------------------------------------
+_ORNEK_URUNLER = ("kopru", "gcs")
+
+
+def _firma_ornek_liste(fid, urun, servisler=False):
+    liste = [s for s in api.sunucu_liste(fid)
+             if str(s.get("urun") or "kopru") == urun]
+    if servisler and urun == "kopru":
+        import concurrent.futures as _cf
+        canli = [s for s in liste if s.get("cevrimici")]
+
+        def _bir(s):
+            v, hata = kopruye_sor(int(s["ornek_id"]), "servis_durum", {}, 5.0)
+            return s, ((v or {}).get("servisler") if v else None), hata
+
+        if canli:
+            with _cf.ThreadPoolExecutor(min(8, len(canli))) as h2:
+                for s, srv, hata in h2.map(_bir, canli):
+                    s["servisler"] = srv
+                    s["servis_hata"] = hata or ""
+    for s in liste:
+        s.setdefault("servisler", None)
+    return liste
+
+
+@yol("GET", r"/api/firma/ornekler/(kopru|gcs)", yetki="firma")
+def _u_firma_ornekler(h, istek, oturum, urun):
+    """Firmanin kopru (kopru) ya da Merkezi Yazilim (gcs) kayitlari.
+    `api_kodu` yalniz yonetici rolune doner (sir tasir); pilot gormez."""
+    servisler = str(istek.sorgu.get("servisler") or "") in ("1", "true")
+    liste = _firma_ornek_liste(_firma_id(oturum), urun, servisler)
+    if oturum.get("rol") == "pilot":
+        for s in liste:
+            s.pop("api_kodu", None)
+    h.json_yaz({"kayitlar": liste, "urun": urun})
+
+
+@yol("POST", r"/api/firma/ornekler/(kopru|gcs)", yetki="firma")
+def _u_firma_ornek_ekle(h, istek, oturum, urun):
+    """Yeni kayit: yalniz AD. API kodu yanitta doner ve ilk baglantiya
+    kadar listede de gorunur."""
+    if oturum.get("rol") == "pilot":
+        h.hata_yaz(403, "Bu islem icin firma yoneticisi yetkisi gerekir")
+        return
+    ad = str((istek.govde or {}).get("ad") or "").strip()
+    if not ad:
+        h.hata_yaz(400, "Ad zorunlu")
+        return
+    aciklama = ("GOKTUNGU Merkezi Yazilim (GRCOFF)" if urun == "gcs"
+                else "GOKTUNGU Kopru Yazilimi")
+    veri, hata = api.sunucu_ekle(_firma_id(oturum), ad, aciklama, urun=urun)
+    if hata:
+        h.hata_yaz(400, hata)
+        return
+    kimlik.denetim(None, "firma_ornek_ekle", "sunucu",
+                   str((veri or {}).get("ornek_id")),
+                   {"firma_id": _firma_id(oturum), "ad": ad, "urun": urun,
+                    "kullanici_id": oturum.get("kullanici_id")}, istek.ip)
+    v = dict(veri or {})
+    v.pop("gizli", None)
+    h.json_yaz({"tamam": True, "kayit": v}, 201)
+
+
+@yol("DELETE", r"/api/firma/ornekler/(kopru|gcs)/(\d+)", yetki="firma")
+def _u_firma_ornek_sil(h, istek, oturum, urun, oid):
+    if oturum.get("rol") == "pilot":
+        h.hata_yaz(403, "Bu islem icin firma yoneticisi yetkisi gerekir")
+        return
+    o = db.tek("SELECT firma_id, ad, urun FROM sunucu_ornekleri WHERE ornek_id = %s",
+               (int(oid),))
+    if not o or int(o["firma_id"]) != _firma_id(oturum) or str(o.get("urun") or "kopru") != urun:
+        h.hata_yaz(404, "Kayit bulunamadı")
+        return
+    _ic_kopru_oturum_kapat(int(oid))
+    tamam, hata = api.sunucu_sil(int(oid))
+    if not tamam:
+        h.hata_yaz(404, hata or "Silinemedi")
+        return
+    kimlik.denetim(None, "firma_ornek_sil", "sunucu", str(oid),
+                   {"firma_id": _firma_id(oturum), "ad": o.get("ad"), "urun": urun,
+                    "kullanici_id": oturum.get("kullanici_id")}, istek.ip)
+    h.json_yaz({"tamam": True})
+
+
+@yol("POST", r"/api/firma/ornekler/(kopru|gcs)/(\d+)/kod_yenile", yetki="firma")
+def _u_firma_ornek_kod_yenile(h, istek, oturum, urun, oid):
+    """Sir + API kodu yenilenir; eski sirla bagli kurulum duser."""
+    if oturum.get("rol") == "pilot":
+        h.hata_yaz(403, "Bu islem icin firma yoneticisi yetkisi gerekir")
+        return
+    o = db.tek("SELECT firma_id, urun FROM sunucu_ornekleri WHERE ornek_id = %s",
+               (int(oid),))
+    if not o or int(o["firma_id"]) != _firma_id(oturum) or str(o.get("urun") or "kopru") != urun:
+        h.hata_yaz(404, "Kayit bulunamadı")
+        return
+    _ic_kopru_oturum_kapat(int(oid))
+    veri, hata = role.gizli_yenile(int(oid))
+    if hata:
+        h.hata_yaz(400, hata)
+        return
+    kimlik.denetim(None, "firma_ornek_kod_yenile", "sunucu", str(oid),
+                   {"firma_id": _firma_id(oturum), "urun": urun,
+                    "kullanici_id": oturum.get("kullanici_id")}, istek.ip)
+    h.json_yaz({"tamam": True, "kayit": veri})
+
+
+@yol("POST", r"/api/istemci/kurulum_bilgi", yetki="acik")
+def _u_istemci_kurulum_bilgi(h, istek, oturum):
+    """GRCOFF kurulum sihirbazi: API kodundaki kimlikle firma kunyesini ve
+    logoyu BIR KEZ ceker (kullanici istegi: "sirket bilgileri ve logo
+    merkezde var, tekrar sormasin"). Kimlik = kurulum_uid + gizli;
+    kayit `gcs` urunlu olmalidir (kopru kodu kabul edilmez)."""
+    g = istek.govde or {}
+    uid = str(g.get("kurulum_uid") or "").strip()
+    gizli = str(g.get("gizli") or "")
+    if not uid or not gizli:
+        h.json_yaz({"hata": "kurulum_uid ve gizli zorunlu"}, 400)
+        return
+    k = db.tek(
+        "SELECT s.ornek_id, s.firma_id, s.ad, s.gizli_ozet, s.durum, s.urun, "
+        "       f.durum AS firma_durum "
+        "FROM sunucu_ornekleri s JOIN firmalar f ON f.firma_id = s.firma_id "
+        "WHERE s.kurulum_uid = %s", (uid,))
+    if not k or not role.gizli_dogrula(gizli, k["gizli_ozet"]):
+        import time as _t
+        _t.sleep(1.0)
+        h.json_yaz({"hata": "Kurulum kimliği geçersiz (API kodu hatalı ya da yenilenmiş)"}, 401)
+        return
+    if k["durum"] != "etkin" or k["firma_durum"] != "etkin":
+        h.json_yaz({"hata": "Kurulum veya firma etkin değil"}, 403)
+        return
+    if str(k.get("urun") or "kopru") != "gcs":
+        h.json_yaz({"hata": "Bu API kodu bir köprü kaydına ait; Merkezi Yazılım "
+                            "kurulumu için kurumsal panelde 'Merkezi Yazılımlar' "
+                            "altında kayıt oluşturun"}, 403)
+        return
+    fid = int(k["firma_id"])
+    f = db.tek(
+        "SELECT firma_id, unvan, kisa_ad, vergi_no, vergi_dairesi, adres, "
+        "       telefon, eposta, web, ulke, logo_yol "
+        "FROM firmalar WHERE firma_id = %s", (fid,)) or {}
+    logo_b64 = ""
+    logo_tur = ""
+    goreli = str(f.get("logo_yol") or "").strip()
+    if goreli:
+        tam = os.path.normpath(os.path.join(VERI_KOKU, "varlik", goreli))
+        if os.path.realpath(tam).startswith(
+                os.path.realpath(os.path.join(VERI_KOKU, "varlik"))) and os.path.isfile(tam):
+            import base64 as _b64
+            with open(tam, "rb") as fh:
+                icerik = fh.read()
+            if len(icerik) <= 2 * 1024 * 1024:
+                logo_tur = mimetypes.guess_type(tam)[0] or "image/png"
+                logo_b64 = _b64.b64encode(icerik).decode("ascii")
+    kimlik.denetim(None, "istemci_kurulum_bilgi", "sunucu", str(k["ornek_id"]),
+                   {"firma_id": fid}, istek.ip)
+    h.json_yaz({
+        "tamam": True,
+        "ornek_id": int(k["ornek_id"]), "ad": k["ad"], "firma_id": fid,
+        "firma": {
+            "unvan": f.get("unvan") or "", "kisa_ad": f.get("kisa_ad") or "",
+            "vergi_no": f.get("vergi_no") or "", "vergi_dairesi": f.get("vergi_dairesi") or "",
+            "adres": f.get("adres") or "", "telefon": f.get("telefon") or "",
+            "eposta": f.get("eposta") or "", "web": f.get("web") or "",
+            "ulke": f.get("ulke") or "",
+        },
+        "logo_tur": logo_tur, "logo_b64": logo_b64,
+    })
+
+
 @yol("GET", r"/api/firma/ekip", yetki="firma")
 def _u_firma_ekip(h, istek, oturum):
     """Firmanin kullanici listesi + kisi basi ucus ozeti.
@@ -4577,7 +4751,7 @@ async def _ws_isle(soket) -> None:
                 gizli = str(m.get("gizli") or "")
                 k = db.tek(
                     "SELECT s.ornek_id, s.firma_id, s.ad, s.gizli_ozet, s.durum, "
-                    "       f.durum AS firma_durum "
+                    "       s.urun, f.durum AS firma_durum "
                     "FROM sunucu_ornekleri s "
                     "JOIN firmalar f ON f.firma_id = s.firma_id "
                     "WHERE s.kurulum_uid = %s", (uid,))
@@ -4588,6 +4762,17 @@ async def _ws_isle(soket) -> None:
                 if k["durum"] != "etkin" or k["firma_durum"] != "etkin":
                     await soket.send(json.dumps(
                         {"tur": "hata", "mesaj": "Kurulum veya firma etkin değil"}))
+                    return
+                # 2026-09-17: urun uyusmazligi — Merkezi Yazilim (gcs)
+                # kaydiyla bir kopru, kopru kaydiyla bir GRCOFF baglanamaz.
+                _kayit_urun = str(k.get("urun") or "kopru")
+                _istemci_urun = str((m.get("yetenekler") or {}).get("urun") or "").lower()
+                if _istemci_urun in ("kopru", "gcs") and _istemci_urun != _kayit_urun:
+                    await soket.send(json.dumps(
+                        {"tur": "hata", "mesaj": (
+                            "Bu kurulum kimliği %s kaydına ait; %s bu kodla bağlanamaz" % (
+                                "Merkezi Yazılım (GRCOFF)" if _kayit_urun == "gcs" else "köprü",
+                                "köprü" if _istemci_urun == "kopru" else "Merkezi Yazılım"))}))
                     return
                 o.ornek_id = int(k["ornek_id"])
                 o.firma_id = int(k["firma_id"])

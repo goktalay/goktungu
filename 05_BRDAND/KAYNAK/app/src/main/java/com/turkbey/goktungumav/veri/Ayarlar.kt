@@ -5,50 +5,26 @@ import android.content.SharedPreferences
 import java.util.UUID
 
 /**
- * Kalici ayarlar.
+ * Kalici uygulama ayarlari (kimlik DISINDA).
  *
- * ## Neden kimlik bilgisi saklanmiyor
+ * Kurulum kimligi (API kodundan gelen uid/sir/adres) ayri dosyada
+ * durur: `kopru/KopruKimlik.kt`. Burada yalniz tercihler vardir.
  *
- * DJI koprusu GDP el sikismasi yaptigi icin kullanici adi ve oturum
- * belirteci saklardi.  MAVLink koprusu **seffaf borudur**: uygulama
- * duzeyinde oturum acmaz, yalnizca MAVLink cercevelerini tasir.
- * Erisim denetimi ag katmaninda saglanir (yalniz ozel ag adreslerine
- * gonderim; bkz. [AgKisiti]).
- *
- * Bu yuzden burada saklanan hicbir hassas deger yoktur ve
- * `EncryptedSharedPreferences` gerekmez.  Sifre veya belirtec
- * saklanmaya baslanirsa sifreleme ZORUNLU olur.
+ * 1.1.0: merkez adresi/portu ve hat hizi alanlari KALKTI. Adres API
+ * kodunun icinde gelir; hat hizi merkezdeki Baglanti Yoneticisi'nden
+ * (`akis_ac` tanimindaki `baud`) belirlenir, telefonda elle secilmez.
  */
 object Ayarlar {
 
     private const val DOSYA = "goktungumav_ayar"
 
-    private const val A_SUNUCU = "sunucu"
-    private const val A_PORT = "port"
-    private const val A_HIZ = "hiz"
     private const val A_CIHAZ = "cihaz_kimlik"
-    private const val A_OTO = "oto_baglan"
-
-    /**
-     * `mavutil` varsayilan MAVLink UDP portu.  Merkezdeki `udp` turu
-     * baglanti kaydinin `port` alani bu degeri tasir.
-     */
-    const val VARSAYILAN_PORT = 14550
-
-    /** ArduPilot USB dogrudan baglantida 115200 kullanir. */
-    const val VARSAYILAN_HIZ = 115200
+    private const val A_OTO = "oto_baslat"
 
     data class Deger(
-        val sunucu: String,
-        val port: Int,
-        val hiz: Int,
         val cihazKimlik: String,
-        val otoBaglan: Boolean
-    ) {
-        /** Baglanmak icin yeterli bilgi var mi. */
-        fun eksiksizMi(): Boolean =
-            sunucu.isNotBlank() && port in 1..65535
-    }
+        val otoBaslat: Boolean
+    )
 
     private fun p(baglam: Context): SharedPreferences =
         baglam.getSharedPreferences(DOSYA, Context.MODE_PRIVATE)
@@ -64,26 +40,12 @@ object Ayarlar {
             s.edit().putString(A_CIHAZ, cihaz).apply()
         }
         return Deger(
-            sunucu = s.getString(A_SUNUCU, "") ?: "",
-            port = s.getInt(A_PORT, VARSAYILAN_PORT),
-            hiz = s.getInt(A_HIZ, VARSAYILAN_HIZ),
             cihazKimlik = cihaz,
-            otoBaglan = s.getBoolean(A_OTO, false)
+            otoBaslat = s.getBoolean(A_OTO, true)
         )
     }
 
-    fun yaz(
-        baglam: Context,
-        sunucu: String,
-        port: Int,
-        hiz: Int,
-        otoBaglan: Boolean
-    ) {
-        p(baglam).edit()
-            .putString(A_SUNUCU, sunucu.trim())
-            .putInt(A_PORT, port)
-            .putInt(A_HIZ, hiz)
-            .putBoolean(A_OTO, otoBaglan)
-            .apply()
+    fun otoBaslatYaz(baglam: Context, deger: Boolean) {
+        p(baglam).edit().putBoolean(A_OTO, deger).apply()
     }
 }

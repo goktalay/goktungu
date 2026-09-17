@@ -85,8 +85,40 @@ class UsbSeri(private val baglam: Context) {
         y.requestPermission(hedef, niyet)
     }
 
-    fun izinVarMi(hedef: UsbDevice): Boolean =
-        yonetici?.hasPermission(hedef) == true
+    fun izinVarMi(hedef: UsbDevice): Boolean {
+        val y = yonetici ?: (baglam.getSystemService(Context.USB_SERVICE)
+            as UsbManager).also { yonetici = it }
+        return y.hasPermission(hedef)
+    }
+
+    /**
+     * Cihaz adi (`/dev/bus/usb/001/002`) ile bagli cihazi bulur.
+     * v1.1.0: merkez `akis_ac` taniminda `port` alani bu addir
+     * (`seri_portlar` yanitinda bildirilir).
+     */
+    fun cihazBul(cihazAdi: String): UsbDevice? {
+        val ad = cihazAdi.trim()
+        if (ad.isEmpty()) return null
+        return cihazlariListele().firstOrNull { it.deviceName == ad }
+    }
+
+    /** Merkezin Baglanti Yoneticisi'ne bildirilen port envanteri. */
+    fun portEnvanteri(): List<Map<String, String>> =
+        cihazlariListele().map { d ->
+            mapOf(
+                "port" to d.deviceName,
+                "aciklama" to cihazEtiketi(d) + " (" + surucuAilesi(d) + ")",
+                "donanim" to String.format("USB VID:PID=%04X:%04X", d.vendorId, d.productId),
+                "kaynak" to "android"
+            )
+        }
+
+    private fun surucuAilesi(d: UsbDevice): String = when (d.vendorId) {
+        SATICI_FTDI -> "FTDI"
+        SATICI_CP210X -> "CP210x"
+        SATICI_CH34X -> "CH34x"
+        else -> "CDC-ACM"
+    }
 
     /**
      * Cihazi acar ve seri hatti yapilandirir.
@@ -278,7 +310,7 @@ class UsbSeri(private val baglam: Context) {
         return false
     }
 
-    private fun cihazEtiketi(d: UsbDevice): String {
+    fun cihazEtiketi(d: UsbDevice): String {
         val ad = runCatching { d.productName }.getOrNull()
         if (!ad.isNullOrBlank()) return ad
         return String.format("%04X:%04X", d.vendorId, d.productId)

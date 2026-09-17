@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.232";
+const GCS_SURUM = "2.4.233";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.233",
+    tarih: "2026-09-17",
+    baslik: "Kurulum sihirbazında merkez sunucu + API kodu (şirket bilgisi ve e-posta/şifre sorulmaz), köprü kayıtları GRCON'da kurumsal panele taşındı, yerel kipte köprü akış rölesi, Android köprüleri gerçek köprü ajanı (paket 2.5.103)",
+    maddeler: [
+      "KURULUM SİHİRBAZI (kullanıcı isteği): veritabanı adımından sonra 'Merkez Sunucu' adımı merkez adresi ve kurumsal paneldeki Merkezi Yazılımlar kaydının API kodunu sorar; kod doğrulanınca kurum bilgileri ve logo merkezden BİR KEZ çekilip şirket kaydına yazılır, köprü ajanı bu kimlikle bağlanır. E-posta/şifre ile kullanıcı aktarma ve şirket bilgisi formu kurulumda sorulmaz (Kullanıcılar bölümünden sonradan yapılabilir). Ardından yerel yönetici hesabı belirlenir.",
+      "GRCON'DA KÖPRÜLER: Destek > Köprüler paneli yalnız yerel kipte (GRCOFF) görünür; merkezde köprü ve Merkezi Yazılım kayıtları kurumsal panelin 'Köprüler' ve 'Merkezi Yazılımlar' menülerinden yönetilir (ad → API kodu, kopyala, yenile, kaldır, çevrimiçi modüller).",
+      "YEREL KİPTE KÖPRÜ RÖLESİ: kapalı devre kurulumda köprüye bağlı dron bağlantıları artık çalışıyor (önceki sürümde merkez iç ucu çağrıldığı için kanal hiç açılmıyordu). Köprüden gelen ham MAVLink/GDP baytları kanal başına loopback UDP ile uygulamaya teslim edilir.",
+      "DJI RÖLE ADAPTÖRÜ: DJI türü bağlantı bir köprüye bağlıysa GDP satırları röle kanalından yerel DJI dinleyicisine aktarılır; GRCON'a doğrudan TCP bağlantısı gerekmez.",
+      "ANDROID KÖPRÜLERİ 1.1.0: MAVLink ve DJI uygulamaları masaüstü köprüyle aynı ajan protokolünü konuşur (API kodu ile kurulum, ters WebSocket, seri_portlar/akis_ac). Merkez, Android köprü kaydını 'gcs' (Merkezi Yazılım) koduyla bağlanmayı reddeder.",
+    ]
+  },
   {
     surum: "2.4.232",
     tarih: "2026-09-17",

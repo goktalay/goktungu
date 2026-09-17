@@ -207,3 +207,9 @@ gerçek görüntüler ilk cihaz denemesinde alınıp değiştirilmelidir.
    güncelleme yayınlanamaz.
 4. **Kapalı deneme** — Play Console yeni yayıncılar için 12 sürekli test
    kullanıcısıyla 14 gün kapalı deneme isteyebilir.
+
+## Sürüm notları — 1.1.0 (17 Eylül 2026)
+
+- Uygulama artık gerçek bir **köprü ajanı**: ilk açılışta "GRCON — Merkez Sunucu mu, GRCOFF — Yerel Kurulum mu?" seçilir ve merkezin **Köprüler** panelinde üretilen API kodu (GTK1.…) girilir. IP, port, e-posta veya belirteç girilmez.
+- Merkeze ters WebSocket ile bağlanır (sabit IP gerekmez); merkezdeki Bağlantı Yöneticisi bağlantıyı açar. DJI telemetri ve komutları (GDP) röle kanalından taşınır; merkezde DJI türü bağlantı bu köprüye bağlanır.
+- Merkez Uygulama 2.4.233 veya üstü gerektirir.

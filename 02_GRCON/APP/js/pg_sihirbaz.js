@@ -76,6 +76,12 @@ var _pgD = {
   esitlemeBilgi: { adres: "", eposta: "", sifre: "" },
   esitlemeSonuc: null,   // {cekilen, eklendi, guncellendi, firma_unvan}
   esitlemeAtlandi: false,
+  // ---- 2.4.233 (kullanici istegi): MERKEZ SUNUCU + API KODU (ADIM 4) ----
+  // E-posta/sifre ve sirket bilgisi formu yerine kurumsal paneldeki
+  // "Merkezi Yazilimlar" kaydinin API kodu girilir; kurum bilgileri ve
+  // logo merkezden BIR KEZ cekilir (pg_merkez_kod).
+  kodBilgi: { adres: "", kod: "" },
+  kodSonuc: null,        // {firma_unvan, logo_var, ad, adres}
   // ---- v2.4.67: KURULUM KIMLIGI (ADIM 5) ----
   // `pg_sonuc` yanitindaki `kurulum_hesabi` buraya yazilir:
   // {eposta, sifre, dosya}. v2.4.68'de EKRANDA GOSTERILMIYOR (asagi bak)
@@ -356,7 +362,7 @@ function pgAdimlarKur() {
     t.pgAdim1 || "Sunucu Bilgileri",
     t.pgAdim2 || "Do\u011frulama",
     t.pgAdim3 || "Kurulum",
-    t.pgAdim4 || "Kullan\u0131c\u0131lar",
+    t.pgAdim4Kod || "Merkez Sunucu",
   ];
   // v2.4.67: adim 5 (kurulum kimligi) YALNIZ esitleme atlandiginda
   // gorunur. Kosulsuz eklenirse esitleme yapan kullanici hic
@@ -564,78 +570,122 @@ function pgAdim4Govde() {
   sar.style.flexDirection = "column";
   sar.style.gap = "13px";
 
-  // Esitleme tamamlandi: ozet goster.
-  if (_pgD.esitlemeSonuc) {
-    const s = _pgD.esitlemeSonuc;
+  // Eslesme tamamlandi: kurum ozeti goster.
+  if (_pgD.kodSonuc) {
+    const s = _pgD.kodSonuc;
     const iyi = document.createElement("div");
     iyi.className = "pgs-bilgi iyi";
     iyi.innerHTML = "<i class='fa-solid fa-circle-check'></i><span>" +
-      pgKacis((t.pgEsitlemeTamam ||
-        "Kullan\u0131c\u0131lar merkezden al\u0131nd\u0131.")) + "</span>";
+      pgKacis(t.pgKodTamam ||
+        "Merkeze eşleşildi; kurum bilgileri ve logo alındı.") + "</span>";
     sar.appendChild(iyi);
-
     const oz = document.createElement("div");
     oz.className = "pgs-ozet";
     const satirlar = [
-      [t.pgEsitlemeFirma || "Firma", s.firma_unvan || "\u2014"],
-      [t.pgEsitlemeCekilen || "Merkezden al\u0131nan", String(s.cekilen)],
-      [t.pgEsitlemeEklendi || "Yeni eklenen", String(s.eklendi)],
-      [t.pgEsitlemeGuncel || "G\u00fcncellenen", String(s.guncellendi)],
+      [t.pgKodFirma || "Kurum", s.firma_unvan || "—"],
+      [t.pgKodAd || "Kayıt adı", s.ad || "—"],
+      [t.pgKodAdres2 || "Merkez", s.adres || "—"],
+      [t.pgKodLogo || "Logo", s.logo_var ? (t.pgKodLogoVar || "alındı")
+                                          : (t.pgKodLogoYok || "merkezde tanımlı değil")],
     ];
-    for (const [a, b] of satirlar) {
+    for (const [k, v] of satirlar) {
       const d = document.createElement("div");
       d.className = "pgs-ozet-satir";
-      d.innerHTML = "<span>" + pgKacis(a) + "</span><span>" +
-        pgKacis(b) + "</span>";
+      d.innerHTML = "<span>" + pgKacis(k) + "</span><span>" + pgKacis(v) + "</span>";
       oz.appendChild(d);
     }
     sar.appendChild(oz);
-
     const n = document.createElement("div");
     n.className = "pgs-bilgi";
     n.innerHTML = "<i class='fa-solid fa-circle-info'></i><span>" +
-      pgKacis(t.pgEsitlemeNot ||
-        "Art\u0131k kurumsal panelde tan\u0131ml\u0131 e-posta ve " +
-        "\u015fifrenizle giri\u015f yapabilirsiniz. Bu i\u015flem bir " +
-        "kez yap\u0131l\u0131r; sistem bundan sonra \u00e7evrimd\u0131\u015f\u0131 " +
-        "\u00e7al\u0131\u015fabilir.") + "</span>";
+      pgKacis(t.pgKodNot ||
+        "Şirket bilgileri bir daha sorulmaz. İleri deyip bu kuruluma ait " +
+        "yönetici hesabınızı belirleyin.") + "</span>";
     sar.appendChild(n);
     return sar;
   }
 
-  // Aciklama: neden bu adim var.
   const b = document.createElement("div");
   b.className = "pgs-bilgi";
-  b.innerHTML = "<i class='fa-solid fa-users'></i><span>" +
-    pgKacis(t.pgEsitlemeAciklama ||
-      "Merkez Uygulama lisans\u0131n\u0131z varsa, kurumsal panelde " +
-      "tan\u0131ml\u0131 kullan\u0131c\u0131lar\u0131n\u0131z\u0131 buraya " +
-      "aktarabilirsiniz. B\u00f6ylece merkezde belirledi\u011finiz " +
-      "\u015fifreler bu kurulumda da ge\u00e7erli olur.") + "</span>";
+  b.innerHTML = "<i class='fa-solid fa-key'></i><span>" +
+    pgKacis(t.pgKodAciklama ||
+      "Kurumsal panelde (goktungu.com) Merkezi Yazılımlar bölümünde " +
+      "bu kurulum için oluşturulan kaydın API kodunu yapıştırın. " +
+      "Kurum bilgileriniz ve logonuz merkezden bir kez alınır; " +
+      "kullanıcı adı ve şifre girilmez.") + "</span>";
   sar.appendChild(b);
 
   const iz = document.createElement("div");
   iz.className = "pgs-izgara";
-  iz.appendChild(pgEsitlemeAlanKur({
-    ad: "adres", etiket: t.pgEsitlemeAdres || "Merkez sunucu adresi",
-    deger: _pgD.esitlemeBilgi.adres, zorunlu: true, genis: true,
-    ipucu: t.pgEsitlemeAdresIpucu || "\u00f6rn. goktungu.com",
+  iz.appendChild(pgKodAlanKur({
+    ad: "adres", etiket: t.pgKodAdres || "Merkez sunucu adresi",
+    deger: _pgD.kodBilgi.adres, genis: true,
+    ipucu: t.pgKodAdresIpucu ||
+      "örn. goktungu.com — boş bırakılırsa API kodundaki adres kullanılır",
   }));
-  iz.appendChild(pgEsitlemeAlanKur({
-    ad: "eposta", etiket: t.pgEsitlemeEposta || "Y\u00f6netici e-postas\u0131",
-    deger: _pgD.esitlemeBilgi.eposta, zorunlu: true, genis: true,
-    ipucu: t.pgEsitlemeEpostaIpucu ||
-      "Kurumsal paneldeki firma y\u00f6neticisi hesab\u0131",
-  }));
-  iz.appendChild(pgEsitlemeAlanKur({
-    ad: "sifre", etiket: t.pgEsitlemeSifre || "\u015eifre",
-    tip: "password", deger: _pgD.esitlemeBilgi.sifre, zorunlu: true,
-    genis: true,
+  iz.appendChild(pgKodAlanKur({
+    ad: "kod", etiket: t.pgKod || "API kodu", coklu: true,
+    deger: _pgD.kodBilgi.kod, zorunlu: true, genis: true,
+    ipucu: t.pgKodIpucu || "GTK1. ile başlar; Merkezi Yazılımlar > kayıt > Kopyala",
   }));
   sar.appendChild(iz);
 
   if (_pgD.hata) sar.appendChild(pgHataKur(_pgD.hata));
   return sar;
+}
+
+// Adim 4 alanlari (adres + kod). `coklu` cok satirli metin kutusu.
+function pgKodAlanKur(o) {
+  const d = document.createElement("div");
+  d.className = "pgs-alan" + (o.genis ? " genis" : "");
+  const et = document.createElement("label");
+  et.className = "pgs-etiket";
+  et.innerHTML = pgKacis(o.etiket) +
+    (o.zorunlu ? " <span class='pgs-yildiz'>*</span>" : "");
+  const gr = document.createElement(o.coklu ? "textarea" : "input");
+  gr.className = "pgs-giris";
+  if (o.coklu) { gr.rows = 4; gr.spellcheck = false; gr.style.fontFamily = "Consolas, monospace"; gr.style.resize = "vertical"; }
+  else gr.type = "text";
+  gr.value = o.deger == null ? "" : String(o.deger);
+  gr.id = "pgKod_" + o.ad;
+  gr.autocomplete = "off";
+  gr.addEventListener("input", () => { _pgD.kodBilgi[o.ad] = gr.value; });
+  if (!o.coklu) {
+    gr.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") { ev.preventDefault(); pgKodBaslat(); }
+    });
+  }
+  d.appendChild(et);
+  d.appendChild(gr);
+  if (o.ipucu) {
+    const ip = document.createElement("div");
+    ip.className = "pgs-ipucu";
+    ip.textContent = o.ipucu;
+    d.appendChild(ip);
+  }
+  return d;
+}
+
+function pgKodBaslat() {
+  if (_pgD.bekliyor) return;
+  for (const ad of ["adres", "kod"]) {
+    const g = document.getElementById("pgKod_" + ad);
+    if (g) _pgD.kodBilgi[ad] = g.value;
+  }
+  const t = pgT();
+  const kod = String(_pgD.kodBilgi.kod || "").replace(/\s+/g, "");
+  if (!kod) {
+    _pgD.hata = (t.pgHata || "Hata") + ": " + (t.pgKod || "API kodu");
+    pgCiz();
+    return;
+  }
+  _pgD.hata = "";
+  _pgD.bekliyor = true;
+  _pgD.gonderilen = "pg_merkez_kod";
+  pgCiz();
+  if (!pgGonder({ tip: "pg_merkez_kod", adres: String(_pgD.kodBilgi.adres || "").trim(),
+                  kod: kod })) pgBaglantiYok();
+  else pgKisaBekci("pg_merkez_kod");
 }
 
 // ---- ADIM 5: KURULUM KIMLIGI (v2.4.67) ----
@@ -1054,7 +1104,7 @@ function pgAltBarKur() {
   if (_pgD.adim === 5) {
     alt.className = "pgs-alt ayrik";
     // Geri: kullanici fikrini degistirip esitleme yapabilmeli.
-    alt.appendChild(btn(t.pgKimlikGeri || "Kullanıcıları Aktar",
+    alt.appendChild(btn(t.pgKimlikGeriKod || "Merkez Sunucu",
       "fa-arrow-left", false, () => {
         _pgD.adim = 4; _pgD.hata = ""; _pgD.yonSonuc = null; pgCiz();
       }, _pgD.yonYurutuluyor));
@@ -1075,9 +1125,10 @@ function pgAltBarKur() {
 
   // ---- ADIM 4: merkez kullanici esitlemesi (v2.4.66) ----
   if (_pgD.adim === 4) {
-    if (_pgD.esitlemeSonuc) {
-      alt.appendChild(btn(t.pgGiris || "Sisteme Gir", "fa-right-to-bracket",
-        true, () => pgSihirbazKapat()));
+    if (_pgD.kodSonuc) {
+      // 2.4.233: eslesme tamam -> yonetici hesabi adimina gecilir.
+      alt.appendChild(btn(t.pgIleri || "\u0130leri", "fa-arrow-right",
+        true, () => { _pgD.adim = 5; _pgD.hata = ""; pgCiz(); }));
       return alt;
     }
     alt.className = "pgs-alt ayrik";
@@ -1091,10 +1142,10 @@ function pgAltBarKur() {
     alt.appendChild(btn(t.pgEsitlemeAtla || "Atla", "fa-forward", false,
       () => pgKurulumKimligiGoster(), _pgD.bekliyor));
     alt.appendChild(btn(
-      _pgD.bekliyor ? (t.pgEsitleniyor || "Aktar\u0131l\u0131yor...")
-                    : (t.pgEsitle || "Kullan\u0131c\u0131lar\u0131 Aktar"),
+      _pgD.bekliyor ? (t.pgKodBaglaniyor || "Merkeze ba\u011flan\u0131l\u0131yor...")
+                    : (t.pgKodBaglan || "Merkeze Ba\u011flan"),
       _pgD.bekliyor ? "fa-spinner" : "fa-cloud-arrow-down",
-      true, () => pgEsitlemeBaslat(), _pgD.bekliyor));
+      true, () => pgKodBaslat(), _pgD.bekliyor));
     return alt;
   }
 
@@ -1107,7 +1158,7 @@ function pgAltBarKur() {
     alt.appendChild(btn(t.pgEsitlemeAtla || "Atla", "fa-forward", false,
       () => pgKurulumKimligiGoster()));
     alt.appendChild(btn(
-      t.pgEsitlemeGec || "Kullan\u0131c\u0131lar\u0131 Aktar",
+      t.pgKodGec || "Merkez Sunucu ve API Kodu",
       "fa-arrow-right", true, () => {
         _pgD.adim = 4; _pgD.hata = ""; pgCiz();
       }));
@@ -1320,6 +1371,23 @@ window.pgSonucGeldi = function (m) {
   if (!_pgD.perde) return;
   const komut = m.komut || _pgD.gonderilen;
   _pgD.bekliyor = false;
+
+  // 2.4.233: merkez sunucu + API kodu yaniti.
+  if (m.tip === "pg_merkez_kod_sonuc" || komut === "pg_merkez_kod") {
+    if (m.basarili) {
+      _pgD.hata = "";
+      _pgD.kodSonuc = {
+        firma_unvan: m.firma_unvan || "", logo_var: !!m.logo_var,
+        ad: m.ad || "", adres: m.adres || "",
+      };
+      _pgD.kodBilgi.kod = "";
+    } else {
+      _pgD.hata = m.hata || (pgT().pgHata || "Hata");
+    }
+    _pgD.adim = 4;
+    pgCiz();
+    return;
+  }
 
   // v2.4.66: merkez kullanici esitlemesi yaniti.
   if (komut === "merkez_esitle" || m.tip === "merkez_esitle_sonuc") {

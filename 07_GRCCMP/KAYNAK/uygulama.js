@@ -498,7 +498,9 @@ const SAYFALAR = {
   ucuslar: sayfaUcuslar,
   videolar: sayfaVideolar,
   dronlar: sayfaDronlar,
-  istasyonlar: sayfaIstasyonlar,
+  istasyonlar: sayfaKopruler,     /* eski baglantilar icin */
+  kopruler: sayfaKopruler,
+  merkezler: sayfaMerkezler,
   ekip: sayfaEkip,
   abonelik: sayfaAbonelik,
   merkez: sayfaMerkez,
@@ -969,17 +971,63 @@ async function sayfaDronlar() {
 }
 
 /* ================================================================ İSTASYONLAR */
-async function sayfaIstasyonlar() {
-  const y = await cagir('/api/firma/sunucular');
+/* ================================================================ KÖPRÜLER /
+   MERKEZİ YAZILIMLAR (2026-09-17, kullanıcı isteği)
+   Eski "İstasyonlar" sayfası iki ürün tipine ayrıldı. Her ikisi de
+   `sunucu_ornekleri` satırıdır (`urun` = kopru | gcs). Kayıt yalnız AD
+   ister; sunucu API kodu üretir (GTK1.…). Kod ilk başarılı bağlantıya
+   kadar listede görünür ve kopyalanır; sonra güvenlik için silinir,
+   "Kodu yenile" yeni sır üretir. Köprülerde çevrimiçi modüller çip olarak
+   gösterilir. */
+const ORNEK_TANIM = {
+  kopru: {
+    baslik: 'Köprüler', tekil: 'Köprü', yeni: 'Yeni Köprü',
+    aciklama: 'Sahadaki köprü yazılımları (Windows, Ubuntu, Android MAVLink ve DJI) ' +
+      'merkeze API koduyla eşleşir ve ters WebSocket ile bağlanır; sabit IP gerekmez. ' +
+      'Kayıt yalnız bir ad ister. Üretilen kodu köprünün ilk kurulum ekranına ' +
+      '(GRCON seçili) yapıştırın; dron, radar ve kamera bağlantılarını Merkez ' +
+      'Uygulama’daki Bağlantı Yöneticisi bu köprü üzerinden açar.',
+    bos: 'Kayıtlı köprü yok. "Yeni Köprü" ile bir kayıt oluşturun; kodu köprü ' +
+      'yazılımının ilk kurulumunda girin.'
+  },
+  gcs: {
+    baslik: 'Merkezi Yazılımlar', tekil: 'Merkezi Yazılım', yeni: 'Yeni Merkezi Yazılım',
+    aciklama: 'Kapalı devre çalışan Merkez Uygulama (GRCOFF) kurulumları. Her kurulum ' +
+      'bir kayıt alır; kurulum sihirbazı veritabanı bilgilerinden sonra merkez ' +
+      'adresini ve bu API kodunu sorar, kurum bilgilerinizi ve logonuzu bir kez ' +
+      'merkezden çeker. Kullanıcı adı / şifre girilmez.',
+    bos: 'Kayıtlı Merkezi Yazılım yok. "Yeni Merkezi Yazılım" ile bir kayıt oluşturun; ' +
+      'kodu GRCOFF kurulum sihirbazına girin.'
+  }
+};
+const MODUL_AD = { dron: 'Dron', ai: 'AI', video: 'Video', gcsdual: 'GroundGCC',
+                   radar: 'Radar', m50: 'M50' };
+
+function modulCipleri(s) {
+  if (!s.cevrimici) return '<span class="ek">çevrimdışı</span>';
+  const liste = Array.isArray(s.servisler) ? s.servisler : null;
+  if (!liste) return `<span class="ek">${kacir(s.servis_hata || 'servis bilgisi yok')}</span>`;
+  if (!liste.length) return '<span class="ek">servis bildirilmedi</span>';
+  return liste.map((m) => {
+    const ad = String((m && (m.ad || m.servis)) || '').toLowerCase();
+    const acik = !!(m && (m.calisiyor === true ||
+      String(m.durum || '').toLowerCase() === 'calisiyor'));
+    return `<span class="modul-cip ${acik ? 'acik' : 'kapali'}"
+      title="${kacir(ad)}: ${acik ? 'çalışıyor' : 'durdu'}">${kacir(MODUL_AD[ad] || ad)}</span>`;
+  }).join('');
+}
+
+async function sayfaOrnekler(urun) {
+  const T = ORNEK_TANIM[urun];
+  const y = await cagir(`/api/firma/ornekler/${urun}?servisler=1`);
   const kayitlar = y.kayitlar || [];
   const cevrimici = kayitlar.filter((s) => s.cevrimici).length;
-
+  const yon = yoneticiMiKontrol();
   el('#icerik').innerHTML = `
-    <h2>İstasyonlar</h2>
-    <p class="aciklama">Kurumunuza kayıtlı yer kontrol istasyonları.
-      İstasyonlar merkeze <strong>ters WebSocket</strong> ile bağlanır;
-      merkez istasyona doğrudan erişmez, bu yüzden sabit IP gerekmez.
-      ${cevrimici} istasyon şu anda çevrimiçi.</p>
+    <h2>${T.baslik}</h2>
+    <p class="aciklama">${T.aciklama} ${cevrimici} kayıt şu anda çevrimiçi.</p>
+    ${yon ? `<div class="arac-cubugu" style="margin-bottom:12px">
+      <button onclick="ornekEkle('${urun}')">+ ${T.yeni}</button></div>` : ''}
     ${kayitlar.length ? `<div class="istasyon-izgara">
       ${kayitlar.map((s) => `
         <div class="istasyon-kart${s.cevrimici ? ' cevrimici' : ''}">
@@ -988,32 +1036,118 @@ async function sayfaIstasyonlar() {
           <dl class="ozet">
             <dt>Durum</dt><dd>${s.cevrimici
               ? rozet('çevrimiçi', 'yesil') : rozet('çevrimdışı', 'gri')}</dd>
+            ${urun === 'kopru' ? `<dt>Modüller</dt><dd class="modul-satir">${modulCipleri(s)}</dd>` : ''}
             <dt>Sürüm</dt><dd>${kacir(s.surum || '—')}</dd>
             <dt>Platform</dt><dd>${kacir(s.platform || '—')}</dd>
             <dt>Makine</dt><dd>${kacir(s.makine_adi || '—')}</dd>
-            <dt>Dron</dt><dd>${sayi(s.dron_sayisi)}</dd>
+            ${urun === 'kopru' ? `<dt>Dron</dt><dd>${sayi(s.dron_sayisi)}</dd>` : ''}
             <dt>Son IP</dt><dd>${kacir(s.son_ip || '—')}</dd>
             <dt>Son görülme</dt><dd>${tarih(s.son_gorulme_ts)}</dd>
           </dl>
+          ${yon ? (s.api_kodu ? `
+            <div class="kod-kutu">
+              <div class="kod-baslik">API kodu <span class="ek">kurulumda girilir; ilk bağlantıda silinir</span></div>
+              <textarea id="kod-${s.ornek_id}" readonly rows="3" spellcheck="false">${kacir(s.api_kodu)}</textarea>
+              <div class="arac-cubugu">
+                <button class="ikincil kucuk" onclick="ornekKodKopyala(${s.ornek_id})">Kopyala</button>
+              </div>
+            </div>` : `
+            <div class="kod-kutu tuketildi">
+              <div class="kod-baslik">API kodu <span class="ek">tüketildi (kurulum bağlandı)</span></div>
+              <div class="arac-cubugu">
+                <button class="ikincil kucuk" onclick="ornekKodYenile('${urun}', ${s.ornek_id}, '${kacir(s.ad)}', ${s.cevrimici ? 'true' : 'false'})">Kodu yenile</button>
+              </div>
+            </div>`) : ''}
           <div class="arac-cubugu">
             ${s.cevrimici ? `<button class="ikincil kucuk"
-                onclick="istasyonSor(${s.ornek_id}, '${kacir(s.ad)}')">Canlı durum</button>`
-              : '<span class="ek">Sorgu için istasyon çevrimiçi olmalı</span>'}
-            ${yoneticiMiKontrol() ? `<button class="ikincil kucuk tehlike"
-                onclick="istasyonSil(${s.ornek_id}, '${kacir(s.ad)}', ${s.cevrimici ? 'true' : 'false'})">Kaldır</button>` : ''}
+                onclick="istasyonSor(${s.ornek_id}, '${kacir(s.ad)}')">Canlı durum</button>` : ''}
+            ${yon ? `<button class="ikincil kucuk tehlike"
+                onclick="ornekSil('${urun}', ${s.ornek_id}, '${kacir(s.ad)}', ${s.cevrimici ? 'true' : 'false'})">Kaldır</button>` : ''}
           </div>
         </div>`).join('')}
     </div>` : `
       <div class="bos-durum">
-        <h3>Kayıtlı istasyon yok</h3>
-        <p>Yer kontrol istasyonunuzu merkeze bağlamak için istasyonda
-          <strong>Program Ayarları → Merkez Sunucu</strong> bölümünü açın,
-          kurum hesabınızla doğrulama yapın ve
-          <strong>Merkeze kaydet</strong> düğmesine basın. İstasyon
-          kaydolduktan sonra bu listede görünür.</p>
-        <a class="yerel-baglanti" href="/#istemciler">Yazılımı indir</a>
+        <h3>${kacir(T.bos)}</h3>
+        ${urun === 'kopru'
+          ? '<a class="yerel-baglanti" href="#kopru">Köprü yazılımını indir</a>'
+          : '<a class="yerel-baglanti" href="#merkez">Merkez Uygulama paketini indir</a>'}
       </div>`}`;
 }
+async function sayfaKopruler() { return sayfaOrnekler('kopru'); }
+async function sayfaMerkezler() { return sayfaOrnekler('gcs'); }
+
+window.ornekEkle = (urun) => {
+  const T = ORNEK_TANIM[urun];
+  pencereAc(T.yeni, `
+    <p class="aciklama">Yalnızca bir ad verin. Kayıt oluşunca API kodu üretilir;
+      kodu listeden kopyalayıp kurulumda girin.</p>
+    <label>Ad<input id="ornek-ad" type="text" maxlength="64"
+      placeholder="${urun === 'kopru' ? 'Örn: Saha Aracı 1' : 'Örn: Ankara Merkez Odası'}"></label>
+    <div id="ornek-hata" class="hata"></div>`,
+    [{ metin: 'Vazgeç', sinif: 'ikincil', tik: pencereKapat },
+     { metin: 'Oluştur', tik: async () => {
+        const ad = (el('#ornek-ad').value || '').trim();
+        if (!ad) { el('#ornek-hata').textContent = 'Ad zorunlu.'; return; }
+        try {
+          const y = await cagir(`/api/firma/ornekler/${urun}`, { method: 'POST', body: { ad } });
+          pencereKapat();
+          bildir(`${T.tekil} oluşturuldu: ${y.kayit && y.kayit.ad}`, 'basari');
+          await sayfaOrnekler(urun);
+          const ta = el(`#kod-${y.kayit && y.kayit.ornek_id}`);
+          if (ta) { ta.focus(); ta.select(); }
+        } catch (e) {
+          el('#ornek-hata').textContent = e.message || 'Oluşturulamadı';
+        }
+      } }]);
+  setTimeout(() => { const g = el('#ornek-ad'); if (g) g.focus(); }, 50);
+};
+
+window.ornekKodKopyala = async (oid) => {
+  const ta = el(`#kod-${oid}`);
+  if (!ta) return;
+  const kod = ta.value;
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(kod); ok = true;
+    }
+  } catch (e) { ok = false; }
+  if (!ok) {
+    try { ta.focus(); ta.select(); ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  }
+  bildir(ok ? 'API kodu panoya kopyalandı.' : 'Kopyalanamadı; kodu kutudan seçip kopyalayın.',
+    ok ? 'basari' : 'hata');
+};
+
+window.ornekKodYenile = async (urun, oid, ad, cevrimici) => {
+  const soru = `"${ad}" için yeni API kodu üretilecek` +
+    (cevrimici ? '; bağlıysa bağlantısı kesilir ve yeni kodla yeniden kurulmalıdır' : '') +
+    '. Devam edilsin mi?';
+  if (!window.confirm(soru)) return;
+  try {
+    await cagir(`/api/firma/ornekler/${urun}/${oid}/kod_yenile`, { method: 'POST', body: {} });
+    bildir('API kodu yenilendi.', 'basari');
+    await sayfaOrnekler(urun);
+    const ta = el(`#kod-${oid}`);
+    if (ta) { ta.focus(); ta.select(); }
+  } catch (e) {
+    bildir(e.message || 'Yenilenemedi', 'hata');
+  }
+};
+
+window.ornekSil = async (urun, oid, ad, cevrimici) => {
+  const soru = (cevrimici
+    ? `"${ad}" şu anda ÇEVRİMİÇİ. Kayıt silinirse bağlantısı kesilir ve aynı kimlikle yeniden bağlanamaz. `
+    : `"${ad}" kaydı listeden kaldırılacak; aynı kimlikle yeniden bağlanamaz. `) + 'Devam edilsin mi?';
+  if (!window.confirm(soru)) return;
+  try {
+    await cagir(`/api/firma/ornekler/${urun}/${oid}`, { method: 'DELETE' });
+    bildir(`"${ad}" kaldırıldı.`, 'basari');
+    sayfaOrnekler(urun);
+  } catch (e) {
+    bildir(e.message || 'Kaldırılamadı', 'hata');
+  }
+};
 
 window.istasyonSor = async (oid, ad) => {
   pencereAc(`${ad} — canlı durum`, `

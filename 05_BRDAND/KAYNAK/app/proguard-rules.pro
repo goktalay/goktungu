@@ -22,3 +22,11 @@
 # mapping.txt uzerinden yapilir.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# 1.1.0: OkHttp/Okio (kopru ajani WebSocket). Kutuphane kendi tuketici
+# kurallarini tasir; yalniz uyarilar susturulur.
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**

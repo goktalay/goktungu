@@ -22,11 +22,8 @@ import kotlinx.coroutines.launch
 
 /**
  * On plan hizmeti: ucus surerken koprunun isletim sistemi tarafindan
- * oldurulmesini engeller.
- *
- * Android 14+ `connectedDevice` hizmet turu ister; manifestte bildirildi.
- * Bildirim govdesi arac ve merkez durumunu canli gosterir — pilot
- * uygulamayi one almadan koprunun ayakta oldugunu gorur.
+ * oldurulmesini engeller. Bildirim govdesi arac ve merkez durumunu
+ * canli gosterir.
  */
 class KopruHizmeti : Service() {
 
@@ -49,9 +46,8 @@ class KopruHizmeti : Service() {
         durumuIzle()
     }
 
-    override fun onStartCommand(
-        intent: Intent?, bayraklar: Int, baslatmaId: Int
-    ): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, bayraklar: Int, baslatmaId: Int): Int =
+        START_STICKY
 
     override fun onDestroy() {
         guncelleyici?.cancel()
@@ -61,11 +57,6 @@ class KopruHizmeti : Service() {
         super.onDestroy()
     }
 
-    /**
-     * Bildirimi iki saniyede bir tazeler.  Akislari `collect` etmek
-     * yerine yoklama kullanildi: uc ayri akisi (arac, merkez, ornek)
-     * birlestirmek bildirim icin gereksiz karmasa olurdu.
-     */
     private fun durumuIzle() {
         val k = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         kapsam = k
@@ -79,19 +70,14 @@ class KopruHizmeti : Service() {
                 } else {
                     getString(R.string.durum_arac_yok)
                 }
-                val ist = KopruYonetici.istemci
-                val merkez = when (ist?.durum?.value) {
-                    GdpIstemci.Durum.BAGLI ->
-                        getString(R.string.hizmet_merkez_bagli) + " " +
-                            KopruYonetici.ornekSayisi.value
-                    GdpIstemci.Durum.BAGLANIYOR ->
-                        getString(R.string.durum_merkez_baglaniyor)
-                    GdpIstemci.Durum.HATA ->
-                        getString(R.string.hizmet_merkez_hata)
+                val ajan = KopruYonetici.ajan
+                val merkez = when (ajan?.durum?.value) {
+                    KopruAjan.Durum.BAGLI -> getString(R.string.hizmet_merkez_bagli) + " " +
+                        KopruYonetici.ornekSayisi.value
+                    KopruAjan.Durum.BAGLANIYOR -> getString(R.string.durum_merkez_baglaniyor)
+                    KopruAjan.Durum.HATA -> getString(R.string.hizmet_merkez_hata)
                     else -> getString(R.string.durum_merkez_kopuk)
                 }
-                // Yalniz degisince bildirim tazele: gereksiz tazeleme
-                // pil tuketir ve bildirim golgesinde titreme yapar.
                 if (arac != oncekiArac || merkez != oncekiMerkez) {
                     oncekiArac = arac
                     oncekiMerkez = merkez
@@ -114,8 +100,7 @@ class KopruHizmeti : Service() {
             ).apply {
                 description = getString(R.string.hizmet_kanal_aciklama)
             }
-            (getSystemService(NotificationManager::class.java))
-                .createNotificationChannel(k)
+            (getSystemService(NotificationManager::class.java)).createNotificationChannel(k)
         }
     }
 
@@ -129,9 +114,7 @@ class KopruHizmeti : Service() {
         )
         return NotificationCompat.Builder(this, KANAL_ID)
             .setContentTitle(getString(R.string.hizmet_bildirim_baslik))
-            .setContentText(
-                getString(R.string.hizmet_bildirim_govde, arac, merkez)
-            )
+            .setContentText(getString(R.string.hizmet_bildirim_govde, arac, merkez))
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setContentIntent(niyet)
             .setOngoing(true)

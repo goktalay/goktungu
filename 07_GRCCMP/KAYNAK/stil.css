@@ -942,3 +942,19 @@ button.talep-et:hover { background: #1e2942; }
    ve ayni rengi kullanmak yaniltici olurdu. */
 .paket-uyari-bilinmiyor { border-left-color: var(--yazi2); }
 .paket-uyari-bilinmiyor strong { color: var(--yazi); }
+
+/* 2026-09-17: Kopruler / Merkezi Yazilimlar — API kodu kutusu, modul cipleri */
+.kod-kutu { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--mavi, #58a6ff);
+  border-radius: var(--r); background: rgba(88,166,255,.06); }
+.kod-kutu.tuketildi { border-style: solid; border-color: var(--cerceve); background: transparent; }
+.kod-kutu .kod-baslik { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.kod-kutu .kod-baslik .ek { font-weight: 400; margin-left: 6px; }
+.kod-kutu textarea { width: 100%; box-sizing: border-box; font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px; word-break: break-all; resize: vertical; background: var(--zemin); color: var(--yazi);
+  border: 1px solid var(--cerceve); border-radius: 6px; padding: 6px 8px; }
+.kod-kutu .arac-cubugu { margin-top: 6px; }
+.modul-satir { display: flex; flex-wrap: wrap; gap: 4px; }
+.modul-cip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--cerceve); color: var(--yazi2); }
+.modul-cip.acik { color: var(--yesil); border-color: rgba(46,160,67,.55); background: rgba(46,160,67,.12); }
+.modul-cip.kapali { opacity: .7; }

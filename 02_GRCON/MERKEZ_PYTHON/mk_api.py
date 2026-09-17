@@ -658,7 +658,7 @@ def sunucu_liste(firma_id: int | None = None) -> list[dict]:
         "SELECT s.ornek_id, s.kurulum_uid, s.firma_id, f.kisa_ad AS firma_kisa_ad, "
         "       s.ad, s.aciklama, s.surum, s.platform, s.makine_adi, "
         "       s.cevrimici, s.son_gorulme_ts, s.son_ip, s.dron_sayisi, "
-        "       s.yetenekler, s.durum, s.olusma_ts "
+        "       s.yetenekler, s.durum, s.olusma_ts, s.urun, s.api_kodu "
         f"FROM sunucu_ornekleri s JOIN firmalar f ON f.firma_id = s.firma_id "
         f"{kosul} ORDER BY f.kisa_ad, s.ad", par)
     canli = {o["kurulum_uid"]: o for o in role.ROLE.tumu()}
@@ -672,11 +672,11 @@ def sunucu_liste(firma_id: int | None = None) -> list[dict]:
     return satirlar
 
 
-def sunucu_ekle(firma_id: int, ad: str, aciklama: str | None = None
-                ) -> tuple[dict | None, str | None]:
+def sunucu_ekle(firma_id: int, ad: str, aciklama: str | None = None,
+                urun: str = "kopru") -> tuple[dict | None, str | None]:
     if not (ad or "").strip():
         return None, "Sunucu adı zorunlu"
-    return role.ornek_kaydet(firma_id, ad.strip(), aciklama)
+    return role.ornek_kaydet(firma_id, ad.strip(), aciklama, urun=urun)
 
 
 def sunucu_sil(ornek_id: int) -> tuple[bool, str | None]:

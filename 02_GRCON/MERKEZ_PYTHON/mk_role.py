@@ -210,12 +210,17 @@ API_KOD_ONEK = "GTK1."
 
 def api_kodu_uret(kurulum_uid: str, gizli: str, merkez_adres: str,
                   merkez_http: str = "", ad: str = "",
-                  ornek_id: int | None = None, tur: str = "grcon") -> str:
+                  ornek_id: int | None = None, tur: str = "grcon",
+                  urun: str = "kopru") -> str:
+    """`p` alanı ürünü taşır: "kopru" (saha köprüsü) | "gcs" (Merkezi
+    Yazılım / GRCOFF kurulumu). Köprü yazılımı `gcs` kodunu, GRCOFF
+    kurulum sihirbazı `kopru` kodunu reddeder."""
     import base64
     govde: dict[str, Any] = {"u": str(kurulum_uid or ""),
                              "g": str(gizli or ""),
                              "m": str(merkez_adres or ""),
-                             "t": str(tur or "grcon")}
+                             "t": str(tur or "grcon"),
+                             "p": str(urun or "kopru")}
     if merkez_http:
         govde["h"] = str(merkez_http)
     if ad:
@@ -238,14 +243,14 @@ def _kopru_adresleri() -> tuple[str, str]:
 
 def gizli_yenile(ornek_id: int) -> tuple[dict | None, str | None]:
     """Sırrı ve API kodunu yeniler; eski sırla bağlanan köprü düşer."""
-    o = db.tek("SELECT ornek_id, kurulum_uid, ad FROM sunucu_ornekleri "
+    o = db.tek("SELECT ornek_id, kurulum_uid, ad, urun FROM sunucu_ornekleri "
                "WHERE ornek_id = %s AND durum <> 'iptal'", (int(ornek_id),))
     if not o:
         return None, "Sunucu bulunamadı"
     gizli = secrets.token_urlsafe(32)
     ws, http = _kopru_adresleri()
     kod = api_kodu_uret(o["kurulum_uid"], gizli, ws, http, o["ad"],
-                        int(o["ornek_id"]))
+                        int(o["ornek_id"]), urun=str(o.get("urun") or "kopru"))
     db.calistir(
         "UPDATE sunucu_ornekleri SET gizli_ozet = %s, api_kodu = %s, "
         "guncel_ts = now() WHERE ornek_id = %s",
@@ -256,8 +261,13 @@ def gizli_yenile(ornek_id: int) -> tuple[dict | None, str | None]:
 
 def ornek_kaydet(firma_id: int, ad: str, aciklama: str | None = None,
                  platform: str | None = None,
-                 makine_adi: str | None = None) -> tuple[dict | None, str | None]:
-    """Yeni köprü sunucusu kaydı üretir; `gizli` yalnız bir kez döner."""
+                 makine_adi: str | None = None,
+                 urun: str = "kopru") -> tuple[dict | None, str | None]:
+    """Yeni sunucu örneği (köprü ya da Merkezi Yazılım) kaydı üretir;
+    `gizli` yalnız bir kez döner, API kodu ilk bağlantıya kadar saklanır."""
+    urun = str(urun or "kopru").strip().lower()
+    if urun not in ("kopru", "gcs", "video", "radar", "gccdual", "dji"):
+        return None, "Geçersiz ürün"
     f = db.tek(
         "SELECT maks_sunucu, "
         "(SELECT count(*) FROM sunucu_ornekleri s WHERE s.firma_id = f.firma_id "
@@ -274,13 +284,14 @@ def ornek_kaydet(firma_id: int, ad: str, aciklama: str | None = None,
     gizli = secrets.token_urlsafe(32)
     oid = db.deger(
         "INSERT INTO sunucu_ornekleri (kurulum_uid, firma_id, ad, aciklama, "
-        "platform, makine_adi, gizli_ozet) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING ornek_id",
-        (uid, firma_id, ad, aciklama, platform, makine_adi, gizli_ozetle(gizli)),
+        "platform, makine_adi, gizli_ozet, urun, yetenekler) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb) RETURNING ornek_id",
+        (uid, firma_id, ad, aciklama, platform, makine_adi, gizli_ozetle(gizli),
+         urun, json.dumps({"urun": urun})),
     )
     ws, http = _kopru_adresleri()
     # v2.4.232: API kodu ilk bağlantıya kadar saklanır (bkz. api_kodu_uret).
-    kod = api_kodu_uret(uid, gizli, ws, http, ad, int(oid))
+    kod = api_kodu_uret(uid, gizli, ws, http, ad, int(oid), urun=urun)
     with contextlib.suppress(Exception):
         db.calistir("UPDATE sunucu_ornekleri SET api_kodu = %s "
                     "WHERE ornek_id = %s", (kod, int(oid)))
@@ -291,6 +302,7 @@ def ornek_kaydet(firma_id: int, ad: str, aciklama: str | None = None,
         "ad": ad,
         "merkez_adres": ws,
         "api_kodu": kod,
+        "urun": urun,
     }, None
 
 

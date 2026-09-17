@@ -18,8 +18,9 @@ android {
         applicationId 'com.turkbey.goktungumav'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
-        versionCode 1
-        versionName '1.0.0'
+        // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
+        versionCode 2
+        versionName '1.1.0'
 
         // Multidex GEREKMEZ: MSDK kalktigi icin yontem sayisi 64K
         // sinirinin cok altinda.  Kaldirmak acilis suresini kisaltir.
@@ -95,6 +96,8 @@ dependencies {
 
     // Es zamanlilik
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    // 1.1.0: merkeze ters WebSocket baglantisi (kopru ajani)
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
     // --- Olcum ---
     //

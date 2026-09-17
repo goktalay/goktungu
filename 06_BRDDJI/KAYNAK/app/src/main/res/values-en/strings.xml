@@ -1,50 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="uygulama_adi">GOKTUNGU</string>
-    <string name="uygulama_alt_adi">DJI Bridge</string>
+    <string name="uygulama_alt_adi">DJI BRIDGE</string>
 
-    <string name="durum_baslik">Status</string>
-    <string name="durum_sdk_kayit_bekliyor">Awaiting SDK registration…</string>
-    <string name="durum_sdk_kayit_tamam">SDK registered</string>
-    <string name="durum_sdk_kayit_hata">SDK registration failed: %1$s</string>
+    <string name="durum_baslik">STATUS</string>
+    <string name="kurulum_baslik">FIRST-RUN SETUP</string>
+    <string name="kimlik_baslik">BRIDGE IDENTITY</string>
+    <string name="durum_sdk_kayit_bekliyor">Awaiting DJI SDK registration…</string>
+    <string name="durum_sdk_kayit_tamam">DJI SDK registered</string>
+    <string name="durum_sdk_kayit_hata">DJI SDK registration failed: %1$s</string>
     <string name="durum_sdk_anahtar_yok">DJI API key is not configured. The app cannot connect to an aircraft.</string>
     <string name="durum_arac_yok">No aircraft connected</string>
     <string name="durum_arac_bagli">Aircraft connected: %1$s</string>
     <string name="durum_arac_seri">Serial: %1$s</string>
-    <string name="durum_merkez_kopuk">No central connection</string>
-    <string name="durum_merkez_baglaniyor">Connecting to central…</string>
-    <string name="durum_merkez_bagli">Connected to central: %1$s</string>
-    <string name="durum_merkez_hata">Central connection error: %1$s</string>
+    <string name="durum_merkez_kopuk">Centre: bridge stopped</string>
+    <string name="durum_merkez_yeniden">Centre: reconnecting…</string>
+    <string name="durum_merkez_baglaniyor">Centre: connecting…</string>
+    <string name="durum_merkez_bagli">Centre: connected · %1$s · %2$s</string>
+    <string name="durum_merkez_hata">Centre: %1$s</string>
+    <string name="durum_kanal_yok">Channel: the centre has not opened a DJI link yet</string>
+    <string name="durum_kanal_var">Channel: %1$d open · %2$d telemetry samples</string>
 
-    <string name="yapilandirma_baslik">Central Server</string>
-    <string name="yapilandirma_adres">Server address</string>
-    <string name="yapilandirma_adres_ipucu">e.g. 192.168.1.50 or goktungu.com</string>
-    <string name="yapilandirma_port">Bridge port</string>
-    <string name="yapilandirma_kullanici">E-mail</string>
-    <string name="yapilandirma_belirtec">Bridge token</string>
-    <string name="yapilandirma_belirtec_ipucu">Central UI → Program Settings → DJI bridge token. Leave empty for local setup.</string>
-    <string name="yapilandirma_kaydet">Save and Connect</string>
-    <string name="yapilandirma_kes">Disconnect</string>
-    <string name="yapilandirma_oto">Connect automatically on launch</string>
-    <string name="yapilandirma_tls">Use TLS</string>
+    <string name="kurulum_aciklama">Which centre will this bridge connect to? Choose, then paste the API code of the bridge record created in that centre\'s Support → Bridges panel. The code carries the identity and the address; no address, port or token is entered.</string>
+    <string name="kurulum_grcon">GRCON — Central Server (online centre at goktungu.com)</string>
+    <string name="kurulum_grcoff">GRCOFF — Local Installation (your own closed-network Centre Application)</string>
+    <string name="ipucu_kod">API code (GTK1.…)</string>
+    <string name="kurulum_not_grcon">Copy the code from Support → Bridges in the GRCON centre application. The code is erased at the centre once the bridge connects; if lost, use Renew code in the panel.</string>
+    <string name="kurulum_not_grcoff">Copy the code from Support → Bridges in your local Centre Application (GRCOFF). The phone and GRCOFF must share a network. The code is erased on first connection; if lost, use Renew code.</string>
+    <string name="dg_kur">SAVE AND CONNECT</string>
+    <string name="kurulum_tamam">Identity saved; connecting to the centre</string>
+    <string name="hata_kod">Invalid API code: %1$s</string>
+    <string name="hata_kod_secim">This API code was issued for %1$s; the setup choice is %2$s. Enter the right code or change the choice.</string>
+    <string name="hata_kimlik_yok">Complete the setup with an API code first.</string>
 
-    <string name="hata_adres_bos">Server address is empty</string>
-    <string name="hata_port_gecersiz">Port must be between 1 and 65535</string>
-    <string name="hata_kullanici_bos">E-mail is empty</string>
+    <string name="kimlik_ozet">Bridge: %1$s\nCentre: %2$s\nAddress: %3$s</string>
+    <string name="dg_baglan">START BRIDGE</string>
+    <string name="dg_kes">STOP</string>
+    <string name="alan_oto_baslat">Start the bridge automatically when the app opens</string>
+    <string name="kanal_not">The DJI link is opened from the centre\'s Connection Manager (DJI Bridge → this bridge). The aircraft on the remote controller appears at the centre once the channel is open.</string>
+    <string name="dg_kimlik_sil">Reset identity (enter a new API code)</string>
+    <string name="kimlik_sil_baslik">Reset the identity?</string>
+    <string name="kimlik_sil_govde">The bridge stops and the setup identity is deleted. Reconnecting requires a new API code (Renew code) from the centre.</string>
+    <string name="kimlik_sil_onay">Reset</string>
+    <string name="kopru_baslatildi">Bridge started; connecting to the centre</string>
 
     <string name="koord_reddedildi">Position command rejected: %1$s</string>
     <string name="koord_belirsiz">Warning: the target latitude and longitude are nearly equal; an axis swap cannot be distinguished.</string>
 
     <string name="hizmet_kanal_adi">GOKTUNGU Bridge</string>
     <string name="hizmet_kanal_aciklama">Keeps the bridge connection alive during flight</string>
-    <string name="hizmet_bildirim_baslik">GOKTUNGU Bridge active</string>
+    <string name="hizmet_bildirim_baslik">GOKTUNGU DJI Bridge active</string>
     <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
+    <string name="hizmet_merkez_bagli">Centre connected, samples</string>
+    <string name="hizmet_merkez_hata">Centre error</string>
 
-    <string name="gunluk_baslik">Log</string>
+    <string name="gunluk_baslik">LOG</string>
     <string name="gunluk_temizle">Clear</string>
     <string name="gunluk_bos">No entries yet</string>
 
-    <string name="tel_baslik">Telemetry</string>
+    <string name="tel_baslik">TELEMETRY</string>
     <string name="tel_konum">Position</string>
     <string name="tel_irtifa">Altitude</string>
     <string name="tel_hiz">Speed</string>
@@ -61,7 +75,7 @@
     <string name="tel_birim_yuzde">%1$d%%</string>
 
     <string name="izin_baslik">Permissions required</string>
-    <string name="izin_govde">The bridge needs location and notification permissions to report the aircraft position to the centre and to keep running during flight.</string>
+    <string name="izin_govde">The bridge needs location and notification permissions to report the aircraft position to the centre.</string>
     <string name="izin_ver">Grant permission</string>
     <string name="izin_reddedildi">Location permission denied; telemetry cannot be reported.</string>
 
@@ -69,8 +83,6 @@
     <string name="hakkinda_surum">Version %1$s</string>
     <string name="hakkinda_telif">Turkbey Teknoloji A.S.</string>
     <string name="hakkinda_lisans">Third-Party Licences</string>
-    <string name="hakkinda_lisans_metni">This application uses DJI Mobile SDK v5. The DJI Android SDK links dynamically against unmodified FFmpeg libraries licensed under LGPL v2.1. FFmpeg source code and build instructions: https://github.com/dji-sdk/FFmpeg — DJI sample code is provided under the MIT licence.</string>
+    <string name="hakkinda_lisans_metni">This application uses DJI Mobile SDK v5, linked dynamically under DJI\'s licence terms. The centre link is a secure WebSocket paired with the API code issued in the centre\'s Support → Bridges panel; the centre opens the DJI link from its Connection Manager.</string>
     <string name="hakkinda_kapat">Close</string>
-    <string name="hizmet_merkez_bagli">Center connected, samples</string>
-    <string name="hizmet_merkez_hata">Center error</string>
 </resources>

@@ -4,3 +4,4 @@ yerel.properties
 build/
 .gradle/
 local.properties
+.kotlin/

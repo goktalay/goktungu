@@ -11,6 +11,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,56 +21,47 @@ import androidx.lifecycle.lifecycleScope
 import com.turkbey.goktungumav.BuildConfig
 import com.turkbey.goktungumav.R
 import com.turkbey.goktungumav.databinding.EtkinlikAnaBinding
+import com.turkbey.goktungumav.kopru.KimlikKodu
+import com.turkbey.goktungumav.kopru.KopruAjan
 import com.turkbey.goktungumav.kopru.KopruHizmeti
+import com.turkbey.goktungumav.kopru.KopruKimlik
 import com.turkbey.goktungumav.kopru.KopruYonetici
-import com.turkbey.goktungumav.mavlink.MavlinkKopru
-import com.turkbey.goktungumav.mavlink.UdpTasima
 import com.turkbey.goktungumav.mavlink.UsbSeri
-import com.turkbey.goktungumav.veri.AgKisiti
 import com.turkbey.goktungumav.veri.Ayarlar
 import com.turkbey.goktungumav.veri.Gunluk
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * GOKTUNGU MAVLink Koprusu — ana ekran.
+ * GOKTUNGU MAVLink Koprusu — ana ekran (1.1.0).
  *
- * Gorevi yalniz sunum ve kullanici girisidir; is mantigi
- * [KopruYonetici] ve [MavlinkKopru] icindedir.  Koordinat donusumu bu
- * katmanda YAPILMAZ (bkz. `MavGozlemci.MavKonum` sozlesmesi).
+ * Iki hal vardir:
+ *  1. KURULUM: kimlik yok. "GRCON — Merkez Sunucu mu, GRCOFF — Yerel
+ *     Kurulum mu?" secimi + API kodu. Kod merkezin Destek > Kopruler
+ *     panelinden kopyalanir ve adresi de tasidigi icin IP/port
+ *     girilmez.
+ *  2. CALISMA: kimlik var. Ajan merkeze bagli; USB cihazlar
+ *     bildirilir, kanallar merkezden acilir. Ekran yalniz durum,
+ *     USB izni, baslat/durdur ve gunluk gosterir.
+ *
+ * Is mantigi [KopruYonetici] icindedir; bu sinif yalniz sunum yapar.
  */
 class AnaEtkinlik : AppCompatActivity() {
 
     private lateinit var bag: EtkinlikAnaBinding
-
     private var cihazlar: List<UsbDevice> = emptyList()
-
-    /** USB izni verildikten sonra baglanti yeniden denenir. */
-    private var izinBekleyenBaglanti = false
 
     private val izinSonucu = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
 
-    /**
-     * USB izin yanitini alan yayin alicisi.
-     *
-     * Android USB izni eszamansizdir: `requestPermission` cagrisi
-     * hemen doner, kullanici karari yayin olarak gelir.  Bu yuzden
-     * baglanti akisi ikiye bolunmustur.
-     */
+    /** USB izin yaniti (eszamansiz). */
     private val usbAlici = object : BroadcastReceiver() {
         override fun onReceive(baglam: Context?, niyet: Intent?) {
             if (niyet?.action != UsbSeri.EYLEM_IZIN) return
-            val verildi = niyet.getBooleanExtra(
-                UsbManager.EXTRA_PERMISSION_GRANTED, false
-            )
-            if (verildi && izinBekleyenBaglanti) {
-                izinBekleyenBaglanti = false
-                baglan()
-            } else if (!verildi) {
-                izinBekleyenBaglanti = false
-                uyar(R.string.hata_usb_izin)
-            }
+            val verildi = niyet.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+            Gunluk.yaz("USB", if (verildi) "USB izni verildi" else "USB izni reddedildi")
+            cihazlariTara()
         }
     }
 
@@ -79,21 +71,22 @@ class AnaEtkinlik : AppCompatActivity() {
         setContentView(bag.root)
 
         KopruYonetici.kur(applicationContext)
-
-        hizlariDoldur()
-        ayarlariYukle()
         izinleriIste()
-        cihazlariTara()
 
+        bag.dgKur.setOnClickListener { kurulumKaydet() }
+        bag.dgBaslat.setOnClickListener { baslat(sessiz = false) }
+        bag.dgKes.setOnClickListener { durdur() }
         bag.dgTara.setOnClickListener { cihazlariTara(bildir = true) }
-        bag.dgBaglan.setOnClickListener { baglan() }
-        bag.dgKes.setOnClickListener { kes() }
+        bag.dgUsbIzin.setOnClickListener { usbIzniIste() }
+        bag.dgKimlikSil.setOnClickListener { kimlikSilSor() }
         bag.dgGunlukTemizle.setOnClickListener { Gunluk.temizle() }
         bag.dgHakkinda.setOnClickListener { hakkindaGoster() }
+        bag.kutuOto.setOnCheckedChangeListener { _, secili ->
+            Ayarlar.otoBaslatYaz(this, secili)
+        }
+        bag.radioGrcon.setOnCheckedChangeListener { _, _ -> kurulumNotuTazele() }
+        bag.radioGrcoff.setOnCheckedChangeListener { _, _ -> kurulumNotuTazele() }
 
-        // Android 14+ kayitli aliciyi acikca disa donuk/ic olarak
-        // isaretlemeyi zorunlu kilar; bu yayin yalniz kendi
-        // uygulamamizdan gelir.
         val suzgec = IntentFilter(UsbSeri.EYLEM_IZIN)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(usbAlici, suzgec, RECEIVER_NOT_EXPORTED)
@@ -102,13 +95,19 @@ class AnaEtkinlik : AppCompatActivity() {
             registerReceiver(usbAlici, suzgec)
         }
 
+        bag.kutuOto.isChecked = Ayarlar.oku(this).otoBaslat
+        kurulumNotuTazele()
+        gorunumTazele()
+        cihazlariTara()
         akislariDinle()
 
-        val a = Ayarlar.oku(this)
-        if (a.otoBaglan && a.eksiksizMi() && cihazlar.isNotEmpty()) {
-            baglan(sessiz = true)
+        // Kimlik varsa ve tercih acik ise kendiliginden baslar: saha
+        // pilotu telefonu acar, kopru merkeze baglanir.
+        if (KopruKimlik.var_(this) && Ayarlar.oku(this).otoBaslat &&
+            !KopruYonetici.calisiyorMu()
+        ) {
+            baslat(sessiz = true)
         }
-
         Gunluk.yaz("ARAYUZ", "Ana ekran acildi")
     }
 
@@ -117,138 +116,143 @@ class AnaEtkinlik : AppCompatActivity() {
         super.onDestroy()
     }
 
-    // ------------------------------------------------------------ ayarlar
-
-    private fun hizlariDoldur() {
-        val uyarlayici = ArrayAdapter(
-            this, android.R.layout.simple_spinner_dropdown_item,
-            UsbSeri.HIZLAR.map { it.toString() }
-        )
-        bag.secimHiz.adapter = uyarlayici
-        val v = UsbSeri.HIZLAR.indexOf(UsbSeri.VARSAYILAN_HIZ)
-        if (v >= 0) bag.secimHiz.setSelection(v)
+    override fun onResume() {
+        super.onResume()
+        cihazlariTara()
+        gorunumTazele()
     }
 
-    private fun ayarlariYukle() {
-        val a = Ayarlar.oku(this)
-        bag.girisAdres.setText(a.sunucu)
-        bag.girisPort.setText(
-            if (a.port > 0) a.port.toString()
-            else UdpTasima.VARSAYILAN_PORT.toString()
+    // ------------------------------------------------------------ kurulum
+
+    private fun kurulumNotuTazele() {
+        bag.etiketKurulumNot.text = getString(
+            if (bag.radioGrcoff.isChecked) R.string.kurulum_not_grcoff
+            else R.string.kurulum_not_grcon
         )
-        bag.kutuOto.isChecked = a.otoBaglan
-        val h = UsbSeri.HIZLAR.indexOf(a.hiz)
-        if (h >= 0) bag.secimHiz.setSelection(h)
     }
 
-    /**
-     * Bagli USB seri cihazlari listeler.
-     *
-     * Secim kullaniciya birakilir: telefona ayni anda ucus
-     * kontrolcusu ve telemetri modemi bagli olabilir.
-     */
-    private fun cihazlariTara(bildir: Boolean = false) {
-        val kopru = KopruYonetici.kopru ?: return
-        cihazlar = kopru.usb.cihazlariListele()
-        val adlar = if (cihazlar.isEmpty()) {
-            listOf(getString(R.string.cihaz_yok))
-        } else {
-            cihazlar.map { d ->
-                val ad = runCatching { d.productName }.getOrNull()
-                if (ad.isNullOrBlank()) {
-                    String.format("%04X:%04X", d.vendorId, d.productId)
-                } else {
-                    "$ad  (${String.format("%04X:%04X", d.vendorId, d.productId)})"
+    private fun kurulumKaydet() {
+        val secim = if (bag.radioGrcoff.isChecked) "grcoff" else "grcon"
+        val ham = bag.girisKod.text.toString()
+        when (val s = KimlikKodu.coz(ham)) {
+            is KimlikKodu.Sonuc.Gecersiz -> {
+                uyarMetin(getString(R.string.hata_kod, s.neden))
+            }
+
+            is KimlikKodu.Sonuc.Gecerli -> {
+                val kod = s.kod
+                if (kod.tur.isNotBlank() && kod.tur != secim) {
+                    uyarMetin(
+                        getString(
+                            R.string.hata_kod_secim,
+                            if (kod.tur == "grcoff") "GRCOFF" else "GRCON",
+                            if (secim == "grcoff") "GRCOFF" else "GRCON"
+                        )
+                    )
+                    return
                 }
+                KopruYonetici.durdur()
+                KopruKimlik.yaz(this, kod, secim)
+                bag.girisKod.setText("")
+                Gunluk.yaz(
+                    "KURULUM",
+                    "API kodu ile kurulum: ${kod.ad} (${secim.uppercase()}) -> ${kod.merkezAdres}"
+                )
+                Toast.makeText(this, R.string.kurulum_tamam, Toast.LENGTH_SHORT).show()
+                gorunumTazele()
+                baslat(sessiz = true)
             }
-        }
-        bag.secimCihaz.adapter = ArrayAdapter(
-            this, android.R.layout.simple_spinner_dropdown_item, adlar
-        )
-        if (bildir) {
-            Toast.makeText(
-                this,
-                getString(R.string.tarama_sonuc, cihazlar.size),
-                Toast.LENGTH_SHORT
-            ).show()
         }
     }
 
-    private fun baglan(sessiz: Boolean = false) {
-        val kopru = KopruYonetici.kopru ?: return
-        val adres = bag.girisAdres.text.toString().trim()
-        val portMetni = bag.girisPort.text.toString().trim()
-
-        if (adres.isEmpty()) return uyar(R.string.hata_adres_bos)
-        val port = portMetni.toIntOrNull()
-        if (port == null || port < 1 || port > 65535) {
-            return uyar(R.string.hata_port_gecersiz)
-        }
-        if (cihazlar.isEmpty()) return uyar(R.string.hata_cihaz_yok)
-
-        // Duz metin kisiti: UDP telemetrisi TLS tasimaz, bu yuzden
-        // yalniz ozel ag adresleri kabul edilir.  Genel internet
-        // adresine sifrelenmemis telemetri gondermek konum ve ucus
-        // verisini aciga cikarir.
-        if (!AgKisiti.ozelAgMi(adres)) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.hata_baslik)
-                .setMessage(AgKisiti.redNedeni(adres))
-                .setPositiveButton(R.string.hakkinda_kapat, null)
-                .show()
-            return
-        }
-
-        val secim = bag.secimCihaz.selectedItemPosition
-            .coerceIn(0, cihazlar.size - 1)
-        val cihaz = cihazlar[secim]
-        val hiz = UsbSeri.HIZLAR.getOrElse(
-            bag.secimHiz.selectedItemPosition
-        ) { UsbSeri.VARSAYILAN_HIZ }
-
-        // USB izni eszamansiz: izin yoksa istenir ve yayin
-        // beklenir; baglanti izin gelince yeniden denenir.
-        if (!kopru.usb.izinVarMi(cihaz)) {
-            izinBekleyenBaglanti = true
-            kopru.usb.izinIste(cihaz)
-            if (!sessiz) {
-                Toast.makeText(
-                    this, R.string.usb_izin_isteniyor, Toast.LENGTH_SHORT
-                ).show()
+    private fun kimlikSilSor() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.kimlik_sil_baslik)
+            .setMessage(R.string.kimlik_sil_govde)
+            .setPositiveButton(R.string.kimlik_sil_onay) { _, _ ->
+                durdur()
+                KopruKimlik.sil(this)
+                Gunluk.uyari("KURULUM", "Kurulum kimligi silindi")
+                gorunumTazele()
             }
+            .setNegativeButton(R.string.hakkinda_kapat, null)
+            .show()
+    }
+
+    // ------------------------------------------------------------ calisma
+
+    private fun baslat(sessiz: Boolean) {
+        if (!KopruYonetici.baslat()) {
+            if (!sessiz) uyar(R.string.hata_kimlik_yok)
             return
         }
-
-        Ayarlar.yaz(
-            baglam = this,
-            sunucu = adres,
-            port = port,
-            hiz = hiz,
-            otoBaglan = bag.kutuOto.isChecked
-        )
-
-        val hata = KopruYonetici.baglan(cihaz, hiz, adres, port)
-        if (hata != null) {
-            uyarMetin(hata)
-            return
-        }
-
         val niyet = Intent(this, KopruHizmeti::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(niyet)
         } else {
             startService(niyet)
         }
-        if (!sessiz) {
+        if (!sessiz) Toast.makeText(this, R.string.kopru_baslatildi, Toast.LENGTH_SHORT).show()
+        gorunumTazele()
+    }
+
+    private fun durdur() {
+        KopruYonetici.durdur()
+        stopService(Intent(this, KopruHizmeti::class.java))
+        gorunumTazele()
+    }
+
+    private fun cihazlariTara(bildir: Boolean = false) {
+        val usb = KopruYonetici.usb ?: return
+        cihazlar = usb.cihazlariListele()
+        val adlar = if (cihazlar.isEmpty()) {
+            listOf(getString(R.string.cihaz_yok))
+        } else {
+            cihazlar.map { d ->
+                usb.cihazEtiketi(d) +
+                    (if (usb.izinVarMi(d)) "  ✓" else "  (" + getString(R.string.usb_izin_yok) + ")")
+            }
+        }
+        bag.secimCihaz.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item, adlar
+        )
+        val izinli = cihazlar.count { usb.izinVarMi(it) }
+        bag.etiketUsb.text = if (cihazlar.isEmpty()) {
+            getString(R.string.durum_usb_yok)
+        } else {
+            getString(R.string.durum_usb_var, cihazlar.size, izinli)
+        }
+        bag.etiketUsb.setTextColor(
+            renk(
+                when {
+                    cihazlar.isEmpty() -> R.color.soluk
+                    izinli == cihazlar.size -> R.color.iyi
+                    else -> R.color.uyari
+                }
+            )
+        )
+        if (bildir) {
             Toast.makeText(
-                this, R.string.kopru_baslatildi, Toast.LENGTH_SHORT
+                this, getString(R.string.tarama_sonuc, cihazlar.size), Toast.LENGTH_SHORT
             ).show()
         }
     }
 
-    private fun kes() {
-        KopruYonetici.kes()
-        stopService(Intent(this, KopruHizmeti::class.java))
+    /**
+     * Secili USB cihaz icin izin ister. Izin ONCEDEN verilmelidir:
+     * merkez `akis_ac` dediginde kullanici basinda olmayabilir.
+     */
+    private fun usbIzniIste() {
+        val usb = KopruYonetici.usb ?: return
+        if (cihazlar.isEmpty()) return uyar(R.string.hata_cihaz_yok)
+        val secim = bag.secimCihaz.selectedItemPosition.coerceIn(0, cihazlar.size - 1)
+        val d = cihazlar[secim]
+        if (usb.izinVarMi(d)) {
+            Toast.makeText(this, R.string.usb_izin_var, Toast.LENGTH_SHORT).show()
+            return
+        }
+        usb.izinIste(d)
+        Toast.makeText(this, R.string.usb_izin_isteniyor, Toast.LENGTH_SHORT).show()
     }
 
     private fun uyar(kaynak: Int) {
@@ -267,82 +271,101 @@ class AnaEtkinlik : AppCompatActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )) {
-            if (ContextCompat.checkSelfPermission(this, i)
-                != PackageManager.PERMISSION_GRANTED
-            ) istenecek += i
+            if (ContextCompat.checkSelfPermission(this, i) != PackageManager.PERMISSION_GRANTED) {
+                istenecek += i
+            }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(
-                this, Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
         ) istenecek += Manifest.permission.POST_NOTIFICATIONS
-
         if (istenecek.isNotEmpty()) izinSonucu.launch(istenecek.toTypedArray())
     }
 
-    // ------------------------------------------------------------ akislar
+    // ------------------------------------------------------------ gorunum
+
+    /** Kurulum/calisma kartlarinin gorunurlugu ve kimlik etiketi. */
+    private fun gorunumTazele() {
+        val k = KopruKimlik.oku(this)
+        val kimlikVar = k != null && k.eksiksizMi()
+        bag.kartKurulum.visibility = if (kimlikVar) View.GONE else View.VISIBLE
+        bag.kartKimlik.visibility = if (kimlikVar) View.VISIBLE else View.GONE
+        if (k != null && kimlikVar) {
+            bag.etiketKimlik.text = getString(
+                R.string.kimlik_ozet,
+                k.ad.ifBlank { "—" }, k.turEtiketi(), k.merkezAdres
+            )
+        }
+        val calisiyor = KopruYonetici.calisiyorMu()
+        bag.dgBaslat.isEnabled = kimlikVar && !calisiyor
+        bag.dgKes.isEnabled = calisiyor
+    }
 
     private fun akislariDinle() {
-        val kopru = KopruYonetici.kopru ?: return
+        val ajan = KopruYonetici.ajan ?: return
 
-        // Kopru durumu
         lifecycleScope.launch {
-            kopru.durum.collect { d ->
-                bag.etiketUsb.text = when (d) {
-                    MavlinkKopru.Durum.KAPALI ->
-                        getString(R.string.durum_usb_yok)
-                    MavlinkKopru.Durum.HATA ->
-                        getString(
-                            R.string.durum_usb_hata,
-                            kopru.hataIletisi.value
-                        )
-                    else -> getString(
-                        R.string.durum_usb_acik,
-                        kopru.usb.cihazAdi, kopru.usb.hiz
+            ajan.durum.collect { d ->
+                val b = ajan.bilgi.value
+                bag.etiketMerkez.text = when (d) {
+                    KopruAjan.Durum.BAGLI -> getString(
+                        R.string.durum_merkez_bagli, b.ad.ifBlank { "#" + b.ornekId }, b.adres
                     )
+                    KopruAjan.Durum.BAGLANIYOR -> getString(R.string.durum_merkez_baglaniyor)
+                    KopruAjan.Durum.HATA -> getString(
+                        R.string.durum_merkez_hata, ajan.sonHata.value
+                    )
+                    else -> if (KopruYonetici.calisiyorMu()) {
+                        getString(R.string.durum_merkez_yeniden)
+                    } else {
+                        getString(R.string.durum_merkez_kopuk)
+                    }
                 }
-                bag.etiketUsb.setTextColor(
+                bag.etiketMerkez.setTextColor(
                     renk(
                         when (d) {
-                            MavlinkKopru.Durum.CALISIYOR -> R.color.iyi
-                            MavlinkKopru.Durum.HATA -> R.color.kotu
-                            MavlinkKopru.Durum.ARAC_BEKLENIYOR ->
-                                R.color.uyari
+                            KopruAjan.Durum.BAGLI -> R.color.iyi
+                            KopruAjan.Durum.HATA -> R.color.kotu
+                            KopruAjan.Durum.BAGLANIYOR -> R.color.uyari
                             else -> R.color.soluk
                         }
                     )
                 )
-
-                bag.etiketMerkez.text = if (kopru.udp.acik) {
-                    getString(
-                        R.string.durum_merkez_bagli, kopru.udp.hedefEtiketi()
-                    )
-                } else {
-                    getString(R.string.durum_merkez_kopuk)
-                }
-                bag.etiketMerkez.setTextColor(
-                    renk(if (kopru.udp.acik) R.color.iyi else R.color.soluk)
-                )
+                gorunumTazele()
             }
         }
 
-        // Arac durumu ve telemetri (SALT OKUMA gozlemden)
+        // Kanal ve sayac satiri: kanallar merkezden acilir; yoklamayla
+        // gosterilir (basit ve yeterli).
         lifecycleScope.launch {
-            kopru.gozlemci.durum.collect { t ->
+            while (true) {
+                val k = KopruYonetici.kanallar
+                val n = k?.etkinSayi() ?: 0
+                bag.etiketKanal.text = if (n == 0) {
+                    getString(R.string.durum_kanal_yok)
+                } else {
+                    getString(R.string.durum_kanal_var, n, k?.ozet() ?: "")
+                }
+                bag.etiketKanal.setTextColor(renk(if (n > 0) R.color.iyi else R.color.soluk))
+                val b = ajan.bilgi.value
+                bag.etiketSayac.text = getString(
+                    R.string.durum_sayac, b.gidenAkisByte / 1024, b.gelenAkisByte / 1024
+                )
+                delay(1000)
+            }
+        }
+
+        lifecycleScope.launch {
+            KopruYonetici.gozlemci.durum.collect { t ->
                 bag.etiketArac.text = if (t.aracVar) {
                     getString(
                         R.string.durum_arac_bagli,
-                        "sys ${t.sysid} · ${kopru.gozlemci.kipAdi()}"
+                        "sys ${t.sysid} · ${KopruYonetici.gozlemci.kipAdi()}"
                     )
                 } else {
                     getString(R.string.durum_arac_yok)
                 }
-                bag.etiketArac.setTextColor(
-                    renk(if (t.aracVar) R.color.iyi else R.color.soluk)
-                )
-
-                bag.etiketSayac.text = kopru.sayaclar()
-
+                bag.etiketArac.setTextColor(renk(if (t.aracVar) R.color.iyi else R.color.soluk))
                 val konum = t.konum
                 bag.etiketTelemetri.text = buildString {
                     if (konum == null) {
@@ -350,23 +373,20 @@ class AnaEtkinlik : AppCompatActivity() {
                     } else {
                         appendLine(
                             "%s  %.6f, %.6f".format(
-                                getString(R.string.tel_konum),
-                                konum.enlem, konum.boylam
+                                getString(R.string.tel_konum), konum.enlem, konum.boylam
                             )
                         )
                     }
                     appendLine(
                         "%s  %s".format(
                             getString(R.string.tel_irtifa),
-                            t.altRel?.let { "%.1f m".format(it) }
-                                ?: getString(R.string.tel_deger_yok)
+                            t.altRel?.let { "%.1f m".format(it) } ?: getString(R.string.tel_deger_yok)
                         )
                     )
                     appendLine(
                         "%s  %s".format(
                             getString(R.string.tel_yon),
-                            t.heading?.let { "%.0f".format(it) }
-                                ?: getString(R.string.tel_deger_yok)
+                            t.heading?.let { "%.0f".format(it) } ?: getString(R.string.tel_deger_yok)
                         )
                     )
                     appendLine(
@@ -375,8 +395,7 @@ class AnaEtkinlik : AppCompatActivity() {
                             if (t.bataryaPct != null || t.bataryaV != null) {
                                 "%s  %s".format(
                                     t.bataryaPct?.let { "$it%%" } ?: "-",
-                                    t.bataryaV?.let { "%.1f V".format(it) }
-                                        ?: "-"
+                                    t.bataryaV?.let { "%.1f V".format(it) } ?: "-"
                                 )
                             } else getString(R.string.tel_deger_yok)
                         )
@@ -384,25 +403,19 @@ class AnaEtkinlik : AppCompatActivity() {
                     appendLine(
                         "%s  %s".format(
                             getString(R.string.tel_arm),
-                            getString(
-                                if (t.armed) R.string.tel_arm_acik
-                                else R.string.tel_arm_kapali
-                            )
+                            getString(if (t.armed) R.string.tel_arm_acik else R.string.tel_arm_kapali)
                         )
                     )
                     append(
                         "%s  %s".format(
                             getString(R.string.tel_mod),
-                            kopru.gozlemci.kipAdi().ifEmpty {
-                                getString(R.string.tel_deger_yok)
-                            }
+                            KopruYonetici.gozlemci.kipAdi().ifEmpty { getString(R.string.tel_deger_yok) }
                         )
                     )
                 }
             }
         }
 
-        // Gunluk
         lifecycleScope.launch {
             Gunluk.kayitlar.collect { kayitlar ->
                 bag.etiketGunluk.text = if (kayitlar.isEmpty()) {
@@ -420,13 +433,8 @@ class AnaEtkinlik : AppCompatActivity() {
 
     private fun hakkindaGoster() {
         val govde = buildString {
-            appendLine(
-                getString(R.string.uygulama_adi) + " " +
-                    getString(R.string.uygulama_alt_adi)
-            )
-            appendLine(
-                getString(R.string.hakkinda_surum, BuildConfig.VERSION_NAME)
-            )
+            appendLine(getString(R.string.uygulama_adi) + " " + getString(R.string.uygulama_alt_adi))
+            appendLine(getString(R.string.hakkinda_surum, BuildConfig.VERSION_NAME))
             appendLine(getString(R.string.hakkinda_telif))
             appendLine()
             appendLine(getString(R.string.hakkinda_lisans))
@@ -437,11 +445,5 @@ class AnaEtkinlik : AppCompatActivity() {
             .setMessage(govde)
             .setPositiveButton(R.string.hakkinda_kapat, null)
             .show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Kablo uygulama arka plandayken takilmis olabilir.
-        cihazlariTara()
     }
 }

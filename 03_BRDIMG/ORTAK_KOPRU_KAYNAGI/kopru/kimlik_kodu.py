@@ -40,4 +40,10 @@ def api_kodu_coz(kod):
     h = str(d.get("h") or "")
     if h and not (h.startswith("http://") or h.startswith("https://")):
         return None, "API kodundaki HTTP adresi http(s):// olmali"
+    # 2026-09-17: `p` urun alani — kurumsal panel Merkezi Yazilim (GRCOFF)
+    # kayitlari icin "gcs" kodu uretir; o kod koprude kullanilamaz.
+    urun = str(d.get("p") or "kopru")
+    if urun != "kopru":
+        return None, ("Bu API kodu bir kopru kaydina degil '%s' kaydina ait "
+                      "(Merkezi Yazilim kodu koprude kullanilamaz)" % urun)
     return d, None

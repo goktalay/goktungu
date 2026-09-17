@@ -11,7 +11,6 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.turkbey.goktungumav.R
 import com.turkbey.goktungumav.arayuz.AnaEtkinlik
-import com.turkbey.goktungumav.mavlink.MavlinkKopru
 import com.turkbey.goktungumav.veri.Gunluk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,17 +24,10 @@ import kotlinx.coroutines.launch
  * On plan hizmeti: ucus surerken koprunun isletim sistemi tarafindan
  * oldurulmesini engeller.
  *
- * ## Neden zorunlu
- *
- * Android, ekran kapandiginda veya uygulama arka plana alindiginda
- * ag ve USB islerini askiya alir.  Kopru askiya alinirsa telemetri
- * kesilir ve **ucus sirasinda** yer istasyonu araci kaybeder.  On plan
- * hizmeti ve kalici bildirim bunu onler.
- *
- * Android 14+ `connectedDevice` hizmet turu ister; manifestte
- * bildirildi.  Bildirim govdesi arac ve merkez durumunu canli
- * gosterir — pilot uygulamayi one almadan koprunun ayakta oldugunu
- * gorur.
+ * Android, ekran kapandiginda ag ve USB islerini askiya alir. Kopru
+ * askiya alinirsa telemetri kesilir ve **ucus sirasinda** yer istasyonu
+ * araci kaybeder. Kalici bildirim bunu onler ve pilot uygulamayi one
+ * almadan merkez baglantisinin ayakta oldugunu gorur.
  */
 class KopruHizmeti : Service() {
 
@@ -58,9 +50,8 @@ class KopruHizmeti : Service() {
         durumuIzle()
     }
 
-    override fun onStartCommand(
-        intent: Intent?, bayraklar: Int, baslatmaId: Int
-    ): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, bayraklar: Int, baslatmaId: Int): Int =
+        START_STICKY
 
     override fun onDestroy() {
         guncelleyici?.cancel()
@@ -70,11 +61,6 @@ class KopruHizmeti : Service() {
         super.onDestroy()
     }
 
-    /**
-     * Bildirimi iki saniyede bir tazeler.  Akislari `collect` etmek
-     * yerine yoklama kullanildi: uc ayri akisi (kopru durumu, arac,
-     * sayaclar) birlestirmek bildirim icin gereksiz karmasa olurdu.
-     */
     private fun durumuIzle() {
         val k = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         kapsam = k
@@ -82,30 +68,24 @@ class KopruHizmeti : Service() {
             var oncekiArac = ""
             var oncekiMerkez = ""
             while (true) {
-                val kopru = KopruYonetici.kopru
-                val t = kopru?.gozlemci?.durum?.value
-                val arac = if (t?.aracVar == true) {
-                    getString(
-                        R.string.hizmet_arac_bagli,
-                        t.sysid, kopru.gozlemci.kipAdi()
-                    )
+                val t = KopruYonetici.gozlemci.durum.value
+                val kanal = KopruYonetici.kanallar?.etkinSayi() ?: 0
+                val arac = if (t.aracVar) {
+                    getString(R.string.hizmet_arac_bagli, t.sysid, KopruYonetici.gozlemci.kipAdi())
+                } else if (kanal > 0) {
+                    getString(R.string.hizmet_kanal_acik, kanal)
                 } else {
                     getString(R.string.durum_arac_yok)
                 }
-                val merkez = when (kopru?.durum?.value) {
-                    MavlinkKopru.Durum.CALISIYOR ->
-                        getString(
-                            R.string.hizmet_merkez_bagli,
-                            kopru.udp.gonderilenCerceve
-                        )
-                    MavlinkKopru.Durum.ARAC_BEKLENIYOR ->
-                        getString(R.string.hizmet_arac_bekleniyor)
-                    MavlinkKopru.Durum.HATA ->
-                        getString(R.string.hizmet_merkez_hata)
+                val ajan = KopruYonetici.ajan
+                val merkez = when (ajan?.durum?.value) {
+                    KopruAjan.Durum.BAGLI -> getString(
+                        R.string.hizmet_merkez_bagli, ajan.bilgi.value.ad
+                    )
+                    KopruAjan.Durum.BAGLANIYOR -> getString(R.string.durum_merkez_baglaniyor)
+                    KopruAjan.Durum.HATA -> getString(R.string.hizmet_merkez_hata)
                     else -> getString(R.string.durum_merkez_kopuk)
                 }
-                // Yalniz degisince bildirim tazele: gereksiz tazeleme
-                // pil tuketir ve bildirim golgesinde titreme yapar.
                 if (arac != oncekiArac || merkez != oncekiMerkez) {
                     oncekiArac = arac
                     oncekiMerkez = merkez
@@ -128,8 +108,7 @@ class KopruHizmeti : Service() {
             ).apply {
                 description = getString(R.string.hizmet_kanal_aciklama)
             }
-            (getSystemService(NotificationManager::class.java))
-                .createNotificationChannel(k)
+            (getSystemService(NotificationManager::class.java)).createNotificationChannel(k)
         }
     }
 
@@ -143,9 +122,7 @@ class KopruHizmeti : Service() {
         )
         return NotificationCompat.Builder(this, KANAL_ID)
             .setContentTitle(getString(R.string.hizmet_bildirim_baslik))
-            .setContentText(
-                getString(R.string.hizmet_bildirim_govde, arac, merkez)
-            )
+            .setContentText(getString(R.string.hizmet_bildirim_govde, arac, merkez))
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setContentIntent(niyet)
             .setOngoing(true)

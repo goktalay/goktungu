@@ -59,8 +59,9 @@ window.kopruKimlikBolumEkle = function(govde){
   const yonetici = (typeof oturumYoneticiMi === "function")
     ? oturumYoneticiMi() : false;
 
-  // Merkez kipinde bolum HIC cizilmez (sunucu da reddeder).
+  // Merkez kipinde bolum HIC cizilmez (kopru kayitlari kurumsal panelde).
   if (window.kopruKimlikDurum.merkez_kipi) return;
+  if (typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi()) return;
 
   govde.appendChild(document.createElement("hr"));
 

@@ -3,40 +3,58 @@
     <string name="uygulama_adi">GOKTUNGU</string>
     <string name="uygulama_alt_adi">MAVLINK BRIDGE</string>
 
-    <!-- Card headings -->
     <string name="durum_baslik">STATUS</string>
-    <string name="yapilandirma_baslik">CONFIGURATION</string>
+    <string name="kurulum_baslik">FIRST-RUN SETUP</string>
+    <string name="kimlik_baslik">BRIDGE IDENTITY</string>
     <string name="telemetri_baslik">TELEMETRY</string>
     <string name="gunluk_baslik">LOG</string>
 
-    <!-- Status messages -->
-    <string name="durum_usb_yok">USB serial link closed</string>
-    <string name="durum_usb_acik">USB open: %1$s @ %2$d</string>
-    <string name="durum_usb_hata">USB error: %1$s</string>
-    <string name="durum_arac_yok">No vehicle</string>
-    <string name="durum_arac_bagli">Vehicle connected: %1$s</string>
-    <string name="durum_merkez_kopuk">Central: disconnected</string>
-    <string name="durum_merkez_bagli">Central: %1$s</string>
+    <string name="durum_merkez_kopuk">Centre: bridge stopped</string>
+    <string name="durum_merkez_yeniden">Centre: reconnecting…</string>
+    <string name="durum_merkez_baglaniyor">Centre: connecting…</string>
+    <string name="durum_merkez_bagli">Centre: connected · %1$s · %2$s</string>
+    <string name="durum_merkez_hata">Centre: %1$s</string>
+    <string name="durum_usb_yok">No USB serial device</string>
+    <string name="durum_usb_var">USB: %1$d device(s), %2$d permitted</string>
+    <string name="durum_kanal_yok">Channel: the centre has not opened a link yet</string>
+    <string name="durum_kanal_var">Channel: %1$d open · %2$s</string>
+    <string name="durum_arac_yok">No aircraft</string>
+    <string name="durum_arac_bagli">Aircraft connected: %1$s</string>
+    <string name="durum_sayac">↑ %1$d KB   ↓ %2$d KB</string>
 
-    <!-- Field labels -->
-    <string name="alan_cihaz">USB serial device</string>
-    <string name="alan_hiz">Line speed (baud)</string>
-    <string name="alan_adres">Central address</string>
-    <string name="alan_port">MAVLink UDP port</string>
-    <string name="alan_oto_baglan">Connect automatically on launch</string>
-    <string name="ipucu_adres">192.168.1.10</string>
-    <string name="ipucu_port">14550</string>
-    <string name="cihaz_yok">No USB serial device attached</string>
+    <string name="kurulum_aciklama">Which centre will this bridge connect to? Choose, then paste the API code of the bridge record created in that centre\'s Support → Bridges panel. The code carries the identity and the address; nothing else is required.</string>
+    <string name="kurulum_grcon">GRCON — Central Server (online centre at goktungu.com)</string>
+    <string name="kurulum_grcoff">GRCOFF — Local Installation (your own closed-network Centre Application)</string>
+    <string name="alan_kod">API code</string>
+    <string name="ipucu_kod">GTK1.…</string>
+    <string name="kurulum_not_grcon">Copy the code from Support → Bridges in the GRCON centre application. The code is erased at the centre once the bridge connects; if lost, use Renew code in the panel.</string>
+    <string name="kurulum_not_grcoff">Copy the code from Support → Bridges in your local Centre Application (GRCOFF). The phone and GRCOFF must share a network. The code is erased on first connection; if lost, use Renew code.</string>
+    <string name="dg_kur">SAVE AND CONNECT</string>
+    <string name="kurulum_tamam">Identity saved; connecting to the centre</string>
+    <string name="hata_kod">Invalid API code: %1$s</string>
+    <string name="hata_kod_secim">This API code was issued for %1$s; the setup choice is %2$s. Enter the right code or change the choice.</string>
+    <string name="hata_kimlik_yok">Complete the setup with an API code first.</string>
 
-    <!-- Buttons -->
-    <string name="dg_tara">SCAN</string>
+    <string name="kimlik_ozet">Bridge: %1$s\nCentre: %2$s\nAddress: %3$s</string>
     <string name="dg_baglan">START BRIDGE</string>
     <string name="dg_kes">STOP</string>
+    <string name="alan_oto_baslat">Start the bridge automatically when the app opens</string>
+    <string name="alan_cihaz">USB serial device</string>
+    <string name="cihaz_yok">No USB serial device attached</string>
+    <string name="dg_tara">SCAN</string>
+    <string name="dg_usb_izin">GRANT USB PERMISSION</string>
+    <string name="usb_izin_yok">no permission</string>
+    <string name="usb_izin_var">USB permission already granted for this device</string>
+    <string name="usb_izin_isteniyor">Requesting USB permission…</string>
+    <string name="usb_izin_not">The link is opened from the centre\'s Connection Manager (Serial → this bridge → device). USB permission must be granted beforehand; otherwise the centre sees "USB permission not granted".</string>
+    <string name="dg_kimlik_sil">Reset identity (enter a new API code)</string>
+    <string name="kimlik_sil_baslik">Reset the identity?</string>
+    <string name="kimlik_sil_govde">The bridge stops and the setup identity is deleted. Reconnecting requires a new API code (Renew code) from the centre.</string>
+    <string name="kimlik_sil_onay">Reset</string>
     <string name="dg_gunluk_temizle">Clear</string>
 
-    <!-- Telemetry fields -->
     <string name="tel_konum">Position</string>
-    <string name="tel_konum_yok">No position (awaiting GPS lock)</string>
+    <string name="tel_konum_yok">No position (aircraft data arrives once a channel is open)</string>
     <string name="tel_irtifa">Altitude</string>
     <string name="tel_yon">Heading</string>
     <string name="tel_batarya">Battery</string>
@@ -46,34 +64,25 @@
     <string name="tel_mod">Mode</string>
     <string name="tel_deger_yok">—</string>
 
-    <!-- Warnings -->
-    <string name="hata_baslik">Connection refused</string>
-    <string name="hata_adres_bos">Central address cannot be empty.</string>
-    <string name="hata_port_gecersiz">Port must be between 1 and 65535.</string>
-    <string name="hata_cihaz_yok">No USB serial device found. Attach the cable and press SCAN.</string>
-    <string name="hata_usb_izin">USB permission denied; the bridge cannot start.</string>
-    <string name="usb_izin_isteniyor">Requesting USB permission…</string>
-    <string name="kopru_baslatildi">Bridge started</string>
+    <string name="hata_cihaz_yok">No USB serial device found. Plug in the cable and tap SCAN.</string>
+    <string name="kopru_baslatildi">Bridge started; connecting to the centre</string>
     <string name="tarama_sonuc">%1$d USB serial device(s) found</string>
 
-    <!-- Log -->
     <string name="gunluk_bos">No entries</string>
 
-    <!-- Foreground service -->
     <string name="hizmet_kanal_adi">Bridge status</string>
     <string name="hizmet_kanal_aciklama">Keeps the bridge alive during flight</string>
     <string name="hizmet_bildirim_baslik">GOKTUNGU MAVLink Bridge</string>
     <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
     <string name="hizmet_arac_bagli">sys %1$d %2$s</string>
-    <string name="hizmet_arac_bekleniyor">Awaiting vehicle</string>
-    <string name="hizmet_merkez_bagli">%1$d frames sent</string>
-    <string name="hizmet_merkez_hata">Bridge error</string>
+    <string name="hizmet_kanal_acik">%1$d channel(s) open</string>
+    <string name="hizmet_merkez_bagli">Centre: %1$s</string>
+    <string name="hizmet_merkez_hata">Centre connection error</string>
 
-    <!-- About -->
     <string name="hakkinda_baslik">About</string>
     <string name="hakkinda_kapat">Close</string>
     <string name="hakkinda_surum">Version %1$s</string>
-    <string name="hakkinda_telif">Turkbey Teknoloji Anonim Sirketi</string>
+    <string name="hakkinda_telif">Turkbey Teknoloji A.S.</string>
     <string name="hakkinda_lisans">Terms of use</string>
-    <string name="hakkinda_lisans_metni">This application is a MAVLink bridge for the GOKTUNGU ground control system. It carries MAVLink frames from the flight controller to the central software without modification. Because telemetry is sent unencrypted, connections are permitted only to private network addresses. Flight safety remains the responsibility of the operator; the bridge performs no flight control, it only carries communication.</string>
+    <string name="hakkinda_lisans_metni">This application is a MAVLink bridge for the GOKTUNGU ground control system. MAVLink frames read from the flight controller over USB are carried to the centre over a secure WebSocket paired with the API code issued in the centre\'s Support → Bridges panel; the centre opens the link from its Connection Manager. The app issues no commands to the aircraft on its own.</string>
 </resources>

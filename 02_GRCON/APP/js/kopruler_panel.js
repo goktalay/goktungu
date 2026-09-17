@@ -350,6 +350,17 @@
     }
     if (zaman === null) zaman = setInterval(iste, ARALIK_MS);
     listeCiz();
+    // 2.4.233 (kullanici istegi): GRCON'da (merkez kipi) kopru kayitlari
+    // kurumsal panelin "Kopruler" menusunden yonetilir; Destek > Kopruler
+    // ogesi ve panel yalniz YEREL kipte (GRCOFF) gorunur.
+    const kipUygula = () => {
+      const merkez = (typeof window.kopruMerkezKipiMi === "function") && window.kopruMerkezKipiMi();
+      const mb = document.getElementById("mbKopruler");
+      if (mb) mb.style.display = merkez ? "none" : "";
+      if (merkez) { const p = panel(); if (p && !p.classList.contains("yuzen-gizli")) p.classList.add("yuzen-gizli"); }
+    };
+    if (typeof window.kopruListesiDinle === "function") window.kopruListesiDinle(kipUygula);
+    kipUygula();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bagla);

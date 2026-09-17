@@ -22,3 +22,10 @@
 
 # GDP protokol veri siniflari -- alan adlari JSON'a birebir yansir.
 -keep class com.turkbey.goktungu.veri.** { *; }
+
+# 1.1.0: OkHttp/Okio (kopru ajani WebSocket)
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**

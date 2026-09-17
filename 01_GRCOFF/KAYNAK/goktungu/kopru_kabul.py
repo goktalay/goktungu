@@ -59,6 +59,7 @@ import hashlib
 import hmac
 import json
 import secrets
+import threading
 import time
 
 # Bulutla AYNI tuz. Degistirilirse mevcut kopru kayitlari gecersiz olur
@@ -127,10 +128,14 @@ API_KOD_ONEK = "GTK1."
 
 
 def api_kodu_uret(kurulum_uid, gizli, merkez_adres, merkez_http="",
-                  ad="", ornek_id=None, tur="grcoff"):
+                  ad="", ornek_id=None, tur="grcoff", urun="kopru"):
+    """`p` (urun): "kopru" saha koprusu, "gcs" Merkezi Yazilim (GRCOFF)
+    kaydi. Yerel kip yalniz kopru kodu uretir; GRCON kurumsal paneli
+    ikisini de uretir."""
     import base64
     govde = {"u": str(kurulum_uid or ""), "g": str(gizli or ""),
-             "m": str(merkez_adres or ""), "t": str(tur or "grcoff")}
+             "m": str(merkez_adres or ""), "t": str(tur or "grcoff"),
+             "p": str(urun or "kopru")}
     if merkez_http:
         govde["h"] = str(merkez_http)
     if ad:
@@ -727,6 +732,196 @@ def bayat_temizle():
 # ======================================================================
 # Merkez -> kopru istek/yanit
 # ======================================================================
+# ======================================================================
+# v2.4.233: YEREL AKIS ROLESI — kopru <-> GCS ham byte kanali
+# ======================================================================
+# Merkez kipinde bu isi merkezin `mk_akis.AkisKopruleyici`si yapar
+# (kopru --WSS--> merkez --UDP--> GCS). Yerel (kapali devre) kipte
+# kopru soketi BU SURECTEDIR; yine de dron.py/pymavlink'in `udpin`
+# arayuzu degismesin diye ayni desen kullanilir: kanal basina bir
+# loopback UDP soketi acilir, kopruden gelen `akis` paketi o sokete
+# yazilir, GCS'nin yazdigi datagram kopruye `akis` olarak gider.
+#
+# NEDEN GEREKLI: onceki surumde yerel kipte `akis` mesaji `pass` ile
+# yutuluyordu ve `_akis_kanali_ac` merkez ic ucunu (`/api/ic/akis_ac`)
+# cagirdigi icin kapali devre kurulumda kopru uzerinden dron baglantisi
+# HIC calismiyordu. Android MAVLink/DJI kopruleri de gercek kopru ajani
+# olunca (1.1.0) bu yol zorunlu hale geldi.
+_AKIS_YEREL_ADRES = "127.0.0.1"
+_AKIS_OKUMA_TAMPON = 65536
+_AKIS_BEKLEME_ENUST = 256 * 1024
+
+
+class YerelAkisKanali:
+    __slots__ = ("ornek_id", "kanal_id", "tanim", "soket", "port", "gcs_es",
+                 "beklemede", "kopruden_byte", "gcsden_byte", "son_hata",
+                 "acilma_ts", "son_kopru_ts", "son_gcs_ts")
+
+    def __init__(self, ornek_id, kanal_id, tanim):
+        self.ornek_id = int(ornek_id)
+        self.kanal_id = int(kanal_id)
+        self.tanim = dict(tanim or {})
+        self.soket = None
+        self.port = 0
+        self.gcs_es = None
+        self.beklemede = bytearray()
+        self.kopruden_byte = 0
+        self.gcsden_byte = 0
+        self.son_hata = ""
+        self.acilma_ts = time.time()
+        self.son_kopru_ts = 0.0
+        self.son_gcs_ts = 0.0
+
+    def ozet(self):
+        return {"ornek_id": self.ornek_id, "kanal_id": self.kanal_id,
+                "port": self.port, "tanim": self.tanim,
+                "gcs_es": list(self.gcs_es) if self.gcs_es else None,
+                "kopruden_byte": self.kopruden_byte,
+                "gcsden_byte": self.gcsden_byte, "son_hata": self.son_hata,
+                "acilma_ts": self.acilma_ts}
+
+
+class YerelAkis:
+    """Yerel kipte acik akis kanallarinin kayit defteri (bellek ici).
+
+    `kanal_ac` OLAY DONGUSU is parcacigindan cagrilmalidir
+    (`_akis_kanali_ac` bir coroutine'dir; kosul saglanir): soket
+    okuyucusu `loop.add_reader` ile o donguye baglanir.
+    """
+
+    def __init__(self):
+        self._kanallar = {}
+        self._kilit = threading.Lock()
+
+    def kanal_ac(self, ornek_id, kanal_id, tanim, gcs_port):
+        oid, kid = int(ornek_id), int(kanal_id)
+        try:
+            dongu = asyncio.get_running_loop()
+        except RuntimeError:
+            return None, "Olay dongusu hazir degil"
+        with self._kilit:
+            eski = self._kanallar.get((oid, kid))
+        if eski is not None:
+            self.kanal_kapat(oid, kid)
+        k = YerelAkisKanali(oid, kid, tanim)
+        import socket as _sk
+        s = _sk.socket(_sk.AF_INET, _sk.SOCK_DGRAM)
+        try:
+            s.bind((_AKIS_YEREL_ADRES, 0))
+            s.setblocking(False)
+        except Exception as e:
+            with contextlib.suppress(Exception):
+                s.close()
+            return None, "UDP portu ayrilamadi: %s" % e
+        k.soket = s
+        k.port = int(s.getsockname()[1])
+        if int(gcs_port or 0) > 0:
+            k.gcs_es = (_AKIS_YEREL_ADRES, int(gcs_port))
+        try:
+            dongu.add_reader(s, self._gcsden_oku, k)
+        except Exception as e:
+            with contextlib.suppress(Exception):
+                s.close()
+            return None, "Soket donguye baglanamadi: %s" % e
+        with self._kilit:
+            self._kanallar[(oid, kid)] = k
+        return k.ozet(), None
+
+    def kanal_kapat(self, ornek_id, kanal_id):
+        with self._kilit:
+            k = self._kanallar.pop((int(ornek_id), int(kanal_id)), None)
+        if k is None:
+            return False
+        s, k.soket = k.soket, None
+        if s is not None:
+            with contextlib.suppress(Exception):
+                asyncio.get_running_loop().remove_reader(s)
+            with contextlib.suppress(Exception):
+                s.close()
+        return True
+
+    def ornek_kapat(self, ornek_id):
+        """Kopru ayrildiginda o kopruye ait tum kanallar kapatilir."""
+        with self._kilit:
+            anahtarlar = [a for a in self._kanallar if a[0] == int(ornek_id)]
+        for a in anahtarlar:
+            self.kanal_kapat(*a)
+        return len(anahtarlar)
+
+    def kanal(self, ornek_id, kanal_id):
+        with self._kilit:
+            return self._kanallar.get((int(ornek_id), int(kanal_id)))
+
+    def durum(self):
+        with self._kilit:
+            return [k.ozet() for k in self._kanallar.values()]
+
+    # ---- kopru -> GCS ----
+    def kopruden_geldi(self, ornek_id, kanal_id, veri_b64):
+        k = self.kanal(ornek_id, kanal_id)
+        if k is None or k.soket is None:
+            return 0
+        try:
+            import base64 as _b64
+            veri = _b64.b64decode(veri_b64 or "", validate=False)
+        except Exception:
+            return 0
+        if not veri:
+            return 0
+        if k.gcs_es is None:
+            k.beklemede.extend(veri)
+            if len(k.beklemede) > _AKIS_BEKLEME_ENUST:
+                del k.beklemede[:len(k.beklemede) - _AKIS_BEKLEME_ENUST]
+            return 0
+        try:
+            n = k.soket.sendto(veri, k.gcs_es)
+        except Exception as e:
+            k.son_hata = "%s: %s" % (type(e).__name__, e)
+            return 0
+        k.kopruden_byte += n
+        k.son_kopru_ts = time.time()
+        return n
+
+    # ---- GCS -> kopru ----
+    def _gcsden_oku(self, k):
+        s = k.soket
+        if s is None:
+            return
+        while True:
+            try:
+                veri, es = s.recvfrom(_AKIS_OKUMA_TAMPON)
+            except (BlockingIOError, InterruptedError):
+                return
+            except Exception as e:
+                k.son_hata = "%s: %s" % (type(e).__name__, e)
+                return
+            if not veri:
+                return
+            if es[0] != _AKIS_YEREL_ADRES:
+                continue
+            if k.gcs_es != es:
+                k.gcs_es = es
+                if k.beklemede:
+                    bek, k.beklemede = bytes(k.beklemede), bytearray()
+                    with contextlib.suppress(Exception):
+                        for i in range(0, len(bek), 8192):
+                            k.soket.sendto(bek[i:i + 8192], es)
+            k.gcsden_byte += len(veri)
+            k.son_gcs_ts = time.time()
+            o = ROLE.ornek_ile(k.ornek_id)
+            if o is None:
+                k.son_hata = "Kopru bagli degil"
+                continue
+            import base64 as _b64
+            paket = json.dumps({"tur": "akis", "kanal_id": k.kanal_id,
+                                "veri": _b64.b64encode(veri).decode("ascii")})
+            with contextlib.suppress(Exception):
+                asyncio.ensure_future(o.soket.send(paket))
+
+
+AKIS = YerelAkis()
+
+
 async def kopruden_iste(o, eylem, veri=None, zaman_asimi=15.0):
     """Kopruye istek gonderir ve yanitini bekler.
 
@@ -903,12 +1098,11 @@ async def oturum(soket, konsol=None):
                 if _hd is not None:
                     _hd.DEPO.yaz(o.ornek_id, o.ad, m)
             elif tur == "akis":
-                # HAM MAVLINK BYTE: saniyede ~50 paket. Gunluge
-                # YAZILMAZ ve yanit URETILMEZ (atesle-unut); yanit
-                # beklemek 20 ms araliklarli pakette kopruude gecikme
-                # biriktirir. Yerel kurulumda akis kopruusu GCS'in
-                # kendi UDP yayini uzerinden yurur.
-                pass
+                # HAM MAVLINK/GDP BYTE: saniyede ~50 paket. Gunluge
+                # YAZILMAZ ve yanit URETILMEZ (atesle-unut). v2.4.233:
+                # yerel role (`AKIS`) GCS'nin UDP portuna teslim eder.
+                AKIS.kopruden_geldi(o.ornek_id, m.get("kanal_id") or 0,
+                                    m.get("veri") or "")
     except Exception as e:
         adi = type(e).__name__
         if "ConnectionClosed" not in adi and not isinstance(
@@ -917,6 +1111,11 @@ async def oturum(soket, konsol=None):
     finally:
         if dogrulandi:
             await ROLE.cikar(o)
+            # v2.4.233: kopru ayrildi -> bu kopruye ait akis kanallari
+            # kapanir (yeniden baglanan oturum yeni kanal acar).
+            if ROLE.ornek_ile(int(o.ornek_id)) is None:
+                with contextlib.suppress(Exception):
+                    AKIS.ornek_kapat(o.ornek_id)
             _baglanti_kapandi(o)
             yaz("KOPRU", "Kopru ayrildi: %s (ornek %s)"
                 % (o.ad, o.ornek_id))

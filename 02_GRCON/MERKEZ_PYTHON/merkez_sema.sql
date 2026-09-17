@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS sunucu_ornekleri (
   durum         TEXT NOT NULL DEFAULT 'etkin'
                 CHECK (durum IN ('etkin','askida','iptal')),
   api_kodu      TEXT NOT NULL DEFAULT '',     -- v2.4.232: kurulum API kodu (ilk bağlantıya kadar)
+  urun          TEXT NOT NULL DEFAULT 'kopru', -- göç 13: kopru | gcs (Merkezi Yazılım) | video | ...
   olusma_ts     TIMESTAMPTZ NOT NULL DEFAULT now(),
   guncel_ts     TIMESTAMPTZ NOT NULL DEFAULT now()
 );

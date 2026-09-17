@@ -12,10 +12,18 @@
 
 window.PANEL_SURUM = {
   ad: 'GÖKTUNGU Kurumsal Panel',
-  surum: '1.3.7',
-  tarih: '2026-09-11',
+  surum: '1.4.0',
+  tarih: '2026-09-17',
   telif: '© 2026 Türkbey Teknoloji Anonim Şirketi',
   gecmis: [
+    {
+      s: "1.4.0", t: "17 Eylül 2026",
+      d: [
+        "KOPRULER VE MERKEZI YAZILIMLAR MENULERI. 'Istasyonlar' ikiye ayrildi: Kopruler (Windows/Ubuntu/Android saha kopruleri) ve Merkezi Yazilimlar (GRCOFF kurulumlari). Yeni kayit yalniz AD ister; panel bir API kodu (GTK1.) uretir. Kod listede kopyalanir, kurulum ilk kez baglaninca guvenlik icin silinir; 'Kodu yenile' yeni sir uretir. Kaldir canli baglantiyi da keser.",
+        "CEVRIMICI MODULLER. Her kopru kartinda merkeze bildirilen servisler (Dron, AI, Video, GroundGCC, Radar, M50) calisiyor/durdu olarak cip halinde gorunur.",
+        "KULLANICI ADI/SIFRE ILE KAYIT KALKTI. Kopru ve Merkezi Yazilim kurulumlari e-posta/sifre yerine API koduyla eslesir; GRCOFF kurulum sihirbazi kurum bilgilerini ve logoyu bu kodla merkezden bir kez ceker."
+      ]
+    },
     {
       s: "1.3.7", t: "11 Eylül 2026",
       d: [

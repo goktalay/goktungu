@@ -1950,6 +1950,11 @@ const DILLER = {
     pgGiris: "Sisteme Gir",
     pgHata: "Hata",
     pgEsitleme: "MERKEZ KULLANICILARI",
+    // 2.4.233: kurulum sihirbazi — merkez sunucu + API kodu (adim 4)
+    pgAdim4Kod: "Merkez Sunucu", pgKodAciklama: "Kurumsal panelde (goktungu.com) Merkezi Yazılımlar bölümünde bu kurulum için oluşturulan kaydın API kodunu yapıştırın. Kurum bilgileriniz ve logonuz merkezden bir kez alınır; kullanıcı adı ve şifre girilmez.",
+    pgKodAdres: "Merkez sunucu adresi", pgKodAdresIpucu: "örn. goktungu.com — boş bırakılırsa API kodundaki adres kullanılır", pgKod: "API kodu", pgKodIpucu: "GTK1. ile başlar; Merkezi Yazılımlar > kayıt > Kopyala",
+    pgKodBaglan: "Merkeze Bağlan", pgKodBaglaniyor: "Merkeze bağlanılıyor...", pgKodTamam: "Merkeze eşleşildi; kurum bilgileri ve logo alındı.", pgKodFirma: "Kurum", pgKodAd: "Kayıt adı", pgKodAdres2: "Merkez", pgKodLogo: "Logo", pgKodLogoVar: "alındı", pgKodLogoYok: "merkezde tanımlı değil",
+    pgKodNot: "Şirket bilgileri bir daha sorulmaz. İleri deyip bu kuruluma ait yönetici hesabınızı belirleyin.", pgKodGec: "Merkez Sunucu ve API Kodu", pgKimlikGeriKod: "Merkez Sunucu",
     pgEsitlemeAciklama: "Merkez Uygulama lisansınız varsa, kurumsal panelde tanımlı kullanıcılarınızı buraya aktarabilirsiniz. Böylece merkezde belirlediğiniz şifreler bu kurulumda da geçerli olur.",
     pgEsitlemeAdres: "Merkez sunucu adresi",
     pgEsitlemeAdresIpucu: "örn. goktungu.com",
@@ -4107,6 +4112,11 @@ const DILLER = {
     pgSemaSurum: "Schema version",
     pgGiris: "Enter System",
     pgEsitleme: "CENTRAL USERS",
+    // 2.4.233: setup wizard — central server + API code (step 4)
+    pgAdim4Kod: "Central Server", pgKodAciklama: "Paste the API code of the record created for this installation under Central Applications in the corporate panel (goktungu.com). Your company details and logo are fetched from the centre once; no username or password is entered.",
+    pgKodAdres: "Central server address", pgKodAdresIpucu: "e.g. goktungu.com — leave empty to use the address inside the API code", pgKod: "API code", pgKodIpucu: "Starts with GTK1.; Central Applications > record > Copy",
+    pgKodBaglan: "Connect to Centre", pgKodBaglaniyor: "Connecting to the centre...", pgKodTamam: "Paired with the centre; company details and logo received.", pgKodFirma: "Company", pgKodAd: "Record name", pgKodAdres2: "Centre", pgKodLogo: "Logo", pgKodLogoVar: "received", pgKodLogoYok: "not defined at the centre",
+    pgKodNot: "Company details will not be asked again. Press Next and set the administrator account for this installation.", pgKodGec: "Central Server and API Code", pgKimlikGeriKod: "Central Server",
     pgEsitlemeAciklama: "If you have a Central Application license, you can import the users defined in your corporate panel. This way the passwords you set centrally also apply to this installation.",
     pgEsitlemeAdres: "Central server address",
     pgEsitlemeAdresIpucu: "e.g. goktungu.com",

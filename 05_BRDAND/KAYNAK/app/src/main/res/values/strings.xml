@@ -5,38 +5,61 @@
 
     <!-- Kart başlıkları -->
     <string name="durum_baslik">DURUM</string>
-    <string name="yapilandirma_baslik">YAPILANDIRMA</string>
+    <string name="kurulum_baslik">İLK KURULUM</string>
+    <string name="kimlik_baslik">KÖPRÜ KİMLİĞİ</string>
     <string name="telemetri_baslik">TELEMETRİ</string>
     <string name="gunluk_baslik">GÜNLÜK</string>
 
     <!-- Durum iletileri -->
-    <string name="durum_usb_yok">USB seri bağlantı kapalı</string>
-    <string name="durum_usb_acik">USB açık: %1$s @ %2$d</string>
-    <string name="durum_usb_hata">USB hatası: %1$s</string>
+    <string name="durum_merkez_kopuk">Merkez: köprü durdu</string>
+    <string name="durum_merkez_yeniden">Merkez: yeniden bağlanılıyor…</string>
+    <string name="durum_merkez_baglaniyor">Merkez: bağlanıyor…</string>
+    <string name="durum_merkez_bagli">Merkez: bağlı · %1$s · %2$s</string>
+    <string name="durum_merkez_hata">Merkez: %1$s</string>
+    <string name="durum_usb_yok">USB seri cihaz yok</string>
+    <string name="durum_usb_var">USB: %1$d cihaz, %2$d izinli</string>
+    <string name="durum_kanal_yok">Kanal: merkez henüz bağlantı açmadı</string>
+    <string name="durum_kanal_var">Kanal: %1$d açık · %2$s</string>
     <string name="durum_arac_yok">Araç yok</string>
     <string name="durum_arac_bagli">Araç bağlı: %1$s</string>
-    <string name="durum_merkez_kopuk">Merkez: kopuk</string>
-    <string name="durum_merkez_bagli">Merkez: %1$s</string>
+    <string name="durum_sayac">↑ %1$d KB   ↓ %2$d KB</string>
 
-    <!-- Alan etiketleri -->
-    <string name="alan_cihaz">USB seri cihaz</string>
-    <string name="alan_hiz">Hat hızı (baud)</string>
-    <string name="alan_adres">Merkez adresi</string>
-    <string name="alan_port">MAVLink UDP portu</string>
-    <string name="alan_oto_baglan">Açılışta kendiliğinden bağlan</string>
-    <string name="ipucu_adres">192.168.1.10</string>
-    <string name="ipucu_port">14550</string>
-    <string name="cihaz_yok">Bağlı USB seri cihaz yok</string>
+    <!-- Kurulum -->
+    <string name="kurulum_aciklama">Bu köprü hangi merkeze bağlanacak? Seçin, sonra o merkezin Destek → Köprüler panelinde oluşturulan köprü kaydının API kodunu yapıştırın. Kod kimliği ve adresi birlikte taşır; başka bir şey girmeniz gerekmez.</string>
+    <string name="kurulum_grcon">GRCON — Merkez Sunucu (goktungu.com üzerindeki çevrimiçi merkez)</string>
+    <string name="kurulum_grcoff">GRCOFF — Yerel Kurulum (kapalı devre çalışan kendi Merkez Uygulamanız)</string>
+    <string name="alan_kod">API kodu</string>
+    <string name="ipucu_kod">GTK1.…</string>
+    <string name="kurulum_not_grcon">Kodu GRCON merkezindeki uygulamanın Destek → Köprüler panelinden kopyalayın. Köprü ilk kez bağlandığında kod merkezde silinir; kaybolursa panelden Kodu yenile ile yenisini alın.</string>
+    <string name="kurulum_not_grcoff">Kodu yerel Merkez Uygulamasının (GRCOFF) Destek → Köprüler panelinden kopyalayın. Telefon ile GRCOFF aynı ağda olmalıdır. Kod ilk bağlantıda silinir; kaybolursa Kodu yenile ile yenisini alın.</string>
+    <string name="dg_kur">KAYDET VE BAĞLAN</string>
+    <string name="kurulum_tamam">Kimlik kaydedildi; merkeze bağlanılıyor</string>
+    <string name="hata_kod">API kodu geçersiz: %1$s</string>
+    <string name="hata_kod_secim">Bu API kodu %1$s için üretilmiş; kurulum seçimi %2$s. Doğru kodu girin veya seçimi değiştirin.</string>
+    <string name="hata_kimlik_yok">Önce API kodu ile kurulumu tamamlayın.</string>
 
-    <!-- Düğmeler -->
-    <string name="dg_tara">TARA</string>
+    <!-- Kimlik kartı -->
+    <string name="kimlik_ozet">Köprü: %1$s\nMerkez: %2$s\nAdres: %3$s</string>
     <string name="dg_baglan">KÖPRÜYÜ BAŞLAT</string>
     <string name="dg_kes">DURDUR</string>
+    <string name="alan_oto_baslat">Uygulama açılınca köprüyü kendiliğinden başlat</string>
+    <string name="alan_cihaz">USB seri cihaz</string>
+    <string name="cihaz_yok">Bağlı USB seri cihaz yok</string>
+    <string name="dg_tara">TARA</string>
+    <string name="dg_usb_izin">USB İZNİ VER</string>
+    <string name="usb_izin_yok">izin yok</string>
+    <string name="usb_izin_var">Bu cihaz için USB izni zaten var</string>
+    <string name="usb_izin_isteniyor">USB izni isteniyor…</string>
+    <string name="usb_izin_not">Bağlantıyı merkezdeki Bağlantı Yöneticisi açar (Seri → bu köprü → cihaz). USB izni önceden verilmiş olmalıdır; aksi halde merkez "USB izni verilmedi" görür.</string>
+    <string name="dg_kimlik_sil">Kimliği sıfırla (yeni API kodu gir)</string>
+    <string name="kimlik_sil_baslik">Kimlik sıfırlansın mı?</string>
+    <string name="kimlik_sil_govde">Köprü durdurulur ve kurulum kimliği silinir. Yeniden bağlanmak için merkezden yeni bir API kodu (Kodu yenile) gerekir.</string>
+    <string name="kimlik_sil_onay">Sıfırla</string>
     <string name="dg_gunluk_temizle">Temizle</string>
 
     <!-- Telemetri alanları -->
     <string name="tel_konum">Konum</string>
-    <string name="tel_konum_yok">Konum yok (GPS kilidi bekleniyor)</string>
+    <string name="tel_konum_yok">Konum yok (kanal açılınca araç verisi gelir)</string>
     <string name="tel_irtifa">İrtifa</string>
     <string name="tel_yon">Yön</string>
     <string name="tel_batarya">Batarya</string>
@@ -47,13 +70,8 @@
     <string name="tel_deger_yok">—</string>
 
     <!-- Uyarılar -->
-    <string name="hata_baslik">Bağlantı reddedildi</string>
-    <string name="hata_adres_bos">Merkez adresi boş olamaz.</string>
-    <string name="hata_port_gecersiz">Port 1 ile 65535 arasında olmalı.</string>
     <string name="hata_cihaz_yok">Bağlı USB seri cihaz bulunamadı. Kabloyu takıp TARA düğmesine basın.</string>
-    <string name="hata_usb_izin">USB izni verilmedi; köprü başlatılamaz.</string>
-    <string name="usb_izin_isteniyor">USB izni isteniyor…</string>
-    <string name="kopru_baslatildi">Köprü başlatıldı</string>
+    <string name="kopru_baslatildi">Köprü başlatıldı; merkeze bağlanılıyor</string>
     <string name="tarama_sonuc">%1$d USB seri cihaz bulundu</string>
 
     <!-- Günlük -->
@@ -65,9 +83,9 @@
     <string name="hizmet_bildirim_baslik">GÖKTUNGU MAVLink Köprüsü</string>
     <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
     <string name="hizmet_arac_bagli">sys %1$d %2$s</string>
-    <string name="hizmet_arac_bekleniyor">Araç bekleniyor</string>
-    <string name="hizmet_merkez_bagli">%1$d çerçeve gönderildi</string>
-    <string name="hizmet_merkez_hata">Köprü hatası</string>
+    <string name="hizmet_kanal_acik">%1$d kanal açık</string>
+    <string name="hizmet_merkez_bagli">Merkez: %1$s</string>
+    <string name="hizmet_merkez_hata">Merkez bağlantı hatası</string>
 
     <!-- Hakkında -->
     <string name="hakkinda_baslik">Hakkında</string>
@@ -75,5 +93,5 @@
     <string name="hakkinda_surum">Sürüm %1$s</string>
     <string name="hakkinda_telif">Türkbey Teknoloji Anonim Şirketi</string>
     <string name="hakkinda_lisans">Kullanım koşulları</string>
-    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir MAVLink köprüsüdür. Uçuş kontrolcüsünden gelen MAVLink çerçevelerini değiştirmeden merkez yazılıma taşır. Telemetri şifrelenmemiş olarak gönderildiği için yalnız özel ağ adreslerine bağlanmaya izin verilir. Uçuş güvenliği kullanıcının sorumluluğundadır; köprü uçuş denetimi yapmaz, yalnız iletişim taşır.</string>
+    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir MAVLink köprüsüdür. Uçuş kontrolcüsünden USB ile alınan MAVLink çerçeveleri, merkezin Destek → Köprüler panelinde üretilen API kodu ile eşleşen güvenli WebSocket bağlantısı üzerinden merkeze taşınır; merkez bağlantıyı kendi Bağlantı Yöneticisi\'nden açar. Uygulama araç üzerinde kendi başına komut üretmez.</string>
 </resources>

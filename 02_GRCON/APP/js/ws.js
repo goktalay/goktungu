@@ -697,6 +697,10 @@ function wsBaglan(){
     // kimlik dogrulanamaz; yonlendirme KOSULSUZ olmalidir.
     } else if (m.tip === "lisans_yenile_sonuc"){
       if (typeof window.lisansYenileSonuc === "function") window.lisansYenileSonuc(m);
+    } else if (m.tip === "pg_merkez_kod_sonuc"){
+      // 2.4.233: kurulum sihirbazi merkez sunucu + API kodu yaniti.
+      if (typeof window.pgSonucGeldi === "function")
+        window.pgSonucGeldi(m);
     } else if (m.tip === "merkez_esitle_sonuc"){
       if (typeof window.pgSonucGeldi === "function")
         window.pgSonucGeldi(m);
