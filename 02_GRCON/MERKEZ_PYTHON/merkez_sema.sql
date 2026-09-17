@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS sunucu_ornekleri (
   dron_sayisi   INTEGER NOT NULL DEFAULT 0,
   durum         TEXT NOT NULL DEFAULT 'etkin'
                 CHECK (durum IN ('etkin','askida','iptal')),
+  api_kodu      TEXT NOT NULL DEFAULT '',     -- v2.4.232: kurulum API kodu (ilk bağlantıya kadar)
   olusma_ts     TIMESTAMPTZ NOT NULL DEFAULT now(),
   guncel_ts     TIMESTAMPTZ NOT NULL DEFAULT now()
 );

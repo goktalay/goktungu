@@ -197,6 +197,63 @@ def kurulum_uid_uret() -> str:
     return secrets.token_hex(16)
 
 
+# --------------------------------------------------------------------------
+# v2.4.232 (2026-09-17): KÖPRÜ API KODU
+# --------------------------------------------------------------------------
+# Köprü kurulumunda tek bir kod girilir; kod kurulum kimliğini (uid),
+# sırrı, merkezin WS adresini ve kayıt adını taşır. Biçim
+# `GTK1.` + base64url(JSON) — GRCOFF `kopru_kabul.api_kodu_uret` ile aynı.
+# Kod sırrı AÇIK taşıdığı için yalnız köprü ilk kez başarıyla bağlanana
+# kadar saklanır (`baglanti_acildi` siler); kaybolursa `gizli_yenile`.
+API_KOD_ONEK = "GTK1."
+
+
+def api_kodu_uret(kurulum_uid: str, gizli: str, merkez_adres: str,
+                  merkez_http: str = "", ad: str = "",
+                  ornek_id: int | None = None, tur: str = "grcon") -> str:
+    import base64
+    govde: dict[str, Any] = {"u": str(kurulum_uid or ""),
+                             "g": str(gizli or ""),
+                             "m": str(merkez_adres or ""),
+                             "t": str(tur or "grcon")}
+    if merkez_http:
+        govde["h"] = str(merkez_http)
+    if ad:
+        govde["a"] = str(ad)
+    if ornek_id:
+        govde["o"] = int(ornek_id)
+    ham = json.dumps(govde, separators=(",", ":"),
+                     ensure_ascii=False).encode("utf-8")
+    return API_KOD_ONEK + base64.urlsafe_b64encode(ham).decode(
+        "ascii").rstrip("=")
+
+
+def _kopru_adresleri() -> tuple[str, str]:
+    a = ayar_oku()
+    ws = str(a.get("kopru_adres") or "wss://goktungu.com/kopru")
+    # HTTP tabanı köprü tarafından WS adresinden türetilir (bulutta
+    # port düşürülür); ayarda açık bir değer varsa o yollanır.
+    return ws, str(a.get("kopru_http") or "")
+
+
+def gizli_yenile(ornek_id: int) -> tuple[dict | None, str | None]:
+    """Sırrı ve API kodunu yeniler; eski sırla bağlanan köprü düşer."""
+    o = db.tek("SELECT ornek_id, kurulum_uid, ad FROM sunucu_ornekleri "
+               "WHERE ornek_id = %s AND durum <> 'iptal'", (int(ornek_id),))
+    if not o:
+        return None, "Sunucu bulunamadı"
+    gizli = secrets.token_urlsafe(32)
+    ws, http = _kopru_adresleri()
+    kod = api_kodu_uret(o["kurulum_uid"], gizli, ws, http, o["ad"],
+                        int(o["ornek_id"]))
+    db.calistir(
+        "UPDATE sunucu_ornekleri SET gizli_ozet = %s, api_kodu = %s, "
+        "guncel_ts = now() WHERE ornek_id = %s",
+        (gizli_ozetle(gizli), kod, int(ornek_id)))
+    return {"ornek_id": int(o["ornek_id"]), "ad": o["ad"],
+            "api_kodu": kod}, None
+
+
 def ornek_kaydet(firma_id: int, ad: str, aciklama: str | None = None,
                  platform: str | None = None,
                  makine_adi: str | None = None) -> tuple[dict | None, str | None]:
@@ -221,14 +278,19 @@ def ornek_kaydet(firma_id: int, ad: str, aciklama: str | None = None,
         "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING ornek_id",
         (uid, firma_id, ad, aciklama, platform, makine_adi, gizli_ozetle(gizli)),
     )
-    a = ayar_oku()
+    ws, http = _kopru_adresleri()
+    # v2.4.232: API kodu ilk bağlantıya kadar saklanır (bkz. api_kodu_uret).
+    kod = api_kodu_uret(uid, gizli, ws, http, ad, int(oid))
+    with contextlib.suppress(Exception):
+        db.calistir("UPDATE sunucu_ornekleri SET api_kodu = %s "
+                    "WHERE ornek_id = %s", (kod, int(oid)))
     return {
         "ornek_id": int(oid),
         "kurulum_uid": uid,
         "gizli": gizli,          # bir daha gösterilmez
         "ad": ad,
-        "merkez_adres": a.get(
-            "kopru_adres", "wss://goktungu.com/kopru"),
+        "merkez_adres": ws,
+        "api_kodu": kod,
     }, None
 
 
@@ -240,6 +302,8 @@ def baglanti_acildi(o: KopruOturumu) -> None:
         "UPDATE sunucu_ornekleri SET cevrimici = TRUE, son_gorulme_ts = now(), "
         "son_ip = %s, role_kanal = %s, surum = COALESCE(%s, surum), "
         "platform = COALESCE(%s, platform), makine_adi = COALESCE(%s, makine_adi), "
+        # v2.4.232: köprü bağlandı -> sırrı açık taşıyan API kodu silinir.
+        "api_kodu = '', "
         "guncel_ts = now() WHERE ornek_id = %s",
         (o.ip, o.kanal, o.surum or None, o.platform or None,
          o.makine_adi or None, o.ornek_id),

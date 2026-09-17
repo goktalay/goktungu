@@ -461,9 +461,10 @@ def uygulama_kur():
         from goktungu.radar_vekil import RadarVekili
         # `cek` geri cagrisi WSSunucusu kuruldugunda baglanir: kopru
         # secimi oturum/firma baglami gerektirir ve o baglam sunucuda
-        # durur. Faz C'ye kadar yalniz 1 numarali radar kopruden beslenir;
-        # digerleri vekil olarak "kopru yok" durumunda kalir.
-        _birincil = RadarVekili(konsol, ayarlar, kilit)
+        # durur.
+        # v2.4.232 (kullanici: "GRCON'da hala bir radar duruyor"): 1 numarali
+        # radar icin SABIT vekil artik uretilmez — kayit yoksa listede radar
+        # yoktur; her vekil yalniz kendi DB kaydindan (fabrika) dogar.
 
         def _radar_fabrika(kayit):
             v = RadarVekili(konsol, ayarlar, kilit)
@@ -471,7 +472,7 @@ def uygulama_kur():
             v.konum_yedek = (kayit.get("lat"), kayit.get("lon"))
             return v
         radar = RadarYoneticisi(konsol, ayarlar, kilit, _radar_kayitlar,
-                                _radar_fabrika, birincil_istemci=_birincil)
+                                _radar_fabrika)
         konsol("RADAR", "Merkez kipi: radar oturumu saha koprusunde "
                         "kurulur; merkezde yerel baglanti denenmez.",
                "bilgi")

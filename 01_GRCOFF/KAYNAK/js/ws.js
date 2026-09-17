@@ -349,6 +349,11 @@ function wsBaglan(){
       // `gizli` YALNIZ BIR KEZ gelir.
       if (typeof window.kopruKimlikSonuc === "function")
         window.kopruKimlikSonuc(m);
+    } else if (m.tip === "kopruler"){
+      // v2.4.232: Destek > Kopruler paneli (liste / olustur / sil /
+      // kod yenile yanitlari; kip bagimsiz).
+      if (typeof window.koprulerPanelIsle === "function")
+        window.koprulerPanelIsle(m);
     } else if (m.tip === "kopru_liste"){
       // v2.4.53 Faz 7: merkezde calisan ornekte firmaya ait KOPRU
       // (saha makinesi) listesi. Baglanti Yoneticisi gruplarini ve

@@ -36,7 +36,7 @@ import mk_sunucu as sunucu  # noqa: E402
 from mk_ayar import PROJE_KOKU, ayar_oku  # noqa: E402
 
 SEMA_DOSYA = os.path.join(BURASI, "merkez_sema.sql")
-BEKLENEN_SEMA = 11
+BEKLENEN_SEMA = 12  # v2.4.232: sunucu_ornekleri.api_kodu (goc_sema12)
 
 
 def _pg_dene() -> tuple[bool, str]:

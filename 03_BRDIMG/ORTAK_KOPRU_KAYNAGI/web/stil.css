@@ -506,3 +506,10 @@ input:focus{border-color:var(--vurgu);
 }
 .giris-kart.genis-kart details{ margin-top: 8px; }
 .giris-kart.genis-kart details summary{ cursor: pointer; }
+
+/* 1.7.23: API kodu alanlari */
+.alan textarea{width:100%;box-sizing:border-box;font-family:Consolas,monospace;font-size:12px;
+  word-break:break-all;resize:vertical;background:var(--giris-arka,transparent);color:inherit;
+  border:1px solid var(--cizgi,#3a4a5a);border-radius:6px;padding:8px}
+#kayitKodDetay{margin-top:8px}
+#kayitKodDetay .alan{margin-top:8px}

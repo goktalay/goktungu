@@ -1025,6 +1025,11 @@
     });
     araclar.append(bDuzenle, bSil);
     satir.append(sol, araclar);
+    // v2.4.232: en sagda bagli oldugu kopru
+    if (kamera.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {
+      const kr = window.kopruRozetOlustur(kamera.kopru_ornek_id);
+      if (kr) satir.appendChild(kr);
+    }
     satir.classList.add("kam-satir-tikla");
     satir.title = t.kamSatirAc || "Yüzen pencerede aç";
     if (ayrikler[kamera.id]) satir.classList.add("kam-satir-acik");
@@ -1053,6 +1058,11 @@
     ad.textContent = kamera.isim;
     ad.title = kamera.url;
     baslik.append(ad, protokolRozet(kamera.protokol));
+    // v2.4.232: kartta da bagli oldugu kopru
+    if (kamera.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {
+      const krK = window.kopruRozetOlustur(kamera.kopru_ornek_id);
+      if (krK) baslik.appendChild(krK);
+    }
     // v2.4.8: AI izleme aktifse yesil AI rozeti
     const aiRozet = aiRozetOlustur(kamera.id);
     if (aiRozet) baslik.appendChild(aiRozet);
@@ -1103,105 +1113,9 @@
   // v2.4.8: izleme listesi degisince rozetler tazelensin
   window.aiIzlemeDegisti = function () { listeCiz(); };
 
-  // ----------------------------------------------------------------
-  // v2.4.56: KOPRU GRUPLARI
-  // Baglanti Yoneticisi ve AI Sunuculari ile ayni gorunum kalibi.
-  // Onizleme kipinde kartlar izgaraya yerlesir; bu yuzden her grup
-  // kendi izgara kabinda cizilir, yoksa grup basliklari izgara
-  // hucresi olur ve duzen bozulur.
-  // ----------------------------------------------------------------
-  function kamKopruBaslik(k, ornekId) {
-    const t = T();
-    const bas = document.createElement("div");
-    bas.className = "kam-kopru-baslik";
-    const led = document.createElement("span");
-    led.className = "kam-kopru-led " +
-      ((k && k.cevrimici) ? "cevrimici" : "cevrimdisi");
-    bas.appendChild(led);
-    const ad = document.createElement("span");
-    ad.className = "ad";
-    ad.textContent = (k && k.ad) ? k.ad : ("#" + ornekId);
-    bas.appendChild(ad);
-    const rozet = document.createElement("span");
-    rozet.className = "kam-kopru-rozet";
-    rozet.textContent = t.bagKopruEtiket || "K\u00d6PR\u00dc";
-    bas.appendChild(rozet);
-    if (k && k.ip) {
-      const yer = document.createElement("span");
-      yer.className = "alt";
-      yer.textContent = k.ip;
-      bas.appendChild(yer);
-    }
-    if (k && !k.cevrimici) {
-      const cd = document.createElement("span");
-      cd.className = "alt";
-      cd.textContent = t.bagKopruCevrimdisi || "\u00e7evrimd\u0131\u015f\u0131";
-      bas.appendChild(cd);
-    }
-    return bas;
-  }
-
-  function kamBosNot(metin) {
-    const not = document.createElement("div");
-    not.className = "kam-kopru-bos";
-    not.textContent = metin;
-    return not;
-  }
-
-  function kamGrupKabi() {
-    const kab = document.createElement("div");
-    kab.className = (gorunum === "onizleme")
-      ? "kam-izgara kam-kopru-govde" : "kam-kopru-govde";
-    return kab;
-  }
-
-  function kameraGrupluCiz(kok, kameraListesi) {
-    const t = T();
-    // Izgara sinifi grup kablarina tasinir; kok duz akis olur.
-    kok.className = "kam-kopru-liste";
-    const kopruler = (typeof window.kopruListesiAl === "function")
-      ? window.kopruListesiAl() : [];
-    const kullanilan = new Set();
-    for (const kp of kopruler) {
-      const oid = String(kp.ornek_id);
-      kullanilan.add(oid);
-      kok.appendChild(kamKopruBaslik(kp, oid));
-      const altindakiler = kameraListesi.filter(
-        (k) => String(k.kopru_ornek_id || "") === oid);
-      if (!altindakiler.length) {
-        kok.appendChild(kamBosNot(t.kopruGrupKameraYok ||
-          "Bu k\u00f6pr\u00fcde kay\u0131tl\u0131 kamera yok"));
-        continue;
-      }
-      const kab = kamGrupKabi();
-      altindakiler.forEach((k) => {
-        kab.appendChild(gorunum === "onizleme"
-          ? kartOlustur(k) : satirOlustur(k));
-      });
-      kok.appendChild(kab);
-    }
-    // Koprusu bilinmeyen kayitlar ASLA gizlenmez.
-    const artakalan = kameraListesi.filter((k) => {
-      const oid = String(k.kopru_ornek_id || "");
-      return !oid || !kullanilan.has(oid);
-    });
-    if (artakalan.length) {
-      const bas = document.createElement("div");
-      bas.className = "kam-kopru-baslik grupsuz";
-      const ad = document.createElement("span");
-      ad.className = "ad";
-      ad.textContent = t.kopruGrupsuzKamera || "K\u00d6PR\u00dcYE BA\u011eLI OLMAYAN";
-      bas.appendChild(ad);
-      kok.appendChild(bas);
-      const kab = kamGrupKabi();
-      artakalan.forEach((k) => {
-        kab.appendChild(gorunum === "onizleme"
-          ? kartOlustur(k) : satirOlustur(k));
-      });
-      kok.appendChild(kab);
-    }
-  }
-
+  // v2.4.232 (kullanici istegi): KOPRU GRUPLAMASI KALDIRILDI. Kameralar
+  // her kipte duz listelenir; satir/kart sonunda bagli oldugu kopru
+  // rozeti gosterilir (window.kopruRozetOlustur).
   // ----------------------------------------------------------------
   // LISTE CIZIMI
   // ----------------------------------------------------------------
@@ -1231,15 +1145,9 @@
     // Merkezde kameralar saha makinelerine baglidir. Duz liste hangi
     // kameranin hangi sahada oldugunu gizler. Yerel kurulumda gruplama
     // yapilmaz (tek makine); eski gorunum birebir korunur.
-    const merkezde = (typeof window.kopruMerkezKipiMi === "function")
-      && window.kopruMerkezKipiMi();
-    if (merkezde) {
-      kameraGrupluCiz(kok, panelKameralari);
-    } else {
-      panelKameralari.forEach((k) => {
-        kok.appendChild(gorunum === "onizleme" ? kartOlustur(k) : satirOlustur(k));
-      });
-    }
+    panelKameralari.forEach((k) => {
+      kok.appendChild(gorunum === "onizleme" ? kartOlustur(k) : satirOlustur(k));
+    });
     // v2.4.33: ayrik pencere sayisini gosteren bilgi satiri. Panel bos
     // gorunurken kullanicinin "kameralarim nereye gitti" sorusunu
     // onlemek icin gerekli.

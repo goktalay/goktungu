@@ -635,7 +635,6 @@ function bagKopruAnahtar(ornekId){ return BAG_KOPRU_ONEK + String(ornekId); }
 // sistemden soküldu (kopru 1.7.9 artik 3 servis bildirir).
 // Kalan servisler: Dron, GroundGCC, Radar. Sira panel sol
 // menusuyle AYNI tutulur.
-const KOPRU_SERVIS_SIRASI = ["dron", "gcsdual", "radar"];
 // Merkezden gelen kopru listesi: [{ornek_id, ad, ip, cevrimici,
 // surum, platform, servisler:[{ad,durum,...}], ...}]
 let bagKopruler = [];
@@ -883,36 +882,14 @@ function bagListeCiz(){
   const sanallar = bagKayitlar.filter(b => String(b.tur) === "sanal");
   let digerler = bagKayitlar.filter(b => String(b.tur) !== "sanal");
 
-  // v2.4.53 Faz 7: KOPRU gruplari. Merkezde calisan ornekte her saha
-  // makinesi (kopru) bir ust grup acar; o kopruye bagli kayitlar
-  // altinda toplanir. Ayrica koprunun AI ve VIDEO servisleri de ayni
-  // grupta gosterilir — grup "saha makinesinin tam gorunumu"dur.
-  //
-  // `kopru_ornek_id` NULL olan kayitlar (lokal kurulum ve merkezde
-  // dogrudan tanimlanan kayitlar) ESKISI GIBI tek tek cizilir; bu,
-  // v2.4.24 davranisinin korunmasi icin zorunludur.
-  const kopruGruplari = [];
-  if (Array.isArray(bagKopruler) && bagKopruler.length){
-    const kopruKayit = new Map();
-    for (const k of bagKopruler) kopruKayit.set(String(k.ornek_id), []);
-    const kalan = [];
-    for (const b of digerler){
-      const kid = (b.kopru_ornek_id == null) ? "" : String(b.kopru_ornek_id);
-      if (kid && kopruKayit.has(kid)) kopruKayit.get(kid).push(b);
-      else kalan.push(b);
-    }
-    digerler = kalan;
-    for (const k of bagKopruler){
-      kopruGruplari.push({kayit: null, anahtar: bagKopruAnahtar(k.ornek_id),
-                          kopru: k,
-                          kayitlar: kopruKayit.get(String(k.ornek_id)) || []});
-    }
-  }
-
+  // v2.4.232 (kullanici istegi): KOPRU GRUPLAMASI KALDIRILDI. Kayitlar
+  // duz listelenir; her satirin EN SAGINDA bagli oldugu kopru rozeti
+  // gosterilir (window.kopruRozetOlustur, kopruler_panel.js). Kopru
+  // yonetimi Destek > Kopruler panelindedir.
   // Kopru gruplari EN USTTE: saha makineleri sistemin omurgasidir.
   // Ardindan kopruye bagli olmayan kayitlar, SANAL grubu ve sonda
   // zorunlu yalitim grubu gelir.
-  const gruplar = kopruGruplari.slice();
+  const gruplar = [];
   for (const b of digerler) gruplar.push({kayit: b, anahtar: String(b.id)});
   if (sanallar.length)
     gruplar.push({kayit: null, anahtar: BAG_SANAL, sanallar: sanallar});
@@ -920,12 +897,6 @@ function bagListeCiz(){
 
   for (const g of gruplar){
     const b = g.kayit;
-
-    // ---- KOPRU ust grubu ----
-    if (g.kopru){
-      bagKopruUstGrupCiz(g.kopru, g.kayitlar, t);
-      continue;
-    }
 
     // ---- SANAL DRON ust grubu ----
     if (g.anahtar === BAG_SANAL){
@@ -1039,6 +1010,11 @@ function bagListeCiz(){
     satir.appendChild(btnPS);
     satir.appendChild(btnDuz);
     satir.appendChild(btnSil);
+    // v2.4.232: en sagda bagli oldugu kopru (merkezde kopru_ornek_id dolu)
+    if (b.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function"){
+      const kr = window.kopruRozetOlustur(b.kopru_ornek_id);
+      if (kr) satir.appendChild(kr);
+    }
     grup.appendChild(satir);
     bagGrupGovdeEkle(grup, g.anahtar, t);
     bagKatlamaKur(grup, satir, katOk, g.anahtar);
@@ -1217,198 +1193,8 @@ function bagSanalKayitBlogu(b, t){
   return blok;
 }
 
-// ====================================================================
-// v2.4.53 Faz 7 — KOPRU (saha makinesi) ust grubu
-// ====================================================================
-// Yapi:
-//   .bag-grup.bag-grup-kopru
-//     .bag-satir.bag-satir-kopru          <- ad + IP + cevrimici benegi
-//     .bag-grup-govde.bag-kopru-govde[data-bag-govde=__kopru__<id>]
-//       .bag-kopru-servisler              <- Dron / AI / Video durumu
-//       .bag-sanal-kayit                  <- her dron baglantisi kaydi
-//         .bag-satir.bag-satir-alt
-//         .bag-grup-govde[data-bag-govde=<id>]  <- dron kartlari
-//
-// SANAL grubuyla ayni desen kullanilir; boylece kart dagitim mantigi
-// (`dronKartiGrubaYerlestir`) hic degismez.
-function bagKopruUstGrupCiz(k, kayitlar, t){
-  const anahtar = bagKopruAnahtar(k.ornek_id);
-  const cevrimici = !!k.cevrimici;
-
-  const grup = document.createElement("div");
-  grup.className = "bag-grup bag-grup-kopru"
-                 + (cevrimici ? " kopru-cevrimici" : " kopru-cevrimdisi");
-  grup.dataset.bagGrup = anahtar;
-
-  const satir = document.createElement("div");
-  satir.className = "bag-satir bag-satir-kopru";
-
-  const katOk = document.createElement("i");
-  katOk.className = "fa-solid fa-chevron-down bag-kat-ok";
-  satir.appendChild(katOk);
-
-  // Cevrimici benegi: saha makinesinin merkeze bagli olup olmadigi
-  // tek bakista gorulmelidir.
-  const benek = document.createElement("span");
-  benek.className = "bag-kopru-benek" + (cevrimici ? " acik" : "");
-  benek.title = cevrimici ? (t.bagKopruCevrimici || "Cevrimici")
-                          : (t.bagKopruCevrimdisi || "Cevrimdisi");
-  satir.appendChild(benek);
-
-  const bilgi = document.createElement("div");
-  bilgi.className = "bag-bilgi";
-  const ust = document.createElement("div");
-  ust.className = "bag-ust";
-  const ad = document.createElement("span");
-  ad.className = "bag-ad";
-  ad.textContent = k.ad || (t.bagKopruAdsiz || "Adsiz kopru");
-  const tur = document.createElement("span");
-  tur.className = "bag-tur bag-tur-kopru";
-  tur.textContent = t.bagKopruEtiket || "KOPRU";
-  ust.appendChild(ad); ust.appendChild(tur);
-
-  const alt = document.createElement("div");
-  alt.className = "bag-alt";
-  // Kullanici istegi: kopruler "isim+IP ile gruplanir".
-  const parcalar = [];
-  // v2.4.230 (kullanici istegi): son baglanilan IP her zaman gosterilir
-  if (k.ip) parcalar.push((t.bagKopruSonIp || "IP") + " " + k.ip);
-  if (k.platform) parcalar.push(String(k.platform).split(" ")[0]);
-  if (k.surum) parcalar.push("v" + k.surum);
-  if (!cevrimici && k.son_gorulme_ts){
-    const d = new Date(k.son_gorulme_ts);
-    if (!isNaN(d.getTime())) parcalar.push((t.bagKopruSonGorulme || "son") + " " +
-      d.toLocaleString(undefined, {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}));
-  }
-  alt.textContent = parcalar.join(" \u00b7 ");
-  alt.title = [k.makine_adi || "", k.platform || "", k.ip ? ((t.bagKopruSonIp || "IP") + " " + k.ip) : ""].filter(Boolean)
-                                                    .join(" \u00b7 ");
-  bilgi.appendChild(ust); bilgi.appendChild(alt);
-
-  const sayac = document.createElement("span");
-  sayac.className = "bag-dron-sayac bag-kopru-sayac";
-
-  // v2.4.230 (kullanici istegi: "kaldirilan kopruler listede duruyor"):
-  // kopru kaydi listeden KALDIRILABILIR. Merkez kipinde firma API'si
-  // (DELETE /api/firma/sunucular/<id>), yerel kipte kopru kimligi iptali.
-  const sil = document.createElement("button");
-  sil.type = "button";
-  sil.className = "bag-kopru-sil";
-  sil.title = t.bagKopruSil || "Köprüyü listeden kaldır";
-  sil.innerHTML = "<i class='fa-solid fa-trash'></i>";
-  sil.addEventListener("pointerdown", ev => ev.stopPropagation());
-  sil.addEventListener("click", ev => {
-    ev.stopPropagation();
-    const adM = k.ad || ("#" + k.ornek_id);
-    const soru = (cevrimici ? (t.bagKopruSilOnayCanli || "{ad} şu anda ÇEVRİMİÇİ. Kayıt silinirse bağlantısı kesilir ve aynı kimlikle yeniden bağlanamaz. Devam edilsin mi?")
-                            : (t.bagKopruSilOnay || "{ad} kaydı listeden kaldırılacak; bu köprü aynı kimlikle yeniden bağlanamaz. Devam edilsin mi?")).replace("{ad}", adM);
-    const yap = () => {
-      if (bagMerkezKipi){
-        fetch("/api/firma/sunucular/" + encodeURIComponent(k.ornek_id), { method: "DELETE", credentials: "same-origin" })
-          .then(r => r.json().catch(() => ({})).then(v => ({ ok: r.ok, v })))
-          .then(({ ok, v }) => {
-            if (typeof window.uyariToastGoster === "function")
-              window.uyariToastGoster({ kategori: "KÖPRÜ", seviye: ok ? "bilgi" : "hata",
-                mesaj: ok ? ((t.bagKopruSilindi || "Köprü kaldırıldı: ") + adM) : ((t.bagKopruSilinemedi || "Kaldırılamadı: ") + (v && v.hata || "")) });
-            bagKopruListesiIste();
-          })
-          .catch(() => bagKopruListesiIste());
-      } else if (ws && ws.readyState === 1){
-        ws.send(JSON.stringify({tip: "kopru_kimlik_sil", ornek_id: k.ornek_id}));
-        setTimeout(bagKopruListesiIste, 800);
-      }
-    };
-    if (typeof window.onayIste === "function") window.onayIste(soru, yap);
-    else if (window.confirm(soru)) yap();
-  });
-
-  satir.appendChild(bilgi);
-  satir.appendChild(sayac);
-  satir.appendChild(sil);
-  grup.appendChild(satir);
-
-  const govde = document.createElement("div");
-  govde.className = "bag-grup-govde bag-kopru-govde";
-  govde.dataset.bagGovde = anahtar;
-
-  // ---- Servis seridi: Dron / GroundGCC / Radar ----
-  govde.appendChild(bagKopruServisSeridi(k, t));
-
-  // ---- Bu kopruye bagli dron baglantilari ----
-  if (kayitlar.length){
-    for (const b of kayitlar) govde.appendChild(bagSanalKayitBlogu(b, t));
-  } else {
-    const bos = document.createElement("div");
-    bos.className = "bag-kopru-bos";
-    bos.textContent = t.bagKopruBaglantiYok
-                   || "Bu kopruye bagli dron baglantisi yok";
-    govde.appendChild(bos);
-  }
-
-  grup.appendChild(govde);
-  if (bagKatlanmis.has(anahtar)){
-    grup.classList.add("katlanmis");
-    govde.style.display = "none";
-  }
-  bagKatlamaKur(grup, satir, katOk, anahtar);
-  bagListe.appendChild(grup);
-}
-
-// Koprunun UC servisi (Dron/GroundGCC/Radar) tek seritte
-// gosterilir. `servisler` null ise kopru cevrimdisidir ya da sorgu
-// basarisiz olmustur: durum "bilinmiyor" olarak gosterilir, SESSIZ
-// GECILMEZ.
-function bagKopruServisSeridi(k, t){
-  const serit = document.createElement("div");
-  serit.className = "bag-kopru-servisler";
-
-  const etiket = {dron: t.bagServisDron || "Dron",
-                  gcsdual: t.bagServisGcsdual || "GroundGCC",
-                  radar: t.bagServisRadar || "Radar"};
-  const ikon = {dron: "fa-plane-up", gcsdual: "fa-gamepad",
-                radar: "fa-satellite-dish"};
-
-  const gelen = new Map();
-  for (const s of (k.servisler || [])){
-    const adAnahtar = String((s && (s.ad || s.servis)) || "").toLowerCase();
-    if (adAnahtar) gelen.set(adAnahtar, s);
-  }
-
-  for (const anahtar of KOPRU_SERVIS_SIRASI){
-    const s = gelen.get(anahtar);
-    // Kopru `servisler.durum()` her servis icin `calisiyor` (bool)
-    // dondurur (kopru/servisler.py). Eski/farkli ajan surumleri metin
-    // `durum` alani gonderebilir; ikisi de kabul edilir.
-    const durum = s ? String(s.durum || "").toLowerCase() : "";
-    const calisiyor = !!(s && (s.calisiyor === true
-                              || durum === "calisiyor"
-                              || durum === "acik"));
-    const bilinmiyor = !s;
-
-    const oge = document.createElement("div");
-    oge.className = "bag-kopru-servis"
-      + (bilinmiyor ? " servis-bilinmiyor"
-                    : (calisiyor ? " servis-calisiyor" : " servis-durdu"));
-
-    const i = document.createElement("i");
-    i.className = "fa-solid " + ikon[anahtar];
-    const ad = document.createElement("span");
-    ad.className = "bag-kopru-servis-ad";
-    ad.textContent = etiket[anahtar];
-    const d = document.createElement("span");
-    d.className = "bag-kopru-servis-durum";
-    d.textContent = bilinmiyor
-      ? (t.bagServisBilinmiyor || "?")
-      : (calisiyor ? (t.bagServisCalisiyor || "Calisiyor")
-                   : (t.bagServisDurdu || "Durdu"));
-    if (bilinmiyor && k.servis_hata) oge.title = k.servis_hata;
-
-    oge.appendChild(i); oge.appendChild(ad); oge.appendChild(d);
-    serit.appendChild(oge);
-  }
-  return serit;
-}
-
+// v2.4.232: `bagKopruUstGrupCiz` / `bagKopruServisSeridi` KALDIRILDI —
+// kopru gruplamasi yok; kopru durumu Destek > Kopruler panelinde.
 // Grup govdesi: dron kartlarinin yasadigi kap + "dron yok" notu
 function bagGrupGovdeEkle(grup, anahtar, t){
   const govde = document.createElement("div");

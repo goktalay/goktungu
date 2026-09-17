@@ -10447,3 +10447,38 @@ body.tam-ekran-modu #altOrtaPanel {
 .kam-takip-angaje.kam-takip-bekliyor:disabled { opacity: .75; }
 .kam-takip-bildirim { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 5; pointer-events: none;
   padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.75); color: #fff; font: 600 12px Segoe UI, system-ui, sans-serif; }
+
+/* ================================================================
+   v2.4.232: KOPRULER PANELI (Destek > Kopruler) + satir sonu rozeti
+   ================================================================ */
+.kp-satir { align-items: flex-start; }
+.kp-benek { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; margin-top: 4px;
+  background: #6b7280; box-shadow: 0 0 0 2px rgba(107,114,128,.25); }
+.kp-benek.acik { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.25), 0 0 8px rgba(34,197,94,.6); }
+.kp-rozet { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 9px; font-size: 10px;
+  font-weight: 600; letter-spacing: .04em; text-transform: uppercase; vertical-align: 1px; }
+.kp-rozet.acik { color: #16a34a; background: rgba(34,197,94,.14); }
+.kp-rozet.kapali { color: var(--soluk); background: rgba(107,114,128,.16); }
+.kp-servisler { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.kp-servis { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 10px;
+  font-size: 10.5px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.kp-servis.acik { color: #15803d; background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.45); }
+.kp-servis.kapali { color: var(--soluk); background: rgba(107,114,128,.10); border-color: rgba(107,114,128,.35); opacity: .75; }
+.kp-servis i { font-size: 10px; }
+.kp-servis-yok { font-size: 10.5px; color: var(--soluk); font-style: italic; }
+.kp-kod-kutu { margin: -2px 0 4px 26px; padding: 8px 10px; border: 1px dashed var(--vurgu, #35a7ff);
+  border-radius: 6px; background: rgba(53,167,255,.06); }
+.kp-kod-not { font-size: 11px; color: var(--soluk); margin-bottom: 6px; }
+.kp-kod { width: 100%; box-sizing: border-box; font-family: Consolas, monospace; font-size: 11px;
+  word-break: break-all; resize: vertical; background: var(--panel-arka, transparent); color: var(--metin); }
+.kp-form-not { font-size: 11px; color: var(--soluk); margin-top: 8px; line-height: 1.4; }
+/* Diger modullerin satir sonundaki "bagli oldugu kopru" rozeti */
+.kopru-rozet { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; margin-left: 6px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 600; white-space: nowrap;
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(107,114,128,.35);
+  color: var(--soluk); background: rgba(107,114,128,.10); }
+.kopru-rozet span { overflow: hidden; text-overflow: ellipsis; }
+.kopru-rozet.cevrimici { color: #15803d; border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.10); }
+.kopru-rozet.cevrimdisi { color: #b45309; border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.10); }
+.kopru-rozet i { font-size: 10px; }
+.bag-satir .kopru-rozet { margin-left: 4px; }

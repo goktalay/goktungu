@@ -32,52 +32,36 @@
       <span class="marka-alt">KÖPRÜ</span>
     </div>
     <p class="giris-aciklama">
-      <b>Kurulum sihirbazı.</b> Bu köprünün hangi merkeze bağlanacağını
-      seçin. Giriş bilgileriniz <b>seçtiğiniz merkezde</b> doğrulanır;
-      bu yüzden adres girişten önce sorulur.
+      <b>Kurulum sihirbazı.</b> Bu köprü hangi merkeze bağlanacak?
+      Seçiminizi yapın, ardından o merkezin <b>Destek &gt; Köprüler</b>
+      panelinde oluşturulan köprü kaydının <b>API kodunu</b> yapıştırın.
+      Kod; kimliği ve merkez adresini birlikte taşır, başka bir şey
+      girmeniz gerekmez.
     </p>
 
     <label class="onay">
-      <input type="radio" name="kurSecim" id="kurBulut" value="bulut"
+      <input type="radio" name="kurSecim" id="kurGrcon" value="grcon"
              checked>
-      <span><b>GÖKTUNGU bulutu</b> — goktungu.com üzerinde
-        barındırılan merkez (öntanımlı)</span>
+      <span><b>GRCON — Merkez Sunucu</b> · goktungu.com üzerinde
+        barındırılan çevrimiçi merkez</span>
     </label>
     <label class="onay">
-      <input type="radio" name="kurSecim" id="kurKendi" value="kendi">
-      <span><b>Kendi merkez sunucum</b> — satın aldığınız
-        <b>Merkez Uygulaması</b>nın kurulu olduğu sunucu</span>
+      <input type="radio" name="kurSecim" id="kurGrcoff" value="grcoff">
+      <span><b>GRCOFF — Yerel Kurulum</b> · kapalı devre çalışan kendi
+        Merkez Uygulamanız</span>
     </label>
 
-    <div id="kurKendiAlan" class="gizli">
-      <label class="alan">
-        <span>Merkez sunucu adresi (IP veya alan adı)</span>
-        <input type="text" id="kurIp" placeholder="192.168.1.50"
-               autocomplete="off">
-      </label>
-      <p class="alan-not">
-        Merkez Uygulaması <b>bu bilgisayarda</b> çalışıyorsa
-        <code>127.0.0.1</code> yazın. Adresi yazmanız yeterlidir:
-        WebSocket ve HTTP adresleri standart portlarla otomatik
-        oluşturulur. Gelişmiş kullanım için aşağıdan elle
-        değiştirebilirsiniz.
-      </p>
-      <details id="kurGelismis">
-        <summary class="kucuk sonuk">Gelişmiş: adresleri elle gir</summary>
-        <div class="izgara">
-          <label class="alan">
-            <span>Merkez WebSocket adresi</span>
-            <input type="text" id="kurAdres"
-                   placeholder="ws://127.0.0.1:8765/kopru">
-          </label>
-          <label class="alan">
-            <span>Merkez HTTP adresi</span>
-            <input type="text" id="kurHttp"
-                   placeholder="http://127.0.0.1:8000">
-          </label>
-        </div>
-      </details>
-    </div>
+    <label class="alan" id="kurKodAlan">
+      <span>API kodu</span>
+      <textarea id="kurKod" rows="4" spellcheck="false" autocomplete="off"
+                placeholder="GTK1.…"></textarea>
+    </label>
+    <p class="alan-not" id="kurKodNot">
+      Kodu <b>GRCON</b> için company panelinizdeki uygulamanın, <b>GRCOFF</b>
+      için yerel Merkez Uygulamasının <b>Destek &gt; Köprüler</b>
+      panelinden kopyalayın. Kod, köprü ilk kez bağlandığında merkezde
+      silinir; kaybolursa panelden <b>Kodu yenile</b> ile yenisini alın.
+    </p>
 
     <div id="kurulumHata" class="uyari gizli"></div>
     <div id="kurulumUzak" class="uyari gizli">
@@ -304,6 +288,17 @@
         <input type="checkbox" id="kYenile">
         <span>Bu makine zaten kayıtlıysa kimliği <b>yenile</b></span>
       </label>
+      <details id="kayitKodDetay">
+        <summary class="kucuk sonuk">Ya da API kodu ile eşleştir (Destek &gt; Köprüler)</summary>
+        <label class="alan">
+          <span>API kodu</span>
+          <textarea id="kApiKod" rows="3" spellcheck="false"
+                    placeholder="GTK1.…"></textarea>
+        </label>
+        <button type="button" id="kayitKodOnay" class="dugme kucuk">
+          Kodu uygula
+        </button>
+      </details>
       <div id="kayitHata" class="uyari gizli"></div>
     </div>
     <div class="pencere-dip">
@@ -542,6 +537,6 @@
 
 <script src="tema.js?v=161"></script>
 <script src="guncelleme.js?v=161"></script>
-<script src="uygulama.js?v=161"></script>
+<script src="uygulama.js?v=162"></script>
 </body>
 </html>

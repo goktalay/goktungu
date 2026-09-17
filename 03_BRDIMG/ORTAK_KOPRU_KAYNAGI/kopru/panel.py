@@ -470,6 +470,30 @@ class PanelIsleyici(BaseHTTPRequestHandler):
             self._hata("Eksik istek basligi (X-Kopru-Jeton)", 403)
             return
 
+        if yol == "/api/kurulum/kod":
+            # 1.7.23 — API KODU ILE KURULUM (giris ONCESI; kullanici
+            # istegi 2026-09-17). Kapi denetimi /api/kurulum/merkez ile
+            # AYNI: yalniz yerel istek + secim henuz yapilmamis. Kod
+            # kimligi ve adresi tasidigi icin e-posta/sifre sorulmaz.
+            if self._yerel_zorunlu():
+                return
+            try:
+                _a = ayar_mod.ayar_oku()
+            except Exception:
+                _a = {}
+            if _a.get("merkez_secim_yapildi"):
+                self._hata(
+                    "Kurulum sihirbazi tamamlanmis: yeni API kodu yalniz "
+                    "giris yaptiktan sonra Ayarlar > Merkez bolumunden "
+                    "girilebilir.", 409)
+                return
+            sonuc = u.api_kodu_kur(g.get("kod"), g.get("secim"))
+            if isinstance(sonuc, dict) and sonuc.get("hata"):
+                self._hata(sonuc["hata"], 400)
+                return
+            self._yaz({"tamam": True, "sonuc": sonuc})
+            return
+
         if yol == "/api/kurulum/merkez":
             # v1.6.0 — ILK ACILIS KURULUM SIHIRBAZI (giris ONCESI calisir)
             #
@@ -617,6 +641,22 @@ class PanelIsleyici(BaseHTTPRequestHandler):
         if yol == "/api/ajan/durdur":
             u.ajan_durdur()
             self._yaz({"tamam": True})
+            return
+        if yol == "/api/merkez/kod":
+            # 1.7.23 — girisli yonetici yeni API kodu girer (panelde
+            # "Kodu yenile" yapildiysa ya da kopru baska merkeze
+            # tasiniyorsa). Yerel istek zorunlu: adres/kimlik yazimi
+            # agdan yapilamaz.
+            if self._yerel_zorunlu():
+                return
+            if str(o.get("rol") or "") != "yonetici":
+                self._hata("Bu islem icin yonetici yetkisi gerekir", 403)
+                return
+            sonuc = u.api_kodu_kur(g.get("kod"), g.get("secim"))
+            if isinstance(sonuc, dict) and sonuc.get("hata"):
+                self._hata(sonuc["hata"], 400)
+                return
+            self._yaz({"tamam": True, "sonuc": sonuc})
             return
         if yol == "/api/merkez/kaydet":
             # Geri alinamaz: yanlis merkeze kayit tum sahayi kopartir.

@@ -125,46 +125,43 @@ function kurulumEkraniAc(v){
 }
 
 function kurulumKur(){
-  var kendi = d('kurKendi'), bulut = d('kurBulut');
-  var alan = d('kurKendiAlan');
+  // 1.7.23 — API KODU ILE KURULUM (kullanıcı isteği 2026-09-17):
+  // "ilk kurulumda merkez sunucu mu (GRCON) yoksa GRCOFF mu diye
+  // sorduktan sonra ... api kodunu sorsun, girdiğinde köprü iletişimi
+  // sağlansın". IP/adres alanları kalktı: kod adresi de taşır.
+  var grcon = d('kurGrcon'), grcoff = d('kurGrcoff');
+  var not_ = d('kurKodNot');
   var tazele = function(){
-    if(kendi.checked) goster(alan); else gizle(alan);
+    if(!not_) return;
+    not_.innerHTML = (grcoff && grcoff.checked)
+      ? 'Kodu yerel <b>Merkez Uygulamasının (GRCOFF)</b> <b>Destek &gt; Köprüler</b> '
+        + 'panelinden kopyalayın. Kod, köprü ilk kez bağlandığında merkezde '
+        + 'silinir; kaybolursa panelden <b>Kodu yenile</b> ile yenisini alın.'
+      : 'Kodu <b>GRCON</b> merkezindeki uygulamanın <b>Destek &gt; Köprüler</b> '
+        + 'panelinden kopyalayın. Kod, köprü ilk kez bağlandığında merkezde '
+        + 'silinir; kaybolursa panelden <b>Kodu yenile</b> ile yenisini alın.';
   };
-  kendi.addEventListener('change', tazele);
-  bulut.addEventListener('change', tazele);
+  if(grcon) grcon.addEventListener('change', tazele);
+  if(grcoff) grcoff.addEventListener('change', tazele);
+  tazele();
 
   d('kurulumForm').addEventListener('submit', function(ev){
     ev.preventDefault();
     var dg = d('kurulumDugme');
     gizle(d('kurulumHata'));
-
-    var govde = { kendi: kendi.checked };
-    if(kendi.checked){
-      var ip = d('kurIp').value.trim();
-      var ws = d('kurAdres').value.trim();
-      var ht = d('kurHttp').value.trim();
-      // Elle yazılan adres, IP alanından TÜRETİLENİN ÖNÜNE geçer:
-      // gelişmiş bölümü açıp adres yazan kullanıcı bunu bilerek yapar.
-      if(!ws || !ht){
-        if(!ip){
-          hataGoster(d('kurulumHata'),
-            'Merkez sunucu adresini yazın (örnek: 127.0.0.1).');
-          return;
-        }
-        // Yerel Merkez Uygulaması TLS kullanmaz: sertifika yoktur ve
-        // kapalı devrede gerekmez. Bu yüzden ws:// + http:// ve
-        // merkezin gerçek portları (8765 / 8000) türetilir.
-        ws = ws || ('ws://' + ip + ':8765/kopru');
-        ht = ht || ('http://' + ip + ':8000');
-      }
-      govde.merkez_adres = ws;
-      govde.merkez_http = ht;
+    var kod = (d('kurKod').value || '').replace(/\s+/g, '');
+    if(!kod){
+      hataGoster(d('kurulumHata'),
+        'API kodunu yapıştırın (Destek > Köprüler panelinden kopyalanır).');
+      d('kurKod').focus();
+      return;
     }
-
+    var secim = (grcoff && grcoff.checked) ? 'grcoff' : 'grcon';
     dg.disabled = true;
-    metin(dg, 'Kaydediliyor...');
-    istek('/api/kurulum/merkez', { method:'POST', govde:govde })
+    metin(dg, 'Bağlanıyor...');
+    istek('/api/kurulum/kod', { method:'POST', govde:{ kod: kod, secim: secim } })
       .then(function(){
+        d('kurKod').value = '';
         gizle(d('kurulumEkran'));
         goster(d('girisEkran'));
         durumCek();
@@ -885,6 +882,28 @@ function kayitKur(){
   d('kayitAc').addEventListener('click', ac);
   d('kayitKapat').addEventListener('click', kapat);
   d('kayitVazgec').addEventListener('click', kapat);
+  // 1.7.23: API kodu ile esleme (Destek > Kopruler'de "Kodu yenile"
+  // sonrasi ya da baska merkeze tasima). Yonetici + yerel istek.
+  var kodBtn = d('kayitKodOnay');
+  if(kodBtn) kodBtn.addEventListener('click', function(){
+    var kod = ((d('kApiKod') || {}).value || '').replace(/\s+/g, '');
+    gizle(d('kayitHata'));
+    if(!kod){ hataGoster(d('kayitHata'), 'API kodunu yapıştırın.'); return; }
+    kodBtn.disabled = true;
+    metin(kodBtn, 'Uygulanıyor...');
+    istek('/api/merkez/kod', { method:'POST', govde:{ kod: kod } })
+      .then(function(){
+        d('kApiKod').value = '';
+        kapat();
+        ayarDokunuldu = false;
+        durumCek();
+      }).catch(function(e){
+        hataGoster(d('kayitHata'), e.message);
+      }).then(function(){
+        kodBtn.disabled = false;
+        metin(kodBtn, 'Kodu uygula');
+      });
+  });
   d('kayitForm').addEventListener('submit', function(ev){
     ev.preventDefault();
     var dg = d('kayitOnay');

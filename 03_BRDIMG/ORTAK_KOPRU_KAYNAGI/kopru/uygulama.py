@@ -162,6 +162,66 @@ class Uygulama:
         return self.ayar_maskeli()
 
     # -----------------------------------------------------------------
+    def api_kodu_kur(self, kod, secim=None):
+        """1.7.23 — API KODU ILE KURULUM (kullanici istegi, 2026-09-17):
+        "kullanici kopru kurdugu zaman ilk kurulumda merkez sunucu mu
+        (GRCON) yoksa GRCOFF mu diye sorduktan sonra ... api kodunu
+        sorsun, girdiginde kopru iletisimi saglansin".
+
+        Kod kimligi (uid+sir) VE merkez adresini tasir; bu yuzden ayarda
+        merkez adresi yazilir, kimlik dosyasi olusturulur, secim bayragi
+        konur ve ajan yeni kimlikle yeniden kurulur. E-posta/sifreyle
+        merkeze kayit adimi (`kurulum_kaydet`) bu yolda gerekmez.
+
+        `secim` ("grcon" | "grcoff") yalniz tutarlilik denetimi ve
+        gunluk icindir: GRCON secilip yerel bir GRCOFF kodu girilirse
+        (ya da tersi) kullanici uyarilir; kod yine de belirleyicidir.
+        """
+        from . import kimlik_kodu
+        d, hata = kimlik_kodu.api_kodu_coz(kod)
+        if hata:
+            return {"hata": hata}
+        tur = str(d.get("t") or "")
+        secim = str(secim or "").strip().lower()
+        if secim and tur and secim != tur:
+            return {"hata": ("Bu API kodu %s icin uretilmis; kurulum "
+                             "secimi %s. Dogru kodu girin veya secimi "
+                             "degistirin." % (
+                                 "GRCON (merkez sunucu)" if tur == "grcon"
+                                 else "GRCOFF (yerel kurulum)",
+                                 "GRCON" if secim == "grcon" else "GRCOFF"))}
+        g = {"merkez_adres": str(d["m"])}
+        # HTTP tabani: kodda varsa o, yoksa bos (WS adresinden turetilir;
+        # bulutta port dusurulur, yerelde korunur — bkz. merkez._http_taban).
+        g["merkez_http"] = str(d.get("h") or "")
+        sonuc = self.ayar_kaydet(g)
+        if isinstance(sonuc, dict) and sonuc.get("hata"):
+            return sonuc
+        kimlik = {
+            "kurulum_uid": str(d["u"]),
+            "gizli": str(d["g"]),
+            "ornek_id": d.get("o"),
+            "ad": str(d.get("a") or ayar_mod.makine_adi()),
+            "firma_id": None,
+            "firma_kisa_ad": "",
+            "eposta": "",
+        }
+        ayar_mod.kimlik_yaz(kimlik)
+        ayar_mod.ayar_guncelle(merkez_secim_yapildi=True,
+                               merkez_secim_ts=int(time.time()),
+                               merkez_kendi=(tur == "grcoff"),
+                               merkez_secim_tur=tur or secim)
+        self.gunluk("API kodu ile kurulum: %s (%s) -> %s" % (
+            kimlik["ad"], tur or secim or "?", g["merkez_adres"]), "bilgi")
+        try:
+            self.kimlik_yenile()
+        except Exception as e:
+            self.gunluk("API kodu sonrasi ajan yenilenemedi: %s" % e,
+                        "uyari")
+        return {"kimlik": ayar_mod.kimlik_maskeli(),
+                "ayar": self.ayar_maskeli(), "tur": tur}
+
+    # -----------------------------------------------------------------
     def merkez_secimi_kaydet(self, kendi, adres=None, http_adres=None):
         """Merkez sunucu secimini isler (Faz 8 — kullanici istegi).
 

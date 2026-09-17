@@ -193,7 +193,9 @@ class RadarYoneticisi:
         """DB kayıtlarıyla istemci sözlüğünü eşitler (silinen kesilir)."""
         kayitlar = {int(k["id"]): k for k in self.kayitlar.listele()}
         for rid in list(self.istemciler):
-            if rid not in kayitlar and rid != 1:
+            # v2.4.232: 1 numara icin istisna kaldirildi — kaydi silinen her
+            # radarin istemcisi/vekili dusurulur.
+            if rid not in kayitlar:
                 try:
                     self.istemciler[rid].kes()
                 except Exception:

@@ -396,12 +396,23 @@ def firma_kopruleri(firma_id):
     `gizli_ozet` ASLA donmez: panel tarafina sizmasi kayit sahtekarligi
     riski yaratir.
     """
-    satirlar = _sorgu(
-        "SELECT ornek_id, kurulum_uid, ad, aciklama, surum, platform,"
-        "       makine_adi, cevrimici, son_gorulme_ts, son_ip,"
-        "       dron_sayisi, yetenekler, durum"
-        "  FROM sunucu_ornekleri WHERE firma_id = %s"
-        " ORDER BY cevrimici DESC, ad", (int(firma_id),))
+    # v2.4.232: `api_kodu` (goc 12) — ilk baglantiya kadar dolu, sonra
+    # bos. Goc henuz uygulanmamis bir merkezde sutun yoktur; liste o
+    # zaman kodsuz doner, panel bosalmaz.
+    try:
+        satirlar = _sorgu(
+            "SELECT ornek_id, kurulum_uid, ad, aciklama, surum, platform,"
+            "       makine_adi, cevrimici, son_gorulme_ts, son_ip,"
+            "       dron_sayisi, yetenekler, durum, api_kodu"
+            "  FROM sunucu_ornekleri WHERE firma_id = %s"
+            " ORDER BY cevrimici DESC, ad", (int(firma_id),))
+    except Exception:
+        satirlar = _sorgu(
+            "SELECT ornek_id, kurulum_uid, ad, aciklama, surum, platform,"
+            "       makine_adi, cevrimici, son_gorulme_ts, son_ip,"
+            "       dron_sayisi, yetenekler, durum"
+            "  FROM sunucu_ornekleri WHERE firma_id = %s"
+            " ORDER BY cevrimici DESC, ad", (int(firma_id),))
     cikti = []
     for s in satirlar or []:
         yet = s.get("yetenekler")
@@ -427,8 +438,48 @@ def firma_kopruleri(firma_id):
             "dron_sayisi": int(s.get("dron_sayisi") or 0),
             "yetenekler": yet if isinstance(yet, dict) else {},
             "durum": str(s.get("durum") or ""),
+            "api_kodu": str(s.get("api_kodu") or ""),
         })
     return cikti
+
+
+# ----------------------------------------------------------------------
+# v2.4.232: Kopruler paneli — merkez ic uclari uzerinden yonetim
+# ----------------------------------------------------------------------
+# Merkezde calisan GCS'in firma oturum kurabiyesi yoktur; kopru kaydi
+# olusturma/silme/kod yenileme merkezin ic uclarina (127.0.0.1 +
+# X-Ic-Anahtar) gider. Firma izolasyonu merkezde YENIDEN denetlenir.
+def kopru_olustur(firma_id, ad):
+    """`(yeni_kayit, hata)`; kayit `api_kodu` icerir."""
+    g, hata = _ic_post("/api/ic/kopru_olustur",
+                       {"firma_id": int(firma_id), "ad": str(ad or "")})
+    if hata:
+        return None, hata
+    if not (g or {}).get("basarili"):
+        return None, str((g or {}).get("hata") or "Kopru olusturulamadi")
+    return (g or {}).get("kopru") or {}, None
+
+
+def kopru_sil(firma_id, ornek_id):
+    g, hata = _ic_post("/api/ic/kopru_sil",
+                       {"firma_id": int(firma_id),
+                        "ornek_id": int(ornek_id)})
+    if hata:
+        return False, hata
+    if not (g or {}).get("basarili"):
+        return False, str((g or {}).get("hata") or "Kopru silinemedi")
+    return True, None
+
+
+def kopru_kod_yenile(firma_id, ornek_id):
+    g, hata = _ic_post("/api/ic/kopru_kod_yenile",
+                       {"firma_id": int(firma_id),
+                        "ornek_id": int(ornek_id)})
+    if hata:
+        return None, hata
+    if not (g or {}).get("basarili"):
+        return None, str((g or {}).get("hata") or "Kod yenilenemedi")
+    return (g or {}).get("kopru") or {}, None
 
 
 def _ic_taban():

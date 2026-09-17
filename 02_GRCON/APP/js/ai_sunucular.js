@@ -425,61 +425,17 @@
     btnlar.appendChild(bp); btnlar.appendChild(bk);
     btnlar.appendChild(bd); btnlar.appendChild(bs);
     sat.appendChild(btnlar);
+    // v2.4.232: en sagda bagli oldugu kopru
+    if (s.kopru_ornek_id != null && typeof window.kopruRozetOlustur === "function") {
+      const kr = window.kopruRozetOlustur(s.kopru_ornek_id);
+      if (kr) sat.appendChild(kr);
+    }
     return sat;
   }
 
-  // ------------------------------------------------------------------
-  // v2.4.56: KOPRU BAZLI GRUPLAMA
-  //
-  // Merkezde calisan ornekte AI sunuculari saha makinelerindedir. Duz
-  // liste, hangi kaydin hangi sahaya ait oldugunu gizler; pilot yanlis
-  // makinenin sunucusunu baslatir. Baglanti Yoneticisi'ndeki gruplama
-  // kaliniyla ayni gorunum kullanilir (kullanici istegi: "hem ai icin
-  // hem kameralar icin ayni kopru gruplamasi gerekiyor").
-  //
-  // Yerel kurulumda gruplama YAPILMAZ: tek makine vardir, grup basligi
-  // yalnizca gurultu olur (v2.4.24 gorunumu korunur).
-  // ------------------------------------------------------------------
-  function kopruBaslikSatiri(k, ornekId) {
-    const bas = document.createElement("div");
-    bas.className = "ai-kopru-baslik";
-    const led = document.createElement("span");
-    led.className = "ai-led " +
-      ((k && k.cevrimici) ? "cevrimici" : "cevrimdisi");
-    bas.appendChild(led);
-    const ad = document.createElement("span");
-    ad.className = "ad";
-    ad.textContent = (k && k.ad) ? k.ad : ("#" + ornekId);
-    bas.appendChild(ad);
-    const rozet = document.createElement("span");
-    rozet.className = "ai-kopru-rozet";
-    rozet.textContent = t("bagKopruEtiket", "KÖPRÜ");
-    bas.appendChild(rozet);
-    if (k && k.ip) {
-      const yer = document.createElement("span");
-      yer.className = "alt";
-      yer.textContent = k.ip;
-      bas.appendChild(yer);
-    }
-    if (k && !k.cevrimici) {
-      const cd = document.createElement("span");
-      cd.className = "alt";
-      cd.textContent = t("bagKopruCevrimdisi", "çevrimdışı");
-      bas.appendChild(cd);
-    }
-    return bas;
-  }
-
-  function grupsuzBaslik() {
-    const bas = document.createElement("div");
-    bas.className = "ai-kopru-baslik grupsuz";
-    const ad = document.createElement("span");
-    ad.className = "ad";
-    ad.textContent = t("kopruGrupsuzAi", "KÖPRÜYE BAĞLI OLMAYAN");
-    bas.appendChild(ad);
-    return bas;
-  }
-
+  // v2.4.232 (kullanici istegi): KOPRU GRUPLAMASI KALDIRILDI. AI
+  // sunuculari her kipte duz listelenir; satir sonunda bagli oldugu
+  // kopru rozeti gosterilir (window.kopruRozetOlustur).
   function bosSatir(metin) {
     const bos = document.createElement("div");
     bos.className = "ai-satir";
@@ -492,51 +448,12 @@
   function listeCiz() {
     if (!liste) return;
     liste.innerHTML = "";
-    const merkezde = (typeof window.kopruMerkezKipiMi === "function")
-      && window.kopruMerkezKipiMi();
-
-    if (!merkezde) {
-      // Yerel kurulum: duz liste (eski davranis birebir).
-      if (!sonSunucular.length) {
-        liste.appendChild(bosSatir(
-          t("aiSunucuYok", "Kayıtlı AI sunucusu yok")));
-        return;
-      }
-      sonSunucular.forEach((s) => liste.appendChild(sunucuSatir(s)));
-      return;
-    }
-
-    // Merkez: kopru basliklari + altinda kayitlar.
-    const kopruler = (typeof window.kopruListesiAl === "function")
-      ? window.kopruListesiAl() : [];
-    const kullanilan = new Set();
-    for (const k of kopruler) {
-      const oid = String(k.ornek_id);
-      kullanilan.add(oid);
-      liste.appendChild(kopruBaslikSatiri(k, oid));
-      const altindakiler = sonSunucular.filter(
-        (s) => String(s.kopru_ornek_id || "") === oid);
-      if (!altindakiler.length) {
-        liste.appendChild(bosSatir(
-          t("kopruGrupAiYok", "Bu köprüde kayıtlı AI sunucusu yok")));
-        continue;
-      }
-      altindakiler.forEach((s) => liste.appendChild(sunucuSatir(s)));
-    }
-    // Koprusu bilinmeyen veya listede olmayan koprulere ait kayitlar.
-    // ASLA gizlenmez: kayit gorunmez olursa pilot silemez de duzeltemez.
-    const artakalan = sonSunucular.filter((s) => {
-      const oid = String(s.kopru_ornek_id || "");
-      return !oid || !kullanilan.has(oid);
-    });
-    if (artakalan.length) {
-      liste.appendChild(grupsuzBaslik());
-      artakalan.forEach((s) => liste.appendChild(sunucuSatir(s)));
-    }
-    if (!kopruler.length && !sonSunucular.length) {
+    if (!sonSunucular.length) {
       liste.appendChild(bosSatir(
         t("aiSunucuYok", "Kayıtlı AI sunucusu yok")));
+      return;
     }
+    sonSunucular.forEach((s) => liste.appendChild(sunucuSatir(s)));
   }
 
   window.aiSunucuListesiIsle = function (m) {

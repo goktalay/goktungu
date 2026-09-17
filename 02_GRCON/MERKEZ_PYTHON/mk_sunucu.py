@@ -4090,6 +4090,101 @@ def _u_ic_kopru_sor(h, istek, oturum):
     h.json_yaz({"basarili": True, "veri": veri or {}})
 
 
+def _ic_firma_dogrula(h, istek):
+    """IC UC korumasi — yalniz `firma_id` isteyen uclar icin
+    (`_ic_uc_dogrula` ornek_id de ister). Ayni iki katman: 127.0.0.1
+    esi + X-Ic-Anahtar. `firma_id` doner, hata yazdiysa None."""
+    try:
+        es = h.client_address[0]
+    except Exception:
+        es = ""
+    if es not in ("127.0.0.1", "::1", "localhost"):
+        h.hata_yaz(404, "Bulunamadı")
+        return None
+    beklenen = (os.environ.get("GOKTUNGU_IC_ANAHTAR") or "").strip()
+    if not beklenen:
+        h.hata_yaz(404, "Bulunamadı")
+        return None
+    gelen = (h.headers.get("X-Ic-Anahtar") or "").strip()
+    if not hmac.compare_digest(gelen, beklenen):
+        h.hata_yaz(403, "İç anahtar geçersiz")
+        return None
+    try:
+        fid = int((istek.govde or {}).get("firma_id") or 0)
+    except Exception:
+        fid = 0
+    if not fid:
+        h.hata_yaz(400, "firma_id zorunlu")
+        return None
+    return fid
+
+
+def _ic_kopru_oturum_kapat(oid):
+    canli = role.ROLE.ornek_ile(int(oid))
+    if canli is not None and _DONGU is not None:
+        try:
+            asyncio.run_coroutine_threadsafe(canli.soket.close(), _DONGU).result(5)
+        except Exception:
+            pass
+
+
+@yol("POST", r"/api/ic/kopru_olustur", yetki="acik")
+def _u_ic_kopru_olustur(h, istek, oturum):
+    """IC UC — v2.4.232 (2026-09-17) Yardim > Kopruler paneli: merkezde
+    calisan GCS firma icin yeni kopru kaydi olusturur. Yalniz AD alinir;
+    kimlik + sir + API kodu burada uretilir (`mk_role.ornek_kaydet`).
+    Kod ilk baglantiya kadar saklanir, sonra silinir."""
+    fid = _ic_firma_dogrula(h, istek)
+    if fid is None:
+        return
+    ad = str((istek.govde or {}).get("ad") or "").strip()
+    veri, hata = api.sunucu_ekle(fid, ad, "GOKTUNGU Kopru Yazilimi")
+    if hata:
+        h.json_yaz({"basarili": False, "hata": hata})
+        return
+    kimlik.denetim(None, "kopru_olustur", "sunucu",
+                   str((veri or {}).get("ornek_id")),
+                   {"firma_id": fid, "ad": ad}, istek.ip)
+    v = dict(veri or {})
+    v.pop("gizli", None)   # sir yalniz API kodunun icinde tasinir
+    h.json_yaz({"basarili": True, "kopru": v})
+
+
+@yol("POST", r"/api/ic/kopru_sil", yetki="acik")
+def _u_ic_kopru_sil(h, istek, oturum):
+    """IC UC — kopru kaydini siler; canli oturum once dusurulur."""
+    d = _ic_uc_dogrula(h, istek)
+    if d is None:
+        return
+    oid, fid = d
+    o = db.tek("SELECT ad FROM sunucu_ornekleri WHERE ornek_id = %s", (oid,))
+    _ic_kopru_oturum_kapat(oid)
+    tamam, hata = api.sunucu_sil(oid)
+    if not tamam:
+        h.json_yaz({"basarili": False, "hata": hata or "Silinemedi"})
+        return
+    kimlik.denetim(None, "kopru_sil", "sunucu", str(oid),
+                   {"firma_id": fid, "ad": (o or {}).get("ad")}, istek.ip)
+    h.json_yaz({"basarili": True})
+
+
+@yol("POST", r"/api/ic/kopru_kod_yenile", yetki="acik")
+def _u_ic_kopru_kod_yenile(h, istek, oturum):
+    """IC UC — sirri ve API kodunu yeniler; eski sirla bagli kopru duser."""
+    d = _ic_uc_dogrula(h, istek)
+    if d is None:
+        return
+    oid, fid = d
+    _ic_kopru_oturum_kapat(oid)
+    veri, hata = role.gizli_yenile(oid)
+    if hata:
+        h.json_yaz({"basarili": False, "hata": hata})
+        return
+    kimlik.denetim(None, "kopru_kod_yenile", "sunucu", str(oid),
+                   {"firma_id": fid}, istek.ip)
+    h.json_yaz({"basarili": True, "kopru": veri})
+
+
 @yol("GET", r"/api/firma/ekip", yetki="firma")
 def _u_firma_ekip(h, istek, oturum):
     """Firmanin kullanici listesi + kisi basi ucus ozeti.

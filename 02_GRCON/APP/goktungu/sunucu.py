@@ -6014,6 +6014,257 @@ class WSSunucusu:
                         {"kuyruk": yeni[-4:]})
         await websocket.send(yanit(True, "", True, yeni[-4:], yeni))
 
+    async def _kopru_servisleri_doldur(self, kopruler, firma_id):
+        """Her koprunun `servisler` alanini kopruye sorarak doldurur.
+
+        v2.4.232: `kopru_liste` ve Kopruler paneli (`kopruler_liste`)
+        ayni yolu kullanir. Servis durumlari (Dron/AI/Video/Radar/M50)
+        kopru makinesinde yasar: yalniz CEVRIMICI kopruye sorulur;
+        cevrimdisi kopruye sorgu her istegi zaman asimina kadar
+        bekletir ve panel donar.
+
+        Merkez kipinde sorgu SENKRON HTTP'dir (merkez ic ucu) ve is
+        parcaciginda PARALEL yapilir; yerel kipte kopru soketi bu
+        surectedir ve `kopruden_iste` ile dogrudan beklenir.
+        """
+        for _k in kopruler or []:
+            _k["servisler"] = None
+            _k["servis_hata"] = ""
+        hedef = [_k for _k in (kopruler or []) if _k.get("cevrimici")]
+        if not hedef:
+            return
+        try:
+            from . import merkez_kimlik as _mk
+            if _mk.etkin():
+                def _servis_cek(_liste=hedef, _f=firma_id):
+                    import concurrent.futures as _cf
+
+                    def _bir(_kk):
+                        return _kk, _mk.kopruye_sor(
+                            _kk["ornek_id"], _f, "servis_durum",
+                            zaman_asimi=5.0)
+
+                    _n = min(8, len(_liste))
+                    with _cf.ThreadPoolExecutor(_n) as _h2:
+                        return list(_h2.map(_bir, _liste))
+
+                for _kk, (_v, _h) in await _db_is_parcasi(_servis_cek):
+                    _kk["servisler"] = ((_v or {}).get("servisler")
+                                        if _v else None)
+                    _kk["servis_hata"] = _h or ""
+                return
+            from . import kopru_kabul as _kk2
+
+            async def _bir_yerel(_kk):
+                o = _kk2.ROLE.ornek_ile(_kk["ornek_id"])
+                if o is None:
+                    _kk["servis_hata"] = "cevrimdisi"
+                    return
+                try:
+                    v = await _kk2.kopruden_iste(o, "servis_durum", {},
+                                                 zaman_asimi=5.0)
+                    _kk["servisler"] = (v or {}).get("servisler")
+                except Exception as e:
+                    _kk["servis_hata"] = str(e)
+
+            await asyncio.gather(*[_bir_yerel(_kk) for _kk in hedef])
+        except Exception as e:
+            print(f"[KOPRU] Servis durumu okunamadi: {e}")
+
+    def _kopru_adresleri(self, websocket):
+        """Yerel kipte koprunun girecegi (ws, http) adres ciftini uretir.
+
+        v2.4.232: API kodu adresi TASIR; bu yuzden sunucu tarafinda
+        uretilmelidir. Konak, operatorun bu arayuze ulastigi adrestir
+        (WS el sikisma `Host` basligi): operator LAN IP ile girdiyse
+        kopru de o IP'yi kullanir. `localhost` ile girildiyse makinenin
+        LAN adresi bulunur; `127.0.0.1` baska bir makinedeki kopru icin
+        anlamsizdir. Portlar GERCEK alinan portlardir (8765/8000 dolu
+        ise siradaki denenir; sabit yazmak yanlis adres uretirdi).
+        """
+        konak = ""
+        try:
+            h = None
+            rh = getattr(websocket, "request_headers", None)
+            if rh is not None:
+                h = rh.get("Host")
+            if not h:
+                req = getattr(websocket, "request", None)
+                if req is not None:
+                    h = req.headers.get("Host")
+            h = str(h or "").strip()
+            if h.startswith("["):
+                konak = h[1:h.index("]")] if "]" in h else h
+            else:
+                konak = h.rsplit(":", 1)[0] if h.count(":") == 1 else h
+        except Exception:
+            konak = ""
+        if not konak or konak in ("localhost", "127.0.0.1", "::1"):
+            konak = self._yerel_lan_ip() or "127.0.0.1"
+        if ":" in konak and not konak.startswith("["):
+            konak = "[%s]" % konak
+        try:
+            ws_port = int(getattr(self, "aktif_ws_port", 0) or 8765)
+        except (TypeError, ValueError):
+            ws_port = 8765
+        http_port = 0
+        try:
+            from .sabitler import _veri_alt_yolu
+            with open(_veri_alt_yolu("calisma.json"), encoding="utf-8") as f:
+                http_port = int((json.load(f) or {}).get("http_port") or 0)
+        except Exception:
+            http_port = 0
+        if not http_port:
+            http_port = int(HTTP_PORTLAR[0]) if HTTP_PORTLAR else 8000
+        return ("ws://%s:%d/kopru" % (konak, ws_port),
+                "http://%s:%d" % (konak, http_port))
+
+    @staticmethod
+    def _yerel_lan_ip():
+        """Makinenin disa cikan LAN adresi (paket gonderilmez)."""
+        import socket as _sk
+        try:
+            with _sk.socket(_sk.AF_INET, _sk.SOCK_DGRAM) as sk:
+                sk.connect(("10.255.255.255", 1))
+                ip = sk.getsockname()[0]
+            if ip and not ip.startswith("127."):
+                return ip
+        except Exception:
+            pass
+        try:
+            for bilgi in _sk.getaddrinfo(_sk.gethostname(), None):
+                a = str(bilgi[4][0])
+                if a.count(".") == 3 and not a.startswith("127."):
+                    return a
+        except Exception:
+            pass
+        return ""
+
+    async def _kopruler_komut(self, websocket, komut, k):
+        """v2.4.232: Yardim > Kopruler paneli (kip BAGIMSIZ).
+
+            {"tip":"kopruler_liste"}
+            {"tip":"kopru_olustur","ad":..}
+            {"tip":"kopru_sil","ornek_id":..}
+            {"tip":"kopru_kod_yenile","ornek_id":..}
+        Yanit: {"tip":"kopruler","basarili":..,"hata":..,"liste":[..],
+                "merkez_kipi":..}
+
+        Kullanici istegi (2026-09-17): yeni kopru YALNIZ isim sorar;
+        olusturulunca API kodu uretilir ve listede kopyalanir; kopru
+        kurulumda bu kodu girer ve iletisim kurulur. Merkez kipinde
+        kayit merkez veritabanindadir (ic uc uzerinden), yerel kipte
+        `yerel_kopruler` tablosundadir; arayuz farki gormez.
+
+        Yetki: liste her girisli kullaniciya, olusturma/silme/kod
+        yenileme yalniz yoneticiye. API kodu (sirri tasir) yalniz
+        yoneticiye gonderilir.
+        """
+        merkez = self._merkez_kipinde()
+
+        def _yanit(basarili, hata="", **ek):
+            p = {"tip": "kopruler", "basarili": bool(basarili),
+                 "hata": hata or "", "merkez_kipi": merkez}
+            p.update(ek)
+            return json.dumps(p, ensure_ascii=False)
+
+        p = self._pilot_bilgi(websocket) or {}
+        yonetici = (p.get("rol") == "yonetici")
+        if komut != "kopruler_liste" and not yonetici:
+            self.konsol("IZIN", "Kopru istegi reddedildi (yonetici degil): "
+                        f"{p.get('eposta', '?')}", "uyari")
+            await websocket.send(_yanit(
+                False, "Kopruleri yalnizca yonetici yonetebilir."))
+            return
+        fid = self._ws_firma_id(websocket) if merkez else None
+        if merkez and fid is None:
+            await websocket.send(_yanit(False, "Oturum gerekli."))
+            return
+        try:
+            oid = int(k.get("ornek_id") or 0)
+        except (TypeError, ValueError):
+            oid = 0
+        ad = str(k.get("ad") or "").strip()
+        if komut == "kopru_olustur" and not ad:
+            await websocket.send(_yanit(False, "Kopru adi bos olamaz."))
+            return
+        if komut in ("kopru_sil", "kopru_kod_yenile") and oid <= 0:
+            await websocket.send(_yanit(False, "Kopru belirtilmedi."))
+            return
+        loop = asyncio.get_event_loop()
+        try:
+            yeni = None
+            if merkez:
+                from . import merkez_kimlik as _mk
+                if komut == "kopru_olustur":
+                    yeni, hata = await _db_is_parcasi(
+                        _mk.kopru_olustur, fid, ad)
+                    if hata:
+                        await websocket.send(_yanit(False, hata))
+                        return
+                elif komut == "kopru_sil":
+                    _t, hata = await _db_is_parcasi(_mk.kopru_sil, fid, oid)
+                    if hata:
+                        await websocket.send(_yanit(False, hata))
+                        return
+                elif komut == "kopru_kod_yenile":
+                    yeni, hata = await _db_is_parcasi(
+                        _mk.kopru_kod_yenile, fid, oid)
+                    if hata:
+                        await websocket.send(_yanit(False, hata))
+                        return
+                liste = await _db_is_parcasi(_mk.firma_kopruleri, fid)
+            else:
+                from . import kopru_kabul as _kk
+                ws_adres, http_adres = self._kopru_adresleri(websocket)
+                if komut == "kopru_olustur":
+                    yeni = await loop.run_in_executor(
+                        None, _db_iade_ederek, _kk.kopru_kaydet, ad, "",
+                        ws_adres, http_adres)
+                elif komut in ("kopru_sil", "kopru_kod_yenile"):
+                    # Canli baglanti DUSURULUR: sir degisti/iptal edildi;
+                    # soket acik kalirsa kopru eski sirla calismayi
+                    # surdurur ve operator islemin olmadigini sanir.
+                    o = _kk.ROLE.ornek_ile(oid)
+                    if o is not None:
+                        with contextlib.suppress(Exception):
+                            await o.soket.close()
+                    if komut == "kopru_sil":
+                        await loop.run_in_executor(
+                            None, _db_iade_ederek, _kk.kopru_sil, oid)
+                    else:
+                        yeni = await loop.run_in_executor(
+                            None, _db_iade_ederek, _kk.kopru_kod_yenile,
+                            oid, ws_adres, http_adres)
+                        if not yeni:
+                            await websocket.send(_yanit(
+                                False, "Kopru kaydi bulunamadi."))
+                            return
+                liste = await loop.run_in_executor(
+                    None, _db_iade_ederek, _kk.kopru_listesi)
+            if komut != "kopruler_liste":
+                etiket = {"kopru_olustur": "olusturuldu",
+                          "kopru_sil": "silindi",
+                          "kopru_kod_yenile": "API kodu yenilendi"}[komut]
+                self.konsol("KOPRU", "Kopru %s: %s" % (
+                    etiket, ad or ("ornek %d" % oid)), "basari")
+                self._pilot_log(websocket, "KOPRU", komut,
+                                {"ad": ad, "ornek_id": oid or
+                                 ((yeni or {}).get("ornek_id"))})
+            liste = list(liste or [])
+            await self._kopru_servisleri_doldur(liste, fid)
+            if not yonetici:
+                for _k in liste:
+                    _k.pop("api_kodu", None)
+            await websocket.send(_yanit(
+                True, "", liste=liste, komut=komut,
+                yeni=(yeni if yonetici else None)))
+        except Exception as e:
+            self.konsol("KOPRU", "Kopru islemi basarisiz: %s: %s"
+                        % (type(e).__name__, e), "hata")
+            await websocket.send(_yanit(
+                False, "%s: %s" % (type(e).__name__, e)))
+
     async def _kopru_kimlik_komut(self, websocket, komut, k):
         """Yerel kurulumun kopru kurulum kimliklerini yonetir.
 
@@ -8936,43 +9187,11 @@ class WSSunucusu:
                 try:
                     from . import merkez_kimlik as _mk
                     if _mk.etkin():
-                        _kopruler = _mk.firma_kopruleri(_fid)
-                        # Servis durumlari (Dron/AI/Video) kopru
-                        # makinesinde yasar: yalniz CEVRIMICI
-                        # kopruye sorulur. Cevrimdisi kopruye sorgu
-                        # denemek her istegi zaman asimina kadar
-                        # bekletir ve panel donar.
-                        #
-                        # Sorgular PARALEL yapilir: sirayla sorulsa
-                        # 10 koprulu bir firmada panel 50 sn donar.
-                        # Ayrica bu cagrilar SENKRON HTTP oldugu icin
-                        # asyncio dongusu disinda (is parcaciginda)
-                        # calistirilir; yoksa TUM arayuz WS trafigi
-                        # sorgu suresince durur.
-                        _hedef = [_k for _k in _kopruler
-                                  if _k.get("cevrimici")]
-                        for _k in _kopruler:
-                            _k["servisler"] = None
-                            _k["servis_hata"] = ""
-                        if _hedef:
-                            def _servis_cek(_liste=_hedef, _f=_fid):
-                                import concurrent.futures as _cf
-
-                                def _bir(_kk):
-                                    return _kk, _mk.kopruye_sor(
-                                        _kk["ornek_id"], _f,
-                                        "servis_durum", zaman_asimi=5.0)
-
-                                _n = min(8, len(_liste))
-                                with _cf.ThreadPoolExecutor(_n) as _h2:
-                                    return list(_h2.map(_bir, _liste))
-
-                            for _kk, (_v, _h) in await _db_is_parcasi(
-                                    _servis_cek):
-                                _kk["servisler"] = (
-                                    (_v or {}).get("servisler")
-                                    if _v else None)
-                                _kk["servis_hata"] = _h or ""
+                        _kopruler = await _db_is_parcasi(
+                            _mk.firma_kopruleri, _fid)
+                        # v2.4.232: servis sorgusu ortak yardimcida
+                        # (Kopruler paneli de ayni yolu kullanir).
+                        await self._kopru_servisleri_doldur(_kopruler, _fid)
                     else:
                         # Yerel kurulumda kopru kavrami yoktur:
                         # bos liste doner, arayuz grup cizmez.
@@ -10883,6 +11102,10 @@ class WSSunucusu:
             # kuyrugu. Hedef LISTESI okuma her pilota acik; KARAR
             # yalnizca yoneticide (yetki denetimi metot icinde).
             await self._hedef_komut(websocket, komut, k)
+        elif komut in ("kopruler_liste", "kopru_olustur", "kopru_sil",
+                       "kopru_kod_yenile"):
+            # v2.4.232: Yardim > Kopruler paneli (kip bagimsiz; API kodu).
+            await self._kopruler_komut(websocket, komut, k)
         elif komut in ("kopru_kimlik_liste", "kopru_kimlik_uret",
                        "kopru_kimlik_sil"):
             # v2.4.67: KAPALI DEVRE KOPRU KIMLIK YONETIMI

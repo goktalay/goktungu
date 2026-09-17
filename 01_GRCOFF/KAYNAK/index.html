@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24230">
+<link rel="stylesheet" href="css/stil.css?v=v24232">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -155,6 +155,8 @@
         <span class="mb-etiket" data-i18n="mbYardim">Destek</span>
         <div class="mb-dropdown">
           <div class="mb-oge" id="mbYardimMerkez" data-hizli="y"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-book-open"></i><span data-i18n="mbYardimMerkez">Destek Merkezi</span></div>
+          <!-- v2.4.232: Kopruler (API kodlu kopru kayitlari; kip bagimsiz) -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbKopruler" data-yuzen="yzKopruler" data-hizli="k"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-diagram-project"></i><span data-i18n="mbKopruler">Köprüler</span></div>
           <!-- v2.4.201: uygulama icinden lisans yenileme -->
           <div class="mb-oge mb-popup-toggle pasif" id="mbLisansYenile" data-yuzen="yzLisans" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-key"></i><span data-i18n="mbLisansYenile">Lisansı Yenile</span></div>
           <div class="mb-oge" id="mbGuncelleme" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-cloud-arrow-down"></i><span data-i18n="mbGuncelleme">Güncellemeleri Denetle</span></div>
@@ -431,6 +433,39 @@
   <div class="form-dip">
     <button id="btnRadarFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
     <button id="btnRadarFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
+  </div>
+</div>
+
+<!-- ============ v2.4.232: KOPRULER (liste) + YENI KOPRU FORMU ============
+     Destek > Kopruler. Kayit yalniz AD ister; sunucu API kodu uretir
+     (kopru kurulumunda girilir). Satirda cevrimici moduller cip olarak
+     gosterilir. Kip bagimsiz (merkez: merkez DB, yerel: yerel_kopruler). -->
+<div id="yzKopruler" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:560px;min-height:300px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-diagram-project"></i> <span data-i18n="panelKopruler">KÖPRÜLER</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzKopruler" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketKopruler">KÖPRÜ YÖNETİMİ</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnKopruYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnKopruYeni" title="Yeni Köprü"><i class="fa-solid fa-plus"></i><span data-i18n="btnKopruYeni">Yeni Köprü</span></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div id="koprulerListe" class="cl-liste"></div>
+  </div>
+</div>
+<div id="yzKopruForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-diagram-project"></i> <span data-i18n="panelKopruFormYeni">YENİ KÖPRÜ</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzKopruForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div class="alan"><label for="kfAd" data-i18n="lblKopruAd">Köprü adı</label><input type="text" id="kfAd" maxlength="64" spellcheck="false" autocomplete="off" placeholder="Örn: Saha Aracı 1"></div>
+    <div class="kp-form-not" data-i18n="kpAciklama">Köprüye yalnızca bir ad verin. Kayıt oluşturulunca köprü yazılımının ilk kurulumunda girilecek API kodu üretilir; kodu listeden kopyalayabilirsiniz.</div>
+  </div>
+  <div class="form-dip">
+    <button id="btnKopruFormIptal" class="ikincil"><span data-i18n="btnFormIptal">İPTAL</span></button>
+    <button id="btnKopruFormKaydet"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="btnFormKaydet">KAYDET</span></button>
   </div>
 </div>
 
@@ -1706,7 +1741,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24230"></script>
+<script src="js/i18n.js?v=v24232"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1756,14 +1791,16 @@
      program_ayar.js'den ONCE yuklenir: window.djiBelirtecBolumEkle
      popup cizilirken hazir olmalidir (kopru_kimlik.js ile ayni kural). -->
 <script src="js/dji_belirtec.js?v=v24127"></script>
-<script src="js/kopru_kimlik.js?v=v24230"></script>
+<script src="js/kopru_kimlik.js?v=v24232"></script>
+<!-- v2.4.232: Destek > Kopruler paneli + satir sonu kopru rozeti (window.kopruRozetOlustur) -->
+<script src="js/kopruler_panel.js?v=v24232"></script>
 <script src="js/program_ayar.js?v=v24230"></script>
 <script src="js/lisans_yenile.js?v=v24201"></script>
 <script src="js/servis_panel.js?v=v24127"></script>
 <!-- v2.4.50: pilot bazli joystick ayarlari (ters cevirme, olu bolge,
      merkez kalibrasyonu). Kisisel ayardir; rol sarti yoktur. -->
 <script src="js/joystick_ayar.js?v=v24127"></script>
-<script src="js/seri.js?v=v24230"></script>
+<script src="js/seri.js?v=v24232"></script>
 <!-- FAZ18-SIHIRBAZ: sanal dron olusturma sihirbazi.
      seri.js'den SONRA yuklenir: bagSanalTip/bagAd gibi
      ogeleri ve `ws` globalini kullanir. -->
@@ -1786,7 +1823,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v24219"></script>
-<script src="js/kameralar.js?v=v24229"></script>
+<script src="js/kameralar.js?v=v24232"></script>
 <script src="js/m50_pencere.js?v=v24225"></script>
 <script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
@@ -1838,14 +1875,14 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24231"></script>
+<script src="js/surum.js?v=v24232"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24227"></script>
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24183"></script>
-<script src="js/ws.js?v=v24229"></script>
+<script src="js/ws.js?v=v24232"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>
@@ -2030,7 +2067,7 @@
 
 <script src="js/ai_panel.js?v=v24150"></script>
 
-<script src="js/ai_sunucular.js?v=v24150"></script>
+<script src="js/ai_sunucular.js?v=v24232"></script>
 
 <script src="js/ai_tespitler.js?v=v24150"></script>
 </body>

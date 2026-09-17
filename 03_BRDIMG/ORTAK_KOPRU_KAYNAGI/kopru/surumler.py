@@ -18,8 +18,28 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.22"
+KOPRU_SURUM = "1.7.23"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.23",
+        "tarih": "2026-09-17",
+        "notlar": [
+            "API KODU ILE KURULUM (kullanici istegi): ilk acilis sihirbazi "
+            "artik 'GRCON - Merkez Sunucu mu, GRCOFF - Yerel Kurulum mu?' "
+            "sorar ve yalniz API KODU ister. Kod (GTK1.…) merkezin "
+            "Destek > Kopruler panelinde uretilir; kurulum kimligini, sirri "
+            "ve merkez adresini birlikte tasir. Girildiginde kimlik dosyasi "
+            "ve merkez adresi yazilir, ajan yeni kimlikle baglanir; IP/adres "
+            "ve e-posta/sifre ile merkeze kayit adimi kalkti "
+            "(/api/kurulum/kod).",
+            "YENIDEN ESLESTIRME: panelde 'Merkeze Kaydet' penceresine "
+            "'API kodu ile eslestir' bolumu eklendi (/api/merkez/kod; "
+            "yonetici + yerel istek). Merkezde 'Kodu yenile' yapildiginda "
+            "veya kopru baska merkeze tasinirken kullanilir.",
+            "Merkez 2.4.232 (GRCOFF 2.5.102) ile birlikte yayinlandi; "
+            "servis surumleri degismedi (radar 2.3.0, M50 1.2.0).",
+        ]
+    },
     {
         "surum": "1.7.22",
         "tarih": "2026-09-16",

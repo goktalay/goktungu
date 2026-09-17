@@ -107,6 +107,74 @@ def gizli_uret():
 
 
 # ======================================================================
+# v2.4.232: KOPRU API KODU
+# ======================================================================
+# Kullanici istegi (2026-09-17): "yeni koprude sadece kopru ismini
+# sorsun, olusturulunca bir API kodu olustursun, bu kodu listedeyken
+# kopyalayabilsin ... kopru ilk kurulumda ... api kodunu sorsun,
+# girdiginde kopru iletisimi saglansin".
+#
+# Kod, koprunun baglanmak icin bilmesi gereken HER SEYI tasir: kurulum
+# kimligi (uid), sir (gizli), merkezin WS/HTTP adresi ve kayit adi.
+# Bicim: `GTK1.` + base64url(JSON). Onek surum tasir; ileride alanlar
+# degisirse kopru eski kodu tanimayi surdurebilir.
+#
+# GUVENLIK: kod SIRRI acik tasir. Bu yuzden veritabaninda yalniz kopru
+# ILK KEZ basariyla baglanana kadar tutulur; baglanti acilinca silinir
+# (`_baglanti_acildi`). Kaybolan kod icin `kopru_kod_yenile` yeni sir
+# uretir; eski sirla baglanan kopru duser.
+API_KOD_ONEK = "GTK1."
+
+
+def api_kodu_uret(kurulum_uid, gizli, merkez_adres, merkez_http="",
+                  ad="", ornek_id=None, tur="grcoff"):
+    import base64
+    govde = {"u": str(kurulum_uid or ""), "g": str(gizli or ""),
+             "m": str(merkez_adres or ""), "t": str(tur or "grcoff")}
+    if merkez_http:
+        govde["h"] = str(merkez_http)
+    if ad:
+        govde["a"] = str(ad)
+    if ornek_id:
+        govde["o"] = int(ornek_id)
+    ham = json.dumps(govde, separators=(",", ":"),
+                     ensure_ascii=False).encode("utf-8")
+    return API_KOD_ONEK + base64.urlsafe_b64encode(ham).decode(
+        "ascii").rstrip("=")
+
+
+def api_kodu_coz(kod):
+    """`(sozluk, hata)` dondurur. Bosluk/satir sonu yok sayilir."""
+    import base64
+    kod = "".join(str(kod or "").split())
+    if not kod.startswith(API_KOD_ONEK):
+        return None, "API kodu '%s' ile baslamali" % API_KOD_ONEK
+    govde = kod[len(API_KOD_ONEK):]
+    govde += "=" * (-len(govde) % 4)
+    try:
+        d = json.loads(base64.urlsafe_b64decode(govde).decode("utf-8"))
+    except Exception:
+        return None, "API kodu cozulemedi (eksik veya bozuk)"
+    if not isinstance(d, dict) or not (d.get("u") and d.get("g")
+                                       and d.get("m")):
+        return None, "API kodu eksik alan iceriyor"
+    return d, None
+
+
+def _api_kodu_sutunu_garanti(con, pg):
+    """`api_kodu` sutunu eski kurulumlarda yoktur; bir kez eklenir."""
+    if pg:
+        con.execute("ALTER TABLE " + TABLO +
+                    " ADD COLUMN IF NOT EXISTS api_kodu TEXT DEFAULT ''")
+        return
+    mevcut = {r[1] for r in con.execute(
+        "PRAGMA table_info(" + TABLO + ")").fetchall()}
+    if "api_kodu" not in mevcut:
+        con.execute("ALTER TABLE " + TABLO +
+                    " ADD COLUMN api_kodu TEXT DEFAULT ''")
+
+
+# ======================================================================
 # Oturum nesnesi
 # ======================================================================
 class KopruOturumu:
@@ -317,24 +385,36 @@ def tablo_kur():
         con.execute(
             "CREATE INDEX IF NOT EXISTS ix_yerel_kopruler_uid"
             " ON " + TABLO + " (kurulum_uid)")
+        # v2.4.232: API kodu sutunu (bkz. api_kodu_uret).
+        with contextlib.suppress(Exception):
+            _api_kodu_sutunu_garanti(con, vt.pg_kipinde())
     return True
 
 
-def kopru_kaydet(ad, aciklama=""):
+def kopru_kaydet(ad, aciklama="", merkez_adres="", merkez_http=""):
     """Yeni kopru kaydi uretir. `gizli` YALNIZ BIR KEZ doner.
 
     Sir veritabaninda ozet olarak tutulur; kaybedilirse yeni kayit
     uretilmesi gerekir. Bulut `ornek_kaydet()` ile ayni sozlesme.
+
+    v2.4.232: `merkez_adres` (ws://...) verilirse koprunun kurulumda
+    girecegi API kodu uretilir ve ilk basarili baglantiya kadar
+    `api_kodu` sutununda tutulur (bkz. api_kodu_uret).
     """
     from . import veritabani as vt
     uid = kurulum_uid_uret()
     gizli = gizli_uret()
+    ad = str(ad or "Yerel Kopru")
+    kod = ""
+    if merkez_adres:
+        kod = api_kodu_uret(uid, gizli, merkez_adres, merkez_http, ad,
+                            None, "grcoff")
     with vt.baglanti() as con:
         im = con.execute(
             "INSERT INTO " + TABLO +
-            " (kurulum_uid, gizli_ozet, ad, aciklama) VALUES (?,?,?,?)",
-            (uid, gizli_ozetle(gizli), str(ad or "Yerel Kopru"),
-             str(aciklama or "")))
+            " (kurulum_uid, gizli_ozet, ad, aciklama, api_kodu)"
+            " VALUES (?,?,?,?,?)",
+            (uid, gizli_ozetle(gizli), ad, str(aciklama or ""), kod))
         oid = getattr(im, "lastrowid", None)
     if not oid:
         with vt.baglanti() as con:
@@ -342,12 +422,47 @@ def kopru_kaydet(ad, aciklama=""):
                 "SELECT ornek_id FROM " + TABLO +
                 " WHERE kurulum_uid=?", (uid,)).fetchone()
             oid = int(s[0]) if s else None
+    if kod and oid:
+        # Kod ornek kimligini de tasisin (kopru panelinde gosterilir).
+        kod = api_kodu_uret(uid, gizli, merkez_adres, merkez_http, ad,
+                            int(oid), "grcoff")
+        with vt.baglanti() as con:
+            con.execute("UPDATE " + TABLO + " SET api_kodu=? WHERE ornek_id=?",
+                        (kod, int(oid)))
     return {
         "ornek_id": int(oid) if oid else None,
         "kurulum_uid": uid,
         "gizli": gizli,
-        "ad": str(ad or "Yerel Kopru"),
+        "ad": ad,
+        "api_kodu": kod,
     }
+
+
+def kopru_kod_yenile(ornek_id, merkez_adres, merkez_http=""):
+    """Kaydin sirrini ve API kodunu YENILER; eski sir gecersizlesir.
+
+    Kod ilk baglantida silindigi icin koprunun yeniden kurulmasi
+    (makine degisti, dosya kayboldu) yeni bir kod gerektirir. Cagiran
+    taraf canli oturumu kapatmalidir (eski sirla baglanan kopru
+    dusmeli).
+    """
+    from . import veritabani as vt
+    with vt.baglanti() as con:
+        s = con.execute(
+            "SELECT kurulum_uid, ad FROM " + TABLO +
+            " WHERE ornek_id=? AND durum <> 'iptal'",
+            (int(ornek_id),)).fetchone()
+    if not s:
+        return None
+    gizli = gizli_uret()
+    kod = api_kodu_uret(str(s["kurulum_uid"]), gizli, merkez_adres,
+                        merkez_http, str(s["ad"] or ""), int(ornek_id),
+                        "grcoff")
+    with vt.baglanti() as con:
+        con.execute(
+            "UPDATE " + TABLO + " SET gizli_ozet=?, api_kodu=?"
+            " WHERE ornek_id=?", (gizli_ozetle(gizli), kod, int(ornek_id)))
+    return {"ornek_id": int(ornek_id), "api_kodu": kod}
 
 
 def _kayit_urunu(satir):
@@ -500,7 +615,7 @@ def kopru_listesi():
             satirlar = con.execute(
                 "SELECT ornek_id, kurulum_uid, ad, aciklama, surum,"
                 "       platform, makine_adi, cevrimici, son_gorulme_ts,"
-                "       son_ip, dron_sayisi, yetenekler, durum"
+                "       son_ip, dron_sayisi, yetenekler, durum, api_kodu"
                 "  FROM " + TABLO + " WHERE durum <> 'iptal'"
                 " ORDER BY ad").fetchall()
     except Exception as e:
@@ -533,6 +648,8 @@ def kopru_listesi():
             "yetenekler": yet if isinstance(yet, dict) else {},
             "durum": str(s["durum"] or ""),
             "yerel": True,
+            # v2.4.232: kod yalniz ilk baglantiya kadar doludur.
+            "api_kodu": str(s["api_kodu"] or ""),
         }
         if canli is not None:
             # Canli oturum daha guncel: nabiz henuz veritabanina
@@ -557,9 +674,11 @@ def _baglanti_acildi(o):
     from . import veritabani as vt
     with contextlib.suppress(Exception):
         with vt.baglanti() as con:
+            # v2.4.232: kopru basariyla baglandi -> API kodu (sirri acik
+            # tasir) artik gerekmez; veritabanindan silinir.
             con.execute(
                 "UPDATE " + TABLO + " SET cevrimici=?, son_gorulme_ts=?,"
-                " son_ip=?, surum=?, platform=?, makine_adi=?"
+                " son_ip=?, surum=?, platform=?, makine_adi=?, api_kodu=''"
                 " WHERE ornek_id=?",
                 (True if vt.pg_kipinde() else 1,
                  dt.datetime.now(dt.timezone.utc), o.ip, o.surum,

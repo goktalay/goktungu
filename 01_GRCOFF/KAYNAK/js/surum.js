@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.231";
-const GCS_SURUM_TARIH = "2026-09-15";
+const GCS_SURUM = "2.4.232";
+const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.232",
+    tarih: "2026-09-17",
+    baslik: "Destek > Köprüler paneli (API kodlu köprü kaydı), köprü gruplaması kaldırıldı, GRCON'da sabit 'Radar 1' vekili kaldırıldı (paket 2.5.102)",
+    maddeler: [
+      "KÖPRÜLER PANELİ (kullanıcı isteği): Destek menüsüne 'Köprüler' eklendi. Standart liste panelinde köprüler; 'Yeni Köprü' yalnızca AD sorar, kayıt oluşunca sunucu bir API KODU üretir (GTK1.… — kimlik, sır ve merkez adresini taşır). Kod listede kopyalanır/gösterilir; köprü ilk kez bağlanınca güvenlik için silinir, 'Kodu yenile' yeni sır üretir (bağlı köprü düşer). Silme canlı bağlantıyı da keser. Kip bağımsız: GRCON'da merkez veritabanı (iç uçlar), GRCOFF'ta yerel_kopruler.",
+      "ÇEVRİMİÇİ MODÜLLER: her köprü satırında çevrimiçi durumu, IP/makine/sürüm ve çalışan servisler (Dron, AI, Video, GroundGCC, Radar, M50) renkli çip olarak; panel açıkken 10 sn'de bir tazelenir.",
+      "GRUPLAMA KALDIRILDI: Bağlantı Yöneticisi, Kameralar ve AI Sunucuları'nda köprü grup başlıkları yok; kayıtlar düz listelenir ve satırın EN SAĞINDA bağlı olduğu köprü rozeti (adı + çevrimiçi/çevrimdışı) gösterilir. Program Ayarları > Köprü Kimlikleri bölümü panele yönlendirir.",
+      "KÖPRÜ 1.7.23 ile: köprü ilk kurulumunda 'GRCON (merkez sunucu) mu, GRCOFF (yerel kurulum) mu?' sorulur ve API kodu girilince kimlik+adres yazılıp bağlantı kurulur; e-posta/şifre ile merkeze kayıt adımı kalktı.",
+      "KÖK NEDEN (kullanıcı: 'GRCON üzerinde hâlâ bir radar duruyor'): merkez kipinde main.py radar yöneticisine sabit bir 'birincil' RadarVekili veriyor, tazele() de kimlik 1'i silmiyordu; veritabanında kayıt olmasa da 'Radar 1 · adres yok · hata' görünüyordu. Sabit vekil ve istisna kaldırıldı; merkez kullanıcıda köprü dışında radar olamaz.",
+    ]
+  },
   {
     surum: "2.4.231",
     tarih: "2026-09-17",
