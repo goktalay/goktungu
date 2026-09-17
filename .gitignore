@@ -42,7 +42,3 @@ track_verisi.ndjson
 *.orijinal
 *.faz[0-9]*
 *.yayin_*
-
-# --- PRNFRM çalışma verisi ---
-prnfrm.sqlite
-prnfrm.sqlite-journal
