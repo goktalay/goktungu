@@ -848,6 +848,8 @@ m50AlanlariEtkinlestir();
   window.eoFormuAc = function(c){
     const t = m50T();
     if (!efId) return;
+    // 2.4.240: merkezde yeni EO cihazi yalniz cevrimici kopru varken.
+    if (!c && typeof window.kopruYeniKayitIzni === "function" && !window.kopruYeniKayitIzni("eo")) return;
     const a = (c && c.m50_ayarlar) || {};
     efId.value = c ? String(c.eo_id) : "";
     efIsim.value = c ? (c.isim || "") : ("M50 " + (eoListesi.length + 1));
@@ -882,7 +884,11 @@ m50AlanlariEtkinlestir();
       const bos = document.createElement("option"); bos.value = "";
       bos.textContent = merkez ? (t.raKopruSec || "Saha makinesi seç...")
                                : (t.bagKopruYerel || "Merkez bağlantısı (bu bilgisayar, köprüsüz)"); sec.appendChild(bos);
-      for (const k of liste){ const o = document.createElement("option"); o.value = String(k.ornek_id);
+      const secili = (c && c.kopru_ornek_id) ? Number(c.kopru_ornek_id) : 0;
+      for (const k of liste){
+        // 2.4.240: merkez kipinde yalniz CEVRIMICI kopruler (kaydin mevcut koprusu haric).
+        if (merkez && !k.cevrimici && Number(k.ornek_id) !== secili) continue;
+        const o = document.createElement("option"); o.value = String(k.ornek_id);
         o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")"); sec.appendChild(o); }
       sec.value = (c && c.kopru_ornek_id) ? String(c.kopru_ornek_id) : "";
     })();
@@ -948,7 +954,13 @@ m50AlanlariEtkinlestir();
       const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
       const sec = document.getElementById("efKopru");
       const kid = parseInt((sec && sec.value) || "0", 10);
-      if (merkez && !kid){ if (sec) sec.focus(); return; }
+      if (merkez && !kid){
+        // 2.4.240: sessiz odaklama yerine acik uyari.
+        const tt = m50T();
+        if (typeof window.uyariToastGoster === "function")
+          window.uyariToastGoster({baslik: tt.panelEoFormYeni || "ELEKTRO OPTİK", mesaj: tt.eoKopruUyari || "Köprü seçilmeden cihaz kaydedilemez.", seviye: "uyari", sure: 5000, kategori: "eo"});
+        if (sec) sec.focus(); return;
+      }
       // 2.4.238: yerel kipte kopru secilmediyse null -> koprusuz (dogrudan SDK).
       paket.kopru_ornek_id = kid || null;
     }

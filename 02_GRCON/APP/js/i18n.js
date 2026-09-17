@@ -2028,6 +2028,15 @@ const DILLER = {
     "bagKopruAciklama": "Bağlantı seçilen köprü bilgisayarında kurulur; adres ve port o makinede çözülür. Ham MAVLink akışı köprü kanalıyla merkeze taşınır. Yalnızca çevrimiçi köprüler listelenir.",
     "bagKopruYok": "Çevrimiçi köprü yok",
     bagKopruYerel: "Merkez bağlantısı (bu bilgisayar, köprüsüz)",
+    // v2.4.240 GRCON: yeni kayit icin cevrimici kopru zorunlu
+    kopruYokBaslik: "Çevrimiçi köprü yok",
+    kopruYokUyari: "Bu sistemde şu an bağlı (çevrimiçi) bir köprü yok. Radar, elektro-optik, dron ve kamera kayıtları yalnız bir köprü üzerinden çalışır; önce köprüyü bağlayın, sonra yeni kayıt ekleyin.",
+    raKopruUyari: "Köprü seçilmeden radar kaydedilemez; listeden bir saha makinesi seçin.",
+    eoKopruUyari: "Köprü seçilmeden elektro-optik cihaz kaydedilemez; listeden bir saha makinesi seçin.",
+    kamCihazKopruSec: "Cihazları listelemek için önce köprü seçin",
+    lblKamKopru: "KÖPRÜ (SAHA MAKİNESİ)",
+    kamKopruNot: "Kamera akışı seçilen köprü makinesinden okunur; \"Yerel bilgisayar kamerası\" seçilirse cihazlar o makineden listelenir.",
+    kamCihazYokKopru: "Köprü makinesinde kamera bulunamadı",
     // v2.4.239 baglanti diyagrami
     dygBaslik: "BAĞLANTI DİYAGRAMI",
     dygDugme: "Bağlantı diyagramını göster",
@@ -4231,6 +4240,15 @@ const DILLER = {
     "bagKopruAciklama": "The connection is opened on the selected bridge computer; the address and port are resolved on that machine. Raw MAVLink is carried to the center over the bridge channel. Only online bridges are listed.",
     "bagKopruYok": "No online bridge",
     bagKopruYerel: "Central connection (this computer, no bridge)",
+    // v2.4.240 GRCON: online bridge required for new records
+    kopruYokBaslik: "No online bridge",
+    kopruYokUyari: "There is no connected (online) bridge in this system right now. Radar, electro-optic, drone and camera records only work through a bridge; connect a bridge first, then add the record.",
+    raKopruUyari: "A radar cannot be saved without a bridge; pick a field machine from the list.",
+    eoKopruUyari: "An electro-optic device cannot be saved without a bridge; pick a field machine from the list.",
+    kamCihazKopruSec: "Select a bridge first to list its devices",
+    lblKamKopru: "BRIDGE (FIELD MACHINE)",
+    kamKopruNot: "The camera stream is read from the selected bridge machine; for \"Local computer camera\" the devices are listed from that machine.",
+    kamCihazYokKopru: "No camera found on the bridge machine",
     // v2.4.239 connection diagram
     dygBaslik: "CONNECTION DIAGRAM",
     dygDugme: "Show connection diagram",

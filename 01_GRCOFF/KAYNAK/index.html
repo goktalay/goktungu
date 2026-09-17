@@ -1165,6 +1165,13 @@
       <label for="kamDron">BAĞLI DRON</label>
       <select id="kamDron"><option value="">— Bağlı değil —</option></select>
       <div class="form-not" id="kamDronBilgi">Dron seçilirse kamera yalnız bu dronun harita ikonunda yerel canlı önizleme olarak gösterilir.</div>
+      <!-- v2.4.240: kopru secici (kameralar.js kamKopruAlan/kamKopruSec; onceden HTML'de yoktu,
+           merkez kipinde kamera hic kaydedilemiyordu) -->
+      <div id="kamKopruAlan">
+        <label for="kamKopruSec" data-i18n="lblKamKopru">KÖPRÜ (SAHA MAKİNESİ)</label>
+        <select id="kamKopruSec"></select>
+        <div class="form-not" data-i18n="kamKopruNot">Kamera akışı seçilen köprü makinesinden okunur; "Yerel bilgisayar kamerası" seçilirse cihazlar o makineden listelenir.</div>
+      </div>
       <label for="kamProtokol" data-i18n="lblKamProtokol">KAMERA TÜRÜ / PROTOKOL</label>
       <select id="kamProtokol">
         <option value="rtsp">RTSP</option>
@@ -1752,7 +1759,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24239"></script>
+<script src="js/i18n.js?v=v24240"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1811,7 +1818,7 @@
 <!-- v2.4.50: pilot bazli joystick ayarlari (ters cevirme, olu bolge,
      merkez kalibrasyonu). Kisisel ayardir; rol sarti yoktur. -->
 <script src="js/joystick_ayar.js?v=v24127"></script>
-<script src="js/seri.js?v=v24239"></script>
+<script src="js/seri.js?v=v24240"></script>
 <!-- FAZ18-SIHIRBAZ: sanal dron olusturma sihirbazi.
      seri.js'den SONRA yuklenir: bagSanalTip/bagAd gibi
      ogeleri ve `ws` globalini kullanir. -->
@@ -1821,9 +1828,9 @@
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
 <script src="js/radar_gorsel.js?v=v24225"></script>
-<script src="js/radar_panel.js?v=v24239"></script>
+<script src="js/radar_panel.js?v=v24240"></script>
 <script src="js/radar_pencere.js?v=v24227"></script>
-<script src="js/m50_panel.js?v=v24239"></script>
+<script src="js/m50_panel.js?v=v24240"></script>
 <script src="js/diyagram.js?v=v24239"></script>
 <script src="js/hedefler.js?v=v24227"></script>
 <script src="js/harita_hover.js?v=v24225"></script>
@@ -1835,7 +1842,7 @@
 <script src="lib/hls.min.js"></script>
 <!-- OFFLINE-KAMERA: MJPEG yeniden bağlanma önce, kamera istemcisi sonra yüklenir. -->
 <script src="js/mjpeg_yeniden.js?v=v24219"></script>
-<script src="js/kameralar.js?v=v24239"></script>
+<script src="js/kameralar.js?v=v24240"></script>
 <script src="js/m50_pencere.js?v=v24225"></script>
 <script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
@@ -1887,7 +1894,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24239"></script>
+<script src="js/surum.js?v=v24240"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>
@@ -2079,7 +2086,7 @@
 
 <script src="js/ai_panel.js?v=v24150"></script>
 
-<script src="js/ai_sunucular.js?v=v24239"></script>
+<script src="js/ai_sunucular.js?v=v24240"></script>
 
 <script src="js/ai_tespitler.js?v=v24150"></script>
 </body>

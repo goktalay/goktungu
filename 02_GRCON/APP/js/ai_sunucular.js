@@ -99,6 +99,8 @@
   // Form
   // ------------------------------------------------------------------
   function formGoster(s) {
+    // 2.4.240: merkezde yeni AI sunucusu yalniz cevrimici kopru varken.
+    if (!s && typeof window.kopruYeniKayitIzni === "function" && !window.kopruYeniKayitIzni("ai")) return;
     duzenlenenId = s ? s.id : null;
     inAd.value       = s ? (s.ad || "") : "";
     inTip.value      = s ? (s.tip || "cpu") : "nvidia";

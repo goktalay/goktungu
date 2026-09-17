@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.239";
+const GCS_SURUM = "2.4.240";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.240",
+    tarih: "2026-09-17",
+    baslik: "GRCON: yeni kayıt için çevrimiçi köprü zorunlu; yerel kamera listesi seçilen köprü makinesinden (paket 2.5.110)",
+    maddeler: [
+      "KULLANICI İSTEĞİ (GRCON / merkez kipi): Radar, Elektro-Optik, Dron (seri/TCP/UDP/DJI), Kamera ve AI Sunucusu için yeni kayıt ekranı yalnız sistemde en az bir ÇEVRİMİÇİ köprü varken açılır; yoksa form açılmadan uyarı verilir. Köprü seçilmeden kayıt yapılamaz (radar ve EO'da artık açık uyarı). Sanal Dron istisnadır: köprü sorulmaz. GRCOFF (yerel kip) etkilenmez.",
+      "Radar ve Elektro-Optik köprü seçicileri merkez kipinde yalnız çevrimiçi köprüleri listeler (kaydın mevcut köprüsü düzenlemede kalır); Bağlantı Yöneticisi, Kamera ve AI ile aynı kural.",
+      "KULLANICI İSTEĞİ: Kamera formunda 'Yerel bilgisayar kamerası' seçilince cihaz listesi formda seçilen KÖPRÜ makinesinden gelir; köprü değiştirilince liste yenilenir. Merkezde köprü seçilmeden liste istenmez.",
+      "HATA (kök neden): Kamera formunda köprü seçici HTML'de hiç yoktu (kameralar.js onu arıyor ama bulamıyordu); merkez kipinde kamera kaydı 'köprü seçin' hatasıyla hiç yapılamıyordu. Seçici forma eklendi.",
+      "HATA (kök neden): merkez kipinde kamera kaydı köprüye yazma ve canlı video kanalı açma, formda seçilen köprüye değil 'video servisi çalışan ilk köprü'ye gidiyordu; birden fazla köprüde yanlış makinenin kamerası açılabiliyordu. Artık kaydın köprüsü kullanılır (sahiplik denetimiyle).",
+    ],
+  },
   {
     surum: "2.4.239",
     tarih: "2026-09-17",

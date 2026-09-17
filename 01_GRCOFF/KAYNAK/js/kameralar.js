@@ -182,11 +182,24 @@
   // mesajini window.kameraCihazlarIsle ile buraya yollar.
   function cihazlariListele() {
     const t = T();
+    // 2.4.240 (kullanici: "hangi kopruyu secersem yerel bilgisayar kamerasi o
+    // koprunun bagli oldugu bilgisayardaki kameralardan gelmeli"): cihaz
+    // listesi secili KOPRU makinesinden istenir; kopru secili degilse merkez
+    // kipinde liste istenmez (once kopru), yerel kipte bu bilgisayar sorulur.
+    const kid = parseInt((kopruSec && kopruSec.value) || "0", 10) || null;
+    const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
+    if (merkez && !kid) {
+      cihazSec.innerHTML = "<option value=''>" +
+        (t.kamCihazKopruSec || "Cihazlar\u0131 listelemek i\u00e7in \u00f6nce k\u00f6pr\u00fc se\u00e7in") + "</option>";
+      return;
+    }
     cihazSec.innerHTML = "<option value=''>" +
       (t.kamCihazYukleniyor || "Cihazlar sorgulan\u0131yor...") +
       "</option>";
-    wsGonder({ tip: "kamera_cihazlari" });
+    wsGonder({ tip: "kamera_cihazlari", kopru_ornek_id: kid });
   }
+  // 2.4.240: kopru degisince donanim cihaz listesi o makineden yenilenir.
+  if (kopruSec) kopruSec.addEventListener("change", () => { if (inProt.value === "donanim") cihazlariListele(); });
 
   window.kameraCihazlarIsle = function(m) {
     if (!cihazSec) return;
@@ -195,7 +208,8 @@
     cihazSec.innerHTML = "";
     if (!cihazlar.length) {
       cihazSec.innerHTML = "<option value=''>" +
-        (t.kamCihazYok || "Sunucuda kamera bulunamad\u0131") + "</option>";
+        (m.gerekce || (m.kopru_ornek_id ? (t.kamCihazYokKopru || "K\u00f6pr\u00fc makinesinde kamera bulunamad\u0131")
+                                        : (t.kamCihazYok || "Sunucuda kamera bulunamad\u0131"))) + "</option>";
       return;
     }
     for (const c of cihazlar) {
@@ -325,6 +339,8 @@
 
   function modalAc(kamera) {
     const t = T();
+    // 2.4.240: merkezde yeni kamera yalniz cevrimici kopru varken.
+    if (!kamera && typeof window.kopruYeniKayitIzni === "function" && !window.kopruYeniKayitIzni("kamera")) return;
     duzenlenenId = kamera ? kamera.id : null;
     inAd.value = kamera ? kamera.isim : "";
     inProt.value = kamera ? kamera.protokol : "rtsp";

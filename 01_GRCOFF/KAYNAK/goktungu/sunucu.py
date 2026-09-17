@@ -3732,20 +3732,40 @@ class WSSunucusu:
             "fps": kayit.get("fps") or 15,
             "genislik": kayit.get("genislik") or 960,   # v2.4.207
         }
-        _s, hata = await _db_is_parcasi(
-            self._saha_komut_eszamanli, "video_kamera_yaz",
-            {"kamera": paket})
+        # v2.4.240: kayit bir kopruye bagliysa defter O kopruye yazilir;
+        # onceki yol video servisi calisan ILK kopruyu seciyordu (formda
+        # secilen kopru yok sayiliyordu -> baska makinenin kameralari).
+        _koid = 0
+        try:
+            _koid = int(kayit.get("kopru_ornek_id") or 0)
+        except (TypeError, ValueError):
+            _koid = 0
+        if _koid:
+            _s, hata = await self._kopruye_sor_async(
+                _koid, websocket, "video_kamera_yaz", {"kamera": paket},
+                zaman_asimi=12.0)
+            if not hata and isinstance(_s, dict) and not _s.get("tamam", True):
+                hata = str(_s.get("hata") or "Saha makinesi komutu uygulayamadi.")
+        else:
+            _s, hata = await _db_is_parcasi(
+                self._saha_komut_eszamanli, "video_kamera_yaz",
+                {"kamera": paket})
         if hata:
             await self._hata_bildir(
                 websocket, "KAMERA",
                 "Kamera kaydi saha makinesine iletilemedi: %s" % hata)
 
-    def _saha_video_baglam(self):
+    def _saha_video_baglam(self, kamera_id=None):
         """`(mk, oid, firma_id)` cozer ya da `(None, None, gerekce)`.
 
         `_saha_komut_eszamanli` ile AYNI cozum; ayri islev olmasinin
         nedeni donus bicimi: kanal islevleri merkez_kimlik modulune
         DOGRUDAN erisir (`_ic_cagri` yolu), kopruye komut gondermez.
+
+        v2.4.240: `kamera_id` verilir ve kaydin `kopru_ornek_id` alani
+        doluysa O kopru kullanilir (formda secilen makine); yalniz
+        koprusuz eski kayitlarda "video servisi calisan ilk kopru"
+        aranir.
         """
         try:
             from . import merkez_kimlik as _mk
@@ -3759,7 +3779,17 @@ class WSSunucusu:
         if not firma_id:
             return None, None, "Oturum gerekli."
         firma_id = int(firma_id)
-        oid = self._saha_kopru_onbellek_oid(_mk, firma_id, "video")
+        oid = None
+        if kamera_id is not None and self.kameralar:
+            try:
+                _ky = self.kameralar.bul(int(kamera_id)) or {}
+                oid = int(_ky.get("kopru_ornek_id") or 0) or None
+            except Exception:
+                oid = None
+            if oid is not None and not self._kopru_sahibi_mi(oid, firma_id):
+                return None, None, "Kameranin koprusu bu firmaya ait degil."
+        if oid is None:
+            oid = self._saha_kopru_onbellek_oid(_mk, firma_id, "video")
         if oid is None:
             return None, None, ("VIDEO servisi calisan saha makinesi "
                                 "yok. Kopru panelinde Video Sunucusunu "
@@ -3773,7 +3803,7 @@ class WSSunucusu:
         oradaki bir istisna MJPEG sunucusunun is parcacigini dusururdu.
         """
         try:
-            _mk, oid, firma_id = self._saha_video_baglam()
+            _mk, oid, firma_id = self._saha_video_baglam(kamera_id)
             if _mk is None:
                 return False, str(firma_id)
             tamam, hata = _mk.video_ac(oid, firma_id, int(kamera_id),
@@ -3792,7 +3822,7 @@ class WSSunucusu:
         buradaki bir istisna soketin kapanmasini engellerdi.
         """
         try:
-            _mk, oid, firma_id = self._saha_video_baglam()
+            _mk, oid, firma_id = self._saha_video_baglam(kamera_id)
             if _mk is None:
                 return str(firma_id)
             return _mk.video_kapat(oid, firma_id, int(kamera_id))
@@ -10394,6 +10424,29 @@ class WSSunucusu:
         elif komut == "kamera_cihazlari" and self.video_proxy:
             # v2.4.7: DONANIM protokolu icin SUNUCU makinesindeki yerel
             # kamera cihazlari (indeks tabanli; AI boru hattina girer)
+            # v2.4.240 (kullanici: "hangi kopruyu secersem yerel kamera o
+            # koprunun bagli oldugu bilgisayardaki kameralardan gelmeli"):
+            # `kopru_ornek_id` verilirse liste O kopru makinesinden alinir
+            # (kopru `video_cihazlar` eylemi); onceki yol "video servisi
+            # calisan ilk kopru"ye soruyordu ve secilen kopruyu yok sayiyordu.
+            _koid = 0
+            try:
+                _koid = int(k.get("kopru_ornek_id") or 0)
+            except (TypeError, ValueError):
+                _koid = 0
+            if _koid:
+                _snc, _hata = await self._kopruye_sor_async(
+                    _koid, websocket, "video_cihazlar", {"en_fazla": 6},
+                    zaman_asimi=30.0)
+                _snc = _snc if isinstance(_snc, dict) else {}
+                _gerekce = _hata or _snc.get("gerekce") or ""
+                if not _hata and _snc.get("opencv") is False and not _gerekce:
+                    _gerekce = "Kopru makinesinde OpenCV kurulu degil"
+                await websocket.send(json.dumps(
+                    {"tip": "kamera_cihazlari",
+                     "cihazlar": list(_snc.get("cihazlar") or []),
+                     "kopru_ornek_id": _koid, "gerekce": str(_gerekce or "")}))
+                return
             cihazlar = await _db_is_parcasi(
                 self.video_proxy.cihaz_listesi)
             await websocket.send(json.dumps(

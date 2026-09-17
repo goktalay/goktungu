@@ -189,6 +189,9 @@ function portlariDoldur(portlar){
 // Ekleme diyalogu
 // ---------------------------------------------------------------
 function bagDialogAc(tur, kayit){
+  // 2.4.240: merkezde yeni seri/tcp/udp/dji kaydi yalniz cevrimici kopru varken.
+  if (!kayit && tur !== "sanal" && tur !== "merkez" &&
+      typeof window.kopruYeniKayitIzni === "function" && !window.kopruYeniKayitIzni("baglanti")) return;
   bagEkleTur = tur;
   bagDuzenleId = kayit ? kayit.id : null;
   const t = D();
@@ -696,6 +699,22 @@ window.kopruListesiAl = function(){
 // anlamlidir; lokal kurulumda her sey programin kendi makinesindedir.
 window.kopruMerkezKipiMi = function(){
   return !!bagMerkezKipi;
+};
+// 2.4.240 (kullanici: "GRCON'da yeni kayit girerken mutlaka kopru sorsun;
+// sistemde cevrimici kopru yoksa yeni kayit ekrani hic acilmadan uyari
+// versin; Radar, Elektro Optik, Dron, Kamera"): merkez kipinde yeni kayit
+// formu yalniz en az bir CEVRIMICI kopru varken acilir. Yerel kipte (GRCOFF)
+// kisit yok. Sanal dron istisnadir (cagiran taraf bu islevi cagirmaz).
+window.kopruYeniKayitIzni = function(kategori){
+  if (!bagMerkezKipi) return true;
+  if ((bagKopruler || []).some(k => k && k.cevrimici)) return true;
+  const t = D();
+  if (typeof window.uyariToastGoster === "function")
+    window.uyariToastGoster({baslik: t.kopruYokBaslik || "Çevrimiçi köprü yok",
+                             mesaj: t.kopruYokUyari || "Yeni kayıt için önce bir köprü bağlanmalı.",
+                             seviye: "uyari", sure: 6000, kategori: kategori || "kopru"});
+  if (typeof bagKopruListesiIste === "function") bagKopruListesiIste();
+  return false;
 };
 
 // Kopru listesi degistiginde haber verilecek dinleyiciler. AI ve kamera

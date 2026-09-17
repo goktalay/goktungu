@@ -172,6 +172,9 @@ function radarRtkUygula(r){
     bos.textContent = merkez ? (t.raKopruSec || "Saha makinesi seç...")
                              : (t.bagKopruYerel || "Merkez bağlantısı (bu bilgisayar, köprüsüz)"); rfKopru.appendChild(bos);
     for (const k of liste){
+      // 2.4.240: merkez kipinde yalniz CEVRIMICI kopruler secilebilir; kaydin
+      // mevcut koprusu cevrimdisi olsa da (duzenleme) listede kalir.
+      if (merkez && !k.cevrimici && Number(k.ornek_id) !== Number(secili || 0)) continue;
       const o = document.createElement("option"); o.value = String(k.ornek_id);
       o.textContent = (k.ad || ("#" + k.ornek_id)) + (k.cevrimici ? "" : " (" + (t.bagKopruCevrimdisi || "çevrimdışı") + ")");
       rfKopru.appendChild(o);
@@ -184,6 +187,8 @@ function radarRtkUygula(r){
   window.radarFormuAc = function(r){
     const t = D();
     if (!rfId) return;
+    // 2.4.240: merkezde yeni radar yalniz cevrimici kopru varken.
+    if (!r && typeof window.kopruYeniKayitIzni === "function" && !window.kopruYeniKayitIzni("radar")) return;
     rfId.value = r ? String(r.radar_id) : "";
     rfIsim.value = r ? (r.isim || "") : ((t.raYeniAd || "Radar") + " " + (radarListesi.length + 1));
     rfIp.value = r ? (r.kayit_ip || "") : "";
@@ -247,6 +252,7 @@ function radarRtkUygula(r){
   if (yeni) yeni.addEventListener("click", () => window.radarFormuAc(null));
   const kaydet = document.getElementById("btnRadarFormKaydet");
   if (kaydet) kaydet.addEventListener("click", () => {
+    const t = D();
     const paket = {tip: "radar_kaydet", radar_id: parseInt(rfId.value, 10) || 0,
                    isim: rfIsim.value.trim(), ip: rfIp.value.trim(),
                    port: parseInt(rfPort.value, 10) || 5001};
@@ -256,7 +262,12 @@ function radarRtkUygula(r){
     {
       const merkez = typeof window.kopruMerkezKipiMi === "function" && window.kopruMerkezKipiMi();
       const kid = parseInt((rfKopru && rfKopru.value) || "0", 10);
-      if (merkez && !kid){ if (rfKopru) rfKopru.focus(); return; }
+      if (merkez && !kid){
+        // 2.4.240: sessiz odaklama yerine acik uyari.
+        if (typeof window.uyariToastGoster === "function")
+          window.uyariToastGoster({baslik: t.panelRadarFormYeni || "RADAR", mesaj: t.raKopruUyari || "Köprü seçilmeden radar kaydedilemez.", seviye: "uyari", sure: 5000, kategori: "radar"});
+        if (rfKopru) rfKopru.focus(); return;
+      }
       // 2.4.238: yerel kipte kopru secilmediyse null -> koprusuz (dogrudan TCP).
       paket.kopru_ornek_id = kid || null;
     }
