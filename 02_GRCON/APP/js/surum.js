@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.228";
+const GCS_SURUM = "2.4.229";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.229",
+    tarih: "2026-09-17",
+    baslik: "Telemetri işleyicisinde 'replayAktif is not defined' çökmesi; /app/ altında API yol öneki (paket 2.5.99)",
+    maddeler: [
+      "KÖK NEDEN (GRCON konsolu, her telemetride 'Uncaught ReferenceError: replayAktif is not defined'): 2.4.227'de Kayıt ve Tekrar Oynatma modülü (kayit.js) kaldırıldı ama ws.js telemetri işleyicisi 'replayAktif' değişkenine korumasız başvuruyordu; telemetri paketleri işlenemiyor, harita/dron/radar verisi gelmiyordu. Başvuru korumaya alındı.",
+      "KÖK NEDEN (GRCON: /api/istemci/kamera_oturum ve /api/app/sirket_logo 404): merkez sunucu yalnız /app/ altındaki istekleri uygulamaya vekil eder; istemci mutlak yolla çağırınca istek merkeze gidiyordu. Yeni app_yolu.js yardımcısı /app/ altında çalışırken kamera oturumu, canlı görüntü (/kamera/<id>), video yükleme ve şirket logosu yollarına öneki ekler; yerel kurulumda davranış değişmez."
+    ]
+  },
   {
     surum: "2.4.228",
     tarih: "2026-09-16",

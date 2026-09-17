@@ -140,8 +140,10 @@ function skArayuzeUygula() {
       el.src = url;
       if (alt !== undefined) el.alt = alt;
     }
-    logoAta(hkLogo, s.logo_url, s.unvan);
-    logoAta(ustLogo, s.logo_url);
+    // v2.4.229: GRCON'da /app/ oneki (bkz. app_yolu.js)
+    const logoUrl = (typeof window.appYolu === "function") ? window.appYolu(s.logo_url) : s.logo_url;
+    logoAta(hkLogo, logoUrl, s.unvan);
+    logoAta(ustLogo, logoUrl);
   }
 }
 

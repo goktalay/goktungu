@@ -237,7 +237,7 @@
   async function kameraOturumuAcVd(jeton) {
     if (!jeton || typeof jeton !== "string") return false;
     try {
-      const y = await fetch("/api/istemci/kamera_oturum", {
+      const y = await fetch((window.appYolu ? window.appYolu("/api/istemci/kamera_oturum") : "/api/istemci/kamera_oturum"), {
         method: "POST", credentials: "same-origin", cache: "no-store",
         headers: {"Content-Type": "application/json",
                   "Authorization": "Bearer " + jeton}, body: "{}"
@@ -252,7 +252,7 @@
   function proxyUrl(id) {
     // Offline Merkezde canlı yayın ana uygulamanın aynı origin'i üzerinden
     // gelir; ek port veya cihaz Köprüsü gerektirmez.
-    return window.location.origin + "/kamera/" + id + "?t=" + Date.now();
+    return window.location.origin + (window.appYolu ? window.appYolu("/kamera/" + id) : "/kamera/" + id) + "?t=" + Date.now();
   }
 
   function videoOlustur(kamera, panelIdx) {

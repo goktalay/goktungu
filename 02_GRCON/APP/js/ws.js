@@ -14,7 +14,7 @@ const wsDurum = document.getElementById("wsDurum");
 async function kameraOturumuAc(jeton){
   if (!jeton || typeof jeton !== "string") return false;
   try {
-    const yanit = await fetch("/api/istemci/kamera_oturum", {
+    const yanit = await fetch(window.appYolu("/api/istemci/kamera_oturum"), {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
@@ -102,7 +102,9 @@ function telemetriIsle(m){
   // Islenmis izler backend takipcisinden gelir (radar bagli olmasa da
   // suzulen izler yasamaya devam eder). Replay aktifken canli yayinda
   // radar alanlari gelmez; haritayi replay verisi besler, ezme.
-  if (!(replayAktif && !m.replay)){
+  // v2.4.229 KOK NEDEN (GRCON: 'replayAktif is not defined' her telemetride): kayit.js 2.4.227'de kaldirildi
+  const _replayAktif = (typeof replayAktif !== "undefined") && replayAktif;
+  if (!(_replayAktif && !m.replay)){
     _guvenli("radar_hedefleri", () => radarHedefleriGuncelle(m.radar_izler || []));
     _guvenli("yetim_izler",     () => yetimIzleriCiz(m.yetim_izler || []));
     _guvenli("grafik",          () => grafikOrnekle((m.radar_izler || []).length));
@@ -459,7 +461,9 @@ function wsBaglan(){
         }
       };
       if (m.basarili && m.jeton){
-        kameraOturumuAc(m.jeton).then(devam, devam);
+        // v2.4.229: merkez kipinde (/app/ vekili) kamera oturum ucu bilerek
+        // kapalidir (sunucu 404 doner); bosuna istek ve konsol hatasi uretme.
+        if (window.appKok === "/app") devam(); else kameraOturumuAc(m.jeton).then(devam, devam);
       } else {
         devam();
       }

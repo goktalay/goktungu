@@ -24,7 +24,7 @@
   // Offline Merkez canlı akışı, uygulamanın aynı origin'i üzerinden gelir.
   // Ayrı port veya cihaz Köprüsü gerekmez.
   function proxyUrl(id) {
-    return window.location.origin + "/kamera/" + id + "?t=" + Date.now();
+    return window.location.origin + window.appYolu("/kamera/" + id) + "?t=" + Date.now();
   }
   // Dron harita önizlemesi yalnız bu same-origin vekil yolunu kullanır.
   // Uzak kaynak URL'si veya erişim bilgisi istemci modülleri arasında taşınmaz.
@@ -156,7 +156,7 @@
 
   // v2.4.166: "dosya" protokolu — mp4 sunucuya yuklenir, url = dosya adi.
   async function videoDosyaYukle(dosya) {
-    const yanit = await fetch("/api/kamera/video_yukle", {
+    const yanit = await fetch(window.appYolu("/api/kamera/video_yukle"), {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
