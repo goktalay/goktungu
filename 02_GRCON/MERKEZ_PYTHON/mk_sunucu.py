@@ -3734,6 +3734,37 @@ def _u_firma_sunucular(h, istek, oturum):
     h.json_yaz({"kayitlar": api.sunucu_liste(_firma_id(oturum))})
 
 
+@yol("DELETE", r"/api/firma/sunucular/(\d+)", yetki="firma")
+def _u_firma_sunucu_sil(h, istek, oturum, oid):
+    """Firmanin kendi istasyon/kopru kaydini siler (2026-09-17, kullanici:
+    'kaldirilan kopruler listede duruyor, istedigimizde kaldirabilelim').
+    Canli oturum varsa once dusurulur; kayit silinince kopru ayni
+    kimlikle yeniden baglanamaz. Pilot rolu silemez."""
+    if oturum.get("rol") == "pilot":
+        h.hata_yaz(403, "Bu islem icin firma yoneticisi yetkisi gerekir")
+        return
+    o = db.tek("SELECT firma_id, ad FROM sunucu_ornekleri WHERE ornek_id = %s",
+               (int(oid),))
+    if not o or int(o["firma_id"]) != _firma_id(oturum):
+        h.hata_yaz(404, "Sunucu bulunamadı")
+        return
+    canli = role.ROLE.ornek_ile(int(oid))
+    if canli is not None and _DONGU is not None:
+        try:
+            asyncio.run_coroutine_threadsafe(canli.soket.close(), _DONGU).result(5)
+        except Exception:
+            pass
+    tamam, hata = api.sunucu_sil(int(oid))
+    if not tamam:
+        h.hata_yaz(404, hata or "Silinemedi")
+        return
+    kimlik.denetim(None, "firma_sunucu_sil", "sunucu", str(oid),
+                   {"firma_id": _firma_id(oturum),
+                    "kullanici_id": oturum.get("kullanici_id"),
+                    "ad": o.get("ad")}, istek.ip)
+    h.json_yaz({"tamam": True})
+
+
 @yol("GET", r"/api/firma/sunucular/(\d+)/sor/([a-z_]+)", yetki="firma")
 def _u_firma_sunucu_sor(h, istek, oturum, oid, eylem):
     """Firmanin kendi istasyonuna canli koprü sorgusu (dron/port/servis).
@@ -4414,6 +4445,22 @@ async def _ws_isle(soket) -> None:
         ip = soket.remote_address[0] if soket.remote_address else None
     except Exception:
         pass
+    # 2026-09-17 (kullanici: "kopruler son baglandigi IP'yi gostersin"):
+    # kopru WSS baglantisi HTTPS on kapisindan (443) ic WS sunucusuna
+    # tunellenir; burada remote_address daima 127.0.0.1 olur. On kapi
+    # gercek esi X-Forwarded-For olarak yazar (istemciden gelen baslik
+    # atilir, bkz. _ws_tunel). Yalniz dongu adresi icin basliga bakilir.
+    if ip in (None, "", "127.0.0.1", "::1"):
+        try:
+            _bas = getattr(soket, "request_headers", None)
+            if _bas is None:
+                _bas = getattr(getattr(soket, "request", None), "headers", None)
+            _ff = str((_bas.get("X-Forwarded-For") if _bas is not None else "") or "")
+            _ff = _ff.split(",")[0].strip()
+            if _ff:
+                ip = _ff
+        except Exception:
+            pass
     o = role.KopruOturumu(soket, ip)
     dogrulandi = False
     try:

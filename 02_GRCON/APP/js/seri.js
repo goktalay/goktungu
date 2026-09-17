@@ -1271,19 +1271,60 @@ function bagKopruUstGrupCiz(k, kayitlar, t){
   alt.className = "bag-alt";
   // Kullanici istegi: kopruler "isim+IP ile gruplanir".
   const parcalar = [];
-  if (k.ip) parcalar.push(k.ip);
+  // v2.4.230 (kullanici istegi): son baglanilan IP her zaman gosterilir
+  if (k.ip) parcalar.push((t.bagKopruSonIp || "IP") + " " + k.ip);
   if (k.platform) parcalar.push(String(k.platform).split(" ")[0]);
   if (k.surum) parcalar.push("v" + k.surum);
+  if (!cevrimici && k.son_gorulme_ts){
+    const d = new Date(k.son_gorulme_ts);
+    if (!isNaN(d.getTime())) parcalar.push((t.bagKopruSonGorulme || "son") + " " +
+      d.toLocaleString(undefined, {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}));
+  }
   alt.textContent = parcalar.join(" \u00b7 ");
-  alt.title = [k.makine_adi || "", k.platform || ""].filter(Boolean)
+  alt.title = [k.makine_adi || "", k.platform || "", k.ip ? ((t.bagKopruSonIp || "IP") + " " + k.ip) : ""].filter(Boolean)
                                                     .join(" \u00b7 ");
   bilgi.appendChild(ust); bilgi.appendChild(alt);
 
   const sayac = document.createElement("span");
   sayac.className = "bag-dron-sayac bag-kopru-sayac";
 
+  // v2.4.230 (kullanici istegi: "kaldirilan kopruler listede duruyor"):
+  // kopru kaydi listeden KALDIRILABILIR. Merkez kipinde firma API'si
+  // (DELETE /api/firma/sunucular/<id>), yerel kipte kopru kimligi iptali.
+  const sil = document.createElement("button");
+  sil.type = "button";
+  sil.className = "bag-kopru-sil";
+  sil.title = t.bagKopruSil || "Köprüyü listeden kaldır";
+  sil.innerHTML = "<i class='fa-solid fa-trash'></i>";
+  sil.addEventListener("pointerdown", ev => ev.stopPropagation());
+  sil.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const adM = k.ad || ("#" + k.ornek_id);
+    const soru = (cevrimici ? (t.bagKopruSilOnayCanli || "{ad} şu anda ÇEVRİMİÇİ. Kayıt silinirse bağlantısı kesilir ve aynı kimlikle yeniden bağlanamaz. Devam edilsin mi?")
+                            : (t.bagKopruSilOnay || "{ad} kaydı listeden kaldırılacak; bu köprü aynı kimlikle yeniden bağlanamaz. Devam edilsin mi?")).replace("{ad}", adM);
+    const yap = () => {
+      if (bagMerkezKipi){
+        fetch("/api/firma/sunucular/" + encodeURIComponent(k.ornek_id), { method: "DELETE", credentials: "same-origin" })
+          .then(r => r.json().catch(() => ({})).then(v => ({ ok: r.ok, v })))
+          .then(({ ok, v }) => {
+            if (typeof window.uyariToastGoster === "function")
+              window.uyariToastGoster({ kategori: "KÖPRÜ", seviye: ok ? "bilgi" : "hata",
+                mesaj: ok ? ((t.bagKopruSilindi || "Köprü kaldırıldı: ") + adM) : ((t.bagKopruSilinemedi || "Kaldırılamadı: ") + (v && v.hata || "")) });
+            bagKopruListesiIste();
+          })
+          .catch(() => bagKopruListesiIste());
+      } else if (ws && ws.readyState === 1){
+        ws.send(JSON.stringify({tip: "kopru_kimlik_sil", ornek_id: k.ornek_id}));
+        setTimeout(bagKopruListesiIste, 800);
+      }
+    };
+    if (typeof window.onayIste === "function") window.onayIste(soru, yap);
+    else if (window.confirm(soru)) yap();
+  });
+
   satir.appendChild(bilgi);
   satir.appendChild(sayac);
+  satir.appendChild(sil);
   grup.appendChild(satir);
 
   const govde = document.createElement("div");

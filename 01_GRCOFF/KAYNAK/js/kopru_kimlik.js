@@ -233,6 +233,7 @@ window.kokListeCiz = function(){
     par.push(k.cevrimici
       ? (t.kokCevrimici || "\u00c7evrimi\u00e7i")
       : (t.kokCevrimdisi || "\u00c7evrimd\u0131\u015f\u0131"));
+    if (k.ip) par.push("IP " + k.ip);   // v2.4.230: son baglanilan adres
     if (k.surum) par.push("v" + k.surum);
     if (k.makine_adi) par.push(k.makine_adi);
     if (typeof k.dron_sayisi === "number" && k.dron_sayisi > 0)

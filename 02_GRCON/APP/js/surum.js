@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.229";
+const GCS_SURUM = "2.4.230";
 const GCS_SURUM_TARIH = "2026-09-15";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.230",
+    tarih: "2026-09-17",
+    baslik: "Köprüler listeden kaldırılabilir, son bağlanılan IP gösterilir; merkez kipinde lisanslı Radar/Elektro-Optik menüleri (paket 2.5.100)",
+    maddeler: [
+      "KÖPRÜ KALDIRMA (kullanıcı bildirimi: kaldırılan köprüler GRCON listesinde duruyordu): Bağlantı Yöneticisi köprü grubunda çöp kutusu düğmesi — merkez kipinde firma API'si üzerinden kayıt silinir (çevrimiçiyse bağlantısı düşürülür, aynı kimlikle yeniden bağlanamaz), yerel kipte köprü kimliği iptal edilir. Kurumsal panel İstasyonlar sayfasına da 'Kaldır' eklendi (firma yöneticisi).",
+      "SON IP (kullanıcı isteği): köprü grubu ve kimlik listesinde son bağlanılan IP ve çevrimdışıysa son görülme zamanı gösterilir. KÖK NEDEN: merkez, köprü WSS bağlantısını HTTPS ön kapısından iç sunucuya tünellediği için kaydedilen adres hep 127.0.0.1 idi; gerçek adres artık ön kapının yazdığı X-Forwarded-For başlığından alınır (istemci başlıkları atılır).",
+      "LİSANS → MENÜ (kullanıcı bildirimi: firmada radar ve elektro-optik lisansı aktifken menü görünmüyordu): merkez kipinde menü görünürlüğü yalnız çevrimiçi köprü servisine bağlıydı; artık firma lisansı yeterlidir, paneller kendi bağlantı durumunu gösterir."
+    ]
+  },
   {
     surum: "2.4.229",
     tarih: "2026-09-17",

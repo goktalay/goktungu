@@ -992,12 +992,15 @@ async function sayfaIstasyonlar() {
             <dt>Platform</dt><dd>${kacir(s.platform || '—')}</dd>
             <dt>Makine</dt><dd>${kacir(s.makine_adi || '—')}</dd>
             <dt>Dron</dt><dd>${sayi(s.dron_sayisi)}</dd>
+            <dt>Son IP</dt><dd>${kacir(s.son_ip || '—')}</dd>
             <dt>Son görülme</dt><dd>${tarih(s.son_gorulme_ts)}</dd>
           </dl>
           <div class="arac-cubugu">
             ${s.cevrimici ? `<button class="ikincil kucuk"
                 onclick="istasyonSor(${s.ornek_id}, '${kacir(s.ad)}')">Canlı durum</button>`
               : '<span class="ek">Sorgu için istasyon çevrimiçi olmalı</span>'}
+            ${yoneticiMiKontrol() ? `<button class="ikincil kucuk tehlike"
+                onclick="istasyonSil(${s.ornek_id}, '${kacir(s.ad)}', ${s.cevrimici ? 'true' : 'false'})">Kaldır</button>` : ''}
           </div>
         </div>`).join('')}
     </div>` : `
@@ -1029,6 +1032,23 @@ window.istasyonSor = async (oid, ad) => {
     <div id="sorgu-sonuc" class="pano" style="margin-top:0">
       <div class="bos">Bir sorgu seçin</div></div>`,
     [{ metin: 'Kapat', sinif: 'ikincil', tik: pencereKapat }], true);
+};
+
+/* 2026-09-17 (kullanici istegi): kaldirilan/eski kopru kayitlari listeden
+   silinebilir. Cevrimiciyse baglantisi da dusurulur; ayni kimlikle yeniden
+   baglanamaz (yeni kimlik uretilmesi gerekir). */
+window.istasyonSil = async (oid, ad, cevrimici) => {
+  const soru = (cevrimici
+    ? `"${ad}" şu anda ÇEVRİMİÇİ. Kayıt silinirse bağlantısı kesilir ve aynı kimlikle yeniden bağlanamaz. `
+    : `"${ad}" kaydı listeden kaldırılacak; bu köprü aynı kimlikle yeniden bağlanamaz. `) + 'Devam edilsin mi?';
+  if (!window.confirm(soru)) return;
+  try {
+    await cagir(`/api/firma/sunucular/${oid}`, { method: 'DELETE' });
+    bildir(`"${ad}" kaldırıldı.`, 'basari');
+    sayfaIstasyonlar();
+  } catch (e) {
+    bildir(e.message || 'Kaldırılamadı', 'hata');
+  }
 };
 
 window.istasyonEylem = async (oid, eylem) => {

@@ -248,8 +248,16 @@ window.lisansOzetiSunucudan = function(o){
     window.istasyon2MenuGorunumGuncelle();
 };
 
+// v2.4.230 (kullanici: "GRCON'da firmada radar ve elektro-optik lisansi
+// aktif olmasina ragmen menude gostermiyor"): merkez kipinde LISANS
+// yeterlidir — kopru cevrimdisiyken de menu acilir; paneller kendi
+// baglanti durumunu gosterir (Radarlar listesi, radar penceresi "kapali").
+// Lisans ozeti henuz gelmediyse eski kanit (koprude servis) kullanilir.
+function _lisansliMerkezMi(alan){
+  return !!(_kopruMerkezKipi && _lisansOzet && _lisansOzet.lisansli && _lisansOzet[alan]);
+}
 function radarYetenekVar(){
-  const donanim = _kopruMerkezKipi ? _kopruRadarAcik : radarAyarSunucu;
+  const donanim = _kopruMerkezKipi ? (_lisansliMerkezMi("radar") || _kopruRadarAcik) : radarAyarSunucu;
   return donanim && lisansUstSinir("radar");
 }
 window.radarYetenekVar = radarYetenekVar;
@@ -259,7 +267,7 @@ window.radarYetenekVar = radarYetenekVar;
 // özeti bu donanım kanıtının yerine geçmez.
 function m50YetenekVar(){
   // v2.4.199: koprusuz (dogrudan SDK) kurulumda da menu acilir.
-  return (!!_kopruM50Acik || !!_m50YerelAcik) && lisansUstSinir("m50");
+  return (!!_kopruM50Acik || !!_m50YerelAcik || _lisansliMerkezMi("m50")) && lisansUstSinir("m50");
 }
 window.m50YerelDurum = function(v){
   const yeni = !!v;

@@ -2184,6 +2184,10 @@
     background: var(--panel-arka);
   }
   .dron-kart.ayrik .dron-kart-baslik { cursor: grab; touch-action: none; }
+  /* v2.4.230: kopru grubunda "listeden kaldir" dugmesi */
+  .bag-kopru-sil { flex: 0 0 auto; width: 24px; height: 22px; margin-left: 4px; display: inline-flex; align-items: center; justify-content: center;
+    background: none; border: 1px solid var(--cizgi); border-radius: 3px; color: var(--soluk); cursor: pointer; padding: 0; }
+  .bag-kopru-sil:hover { color: #fff; border-color: #ef4444; background: rgba(239,68,68,.15); }
   /* v2.4.224: panelde kapat/kucult gizli; kart basligi tiklanabilir; yuzen pencerede kucult = yalniz baslik */
   /* dugme_birlik.css genel dugme kurali :not(#btnBaglan) ile id-duzeyi ozgulluk + !important tasir;
      gizleme onu gecmek icin iki :not(#..) ile ozgulluk yukseltir. */
