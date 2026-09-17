@@ -91,3 +91,27 @@ btnAcik.addEventListener("click", () => temaUygula("acik", true));
     { attributes: true, attributeFilter: ["data-tema"] });
 })();
 // ---------------------------------------------------------------
+// 2.4.237: FIRMA LOGOSU (Turkbey Teknoloji A.S.) — tema uyumu.
+// Kullanici yeni logoyu yukledi (siyah cizgi, seffaf zemin). Koyu
+// temada beyaz surum (`logo.png`), acik temada siyah surum
+// (`logo_acik.png`) kullanilir; aksi halde koyu zeminde gorunmezdi.
+// Kurumun merkezden gelen kendi logosu (sirket.js logoAta) bu
+// secimin UZERINE yazar; burada yalniz varsayilan dosyalar degisir.
+// ---------------------------------------------------------------
+(function(){
+  function firmaLogoSec(){
+    const acik = document.documentElement.getAttribute("data-tema") === "acik";
+    const yol = acik ? "logo_acik.png" : "logo.png";
+    const diger = acik ? "logo.png" : "logo_acik.png";
+    document.querySelectorAll("#logo, .giris-logo, #btnGokkubbeyeGit img").forEach(el => {
+      const src = el.getAttribute("src") || "";
+      // Yalniz varsayilan firma logosu degistirilir; merkezden atanmis
+      // kurum logosu (data-sk-varsayilan-logo dolu) korunur.
+      if (src === diger || src === "/" + diger) el.setAttribute("src", yol);
+    });
+  }
+  firmaLogoSec();
+  new MutationObserver(firmaLogoSec).observe(document.documentElement,
+    { attributes: true, attributeFilter: ["data-tema"] });
+})();
+// ---------------------------------------------------------------

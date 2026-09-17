@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.236";
+const GCS_SURUM = "2.4.237";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.237",
+    tarih: "2026-09-17",
+    baslik: "Türkbey Teknoloji yeni logo ve ikonu (paket 2.5.107)",
+    maddeler: [
+      "FİRMA LOGOSU: kullanıcının yüklediği TURKBEY.ai (kurt başı ikonu + TURKBEY yazısı) kaynağından ikon ve tam logo üretildi. Uygulamada firma ikonu (üst bar, giriş ekranı, harita pilot işareti, favicon) koyu temada beyaz, açık temada siyah sürümle gösterilir (tema.js). Tam logo gokkubbe.png dosyasının yerine yazıldı; kaynak dosyalar varliklar/marka altında.",
+      "GRCON: Türkbey firmasının merkezdeki kurum logosu da yeni ikonla değiştirildi (koyu yuvarlak zemin + beyaz kurt; iki temada da okunur). Ürün logosu (GÖKTUNGU) değişmedi.",
+    ]
+  },
   {
     surum: "2.4.236",
     tarih: "2026-09-17",

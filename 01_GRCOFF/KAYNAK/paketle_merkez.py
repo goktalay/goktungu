@@ -101,7 +101,7 @@ WEB_DOSYA = (
     "index.html", "flight.html", "video.html",
     "manifest.json", "sw.js", "rapor_i18n.json",
     "dron.glb",
-    "logo.png", "goktungu.webp", "goktungu_acik.webp",
+    "logo.png", "logo_acik.png", "goktungu.webp", "goktungu_acik.webp",
 )
 
 # Kok dizinde kalanlar.
