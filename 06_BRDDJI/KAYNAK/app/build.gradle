@@ -30,8 +30,8 @@ android {
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
-        versionCode 2
-        versionName '1.1.0'
+        versionCode 3
+        versionName '1.1.1'
 
         // MSDK buyuk -> multidex zorunlu
         multiDexEnabled true

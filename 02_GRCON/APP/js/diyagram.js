@@ -44,6 +44,7 @@
     if (!p) return;
     const g = govde();
     if (g) g.innerHTML = '<div class="dyg-bos">' + esc(T().dygYukleniyor || "Yükleniyor…") + "</div>";
+    const gs = document.getElementById("dygGosterge"); if (gs) gs.innerHTML = "";
     if (typeof window.yuzenPanelAc === "function") window.yuzenPanelAc("yzDiyagram");
     else p.classList.remove("yuzen-gizli");
     gonder();
@@ -162,11 +163,10 @@
       zincir.appendChild(kutuOlustur(k));
     });
     g.appendChild(zincir);
-    const acik = document.createElement("div");
-    acik.className = "dyg-aciklama";
-    acik.innerHTML = ["bagli", "bekliyor", "kopuk", "kapali"].map((d) =>
+    // 2.4.241 (kullanici): gostergeler panel footer'inda.
+    const acik = document.getElementById("dygGosterge");
+    if (acik) acik.innerHTML = ["bagli", "bekliyor", "kopuk", "kapali"].map((d) =>
       '<span class="dyg-nokta dyg-' + d + '"></span>' + esc(durumMetin(d))).join(" &nbsp; ");
-    g.appendChild(acik);
   }
 
   /** Liste satirlarina eklenen ortak kucuk dugme. */

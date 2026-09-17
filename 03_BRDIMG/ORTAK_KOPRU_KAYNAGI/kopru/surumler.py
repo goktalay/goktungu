@@ -18,8 +18,21 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.23"
+KOPRU_SURUM = "1.7.24"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.24",
+        "tarih": "2026-09-17",
+        "notlar": [
+            "YENI IKON (kullanici istegi): Turkbey kurt ikonunun gece surumu "
+            "Linux hicolor seti, Windows kurulum/kisayol .ico ve panel "
+            "favicon dosyalarina uygulandi.",
+            "API kodu dogrulamasi: GRCOFF (Merkezi Yazilim, p=gcs) icin "
+            "uretilmis bir kod koprude kabul edilmez; kurulumda acik hata "
+            "verilir (onceden kimlik yaziliyor, merhaba urun uyusmazligiyla "
+            "reddediliyordu).",
+        ],
+    },
     {
         "surum": "1.7.23",
         "tarih": "2026-09-17",

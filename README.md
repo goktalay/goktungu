@@ -1,5 +1,7 @@
 # GÖKTUNGU
 
+![GÖKTUNGU GRCON — harita ekranı: rota, sanal dron telemetrisi, yapay ufuk ve konsol](13_DOKUMANTASYON/gorseller/grcon_harita_ekrani.png)
+
 GÖKTUNGU, dron komuta-kontrol ekosistemidir: yer kontrol istasyonu, çevrimiçi ve çevrimdışı merkez yazılımı, saha köprüleri, kurumsal/yönetim panelleri ve tanıtım sitesi. Bu depo, sistemin **kaynak ve mühendislik teslimidir**.
 
 > **Bu depo özeldir (private).** İçinde sır, özel anahtar, parola, canlı veritabanı dökümü veya müşteri verisi **bulunmaz** — bunlar `.gitignore` ile dışarıda tutulur ve işletim ortamında güvenli biçimde yönetilir. Üretilen kurulum paketleri ve büyük model dosyaları depoda değil, **Releases** altındadır.

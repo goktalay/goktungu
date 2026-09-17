@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.240";
+const GCS_SURUM = "2.4.241";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.241",
+    tarih: "2026-09-17",
+    baslik: "Yeni uygulama ikonu (gece/gündüz kurt); bağlantı diyagramı beyaz zemin, ortalı kutular, footer göstergeler (paket 2.5.111)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: Türkbey kurt ikonunun yeni gece (lacivert zemin) ve gündüz (açık deri zemin) sürümleri tüm ikonlara uygulandı: uygulama/PWA ikonları, favicon, üst bar ve giriş logosu (koyu temada gece, açık temada gündüz), harita pilot işareti, Linux hicolor seti, Windows kurulum .ico. Web sitesi, kurumsal ve yönetim paneli favicon'ları, köprü ve Android köprü başlatıcı ikonları da aynı ikona geçirildi.",
+      "KULLANICI İSTEĞİ: Bağlantı diyagramı paneli beyaz zeminli; kutular dikey olarak ortalanır; durum göstergeleri ve tazeleme notu panelin footer'ında.",
+    ],
+  },
   {
     surum: "2.4.240",
     tarih: "2026-09-17",

@@ -89,3 +89,7 @@ merkez sunucusuna gönderilir. Gizlilik politikası (Play Console'da zorunlu):
 - Uygulama artık gerçek bir **köprü ajanı**: ilk açılışta "GRCON — Merkez Sunucu mu, GRCOFF — Yerel Kurulum mu?" seçilir ve merkezin **Köprüler** panelinde üretilen API kodu (GTK1.…) girilir. IP, port, e-posta veya belirteç girilmez.
 - Merkeze ters WebSocket ile bağlanır (sabit IP gerekmez); merkezdeki Bağlantı Yöneticisi bağlantıyı açar. USB seri cihazlar merkeze bildirilir; ham MAVLink röle üzerinden taşınır.
 - Merkez Uygulama 2.4.233 veya üstü gerektirir.
+
+## 1.1.1 (2026-09-18)
+
+- Yeni Türkbey kurt ikonu (gece sürümü): başlatıcı ikonu, yuvarlak ikon ve uyarlanabilir ikon (lacivert zemin). İşlev değişikliği yok.

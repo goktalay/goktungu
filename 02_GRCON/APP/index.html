@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GÖKTUNGU</title>
 <meta name="description" content="GÖKTUNGU komuta kontrol arayüzü — insansız hava aracı harekât yönetimi, radar füzyonu, canlı video ve yapay zekâ destekli tespit.">
-<link rel="icon" type="image/png" href="logo.png?v=v24237">
+<link rel="icon" type="image/png" href="logo.png?v=v24241">
 <!-- v2.4.14: PWA - web uygulamasi olarak kurulabilirlik -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0d1117">
@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
 <link rel="stylesheet" href="css/stil.css?v=v24232">
-<link rel="stylesheet" href="css/diyagram.css?v=v24239">
+<link rel="stylesheet" href="css/diyagram.css?v=v24241">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -446,8 +446,11 @@
     <span><i class="fa-solid fa-diagram-project"></i> <span data-i18n="dygBaslik">BAĞLANTI DİYAGRAMI</span></span>
     <button class="yuzen-kapat" data-yuzen="yzDiyagram" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
   </div>
-  <div class="yuzen-icerik">
+  <div class="yuzen-icerik dyg-icerik">
     <div id="dygGovde" class="dyg-govde"></div>
+  </div>
+  <div class="dyg-altbar" id="dygAltbar">
+    <div id="dygGosterge" class="dyg-aciklama"></div>
     <div class="dyg-not" data-i18n="dygTazeleme">Durum 3 saniyede bir tazelenir</div>
   </div>
 </div>
@@ -1831,7 +1834,7 @@
 <script src="js/radar_panel.js?v=v24240"></script>
 <script src="js/radar_pencere.js?v=v24227"></script>
 <script src="js/m50_panel.js?v=v24240"></script>
-<script src="js/diyagram.js?v=v24239"></script>
+<script src="js/diyagram.js?v=v24241"></script>
 <script src="js/hedefler.js?v=v24227"></script>
 <script src="js/harita_hover.js?v=v24225"></script>
 <script src="js/harita_cevrimici.js?v=v24220"></script>
@@ -1894,7 +1897,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24240"></script>
+<script src="js/surum.js?v=v24241"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>
