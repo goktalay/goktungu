@@ -200,7 +200,10 @@ class EOYoneticisi:
     def tazele(self) -> None:
         kayitlar = {int(k["id"]): k for k in self.kayitlar.listele()}
         for eid in list(self.vekiller):
-            if eid not in kayitlar and eid != 1:
+            # 2.4.236 (kullanici: "Elektro-optikten silemedim"): 1 numarali
+            # cihaz icin istisna KALDIRILDI — kaydi silinen her vekil duser;
+            # aksi halde 'M50 1' listede/haritada hayalet olarak kaliyordu.
+            if eid not in kayitlar:
                 y = self.yereller.pop(eid, None)
                 if y is not None:
                     try:

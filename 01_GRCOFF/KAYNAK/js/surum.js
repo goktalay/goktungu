@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.235";
+const GCS_SURUM = "2.4.236";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.236",
+    tarih: "2026-09-17",
+    baslik: "İlk kurulumda varsayılan Radar 1 / M50 1 kaydı yok; silinen M50 kaydı hayalet olarak kalmıyor (paket 2.5.106)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı: 'Radar'dan silebildim ama Elektro-optikten silemedim'): elektro-optik yöneticisi 1 numaralı cihazın vekilini kayıt silinse de tutuyordu; kayıt veritabanından silindiği halde 'M50 1 · adres yok · kapalı' listede ve haritada kalıyordu. İstisna kaldırıldı; silinen her kaydın vekili düşer.",
+      "GRCOFF İLK KURULUM KURALI (kullanıcı isteği): yerel kurulumda da açılışta varsayılan 'Radar 1' ve 'M50 1' kaydı üretilmez. Radar ve elektro-optik listeleri boş başlar; kayıtlar 'Yeni Radar' / 'Yeni Elektro Optik' ile operatör tarafından açılır.",
+    ]
+  },
   {
     surum: "2.4.235",
     tarih: "2026-09-17",

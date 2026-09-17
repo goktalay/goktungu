@@ -455,8 +455,9 @@ def uygulama_kur():
     # v2.4.231 (kullanici: "GRCON'da kopru disinda hicbir cihaz dogrudan
     # baglanamaz"): merkez kipinde varsayilan 'Radar 1' kaydi URETILMEZ;
     # radar kayitlari firma tarafindan, bir saha koprusune bagli olarak acilir.
-    if not _radar_merkez:
-        _radar_kayitlar.eski_ayardan_goc(ayarlar)
+    # 2.4.236 (kullanici: "GRCOFF ilk kurulumda hicbir veri olmamali"):
+    # yerel kipte de varsayilan 'Radar 1' kaydi URETILMEZ (eski
+    # `eski_ayardan_goc` bos IP'li bir kayit ekliyordu). Liste bos baslar.
     if _radar_merkez:
         from goktungu.radar_vekil import RadarVekili
         # `cek` geri cagrisi WSSunucusu kuruldugunda baglanir: kopru
@@ -509,8 +510,7 @@ def uygulama_kur():
         _eo_merkez = _mk_eo.merkez_kipinde()
     except Exception:
         _eo_merkez = False
-    if not _eo_merkez:
-        _eo_kayitlar.ilk_kaydi_garanti_et()
+    # 2.4.236: yerel kipte de varsayilan 'M50 1' kaydi uretilmez (bkz. radar).
     eo = EOYoneticisi(
         konsol, ayarlar, kilit, _eo_kayitlar,
         vekil_fabrikasi=lambda k: M50Vekili(konsol, kilit),
