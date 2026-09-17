@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.234";
+const GCS_SURUM = "2.4.235";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.235",
+    tarih: "2026-09-17",
+    baslik: "Kurulum sihirbazı: köprü kimliği yazılamıyor (Permission denied) düzeltmesi, adım 4 başlığı (paket 2.5.105)",
+    maddeler: [
+      "KÖK NEDEN (kullanıcı ekran görüntüsü: 'Kopru kimligi yazilamadi: [Errno 13] Permission denied: /opt/goktungu/merkez/veri/kopru.json.yeni'): merkez ajanının kimlik dosyası (kopru.json) program dizini altındaki veri/ klasörüne yazılıyordu; servis kullanıcısının orada yazma yetkisi yok. Dosya artık uygulamanın gerçek veri kökünde (GOKTUNGU_VERI_KOKU, pg.json ile aynı yer) tutulur; eski konumdaki dosya varsa okunmaya devam eder.",
+      "Sihirbaz adım 4 başlığı 'MERKEZ KULLANICILARI' yerine 'MERKEZ SUNUCU' (API kodu ile eşleştirme) olarak düzeltildi.",
+    ]
+  },
   {
     surum: "2.4.234",
     tarih: "2026-09-17",

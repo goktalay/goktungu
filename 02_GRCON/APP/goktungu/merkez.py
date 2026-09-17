@@ -310,7 +310,21 @@ def _veri_koku():
 
 
 def kopru_dosya():
-    return os.path.join(_veri_koku(), KOPRU_DOSYA_ADI)
+    """Kopru kimligi dosyasinin yolu.
+
+    2.4.235 OLCULEN KUSUR (kullanici ekran goruntusu): `_veri_koku()`
+    program dizini altindaki `veri/` klasorunu seciyordu
+    (/opt/goktungu/merkez/veri); servis kullanicisinin orada yazma
+    yetkisi yok -> "Permission denied: kopru.json.yeni". Dosya artik
+    uygulamanin GERCEK veri kokunde (GOKTUNGU_VERI_KOKU; pg.json ile
+    ayni yer, `sabitler._veri_alt_yolu`) tutulur. Eski konumda dosya
+    varsa `_veri_alt_yolu` gecis kuraliyla onu okumaya devam eder.
+    """
+    try:
+        from .sabitler import _veri_alt_yolu
+        return _veri_alt_yolu(KOPRU_DOSYA_ADI)
+    except Exception:
+        return os.path.join(_veri_koku(), KOPRU_DOSYA_ADI)
 
 
 def kimlik_oku():

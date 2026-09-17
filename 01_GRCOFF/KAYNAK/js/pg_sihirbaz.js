@@ -336,11 +336,12 @@ function pgBaslikKur() {
        "tan\u0131mlay\u0131n.");
 
   if (!goc && _pgD.adim === 4) {
-    ikon = "fa-users";
-    ust = t.pgEsitlemeBaslik || "MERKEZ KULLANICILARI";
-    altb = t.pgEsitlemeAltBaslik ||
-      "Kurumsal panelde tan\u0131ml\u0131 kullan\u0131c\u0131lar\u0131 " +
-      "bu kuruluma aktar\u0131n.";
+    // 2.4.235: adim 4 artik merkez sunucu + API kodu (kullanici esitlemesi degil).
+    ikon = "fa-key";
+    ust = t.pgKodBaslik || "MERKEZ SUNUCU";
+    altb = t.pgKodAltBaslik ||
+      "Bu kurulumu merkeze API koduyla e\u015fle\u015ftirin; kurum bilgileri " +
+      "ve logo merkezden bir kez al\u0131n\u0131r.";
   } else if (!goc && _pgD.adim === 5) {
     ikon = "fa-user-shield";
     ust = t.pgYonBaslik || "YÖNETİCİ HESABI";
