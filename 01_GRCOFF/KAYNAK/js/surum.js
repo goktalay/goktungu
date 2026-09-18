@@ -2,11 +2,27 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.244";
+const GCS_SURUM = "2.4.246";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.246",
+    tarih: "2026-09-18",
+    baslik: "Makro: dron.param_set / dron.param_get (paket 2.5.116)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: makroda otopilot parametreleri. dron.param_set(ad, deger) PARAM_SET gönderir, PARAM_VALUE ile doğrular, 3 deneme (tip önce okunmuşsa aynı tip, yoksa REAL32); dron.param_get(ad) PARAM_REQUEST_READ ile okur. Türkçe takma adlar: param_ayarla / param_oku. PARAM_VALUE mesajları arka plan okuyucuda toplanır.",
+    ],
+  },
+  {
+    surum: "2.4.245",
+    tarih: "2026-09-18",
+    baslik: "Silinen sanal dron 'Bağlantısı bilinmeyen' altında kalmıyor (paket 2.5.115)",
+    maddeler: [
+      "HATA (kök neden, kullanıcı: 'GRCON'dan sanal dronu silince Bağlantısı Bilinmeyen altına geliyor'): sunucu bağlantı silinince SITL'i durdurup dronu listeden düşürüyordu, ancak istemci yalnız 'bağlantı koptu' paketiyle 10 sn sonra kart siliyordu; listeden tamamen kaybolan dron için paket gelmediğinden kart 'Bağlantısı bilinmeyen' grubunda kalıyordu. Artık sunucu listesinde olmayan her dronun kartı ve harita varlığı anında silinir.",
+    ],
+  },
   {
     surum: "2.4.244",
     tarih: "2026-09-18",

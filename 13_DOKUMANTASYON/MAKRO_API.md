@@ -1,6 +1,6 @@
 # GÖKTUNGU Python Makro API'si — makro yazan yapay zekâ için rehber
 
-Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.243) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
+Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.246) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
 
 ## 1. Çalışma ortamı (mutlaka bilinmesi gerekenler)
 
@@ -69,6 +69,8 @@ Tüm işlevler ArduPilot (Copter/Plane/Rover) hedefler; komutlar `COMMAND_LONG` 
 | `dron.mesafe(lat, lon)` | Drondan noktaya büyük daire uzaklığı (m); konum yoksa `None` | float |
 | `dron.bekle_varis(lat, lon, tol_m=3, zaman_asimi=300)` | Noktaya `tol_m` içinde yaklaşana kadar bekler | `True/False` |
 | `dron.bekle_irtifa(irtifa, tol_m=1, zaman_asimi=120)` | Göreli irtifaya ulaşana kadar bekler | `True/False` |
+| `dron.param_get(ad, zaman_asimi=3, deneme=3)` | PARAM_REQUEST_READ ile parametre okur (`"WPNAV_SPEED"`); takma ad `param_oku` | float veya `None` |
+| `dron.param_set(ad, deger, zaman_asimi=3, deneme=3, dogrula=True)` | PARAM_SET gönderir ve PARAM_VALUE ile doğrular; tip önce okunmuşsa aynı tip, yoksa REAL32 (ArduPilot tam sayı parametreleri de kabul eder); takma ad `param_ayarla` | doğrulandıysa `True` |
 | `dron.komut(cmd, p1..p7, onay_bekle=True, zaman_asimi=5)` | Ham COMMAND_LONG; `onay_bekle=True` ise COMMAND_ACK.result döner (0 = MAV_RESULT_ACCEPTED) | int veya `None` |
 | `dron.kapat()` | Bağlantıyı kapatır (makro sonunda otomatik) | — |
 
@@ -144,7 +146,17 @@ while True:
     bekle(2)
 ```
 
-### 7.3 Ham MAVLink ile servo darbesi ve ACK kontrolü
+### 7.3 Parametre okuma/yazma
+```python
+eski = dron.param_get("WPNAV_SPEED")
+yaz("WPNAV_SPEED (cm/s):", eski)
+if not dron.param_set("WPNAV_SPEED", 800):
+    bildir("Parametre yazılamadı"); durdur()
+yaz("Yeni değer:", dron.param_get("WPNAV_SPEED"))
+# Kalıcı olması için otopilot parametreyi EEPROM'a kendisi yazar (ArduPilot).
+```
+
+### 7.4 Ham MAVLink ile servo darbesi ve ACK kontrolü
 ```python
 sonuc = dron.komut(mavlink.MAV_CMD_DO_SET_SERVO, 9, 1900)
 yaz("servo ACK:", sonuc)   # 0 = kabul edildi
@@ -152,7 +164,7 @@ bekle(1)
 dron.komut(mavlink.MAV_CMD_DO_SET_SERVO, 9, 1100)
 ```
 
-### 7.4 İki dronla eş zamanlı kalkış
+### 7.5 İki dronla eş zamanlı kalkış
 ```python
 a, b = dronlar[1], dronlar[2]
 for d in (a, b):

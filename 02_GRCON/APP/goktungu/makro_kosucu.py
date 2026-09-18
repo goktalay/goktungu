@@ -29,6 +29,7 @@ GRCON'da makro calistirma yetkisi `dron_komut` ile ayni izne baglidir.
     bildir(metin)     arayuzde uyari balonu olarak goster
     durdur()          makroyu bitir
     time, math, json  standart moduller
+    dron.param_get(ad) / dron.param_set(ad, deger)  otopilot parametreleri (2.4.246)
 """
 import builtins
 import io
@@ -204,6 +205,7 @@ class DronFasadi:
                    "yon": None, "batarya": None, "batarya_v": None, "mod": None, "armed": None,
                    "gps_fix": None, "uydu": None, "roll": None, "pitch": None, "son_ts": 0.0}
         self._kilit = threading.Lock()
+        self._paramlar = {}      # 2.4.246: PARAM_VALUE -> {AD: (deger, tip, ts)}
         self._dur = False
         self._kalp_ts = 0.0
         threading.Thread(target=self._oku, daemon=True).start()
@@ -266,6 +268,18 @@ class DronFasadi:
                 elif t == "ATTITUDE":
                     self._t["roll"] = math.degrees(m.roll)
                     self._t["pitch"] = math.degrees(m.pitch)
+                elif t == "PARAM_VALUE":
+                    # 2.4.246: param_get/param_set bu sozlukten bekler (arka
+                    # plan okuyucu mesajlari tukettigi icin recv_match ile
+                    # beklemek yarisirdi).
+                    try:
+                        pid = m.param_id
+                        if isinstance(pid, bytes):
+                            pid = pid.decode("ascii", "ignore")
+                        pid = str(pid).rstrip("\x00").upper()
+                        self._paramlar[pid] = (float(m.param_value), int(m.param_type), time.time())
+                    except Exception:
+                        pass
 
     # --- durum ------------------------------------------------------
     def _al(self, ad):
@@ -422,6 +436,53 @@ class DronFasadi:
                 return True
             time.sleep(0.5)
         return False
+
+    # --- parametreler (2.4.246, kullanici: "makroya param_set koy") -----
+    def _param_bekle(self, ad, sonra_ts, zaman_asimi):
+        bitis = time.time() + zaman_asimi
+        while time.time() < bitis:
+            with self._kilit:
+                v = self._paramlar.get(ad)
+            if v is not None and v[2] >= sonra_ts:
+                return v
+            time.sleep(0.05)
+        return None
+
+    def param_get(self, ad, zaman_asimi=3.0, deneme=3):
+        """Parametre okur (PARAM_REQUEST_READ). Deger (float) veya None."""
+        ad = str(ad).strip().upper()
+        for _ in range(max(1, int(deneme))):
+            t0 = time.time()
+            self.mav.mav.param_request_read_send(self.sysid, 1, ad.encode("ascii", "ignore"), -1)
+            v = self._param_bekle(ad, t0, zaman_asimi)
+            if v is not None:
+                return v[0]
+        return None
+
+    def param_set(self, ad, deger, zaman_asimi=3.0, deneme=3, dogrula=True):
+        """Parametre yazar (PARAM_SET) ve PARAM_VALUE ile dogrular.
+
+        Tip, daha once okunmus PARAM_VALUE'dan alinir (yoksa REAL32;
+        ArduPilot tam sayi parametreleri REAL32 ile de kabul eder).
+        Doner: True (dogrulandi) / False.
+        """
+        ad = str(ad).strip().upper()
+        deger = float(deger)
+        with self._kilit:
+            onceki = self._paramlar.get(ad)
+        tip = onceki[1] if onceki else 9   # 9 = MAV_PARAM_TYPE_REAL32
+        for _ in range(max(1, int(deneme))):
+            t0 = time.time()
+            self.mav.mav.param_set_send(self.sysid, 1, ad.encode("ascii", "ignore"), deger, int(tip))
+            if not dogrula:
+                return True
+            v = self._param_bekle(ad, t0, zaman_asimi)
+            if v is not None and abs(v[0] - deger) <= max(1e-6, abs(deger) * 1e-6):
+                return True
+        return False
+
+    param_oku = param_get
+    param_ayarla = param_set
 
     def kapat(self):
         self._dur = True

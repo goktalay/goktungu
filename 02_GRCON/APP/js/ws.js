@@ -142,6 +142,27 @@ function telemetriIsle(m){
         varlikGuncelle(d);
       });
     }
+    // v2.4.245 (kullanici: "GRCON'dan sanal dronu silince Bagliantisi
+    // Bilinmeyen altina geliyor"): sunucu bir dronu listeden DUSURDUGUNDE
+    // (baglanti silindi/durduruldu, SITL kapandi) istemciye bir daha o
+    // dron icin paket gelmez; `varlikGuncelle` cagrilmadigi icin 10 sn'lik
+    // silme zamanlayicisi da hic kurulmaz ve kart "Baglantisi bilinmeyen"
+    // grubunda sonsuza dek kalirdi. Sunucu listesi kesindir: listede
+    // olmayan her dronun karti HEMEN silinir.
+    _guvenli("dron_kaybolan", () => {
+      if (typeof dronSil !== "function") return;
+      const gelen = new Set(gelenDronlar.map(d => String(d.sysid)));
+      for (const sysid of Object.keys(sonVeri)){
+        if (gelen.has(String(sysid))) continue;
+        delete sonVeri[sysid];
+        try { dronSil(parseInt(sysid, 10)); } catch (e) {}
+      }
+      if (typeof dronKartlar === "object" && dronKartlar){
+        for (const sysid of Object.keys(dronKartlar)){
+          if (!gelen.has(String(sysid))) { try { dronSil(parseInt(sysid, 10)); } catch (e) {} }
+        }
+      }
+    });
     // v2.4.33: dron kartlarini bagli olduklari baglanti grubuna
     // yerlestirir. Dron dongusunden SONRA cagrilir: kartlar
     // varlikGuncelle icinde uretildigi icin, once cagrilirsa
