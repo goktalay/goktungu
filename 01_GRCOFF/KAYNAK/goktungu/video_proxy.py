@@ -17,6 +17,7 @@ import os
 import shutil as _shutil
 import socketserver
 import subprocess
+import contextlib
 import threading
 import time
 
@@ -609,6 +610,11 @@ class VideoProxy:
         self.anotasyon = AnotasyonDeposu()  # v2.4.7: AI tespit kutulari
         # v2.4.34: kamera_id -> son basarisizlik gerekcesi (istemciye iletilir)
         self._son_hatalar = {}
+        # v2.4.242 (IS140): kopruye bagli kameralar icin canli kanal
+        # kancalari (sunucu.py baglar: merkez kipinde merkez_kimlik,
+        # yerel kipte kopru_kabul). None ise koprulu kamera dogrudan acilir.
+        self._kanal_ac = None
+        self._kanal_kapat = None
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -693,6 +699,12 @@ class VideoProxy:
         if not kam:
             self._hata_yaz(kamera_id, "kamera kaydi bulunamadi")
             return None
+        # v2.4.242 (IS140): kayit bir KOPRUYE bagliysa kareler o koprunun
+        # makinesinden (yerel role / merkez) gelir; kamera adresi bu
+        # makineden acilmaz (USB kamera baska makinededir).
+        if kam.get("kopru_ornek_id") and self._kanal_ac is not None \
+                and kam.get("protokol") not in ("dosya",):
+            return self._uzak_yayin_al(kamera_id)
         url = self._url_coz(kam)
         if not url:
             if kam.get("protokol") == "dji":
@@ -756,6 +768,31 @@ class VideoProxy:
         with self._kilit:
             return sorted(int(k) for k, y in self.yayinlar.items()
                           if getattr(y, "calisiyor", False) and getattr(y, "kare_no", 0) > 0)
+
+    def _uzak_yayin_al(self, kamera_id):
+        """Koprulu kamera icin `_UzakYayin` (v2.4.242, IS140)."""
+        from .saha_vekil import _UzakYayin
+        kid = int(kamera_id)
+        with self._kilit:
+            y = self.yayinlar.get(kamera_id)
+        if y is not None and y.calisiyor and isinstance(y, _UzakYayin):
+            return y
+        if y is not None:
+            with self._kilit:
+                if self.yayinlar.get(kamera_id) is y:
+                    self.yayinlar.pop(kamera_id, None)
+            with contextlib.suppress(Exception):
+                y.durdur()
+        y = _UzakYayin(kid, self._kanal_ac, self._kanal_kapat, self.konsol)
+        ok, gerekce = y.baslat()
+        if not ok:
+            with self._kilit:
+                self._son_hatalar[kid] = gerekce or "kopru canli kanali acilamadi"
+            return None
+        with self._kilit:
+            self._son_hatalar.pop(kid, None)
+            self.yayinlar[kamera_id] = y
+        return y
 
     def _hata_yaz(self, kamera_id, gerekce):
         with self._kilit:

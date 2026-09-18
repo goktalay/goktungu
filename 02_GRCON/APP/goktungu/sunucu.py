@@ -3710,15 +3710,20 @@ class WSSunucusu:
         kamerayi yeniden girmek zorunda kalir, oysa kopru birkac saniye
         sonra ayaga kalkabilir.
         """
-        if not (self.kameralar and self._merkez_kipinde()):
+        if not self.kameralar:
             return
-        if getattr(self.video_proxy, "_komut", None) is None:
-            return                      # lokal kurulum: vekil yok
         try:
             kayit = self.kameralar.bul(int(kamera_id))
         except Exception:
             kayit = None
         if not kayit:
+            return
+        # v2.4.242 (IS140): yerel kipte de kopruye bagli kayit kopruye
+        # iletilir; koprusuz kayit yerelde dogrudan acilir (iletim yok).
+        if not self._merkez_kipinde() and not kayit.get("kopru_ornek_id"):
+            return
+        if self._merkez_kipinde() and getattr(self.video_proxy, "_komut", None) is None \
+                and not kayit.get("kopru_ornek_id"):
             return
         paket = {
             "id": int(kamera_id),
@@ -3772,6 +3777,16 @@ class WSSunucusu:
         except Exception as e:
             return None, None, "Merkez kimlik modulu yuklenemedi: %s" % e
         if not _mk.etkin():
+            # v2.4.242 (IS140): yerel kipte koprulu kamera -> yerel role
+            # (kopru_kabul.video_ac/video_kapat ayni imzayi tasir).
+            try:
+                from . import kopru_kabul as _kk
+                _ky = self.kameralar.bul(int(kamera_id)) if (kamera_id is not None and self.kameralar) else None
+                _oid = int((_ky or {}).get("kopru_ornek_id") or 0)
+            except Exception:
+                _oid = 0
+            if _oid:
+                return _kk, _oid, None
             return None, None, ("Yerel kipte canli kanal gerekmez "
                                 "(kamera dogrudan acilir).")
         p = self._aktif_pilot() or {}

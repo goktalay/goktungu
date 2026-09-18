@@ -165,6 +165,58 @@ class _KopruVekilTemel:
                 pass
 
 
+KARE_MAGIC = b"GKVK"
+_BASLIK_BICIM = "!IHH"
+_BASLIK_BOY = 4 + 8
+
+
+class KareBirlestirici:
+    """v2.4.242 (IS140): merkezden gelen datagramlari JPEG kareye cevirir.
+
+    Iki bicim kabul edilir:
+      * ham JPEG datagram (eski merkez / kucuk kare) -> oldugu gibi
+      * `GKVK + kare_no(u32) + parca_no(u16) + parca_sayisi(u16) + veri`
+        parcalari -> ayni kare_no'nun tum parcalari gelince birlestirilir.
+    Eksik parcali kare, yeni bir kare_no gelince ATILIR (tamponlanmaz).
+    """
+
+    def __init__(self):
+        self.kare_no = None
+        self.parcalar = {}
+        self.sayi = 0
+        self.dusen = 0
+        self.birlesen = 0
+
+    def ekle(self, veri):
+        if not veri:
+            return None
+        if veri[:2] == b"\xff\xd8":
+            return veri
+        if len(veri) < _BASLIK_BOY or veri[:4] != KARE_MAGIC:
+            return None
+        import struct as _st
+        no, idx, say = _st.unpack(_BASLIK_BICIM, veri[4:_BASLIK_BOY])
+        if say == 0 or idx >= say:
+            return None
+        if no != self.kare_no:
+            if self.kare_no is not None and self.parcalar:
+                self.dusen += 1
+            self.kare_no = no
+            self.parcalar = {}
+            self.sayi = say
+        self.parcalar[idx] = veri[_BASLIK_BOY:]
+        if len(self.parcalar) < self.sayi:
+            return None
+        kare = b"".join(self.parcalar[i] for i in range(self.sayi))
+        self.parcalar = {}
+        self.kare_no = None
+        if kare[:2] != b"\xff\xd8":
+            self.dusen += 1
+            return None
+        self.birlesen += 1
+        return kare
+
+
 class _UzakYayin:
     """Merkez uzerinden gelen kareleri tasiyan yayin nesnesi.
 
@@ -243,8 +295,9 @@ class _UzakYayin:
         return True, ""
 
     def _oku(self):
-        """UDP'den kare okur. Her datagram TAM bir JPEG karedir."""
+        """UDP'den kare okur. Datagram ya TAM bir JPEG ya da GKVK parcasidir (v2.4.242)."""
         bos_tur = 0
+        birlestirici = KareBirlestirici()
         while self.calisiyor and self.soket is not None:
             try:
                 veri, _ = self.soket.recvfrom(self.OKUMA_TAMPON)
@@ -264,9 +317,12 @@ class _UzakYayin:
             if not veri:
                 continue
             bos_tur = 0
+            kare = birlestirici.ekle(veri)
+            if kare is None:
+                continue
             self.hata = None
             with self.kosul:
-                self.son_kare = veri
+                self.son_kare = kare
                 self.kare_no += 1
                 self.kosul.notify_all()
         self.calisiyor = False

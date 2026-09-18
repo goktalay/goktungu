@@ -18,8 +18,23 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.24"
+KOPRU_SURUM = "1.7.25"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.25",
+        "tarih": "2026-09-18",
+        "notlar": [
+            "CANLI KAMERA KARESI MERKEZE ITILIR (kullanici istegi): GRCON "
+            "merkezi ile kopru ayri aglarda oldugu icin merkez artik "
+            "koprudeki 8801 portuna gelmez; kopru, `video_canli_ac` "
+            "istegiyle yerel MJPEG akisini okur ve kareleri acik WSS ajan "
+            "baglantisindan `video_kare` olarak merkeze iter. Yeni port ve "
+            "iceri dogru baglanti gerekmez.",
+            "FPS ve genislik ayari artik islenir: kamera kaydindaki `fps` "
+            "(1-30) ve `genislik` yerel vekilde (ffmpeg -r / scale, OpenCV) "
+            "ve merkeze itmede uygulanir; onceki surum bu alanlari atiyordu.",
+        ],
+    },
     {
         "surum": "1.7.24",
         "tarih": "2026-09-17",

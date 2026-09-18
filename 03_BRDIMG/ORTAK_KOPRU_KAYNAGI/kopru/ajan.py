@@ -519,6 +519,26 @@ class KopruAjani:
     def video_gonder(self, veri):
         return self._gonder({"tur": "video", "veri": veri})
 
+    def video_kare_gonder(self, kamera_id, veri):
+        """CANLI KAMERA KARESI (1.7.25, IS140): JPEG'i merkeze yollar.
+
+        `akis_gonder` ile ayni ilke: KUYRUGA ALMAZ, atesle-unut. Gecikmis
+        kare degersizdir; baglanti yokken kare ATILIR. Merkez bu mesaji
+        `mk_video` ile GRCON uygulamasinin UDP portuna teslim eder.
+        """
+        dongu, soket = self._dongu, self._soket
+        if not (self.bagli and soket is not None and dongu is not None):
+            return False
+        paket = {"tur": "video_kare", "kamera_id": int(kamera_id),
+                 "veri": _b64(veri)}
+        try:
+            asyncio.run_coroutine_threadsafe(
+                soket.send(json.dumps(paket, ensure_ascii=False)), dongu)
+            return True
+        except Exception as e:
+            self.son_hata = f"{type(e).__name__}: {e}"
+            return False
+
     # ------------------------------------------------------------------
     # Radar akisi (durum + izler)
     # ------------------------------------------------------------------

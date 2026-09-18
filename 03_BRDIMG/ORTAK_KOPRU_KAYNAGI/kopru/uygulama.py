@@ -10,7 +10,9 @@ sordugunda yanit GERCEK surec durumundan uretilir. Uydurma "calisiyor"
 yaniti, merkez panelinde saha durumunu YANLIS gosterir ve operatoru
 yanlis yonlendirir.
 """
+import http.client
 import os
+import re
 import threading
 import time
 
@@ -21,6 +23,119 @@ from . import ayar as ayar_mod
 from . import merkez as merkez_mod
 from . import guncelleme as guncelleme_mod
 from . import servisler as servis_mod
+
+
+class CanliKareItici(threading.Thread):
+    """CANLI KAMERA KARESI ITICISI (1.7.25, IS140).
+
+    Kullanici: "Video koprusunde GRCON'a baglaniyorsa ... sunucu baska
+    yerde, kopru baska yerde; bir sekilde yayin yapman lazim, bu yayin
+    fps ayarina gore resim vermeli."
+
+    Video servisi kareleri BU makinede uretir (127.0.0.1:8801 MJPEG).
+    Merkez o porta ulasamaz. Bu is parcacigi yerel MJPEG akisini okur,
+    kareleri kamera kaydindaki FPS tavaniyla ayiklar ve ajanin acik
+    WSS baglantisindan `video_kare` olarak merkeze ITER. Yeni port
+    acilmaz, iceri dogru baglanti gerekmez.
+    """
+
+    def __init__(self, kamera_id, fps, gonder, port, gunluk=None):
+        super().__init__(daemon=True, name="canli-kare-%s" % kamera_id)
+        self.kamera_id = int(kamera_id)
+        self.fps = max(1, min(30, int(fps or 15)))
+        self._gonder = gonder
+        self._port = int(port)
+        self._gunluk = gunluk or (lambda *a, **k: None)
+        self._dur = threading.Event()
+        self.kare = 0
+        self.byte = 0
+        self.atlanan = 0
+        self.son_ts = 0.0
+        self.son_hata = ""
+        self.baslama_ts = time.time()
+
+    def durdur(self):
+        self._dur.set()
+
+    def ozet(self):
+        return {"kamera_id": self.kamera_id, "fps": self.fps, "kare": self.kare,
+                "byte": self.byte, "atlanan": self.atlanan,
+                "calisiyor": self.is_alive() and not self._dur.is_set(),
+                "son_kare_once_sn": (round(time.time() - self.son_ts, 1)
+                                     if self.son_ts else None),
+                "yas_sn": round(time.time() - self.baslama_ts, 1),
+                "son_hata": self.son_hata}
+
+    def run(self):
+        while not self._dur.is_set():
+            try:
+                self._akisi_oku()
+            except Exception as e:
+                self.son_hata = "%s: %s" % (type(e).__name__, e)
+            if not self._dur.is_set():
+                self._dur.wait(2.0)
+
+    def _akisi_oku(self):
+        baglanti = http.client.HTTPConnection("127.0.0.1", self._port, timeout=20)
+        try:
+            baglanti.request("GET", "/kamera/%d" % self.kamera_id)
+            yanit = baglanti.getresponse()
+            if yanit.status != 200:
+                govde = yanit.read(400)
+                self.son_hata = "yerel vekil %d: %s" % (
+                    yanit.status, govde.decode("utf-8", "replace")[:200])
+                return
+            tampon = b""
+            son_gonderim = 0.0
+            while not self._dur.is_set():
+                # read1: eldeki veriyi HEMEN dondurur; read(n) n bayt dolana
+                # kadar bloke olur ve kareleri toplu getirirdi (fps atlanirdi).
+                parca = yanit.read1(65536)
+                if not parca:
+                    self.son_hata = "yerel vekil akisi kapandi"
+                    return
+                tampon += parca
+                while True:
+                    kare, tampon = self._kare_ayikla(tampon)
+                    if kare is None:
+                        break
+                    simdi = time.time()
+                    if simdi - son_gonderim < 1.0 / self.fps:
+                        self.atlanan += 1
+                        continue
+                    son_gonderim = simdi
+                    if self._gonder(self.kamera_id, kare):
+                        self.kare += 1
+                        self.byte += len(kare)
+                        self.son_ts = simdi
+                        self.son_hata = ""
+                    else:
+                        self.son_hata = "merkez baglantisi yok; kare atildi"
+                if len(tampon) > 8 * 1024 * 1024:
+                    tampon = b""      # bozuk akis; yeniden es zamanla
+        finally:
+            try:
+                baglanti.close()
+            except Exception:
+                pass
+
+    @staticmethod
+    def _kare_ayikla(tampon):
+        """Multipart tampondan tek JPEG kare ayirir: (kare|None, kalan)."""
+        bas = tampon.find(b"\xff\xd8")
+        if bas < 0:
+            return None, tampon[-4:] if len(tampon) > 4 else tampon
+        baslik = tampon[:bas]
+        m = re.search(rb"Content-Length:\s*(\d+)", baslik, re.I)
+        if m:
+            uzunluk = int(m.group(1))
+            if len(tampon) < bas + uzunluk:
+                return None, tampon
+            return tampon[bas:bas + uzunluk], tampon[bas + uzunluk:]
+        son = tampon.find(b"\xff\xd9", bas + 2)
+        if son < 0:
+            return None, tampon
+        return tampon[bas:son + 2], tampon[son + 2:]
 
 
 class Uygulama:
@@ -727,7 +842,60 @@ class Uygulama:
                           zaman_asimi=25.0)
 
         def video_kamera_yaz(v):
+            # 1.7.25 (IS140): fps kaydi canli iticiye de uygulanir.
+            try:
+                _k = (v or {}).get("kamera") if isinstance((v or {}).get("kamera"), dict) else (v or {})
+                _kid = int(_k.get("id") or 0)
+                _fps = max(1, min(30, int(_k.get("fps") or 15)))
+                self._canli_fps[_kid] = _fps
+                _it = self._canli_iticiler.get(_kid)
+                if _it is not None:
+                    _it.fps = _fps
+            except Exception:
+                pass
             return _video("kamera_yaz", dict(v or {}))
+
+        def video_canli_ac(v):
+            """Merkezin `/api/ic/video_ac` istegi: kareleri merkeze IT (IS140)."""
+            try:
+                kid = int((v or {}).get("id") or 0)
+            except (TypeError, ValueError):
+                kid = 0
+            if not kid:
+                return {"tamam": False, "hata": "kamera id gerekli"}
+            r = _video("akis_baslat", {"id": kid}, zaman_asimi=25.0)
+            if not r.get("tamam") or r.get("acildi") is False:
+                return {"tamam": False, "hata": r.get("gerekce") or r.get("hata")
+                        or "kaynak acilamadi"}
+            try:
+                fps = int((v or {}).get("fps") or 0) or self._canli_fps.get(kid, 15)
+            except (TypeError, ValueError):
+                fps = self._canli_fps.get(kid, 15)
+            it = self._canli_iticiler.get(kid)
+            if it is not None and it.is_alive() and not it._dur.is_set():
+                it.fps = max(1, min(30, fps))
+                return {"tamam": True, "zaten": True, "fps": it.fps}
+            it = CanliKareItici(kid, fps, self._video_kare_gonder,
+                                int(r.get("port") or 8801),
+                                lambda m, s="bilgi": self.gunluk(m, s))
+            self._canli_iticiler[kid] = it
+            it.start()
+            self.gunluk("Canli kamera itici basladi (kamera %d, %d fps)" % (kid, it.fps))
+            return {"tamam": True, "fps": it.fps}
+
+        def video_canli_kapat(v):
+            try:
+                kid = int((v or {}).get("id") or 0)
+            except (TypeError, ValueError):
+                kid = 0
+            it = self._canli_iticiler.pop(kid, None)
+            if it is not None:
+                it.durdur()
+            return {"tamam": True, "vardi": it is not None}
+
+        def video_canli_durum(_v):
+            return {"tamam": True,
+                    "kanallar": [it.ozet() for it in list(self._canli_iticiler.values())]}
 
         def video_kamera_sil(v):
             return _video("kamera_sil", {"id": (v or {}).get("id")})
@@ -836,6 +1004,9 @@ class Uygulama:
             "video_akis_baslat": video_akis_baslat,
             "video_akis_durdur": video_akis_durdur,
             "video_durum": video_durum,
+            "video_canli_ac": video_canli_ac,
+            "video_canli_kapat": video_canli_kapat,
+            "video_canli_durum": video_canli_durum,
             "ai_sunucu_yaz": ai_sunucu_yaz,
             "ai_sunucu_sil": ai_sunucu_sil,
             "ai_izleme_baslat": ai_izleme_baslat,
@@ -863,6 +1034,27 @@ class Uygulama:
     # -----------------------------------------------------------------
     # Akis
     # -----------------------------------------------------------------
+    def _video_kare_gonder(self, kamera_id, veri):
+        """Canli kareyi merkeze yollar (1.7.25, IS140); ajan yoksa atilir."""
+        a = self.ajan
+        if not (a and a.bagli):
+            return False
+        return a.video_kare_gonder(kamera_id, veri)
+
+    @property
+    def _canli_iticiler(self):
+        d = self.__dict__.get("_canli_iticiler_d")
+        if d is None:
+            d = self.__dict__["_canli_iticiler_d"] = {}
+        return d
+
+    @property
+    def _canli_fps(self):
+        d = self.__dict__.get("_canli_fps_d")
+        if d is None:
+            d = self.__dict__["_canli_fps_d"] = {}
+        return d
+
     def _akis_gonder(self, kanal_id, veri):
         """Kanaldan okunan byte'i merkeze yollar.
 

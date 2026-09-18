@@ -2,11 +2,22 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.241";
+const GCS_SURUM = "2.4.242";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.242",
+    tarih: "2026-09-18",
+    baslik: "Köprüdeki kameranın görüntüsü GRCON'a ve GRCOFF'a köprüden aktarılır (FPS ayarına göre) (paket 2.5.112, Köprü 1.7.25)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: 'Video köprüsünde GRCON'a bağlanıyorsa başka bir yolla görüntüyü paylaşman gerek; sunucu başka yerde, köprü başka yerde; bu yayın FPS ayarına göre resim vermeli.' Köprü (1.7.25) artık merkezin isteğiyle yerel MJPEG akışını okuyup kareleri kendi açık WSS bağlantısından merkeze iter; merkez (mk_video, IS71'de kaldırılan röle geri getirildi) kareleri GRCON uygulamasına teslim eder, uygulama /app/kamera/<id> MJPEG akışı olarak tarayıcıya sunar. Köprüye içeri doğru bağlantı veya yeni port gerekmez.",
+      "Büyük kareler (60 KB üstü) GKVK başlığıyla parçalanıp uygulamada birleştirilir; önceki tasarım 63 KB üstünü düşürüyordu. Kamera kaydındaki FPS (1–30) ve genişlik köprüde de uygulanır (ffmpeg -r/scale, OpenCV); merkeze itme FPS tavanına uyar.",
+      "GRCOFF (yerel kip): köprüye bağlı kamera kaydı artık köprü makinesinden yayınlanır (yerel röle, aynı GKVK biçimi); köprüsüz kayıtlar bu bilgisayardan doğrudan açılmaya devam eder. Kamera kaydı köprüye yerel kipte de iletilir.",
+      "Bağlantı diyagramı kamera kutusunda 'Yayın' durumu bu yolu yansıtır.",
+    ],
+  },
   {
     surum: "2.4.241",
     tarih: "2026-09-17",

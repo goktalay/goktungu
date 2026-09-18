@@ -922,6 +922,167 @@ class YerelAkis:
 AKIS = YerelAkis()
 
 
+# ---------------------------------------------------------------------
+# v2.4.242 (IS140): YEREL VIDEO ROLESI — kopruden gelen `video_kare`
+# mesajlarini GRCOFF'un video vekilinin UDP portuna teslim eder (merkezdeki
+# mk_video ile ayni sozlesme ve ayni GKVK parcalama bicimi).
+# ---------------------------------------------------------------------
+_VIDEO_PARCA_BYTE = 60000
+_VIDEO_KARE_ENUST = 4 * 1024 * 1024
+_VIDEO_MAGIC = b"GKVK"
+_DONGU = None
+
+
+def _video_parcala(veri, kare_no):
+    import struct as _st
+    if len(veri) <= _VIDEO_PARCA_BYTE:
+        return [veri]
+    parcalar = [veri[i:i + _VIDEO_PARCA_BYTE] for i in range(0, len(veri), _VIDEO_PARCA_BYTE)]
+    say = len(parcalar)
+    return [_VIDEO_MAGIC + _st.pack("!IHH", kare_no & 0xFFFFFFFF, i, say) + p
+            for i, p in enumerate(parcalar)]
+
+
+class YerelVideo:
+    def __init__(self):
+        self._kanallar = {}
+        self._kilit = threading.Lock()
+        self._sayac = 0
+
+    def kanal_ac(self, ornek_id, kamera_id, app_port):
+        import socket as _sk
+        oid, kid = int(ornek_id), int(kamera_id)
+        try:
+            ap = int(app_port or 0)
+        except Exception:
+            ap = 0
+        if ap <= 0 or ap > 65535:
+            return None, "app_port zorunlu"
+        self.kanal_kapat(oid, kid)
+        s = _sk.socket(_sk.AF_INET, _sk.SOCK_DGRAM)
+        try:
+            s.bind(("127.0.0.1", 0))
+            with contextlib.suppress(OSError):
+                s.setsockopt(_sk.SOL_SOCKET, _sk.SO_SNDBUF, 4 << 20)
+        except Exception as e:
+            with contextlib.suppress(Exception):
+                s.close()
+            return None, "UDP portu ayrilamadi: %s" % e
+        k = {"soket": s, "es": ("127.0.0.1", ap), "kare": 0, "byte": 0,
+             "dusen": 0, "son_ts": 0.0, "son_hata": "", "acilma_ts": time.time()}
+        with self._kilit:
+            self._kanallar[(oid, kid)] = k
+        return {"ornek_id": oid, "kamera_id": kid, "app_port": ap}, None
+
+    def kanal_kapat(self, ornek_id, kamera_id):
+        with self._kilit:
+            k = self._kanallar.pop((int(ornek_id), int(kamera_id)), None)
+        if k is None:
+            return False
+        with contextlib.suppress(Exception):
+            k["soket"].close()
+        return True
+
+    def ornek_kapat(self, ornek_id):
+        oid = int(ornek_id)
+        with self._kilit:
+            anahtarlar = [a for a in self._kanallar if a[0] == oid]
+        for _, kid in anahtarlar:
+            self.kanal_kapat(oid, kid)
+        return len(anahtarlar)
+
+    def kopruden_geldi(self, ornek_id, kamera_id, veri_b64):
+        import base64 as _b64
+        with self._kilit:
+            k = self._kanallar.get((int(ornek_id), int(kamera_id)))
+        if k is None:
+            return 0
+        try:
+            veri = _b64.b64decode(veri_b64 or "", validate=True)
+        except Exception as e:
+            k["dusen"] += 1
+            k["son_hata"] = "Kare cozulemedi (base64): %s" % type(e).__name__
+            return 0
+        if not veri or veri[:2] != b"\xff\xd8":
+            k["dusen"] += 1
+            k["son_hata"] = "Kare JPEG degil"
+            return 0
+        if len(veri) > _VIDEO_KARE_ENUST:
+            k["dusen"] += 1
+            k["son_hata"] = "Kare cok buyuk (%d bayt)" % len(veri)
+            return 0
+        self._sayac += 1
+        toplam = 0
+        try:
+            for p in _video_parcala(veri, self._sayac):
+                toplam += k["soket"].sendto(p, k["es"])
+        except Exception as e:
+            k["dusen"] += 1
+            k["son_hata"] = "%s: %s" % (type(e).__name__, e)
+            return 0
+        k["kare"] += 1
+        k["byte"] += toplam
+        k["son_ts"] = time.time()
+        return toplam
+
+    def durum(self, ornek_id=None):
+        with self._kilit:
+            ks = list(self._kanallar.items())
+        cikti = []
+        for (oid, kid), k in ks:
+            if ornek_id is not None and oid != int(ornek_id):
+                continue
+            cikti.append({"ornek_id": oid, "kamera_id": kid, "app_port": k["es"][1],
+                          "kare": k["kare"], "byte": k["byte"], "dusen": k["dusen"],
+                          "son_hata": k["son_hata"]})
+        return cikti
+
+
+VIDEO = YerelVideo()
+
+
+def _dongu_cagir(coro, zaman_asimi):
+    """Olay dongusu disindan (MJPEG is parcacigi) koprüye istek."""
+    dongu = _DONGU
+    if dongu is None or not dongu.is_running():
+        return None, "Olay dongusu hazir degil"
+    try:
+        gelecek = asyncio.run_coroutine_threadsafe(coro, dongu)
+        return gelecek.result(timeout=zaman_asimi), None
+    except Exception as e:
+        return None, "%s: %s" % (type(e).__name__, e)
+
+
+def video_ac(ornek_id, firma_id, kamera_id, app_port, zaman_asimi=20.0):
+    """`merkez_kimlik.video_ac` ile AYNI imza (sunucu._saha_video_kanal_ac)."""
+    o = ROLE.ornek_ile(int(ornek_id))
+    if o is None:
+        return False, "Kopru cevrimdisi"
+    ozet, hata = VIDEO.kanal_ac(ornek_id, kamera_id, app_port)
+    if hata:
+        return False, hata
+    sonuc, h2 = _dongu_cagir(kopruden_iste(o, "video_canli_ac", {"id": int(kamera_id)},
+                                           zaman_asimi=zaman_asimi), zaman_asimi + 2)
+    if h2 or not isinstance(sonuc, tuple):
+        VIDEO.kanal_kapat(ornek_id, kamera_id)
+        return False, h2 or "Kopru yanit vermedi"
+    veri, khata = sonuc
+    if khata or not (veri or {}).get("tamam"):
+        VIDEO.kanal_kapat(ornek_id, kamera_id)
+        return False, khata or (veri or {}).get("hata") or "Kopru canli yayini baslatamadi"
+    return True, ""
+
+
+def video_kapat(ornek_id, firma_id, kamera_id):
+    VIDEO.kanal_kapat(ornek_id, kamera_id)
+    o = ROLE.ornek_ile(int(ornek_id))
+    if o is None:
+        return None
+    _s, h = _dongu_cagir(kopruden_iste(o, "video_canli_kapat", {"id": int(kamera_id)},
+                                       zaman_asimi=6.0), 8.0)
+    return h
+
+
 async def kopruden_iste(o, eylem, veri=None, zaman_asimi=15.0):
     """Kopruye istek gonderir ve yanitini bekler.
 
@@ -933,6 +1094,8 @@ async def kopruden_iste(o, eylem, veri=None, zaman_asimi=15.0):
         raise ConnectionError("Kopru cevrimdisi")
     istek_id = secrets.token_hex(8)
     dongu = asyncio.get_running_loop()
+    global _DONGU
+    _DONGU = dongu
     gelecek = dongu.create_future()
     o.bekleyen[istek_id] = gelecek
     paket = {"tur": "istek", "istek_id": istek_id, "eylem": str(eylem),
@@ -1097,6 +1260,10 @@ async def oturum(soket, konsol=None):
                 o.son_hedef_ts = time.time()
                 if _hd is not None:
                     _hd.DEPO.yaz(o.ornek_id, o.ad, m)
+            elif tur == "video_kare":
+                # v2.4.242 (IS140): canli kamera karesi -> yerel video rolesi
+                VIDEO.kopruden_geldi(o.ornek_id, m.get("kamera_id") or 0,
+                                     m.get("veri") or "")
             elif tur == "akis":
                 # HAM MAVLINK/GDP BYTE: saniyede ~50 paket. Gunluge
                 # YAZILMAZ ve yanit URETILMEZ (atesle-unut). v2.4.233:
@@ -1116,6 +1283,7 @@ async def oturum(soket, konsol=None):
             if ROLE.ornek_ile(int(o.ornek_id)) is None:
                 with contextlib.suppress(Exception):
                     AKIS.ornek_kapat(o.ornek_id)
+                    VIDEO.ornek_kapat(o.ornek_id)
             _baglanti_kapandi(o)
             yaz("KOPRU", "Kopru ayrildi: %s (ornek %s)"
                 % (o.ad, o.ornek_id))

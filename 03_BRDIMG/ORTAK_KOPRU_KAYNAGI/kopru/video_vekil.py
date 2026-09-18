@@ -111,12 +111,25 @@ class KameraDefteri:
             kid = int(kayit.get("id"))
         except (TypeError, ValueError):
             return None
+        # 1.7.25 (IS140): FPS tavani ve genislik merkezden gelir ve
+        # SAKLANIR. Onceki surum bu alanlari atiyordu; kullanicinin
+        # "fps ayarina gore resim vermeli" istegi bu yuzden islemiyordu.
+        try:
+            fps = max(1, min(30, int(kayit.get("fps") or 15)))
+        except (TypeError, ValueError):
+            fps = 15
+        try:
+            genislik = max(160, min(3840, int(kayit.get("genislik") or 960)))
+        except (TypeError, ValueError):
+            genislik = 960
         k = {
             "id": kid,
             "isim": str(kayit.get("isim") or ""),
             "protokol": str(kayit.get("protokol") or "").lower(),
             "url": str(kayit.get("url") or ""),
             "ai_gorevler": str(kayit.get("ai_gorevler") or ""),
+            "fps": fps,
+            "genislik": genislik,
         }
         with self._kilit:
             self._veri[kid] = k
@@ -237,10 +250,13 @@ class _Yayin:
     """Tek kaynak icin FFmpeg sureci (veya OpenCV yakalama) + fan-out."""
 
     def __init__(self, kamera_id, url, protokol, konsol=None,
-                 anotasyon=None):
+                 anotasyon=None, fps=15, genislik=960):
         self.kamera_id = kamera_id
         self.url = url
         self.protokol = protokol
+        # 1.7.25: kamera kaydindaki FPS tavani ve genislik (IS140)
+        self.fps = max(1, min(30, int(fps or 15)))
+        self.genislik = max(160, min(3840, int(genislik or 960)))
         self.konsol = konsol
         self.anotasyon = anotasyon   # AnotasyonDeposu (opsiyonel)
         self.surec = None
@@ -304,9 +320,9 @@ class _Yayin:
             cmd += ["-fflags", "nobuffer", "-flags", "low_delay"]
         cmd += ["-i", self.url,
                 "-an",                       # ses yok
-                "-vf", "scale='min(960,iw)':-2",  # bant genisligi icin sinirla
+                "-vf", "scale='min(%d,iw)':-2" % self.genislik,  # bant genisligi icin sinirla
                 "-q:v", "7",
-                "-r", "15",
+                "-r", str(self.fps),
                 "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"]
         try:
             self.surec = subprocess.Popen(
@@ -409,8 +425,8 @@ class _Yayin:
                             "(kamera %s, indeks %s)"
                             % (self.kamera_id, indeks))
             return
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(self.genislik))
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(self.genislik * 9 / 16))
         onceki = 0.0
         while self.calisiyor:
             ok, kare = cap.read()
@@ -419,7 +435,7 @@ class _Yayin:
                 break
             # 15 fps sinirla
             simdi = time.time()
-            if simdi - onceki < 1.0 / 15:
+            if simdi - onceki < 1.0 / self.fps:
                 continue
             onceki = simdi
             okk, jpg = cv2.imencode(".jpg", kare,
@@ -603,14 +619,20 @@ class VideoProxy:
                 "DJI kopru henuz video adresi bildirmedi"
                 if kam.get("protokol") == "dji" else "kaynak adresi bos")
             return None
+        istenen_fps = int(kam.get("fps") or 15)
+        istenen_gen = int(kam.get("genislik") or 960)
         with self._kilit:
             y = self.yayinlar.get(kamera_id)
-            if y and (not y.calisiyor or y.url != url):
+            # 1.7.25: FPS/genislik degistiyse yayin yeniden kurulur (IS140)
+            if y and (not y.calisiyor or y.url != url
+                      or getattr(y, "fps", 15) != istenen_fps
+                      or getattr(y, "genislik", 960) != istenen_gen):
                 y.durdur()
                 y = None
             if y is None:
                 y = _Yayin(kamera_id, url, kam["protokol"],
-                           self.konsol, anotasyon=self.anotasyon)
+                           self.konsol, anotasyon=self.anotasyon,
+                           fps=istenen_fps, genislik=istenen_gen)
                 if not y.baslat():
                     self._son_hatalar[int(kamera_id)] = (
                         y.hata or "kaynak baslatilamadi")
