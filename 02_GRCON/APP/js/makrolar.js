@@ -31,35 +31,42 @@
   }
 
   // -----------------------------------------------------------------
-  // Kullanilabilir degiskenler (panelin altinda; tiklaninca koda eklenir)
+  // Sozdizimi vurgulama (2.4.244, kullanici: "syntax gorunsun"). GRCOFF
+  // cevrimdisi calistigi icin kutuphane yok: saydam textarea'nin altinda
+  // renklendirilmis <pre> katmani, kaydirma es zamanli.
   // -----------------------------------------------------------------
-  const DEGISKENLER = [
-    { ad: "mav", ek: "mav", tr: "Seçili dronun pymavlink bağlantısı (mavutil.mavlink_connection). Örn: mav.mav.command_long_send(...), mav.recv_match(type='HEARTBEAT', blocking=True)", en: "pymavlink connection of the selected drone (mavutil.mavlink_connection)." },
-    { ad: "mavutil", ek: "mavutil", tr: "pymavlink.mavutil modülü (mavutil.mavlink_connection, mavutil.mavlink.MAV_CMD_*)", en: "pymavlink.mavutil module." },
-    { ad: "mavlink", ek: "mavlink", tr: "MAVLink lehçesi (ardupilotmega): MAV_CMD_NAV_TAKEOFF, MAV_FRAME_* sabitleri", en: "MAVLink dialect (ardupilotmega) constants." },
-    { ad: "dron", ek: "dron", tr: "Seçili dronun kolay arayüzü. Alanlar: lat, lon, konum, irtifa, irtifa_msl, hiz, yon, batarya, batarya_v, mod, armed, ucusta, bagli, gps_fix, uydu, roll, pitch, sysid, mav", en: "Easy facade of the selected drone (lat, lon, konum, irtifa, hiz, yon, batarya, mod, armed, ucusta, bagli...)." },
-    { ad: "dron.arm()", ek: "dron.arm()", tr: "Arm eder; arm(zorla=True) zorlar. Başarı için True döner", en: "Arms the vehicle; arm(zorla=True) forces." },
-    { ad: "dron.disarm()", ek: "dron.disarm()", tr: "Disarm eder", en: "Disarms." },
-    { ad: "dron.mod_ayarla('GUIDED')", ek: "dron.mod_ayarla('GUIDED')", tr: "Uçuş modunu değiştirir (GUIDED, AUTO, LOITER, RTL, LAND ...)", en: "Sets the flight mode." },
-    { ad: "dron.kalk(irtifa)", ek: "dron.kalk(20)", tr: "GUIDED + arm + kalkış; verilen göreli irtifaya ulaşınca döner", en: "GUIDED + arm + takeoff to the given relative altitude." },
-    { ad: "dron.git(lat, lon, irtifa)", ek: "dron.git(39.9, 32.8, 30, bekle=True)", tr: "GUIDED hedefe uçar (göreli irtifa); bekle=True ile varışı bekler", en: "Flies to a GUIDED target; bekle=True waits for arrival." },
-    { ad: "dron.eve_don()", ek: "dron.eve_don()", tr: "RTL modu", en: "RTL mode." },
-    { ad: "dron.inis()", ek: "dron.inis()", tr: "LAND modu", en: "LAND mode." },
-    { ad: "dron.hiz_ayarla(m_s)", ek: "dron.hiz_ayarla(5)", tr: "Yer hızı hedefi (m/s)", en: "Ground speed target (m/s)." },
-    { ad: "dron.mesafe(lat, lon)", ek: "dron.mesafe(39.9, 32.8)", tr: "Drondan noktaya uzaklık (m)", en: "Distance from drone to a point (m)." },
-    { ad: "dron.bekle_varis(lat, lon, tol_m)", ek: "dron.bekle_varis(39.9, 32.8, 3)", tr: "Noktaya varana kadar bekler", en: "Waits until the drone reaches the point." },
-    { ad: "dron.bekle_irtifa(irtifa)", ek: "dron.bekle_irtifa(20)", tr: "İrtifaya ulaşana kadar bekler", en: "Waits until the altitude is reached." },
-    { ad: "dron.komut(cmd, p1..p7)", ek: "dron.komut(mavlink.MAV_CMD_DO_SET_SERVO, 9, 1500)", tr: "Ham COMMAND_LONG gönderir, ACK sonucunu döner", en: "Sends raw COMMAND_LONG, returns ACK result." },
-    { ad: "dron.durum()", ek: "dron.durum()", tr: "Tüm telemetri alanları sözlük olarak", en: "All telemetry fields as a dict." },
-    { ad: "dronlar", ek: "dronlar", tr: "Bağlı tüm dronlar: dronlar[sysid] (tembel açılır), dronlar.sysidler()", en: "All connected drones: dronlar[sysid], dronlar.sysidler()." },
-    { ad: "dron_bul(sysid)", ek: "dron_bul(2)", tr: "sysid ile dron arayüzü", en: "Drone facade by sysid." },
-    { ad: "sysid", ek: "sysid", tr: "Seçili dronun sysid'i", en: "Selected drone's sysid." },
-    { ad: "bekle(sn)", ek: "bekle(1)", tr: "Saniye bekler (time.sleep)", en: "Sleeps for seconds." },
-    { ad: "yaz(...)", ek: "yaz('merhaba', dron.irtifa)", tr: "Çıktı penceresine yazar (print de aynı)", en: "Writes to the output console (print works too)." },
-    { ad: "bildir(metin)", ek: "bildir('Görev tamam')", tr: "Arayüzde uyarı balonu gösterir", en: "Shows a toast notification in the UI." },
-    { ad: "durdur()", ek: "durdur()", tr: "Makroyu bitirir", en: "Ends the macro." },
-    { ad: "time, math, json", ek: "time.time()", tr: "Standart modüller hazır", en: "Standard modules available." },
-  ];
+  const PY_ANAHTAR = new Set(("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield").split(" "));
+  const PY_YERLESIK = new Set(("print len range int float str bool list dict set tuple abs min max sum round sorted enumerate zip map filter any all isinstance open input type repr getattr setattr hasattr Exception ValueError RuntimeError KeyError IndexError TypeError").split(" "));
+  const MK_API = new Set(("mav mavutil mavlink dron dronlar dron_bul sysid bekle yaz bildir durdur time math json").split(" "));
+  const TOKEN = /(#[^\n]*)|("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|(\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)|(@[A-Za-z_][\w.]*)|([A-Za-z_][A-Za-z0-9_]*)|(\n)|([^\w\s#"'@\n]+)|(\s+)/g;
+  function escH(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function vurgula(kod) {
+    let cikti = "", m;
+    TOKEN.lastIndex = 0;
+    while ((m = TOKEN.exec(kod)) !== null) {
+      const [tum, yorum, ucluDizgi, dizgi, sayi, dekor, ad, yeni, isaret, bosluk] = m;
+      if (yorum) cikti += '<span class="py-yorum">' + escH(yorum) + "</span>";
+      else if (ucluDizgi || dizgi) cikti += '<span class="py-dizgi">' + escH(tum) + "</span>";
+      else if (sayi) cikti += '<span class="py-sayi">' + escH(sayi) + "</span>";
+      else if (dekor) cikti += '<span class="py-dekor">' + escH(dekor) + "</span>";
+      else if (ad) {
+        let sinif = "";
+        if (PY_ANAHTAR.has(ad)) sinif = "py-anahtar";
+        else if (MK_API.has(ad)) sinif = "py-api";
+        else if (PY_YERLESIK.has(ad)) sinif = "py-yerlesik";
+        else if (/^[A-Z]/.test(ad)) sinif = "py-sinif";
+        cikti += sinif ? ('<span class="' + sinif + '">' + escH(ad) + "</span>") : escH(ad);
+      }
+      else cikti += escH(tum);
+    }
+    return cikti + "\n";   // son satir icin yukseklik
+  }
+  function vurguYenile() {
+    const ta = el("mkKod"), pre = el("mkKodVurgu");
+    if (!ta || !pre) return;
+    pre.innerHTML = vurgula(ta.value);
+    pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft;
+  }
 
   const ORNEK_KOD = [
     "# Örnek: 20 m'ye kalk, 30 m kuzeye git, geri dön",
@@ -212,16 +219,6 @@
     }
   }
 
-  function kodaEkle(metin) {
-    const ta = el("mkKod");
-    if (!ta) return;
-    const bas = ta.selectionStart || 0, son = ta.selectionEnd || 0;
-    ta.value = ta.value.slice(0, bas) + metin + ta.value.slice(son);
-    ta.selectionStart = ta.selectionEnd = bas + metin.length;
-    ta.focus();
-    kodDegisti = true; kaydetDurumu();
-  }
-
   function kaydetDurumu() {
     const b = el("btnMkKaydet");
     if (b) b.classList.toggle("mk-kirli", !!kodDegisti);
@@ -234,11 +231,10 @@
     kodDegisti = false;
     kaydetDurumu();
     konsolTemizle();
-    degiskenleriCiz();
     sysidSeciciDoldur();
     const r = liste.find((x) => Number(x.id) === seciliId);
     if (el("mkEditorBaslik")) el("mkEditorBaslik").textContent = ((r && r.ad) || ("Makro " + seciliId)).toUpperCase();
-    if (el("mkKod")) el("mkKod").value = "";
+    if (el("mkKod")) { el("mkKod").value = ""; vurguYenile(); }
     durumYaz(durumlar[String(seciliId)] || { durum: "hazir" });
     ac("yzMakroEditor");
     gonder({ tip: "makro_kod_oku", makro_id: seciliId });
@@ -281,6 +277,7 @@
     const ta = el("mkKod");
     if (ta && !kodDegisti) ta.value = (m.kod && m.kod.length) ? m.kod : ORNEK_KOD;
     if (ta && !(m.kod && m.kod.length)) { kodDegisti = true; kaydetDurumu(); }
+    vurguYenile();
     if (el("mkEditorBaslik") && m.ad) el("mkEditorBaslik").textContent = String(m.ad).toUpperCase();
     durumYaz(m.durum || {});
     konsolTemizle(); konsolEkle(m.cikti || []);
@@ -315,14 +312,15 @@
     const ad = el("mfAd"); if (ad) ad.addEventListener("keydown", (e) => { if (e.key === "Enter") formKaydet(); });
     const ta = el("mkKod");
     if (ta) {
-      ta.addEventListener("input", () => { kodDegisti = true; kaydetDurumu(); });
+      ta.addEventListener("input", () => { kodDegisti = true; kaydetDurumu(); vurguYenile(); });
+      ta.addEventListener("scroll", () => { const pre = el("mkKodVurgu"); if (pre) { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; } });
       ta.addEventListener("keydown", (e) => {
         if (e.key === "Tab") {
           e.preventDefault();
           const b = ta.selectionStart, s = ta.selectionEnd;
           ta.value = ta.value.slice(0, b) + "    " + ta.value.slice(s);
           ta.selectionStart = ta.selectionEnd = b + 4;
-          kodDegisti = true; kaydetDurumu();
+          kodDegisti = true; kaydetDurumu(); vurguYenile();
         } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
           e.preventDefault(); kodKaydet();
         }
@@ -345,4 +343,5 @@
   window.makroPanelBagla = bagla;
   window.makroEditorAc = editorAc;
   window.makroListesiIste = iste;
+  window.makroVurgula = vurgula;
 })();

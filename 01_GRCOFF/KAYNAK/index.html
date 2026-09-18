@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
 <link rel="stylesheet" href="css/stil.css?v=v24232">
 <link rel="stylesheet" href="css/diyagram.css?v=v24241">
-<link rel="stylesheet" href="css/makrolar.css?v=v24243">
+<link rel="stylesheet" href="css/makrolar.css?v=v24244">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -462,11 +462,12 @@
   </div>
   <div class="yuzen-icerik mk-editor-icerik">
     <div class="mk-satir-ust"><span id="mkDurum" class="mk-durum mk-d-hazir" data-i18n="mkDurum_hazir">Hazır</span></div>
-    <textarea id="mkKod" class="mk-kod" spellcheck="false" wrap="off" data-i18n-placeholder="mkKodYer" placeholder="# Python makro kodu"></textarea>
+    <div class="mk-editor">
+      <pre id="mkKodVurgu" class="mk-vurgu" aria-hidden="true"></pre>
+      <textarea id="mkKod" class="mk-kod" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" data-i18n-placeholder="mkKodYer" placeholder="# Python makro kodu"></textarea>
+    </div>
     <div class="mk-konsol-baslik"><span data-i18n="mkCikti">ÇIKTI</span><button id="btnMkTemizle" class="dk-konsol-btn" data-i18n-title="mkTemizle" title="Temizle"><i class="fa-solid fa-trash"></i></button></div>
     <div id="mkKonsol" class="dk-konsol-govde mk-konsol"></div>
-    <div class="mk-degiskenler-baslik" data-i18n="mkDegiskenler">KULLANILABİLİR DEĞİŞKENLER VE İŞLEVLER</div>
-    <div id="mkDegiskenler" class="mk-degiskenler"></div>
   </div>
 </div>
 <div id="yzRadarForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
@@ -1909,7 +1910,7 @@
 <script src="js/m50_pencere.js?v=v24225"></script>
 <script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
-<script src="js/makrolar.js?v=v24243"></script>
+<script src="js/makrolar.js?v=v24244"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>
 <script src="js/serbest_form.js?v=v24127"></script>
 <!-- v2.4.40: koridor gorev turu (merkez hat + genislik -> cift kenar tarama).
@@ -1958,7 +1959,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24243"></script>
+<script src="js/surum.js?v=v24244"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>

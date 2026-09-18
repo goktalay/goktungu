@@ -1,13 +1,26 @@
-/* css/makrolar.css — v2.4.243 Python makrolari (IS137) */
+/* css/makrolar.css — v2.4.243 Python makrolari (IS137); 2.4.244: sozdizimi vurgulama, siyah konsol */
 .mk-editor-icerik { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; min-height: 0; }
-.mk-kod {
-  width: 100%; min-height: 220px; flex: 1 1 auto; box-sizing: border-box; resize: vertical;
-  font: 12px/1.45 Consolas, "Cascadia Mono", Menlo, monospace; tab-size: 4; white-space: pre; overflow: auto;
-  color: var(--metin, #dfe6ee); background: rgba(10, 16, 24, 0.55); border: 1px solid rgba(140, 160, 180, 0.35); border-radius: 6px; padding: 8px;
+.mk-editor { position: relative; flex: 1 1 auto; min-height: 240px; border: 1px solid #2a3546; border-radius: 6px; background: #0d1117; overflow: hidden; }
+.mk-editor .mk-vurgu, .mk-editor .mk-kod {
+  position: absolute; inset: 0; margin: 0; padding: 8px 10px; box-sizing: border-box; border: 0;
+  font: 13px/1.5 Consolas, "Cascadia Mono", Menlo, monospace; tab-size: 4; white-space: pre; overflow: auto; word-wrap: normal;
 }
-body.tema-acik .mk-kod { background: #f7f9fb; color: #1b2733; border-color: #c9d2dc; }
+.mk-editor .mk-vurgu { color: #d6deeb; background: transparent; pointer-events: none; overflow: hidden; }
+.mk-editor .mk-kod {
+  color: transparent; background: transparent; caret-color: #ffffff; -webkit-text-fill-color: transparent;
+  resize: none; outline: none; width: 100%; height: 100%;
+}
+.mk-editor .mk-kod::placeholder { color: #6b7685; -webkit-text-fill-color: #6b7685; }
+.mk-editor .mk-kod::selection { background: rgba(80, 140, 220, 0.45); }
+.py-anahtar { color: #ff7b72; }
+.py-yerlesik { color: #d2a8ff; }
+.py-api { color: #79c0ff; font-weight: 600; }
+.py-sinif { color: #ffa657; }
+.py-dizgi { color: #a5d6ff; }
+.py-sayi { color: #f2cc60; }
+.py-yorum { color: #8b949e; font-style: italic; }
+.py-dekor { color: #d2a8ff; }
 .mk-satir-ust { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; }
-.mk-satir-ust select { min-width: 160px; }
 .mk-durum { padding: 2px 8px; border-radius: 10px; font-size: 11px; opacity: 0.9; border: 1px solid currentColor; }
 .mk-durum.mk-d-hazir, .ra-nokta.mk-d-hazir { color: #8a96a3; }
 .mk-durum.mk-d-calisiyor, .ra-nokta.mk-d-calisiyor { color: #2fb56e; }
@@ -18,11 +31,12 @@ body.tema-acik .mk-kod { background: #f7f9fb; color: #1b2733; border-color: #c9d
 .mk-kaydet-not { font-size: 10px; opacity: 0.7; }
 .tb-btn.mk-kirli { box-shadow: inset 0 0 0 1px #e0a800; }
 .mk-konsol-baslik { display: flex; align-items: center; justify-content: space-between; font-size: 10px; letter-spacing: 0.05em; opacity: 0.75; margin-top: 2px; }
-.mk-konsol { height: 150px; min-height: 90px; resize: vertical; overflow: auto; border: 1px solid rgba(140, 160, 180, 0.25); border-radius: 6px; padding: 4px 6px; font-size: 11px; background: rgba(0, 0, 0, 0.25); }
-body.tema-acik .mk-konsol { background: #ffffff; border-color: #dfe5ec; }
-.mk-degiskenler-baslik { font-size: 10px; letter-spacing: 0.05em; opacity: 0.75; margin-top: 4px; }
-.mk-degiskenler { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2px 10px; max-height: 150px; overflow: auto; font-size: 11px; padding: 4px 2px; }
-.mk-degisken { display: flex; gap: 8px; align-items: baseline; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
-.mk-degisken:hover { background: rgba(120, 160, 200, 0.15); }
-.mk-degisken code { flex: 0 0 auto; color: #4db6e6; font: 11px Consolas, Menlo, monospace; }
-.mk-degisken span { opacity: 0.8; }
+.mk-konsol, body.tema-acik .mk-konsol {
+  height: 170px; min-height: 90px; resize: vertical; overflow: auto; border: 1px solid #2a3546; border-radius: 6px; padding: 4px 6px;
+  font: 12px/1.45 Consolas, "Cascadia Mono", Menlo, monospace; background: #000000; color: #d6deeb;
+}
+.mk-konsol .dk-kons-ts { color: #6b7685; }
+.mk-konsol .dk-kons-bilgi .dk-kons-metin { color: #d6deeb; }
+.mk-konsol .dk-kons-basari .dk-kons-metin { color: #3fb950; }
+.mk-konsol .dk-kons-uyari .dk-kons-metin { color: #f2cc60; }
+.mk-konsol .dk-kons-hata .dk-kons-metin { color: #ff7b72; }

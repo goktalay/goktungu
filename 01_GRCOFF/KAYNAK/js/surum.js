@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.243";
+const GCS_SURUM = "2.4.244";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.244",
+    tarih: "2026-09-18",
+    baslik: "Makro düzenleme: sözdizimi vurgulama, siyah konsol, işlev listesi kaldırıldı (paket 2.5.114)",
+    maddeler: [
+      "KULLANICI GERİ BİLDİRİMİ: 'kod hiç görünmüyor, syntax görünsün; konsolda siyah zemin olsun; altında işlevleri gösterme'. Kod alanı koyu zeminli ve Python sözdizimi vurgulamalı (anahtar kelimeler, dizgiler, sayılar, yorumlar, makro API adları); kütüphanesiz yerleşik vurgulayıcı (GRCOFF çevrimdışı). Çıktı penceresi siyah zemin, seviye renkleri. Alt değişken/işlev listesi kaldırıldı; başvuru MAKRO_API.md/PDF belgesinde.",
+    ],
+  },
   {
     surum: "2.4.243",
     tarih: "2026-09-18",
