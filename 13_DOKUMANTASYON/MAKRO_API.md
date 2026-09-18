@@ -1,6 +1,6 @@
 # GÖKTUNGU Python Makro API'si — makro yazan yapay zekâ için rehber
 
-Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.246) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
+Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.251) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
 
 ## 1. Çalışma ortamı (mutlaka bilinmesi gerekenler)
 
@@ -45,6 +45,7 @@ Telemetri arka planda okunur; alanlar anlık değerdir, henüz gelmediyse `None`
 | `dron.mod` | mod adı, örn. `"GUIDED"` | HEARTBEAT.custom_mode |
 | `dron.armed` | bool | HEARTBEAT.base_mode |
 | `dron.ucusta` | bool (armed ve göreli irtifa > 1 m) | türetilmiş |
+| `dron.konum_gecerli` | bool: lat/lon var, (0,0) değil, gps_fix ≥ 2 | türetilmiş |
 | `dron.bagli` | bool (son 5 sn içinde heartbeat) | türetilmiş |
 | `dron.gps_fix`, `dron.uydu` | int | GPS_RAW_INT |
 | `dron.roll`, `dron.pitch` | derece | ATTITUDE |
@@ -58,11 +59,12 @@ Tüm işlevler ArduPilot (Copter/Plane/Rover) hedefler; komutlar `COMMAND_LONG` 
 | İşlev | Ne yapar | Dönüş |
 |---|---|---|
 | `dron.bekle_baglanti(zaman_asimi=15)` | Heartbeat gelene kadar bekler | `True/False` |
+| `dron.bekle_konum(zaman_asimi=30)` | Geçerli GPS/EKF konumu gelene kadar bekler | `True/False` |
 | `dron.arm(bekle=True, zorla=False, zaman_asimi=10)` | MAV_CMD_COMPONENT_ARM_DISARM (zorla: param2=21196) | armed olduysa `True` |
 | `dron.disarm(zorla=False)` | Disarm | ACK sonucu (0 = kabul) veya `None` |
-| `dron.mod_ayarla(ad, bekle=True, zaman_asimi=5)` | Uçuş modu (`"GUIDED"`, `"AUTO"`, `"LOITER"`, `"RTL"`, `"LAND"`, `"STABILIZE"` …); bilinmeyen ad `ValueError` | moda geçtiyse `True` |
-| `dron.kalk(irtifa=10, bekle=True, zaman_asimi=60)` | GUIDED → arm → MAV_CMD_NAV_TAKEOFF; irtifanın %95'ine ulaşınca döner. Arm edilemezse `RuntimeError` | `True/False` |
-| `dron.git(lat, lon, irtifa=None, bekle=False, tol_m=3, zaman_asimi=300)` | SET_POSITION_TARGET_GLOBAL_INT (GLOBAL_RELATIVE_ALT_INT, yalnız konum). `irtifa=None` → mevcut göreli irtifa. `bekle=True` varışa kadar bekler | `True/False` |
+| `dron.mod_ayarla(ad, bekle=True, zaman_asimi=5, zorla=False)` | Uçuş modu (`"GUIDED"`, `"AUTO"`, `"LOITER"`, `"RTL"`, `"LAND"`, `"STABILIZE"` …); bilinmeyen ad `ValueError`. **Konum gerektiren modlar** (GUIDED, AUTO, RTL, LOITER, CIRCLE, …) geçerli konum yokken `RuntimeError` verir; `zorla=True` atlar (tehlikeli) | moda geçtiyse `True` |
+| `dron.kalk(irtifa=10, bekle=True, zaman_asimi=60, zorla=False)` | GUIDED → arm → MAV_CMD_NAV_TAKEOFF; irtifanın %95'ine ulaşınca döner. Konum yoksa veya arm edilemezse `RuntimeError` | `True/False` |
+| `dron.git(lat, lon, irtifa=None, bekle=False, tol_m=3, zaman_asimi=300, zorla=False)` | SET_POSITION_TARGET_GLOBAL_INT (GLOBAL_RELATIVE_ALT_INT, yalnız konum). `irtifa=None` → mevcut göreli irtifa. `bekle=True` varışa kadar bekler. Hedef (0,0) veya aralık dışıysa `ValueError`; aracın konumu yoksa `RuntimeError` | `True/False` |
 | `dron.eve_don()` | RTL modu | `True/False` |
 | `dron.inis()` | LAND modu | `True/False` |
 | `dron.hiz_ayarla(m_s)` | MAV_CMD_DO_CHANGE_SPEED (yer hızı) | ACK sonucu |
@@ -103,6 +105,8 @@ Dikkat: `dron` nesnesinin arka plan okuyucusu aynı bağlantıdan mesaj tüketir
 
 1. Betik **üst düzeyde** çalışır; `main()` sarmalamak zorunlu değildir ama uzun betiklerde tavsiye edilir.
 2. Başta bağlantıyı doğrulayın: `if dron is None or not dron.bagli: yaz("Dron bağlı değil"); durdur()`.
+2b. **Konum gerektiren her şeyden önce** (`mod_ayarla("GUIDED")`, `git`, `kalk`, arm) `dron.bekle_konum(30)` çağırın ve `False` dönerse durun. Konumsuz (GPS kilidi yok, lat/lon = 0) bir aracı GUIDED/AUTO'ya almak veya hedefe göndermek otopilotu çökertebilir (ArduPilot: "Location cannot be (0, 0, 0)"); API bu durumda `RuntimeError` verir, `zorla=True` ile atlamayın.
+2c. Güvenlik parametrelerini (ARMING_CHECK, FS_*, FENCE, STALL_PREVENT, PTCH_LIM_*) kapatan makro yazmayın; kullanıcı açıkça istemedikçe failsafe ayarlarına dokunmayın.
 3. Her bekleme işlevinin dönüşünü kontrol edin; `False` ise güvenli bir adıma geçin (örn. `dron.eve_don()`), ardından `durdur()`.
 4. Sonsuz döngülerde mutlaka `bekle(...)` kullanın (CPU tavanı vardır) ve bir çıkış koşulu koyun.
 5. Koordinatlar ondalık derece, irtifalar **göreli metre**dir. Küçük yer değiştirme için: 1° enlem ≈ 111 320 m; 1° boylam ≈ 111 320 × cos(enlem) m.
@@ -118,6 +122,8 @@ Dikkat: `dron` nesnesinin arka plan okuyucusu aynı bağlantıdan mesaj tüketir
 ```python
 if dron is None or not dron.bekle_baglanti(10):
     yaz("Dron bağlı değil"); durdur()
+if not dron.bekle_konum(30):
+    yaz("GPS konumu yok, kalkış iptal"); durdur()
 yaz("Başlangıç", dron.konum, "mod", dron.mod, "batarya %", dron.batarya)
 if not dron.kalk(20):
     bildir("Kalkış başarısız"); dron.inis(); durdur()

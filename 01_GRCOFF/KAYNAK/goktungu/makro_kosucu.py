@@ -310,6 +310,43 @@ class DronFasadi:
         return (time.time() - self._kalp_ts) < 5.0
 
     @property
+    def konum_gecerli(self):
+        """GPS/EKF konumu kullanilabilir mi? (0,0) veya fix<2 ise False.
+
+        2.4.251: konumsuz aracta GUIDED/git/kalk, ArduPilot'ta
+        'Location cannot be (0, 0, 0)' panigine yol acar (SITL'de olculdu);
+        bu yuzden konum gerektiren islevler once bunu denetler.
+        """
+        lat, lon, fix = self.lat, self.lon, self.gps_fix
+        if lat is None or lon is None:
+            return False
+        if abs(lat) < 1e-6 and abs(lon) < 1e-6:
+            return False
+        if fix is not None and fix < 2:
+            return False
+        return True
+
+    def bekle_konum(self, zaman_asimi=30.0):
+        """Gecerli konum gelene kadar bekler."""
+        bitis = time.time() + zaman_asimi
+        while time.time() < bitis:
+            if self.konum_gecerli:
+                return True
+            time.sleep(0.25)
+        return False
+
+    KONUM_GEREKTIREN_MODLAR = {"GUIDED", "AUTO", "RTL", "LOITER", "CIRCLE", "SMART_RTL", "FOLLOW",
+                               "QLOITER", "QRTL", "QLAND", "CRUISE", "TAKEOFF", "POSHOLD", "BRAKE",
+                               "AUTOTUNE", "THERMAL", "AVOID_ADSB", "GUIDED_NOGPS"}
+
+    def _konum_denetle(self, islem, zorla=False):
+        if zorla or self.konum_gecerli:
+            return
+        raise RuntimeError("%s icin gecerli konum yok (GPS kilidi/EKF hazir degil; lat=%s lon=%s fix=%s). "
+                           "dron.bekle_konum() ile bekleyin; zorla=True ile atlanabilir ama otopilot cokebilir."
+                           % (islem, self.lat, self.lon, self.gps_fix))
+
+    @property
     def ucusta(self):
         irt = self.irtifa
         return bool(self.armed) and irt is not None and irt > 1.0
@@ -340,9 +377,11 @@ class DronFasadi:
                 return m.result
         return None
 
-    def mod_ayarla(self, ad, bekle=True, zaman_asimi=5.0):
+    def mod_ayarla(self, ad, bekle=True, zaman_asimi=5.0, zorla=False):
         eslem = self.mav.mode_mapping() or {}
         ad_u = str(ad).upper()
+        if ad_u in self.KONUM_GEREKTIREN_MODLAR:
+            self._konum_denetle("mod_ayarla('%s')" % ad_u, zorla)
         if ad_u not in eslem:
             raise ValueError("Bilinmeyen mod '%s'; secenekler: %s" % (ad, ", ".join(sorted(eslem))))
         self.mav.set_mode(eslem[ad_u])
@@ -356,6 +395,9 @@ class DronFasadi:
         return False
 
     def arm(self, bekle=True, zorla=False, zaman_asimi=10.0):
+        if not self.konum_gecerli:
+            _yaz("arm: gecerli konum yok (lat=%s lon=%s fix=%s); konumsuz arm/ucus otopilotu cokertebilir"
+                 % (self.lat, self.lon, self.gps_fix), sev="UYARI")
         MAV_CMD = 400
         self.komut(MAV_CMD, 1, 21196 if zorla else 0, onay_bekle=False)
         if not bekle:
@@ -370,8 +412,9 @@ class DronFasadi:
     def disarm(self, zorla=False):
         return self.komut(400, 0, 21196 if zorla else 0)
 
-    def kalk(self, irtifa=10.0, bekle=True, zaman_asimi=60.0):
+    def kalk(self, irtifa=10.0, bekle=True, zaman_asimi=60.0, zorla=False):
         """GUIDED moda gecer, arm eder ve verilen irtifaya kalkar."""
+        self._konum_denetle("kalk", zorla)
         if not self.mod_ayarla("GUIDED"):
             raise RuntimeError("GUIDED moda gecilemedi")
         if not self.armed and not self.arm():
@@ -387,8 +430,15 @@ class DronFasadi:
             time.sleep(0.5)
         return False
 
-    def git(self, lat, lon, irtifa=None, bekle=False, tol_m=3.0, zaman_asimi=300.0):
+    def git(self, lat, lon, irtifa=None, bekle=False, tol_m=3.0, zaman_asimi=300.0, zorla=False):
         """GUIDED hedef (goreli irtifa). bekle=True ise varisa kadar bekler."""
+        try:
+            lat, lon = float(lat), float(lon)
+        except (TypeError, ValueError):
+            raise ValueError("git: lat/lon sayisal olmali")
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0) or (abs(lat) < 1e-6 and abs(lon) < 1e-6):
+            raise ValueError("git: gecersiz hedef konum (%s, %s)" % (lat, lon))
+        self._konum_denetle("git", zorla)
         if irtifa is None:
             irtifa = self.irtifa or 10.0
         MASKE = 0b0000111111111000   # yalniz konum

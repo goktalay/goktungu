@@ -2,11 +2,20 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.250";
+const GCS_SURUM = "2.4.251";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.251",
+    tarih: "2026-09-18",
+    baslik: "Sanal dron PANIC gözcüsü (otomatik yeniden başlatma); makroda konumsuz GUIDED/git/kalk korumasi (paket 2.5.121)",
+    maddeler: [
+      "HATA (kök neden, kullanıcı: 'makro bitince dron ile bağlantı kesiliyor'): makro, GPS kilidi olmayan sanal uçağı zorla arm edip GUIDED'a alınca ArduPlane SITL 'PANIC: Location cannot be (0, 0, 0)' ile sonsuz döngüye girdi; TCP açık kaldı, telemetri kesildi. GCS artık sitl.log'da PANIC görünce süreci öldürüp aynı ayarlarla yeniden başlatır (10 dk'da 3 panikten sonra durur ve uyarır).",
+      "Makro API: dron.konum_gecerli ve dron.bekle_konum(); geçerli konum yokken mod_ayarla(GUIDED/AUTO/RTL/LOITER…), git ve kalk hata verir (zorla=True ile atlanabilir); git hedef koordinatını doğrular; konumsuz arm uyarı yazar.",
+    ],
+  },
   {
     surum: "2.4.250",
     tarih: "2026-09-18",
