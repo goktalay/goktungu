@@ -354,6 +354,17 @@ function wsBaglan(){
       // kod yenile yanitlari; kip bagimsiz).
       if (typeof window.koprulerPanelIsle === "function")
         window.koprulerPanelIsle(m);
+    } else if (m.tip === "makrolar"){
+      // v2.4.243: Python makrolari listesi
+      if (typeof window.makroListesiIsle === "function") window.makroListesiIsle(m);
+    } else if (m.tip === "makro_kod"){
+      if (typeof window.makroKodIsle === "function") window.makroKodIsle(m);
+    } else if (m.tip === "makro_kod_yazildi"){
+      if (typeof window.makroKodYazildiIsle === "function") window.makroKodYazildiIsle(m);
+    } else if (m.tip === "makro_cikti"){
+      if (typeof window.makroCiktiIsle === "function") window.makroCiktiIsle(m);
+    } else if (m.tip === "makro_durum"){
+      if (typeof window.makroDurumIsle === "function") window.makroDurumIsle(m);
     } else if (m.tip === "diyagram_bilgi"){
       // v2.4.239: baglanti diyagrami paneli.
       if (typeof window.diyagramIsle === "function") window.diyagramIsle(m);

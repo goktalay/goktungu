@@ -326,8 +326,12 @@ class WSSunucusu:
                  pilot=None,
                  dji_kopru=None, ai_yonetici=None, kisiler=None,
                  araclar=None, mesajlar=None, istasyon2=None, m50=None,
-                 m50_yerel=None):
+                 m50_yerel=None, makrolar=None):
         self.konsol = konsol
+        # v2.4.243 (IS137): Python makrolari (MakroCalistirici)
+        self.makrolar = makrolar
+        if makrolar is not None:
+            makrolar.kanca = self._makro_kanca
         self.ayarlar = ayarlar
         self.kullanicilar = kullanicilar
         self.lokasyonlar = lokasyonlar
@@ -1352,6 +1356,94 @@ class WSSunucusu:
 
         tile_cache.ozet_dinleyici_ekle(_dinleyici)
         tile_cache.toplam_olc(arka_planda=True)
+
+    # ------------------------------------------------------------------
+    # v2.4.243 (IS137): MAKROLAR
+    # ------------------------------------------------------------------
+    def _makro_kanca(self, makro_id, satirlar, durum):
+        """MakroCalistirici okuma is parcacigindan: cikti + durum yayini."""
+        mesaj = {"tip": "makro_cikti", "makro_id": int(makro_id),
+                 "satirlar": list(satirlar or []), "durum": durum or {}}
+        for s in mesaj["satirlar"]:
+            if s.get("sev") == "bildir":
+                self.duyur_threadden({"tip": "uyari_yeni", "uyari": {
+                    "kategori": "makro", "mesaj": s.get("metin", "")[9:], "okundu": 0,
+                    "seviye": "bilgi", "ts": s.get("ts"), "baslik": "Makro"}})
+        self.duyur_threadden(mesaj)
+
+    async def _makro_liste_gonder(self, websocket, ek=None):
+        fid = self._ws_firma_id(websocket)
+        m = {"tip": "makrolar", "basarili": True, "hata": "",
+             "liste": self.makrolar.kayitlar.listele(firma_id=fid),
+             "durumlar": self.makrolar.durumlar()}
+        if ek:
+            m.update(ek)
+        await websocket.send(json.dumps(m))
+
+    async def _makro_komut(self, websocket, komut, k):
+        if self.makrolar is None:
+            await self._uyari_gonder(websocket, "makro", "Makro sistemi bu kurulumda etkin degil")
+            return
+        try:
+            mid = int(k.get("makro_id") or k.get("id") or 0)
+        except (TypeError, ValueError):
+            mid = 0
+        try:
+            if komut == "makro_liste":
+                await self._makro_liste_gonder(websocket)
+            elif komut == "makro_kaydet":
+                if mid:
+                    self.makrolar.kayitlar.guncelle(mid, k)
+                else:
+                    mid = self.makrolar.kayitlar.ekle(k)
+                self.makrolar.kayitlar.firma_ata(mid, self._ws_firma_id(websocket))
+                self.konsol("MAKRO", "Makro kaydi guncellendi: #%d %s" % (mid, k.get("ad") or ""), "basari")
+                await self._makro_liste_gonder(websocket, {"komut": "kaydet", "yeni_id": mid})
+            elif komut == "makro_sil":
+                if mid:
+                    self.makrolar.durdur(mid)
+                    self.makrolar.kayitlar.sil(mid)
+                    self.makrolar.cikti_temizle(mid)
+                    self.konsol("MAKRO", "Makro silindi: #%d" % mid)
+                await self._makro_liste_gonder(websocket, {"komut": "sil"})
+            elif komut == "makro_kod_oku":
+                kayit = self.makrolar.kayitlar.bul(mid) if mid else None
+                if not kayit:
+                    await self._uyari_gonder(websocket, "makro", "Makro kaydi bulunamadi")
+                    return
+                await websocket.send(json.dumps({
+                    "tip": "makro_kod", "makro_id": mid, "ad": kayit.get("ad"),
+                    "aciklama": kayit.get("aciklama"), "sure_sn": kayit.get("sure_sn"),
+                    "kod": kayit.get("kod") or "",
+                    "durum": self.makrolar.durum(mid),
+                    "cikti": self.makrolar.cikti(mid)[-300:]}))
+            elif komut == "makro_kod_yaz":
+                if not mid:
+                    await self._uyari_gonder(websocket, "makro", "Makro kaydi bulunamadi")
+                    return
+                self.makrolar.kayitlar.guncelle(mid, {"kod": k.get("kod") or ""})
+                await websocket.send(json.dumps({"tip": "makro_kod_yazildi", "makro_id": mid, "basarili": True}))
+            elif komut == "makro_calistir":
+                try:
+                    sysid = int(k.get("sysid") or 0)
+                except (TypeError, ValueError):
+                    sysid = 0
+                tamam, hata = self.makrolar.calistir(mid, sysid)
+                if not tamam:
+                    await self._uyari_gonder(websocket, "makro", hata or "Makro baslatilamadi")
+                self._pilot_log(websocket, "makro", "makro_calistir", "#%d sysid=%s" % (mid, sysid))
+                await websocket.send(json.dumps({"tip": "makro_durum", "makro_id": mid,
+                                                 "durum": self.makrolar.durum(mid), "hata": hata or ""}))
+            elif komut == "makro_durdur":
+                vardi = self.makrolar.durdur(mid)
+                await websocket.send(json.dumps({"tip": "makro_durum", "makro_id": mid,
+                                                 "durum": self.makrolar.durum(mid), "vardi": vardi}))
+            elif komut == "makro_cikti_temizle":
+                self.makrolar.cikti_temizle(mid)
+                await websocket.send(json.dumps({"tip": "makro_cikti", "makro_id": mid,
+                                                 "satirlar": [], "durum": self.makrolar.durum(mid), "temizle": True}))
+        except Exception as e:
+            await self._uyari_gonder(websocket, "makro", "Makro islemi basarisiz: %s" % e)
 
     def duyur_threadden(self, mesaj: dict):
         """v2.4.0: Baska thread'lerden (AI yoklama, HTTP tespit
@@ -5602,6 +5694,11 @@ class WSSunucusu:
         "radar_json_yaz":   ("radar", "parametre", "radar"),
         "radar_listesi":    ("radar", "parametre", "radar"),
         "radar_kaydet":     ("radar", "parametre", "radar"),
+        "makro_calistir": ("dron", "pilotluk", "makro"),
+        "makro_durdur": ("dron", "pilotluk", "makro"),
+        "makro_kaydet": ("dron", "pilotluk", "makro"),
+        "makro_kod_yaz": ("dron", "pilotluk", "makro"),
+        "makro_sil": ("dron", "pilotluk", "makro"),
         "radar_sil":        ("radar", "parametre", "radar"),
         "takipci_ayar":     ("radar", "hedef_yonetimi", "radar"),
         "filtre_ayar":      ("radar", "hedef_yonetimi", "radar"),
@@ -7604,6 +7701,13 @@ class WSSunucusu:
                         _ist.ayar_kuyruk.append(_kuyruk)
 
         # ---- v2.4.191: coklu elektro-optik kayit yonetimi ----
+        # ------------------------------------------------------------
+        # v2.4.243 (IS137): PYTHON MAKROLARI (Rotalar > Makrolar)
+        # ------------------------------------------------------------
+        elif komut in ("makro_liste", "makro_kaydet", "makro_sil", "makro_kod_oku",
+                       "makro_kod_yaz", "makro_calistir", "makro_durdur", "makro_cikti_temizle"):
+            await self._makro_komut(websocket, komut, k)
+
         elif komut == "eo_listesi":
             _eo = getattr(self, "eo", None)
             if _eo is not None:

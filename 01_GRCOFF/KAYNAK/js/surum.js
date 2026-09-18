@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.242";
+const GCS_SURUM = "2.4.243";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.243",
+    tarih: "2026-09-18",
+    baslik: "Python makroları: Rotalar > Makrolar; kayıt paneli, Python düzenleme paneli, mavutil erişimi (paket 2.5.113)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: Rotalar menüsünde 'Makrolar'. Standart kayıt paneli: Yeni Makro yalnız adı sorar, Kaydet ile listeye düşer; satırdaki script ikonu Python düzenleme panelini açar (kod alanı, Kaydet/Çalıştır/Durdur, dron seçimi, çıktı penceresi, altta kullanılabilir değişken ve işlev listesi; tıklayınca koda eklenir).",
+      "Makro ayrı ve kısıtlı bir Python sürecinde çalışır (bellek/CPU/dosya sınırları, yalnız 127.0.0.1 soket, subprocess/ctypes vb. kapalı, dosya erişimi kendi dizini). Dron erişimi her dron için zaten açık olan 9000+sysid MAVLink UDP aynasından: `mav` = mavutil.mavlink_connection (ham erişim), `dron` = kolay arayüz (arm, mod_ayarla, kalk, git, eve_don, inis, hiz_ayarla, mesafe, bekle_varis, lat/lon/irtifa/hiz/batarya/mod/armed...), `dronlar[sysid]`, `bekle`, `yaz`, `bildir`, `durdur`.",
+      "Çıktı satırları canlı akar (makro_cikti), bildir() arayüzde uyarı balonu gösterir; zaman aşımı kayıt başına ayarlanır (varsayılan 3600 sn). GRCON'da makro çalıştırma/kaydetme yetkisi dron pilotluk iznine bağlıdır; makrolar firmaya özeldir. Yeni tablo: makrolar; WS: makro_liste/kaydet/sil/kod_oku/kod_yaz/calistir/durdur/cikti_temizle.",
+    ],
+  },
   {
     surum: "2.4.242",
     tarih: "2026-09-18",

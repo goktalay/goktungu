@@ -390,6 +390,17 @@ def tablolari_olustur():
                 firma_id        INTEGER
             );
 
+            -- v2.4.243 (IS137): dron Python makrolari
+            CREATE TABLE IF NOT EXISTS makrolar (
+                id              INTEGER PRIMARY KEY,
+                ad              TEXT NOT NULL DEFAULT 'Makro',
+                aciklama        TEXT NOT NULL DEFAULT '',
+                kod             TEXT NOT NULL DEFAULT '',
+                sure_sn         INTEGER NOT NULL DEFAULT 3600,
+                guncelleme_ts   REAL,
+                firma_id        INTEGER
+            );
+
             CREATE TABLE IF NOT EXISTS lokasyonlar (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad          TEXT NOT NULL,

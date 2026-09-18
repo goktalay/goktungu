@@ -1,0 +1,28 @@
+/* css/makrolar.css — v2.4.243 Python makrolari (IS137) */
+.mk-editor-icerik { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; min-height: 0; }
+.mk-kod {
+  width: 100%; min-height: 220px; flex: 1 1 auto; box-sizing: border-box; resize: vertical;
+  font: 12px/1.45 Consolas, "Cascadia Mono", Menlo, monospace; tab-size: 4; white-space: pre; overflow: auto;
+  color: var(--metin, #dfe6ee); background: rgba(10, 16, 24, 0.55); border: 1px solid rgba(140, 160, 180, 0.35); border-radius: 6px; padding: 8px;
+}
+body.tema-acik .mk-kod { background: #f7f9fb; color: #1b2733; border-color: #c9d2dc; }
+.mk-satir-ust { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; }
+.mk-satir-ust select { min-width: 160px; }
+.mk-durum { padding: 2px 8px; border-radius: 10px; font-size: 11px; opacity: 0.9; border: 1px solid currentColor; }
+.mk-durum.mk-d-hazir, .ra-nokta.mk-d-hazir { color: #8a96a3; }
+.mk-durum.mk-d-calisiyor, .ra-nokta.mk-d-calisiyor { color: #2fb56e; }
+.mk-durum.mk-d-bitti, .ra-nokta.mk-d-bitti { color: #3a9ad9; }
+.mk-durum.mk-d-hata, .ra-nokta.mk-d-hata { color: #e03c3c; }
+.mk-durum.mk-d-durduruldu, .ra-nokta.mk-d-durduruldu { color: #e0a800; }
+.ra-nokta[class*="mk-d-"] { background: currentColor; }
+.mk-kaydet-not { font-size: 10px; opacity: 0.7; }
+.tb-btn.mk-kirli { box-shadow: inset 0 0 0 1px #e0a800; }
+.mk-konsol-baslik { display: flex; align-items: center; justify-content: space-between; font-size: 10px; letter-spacing: 0.05em; opacity: 0.75; margin-top: 2px; }
+.mk-konsol { height: 150px; min-height: 90px; resize: vertical; overflow: auto; border: 1px solid rgba(140, 160, 180, 0.25); border-radius: 6px; padding: 4px 6px; font-size: 11px; background: rgba(0, 0, 0, 0.25); }
+body.tema-acik .mk-konsol { background: #ffffff; border-color: #dfe5ec; }
+.mk-degiskenler-baslik { font-size: 10px; letter-spacing: 0.05em; opacity: 0.75; margin-top: 4px; }
+.mk-degiskenler { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2px 10px; max-height: 150px; overflow: auto; font-size: 11px; padding: 4px 2px; }
+.mk-degisken { display: flex; gap: 8px; align-items: baseline; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.mk-degisken:hover { background: rgba(120, 160, 200, 0.15); }
+.mk-degisken code { flex: 0 0 auto; color: #4db6e6; font: 11px Consolas, Menlo, monospace; }
+.mk-degisken span { opacity: 0.8; }

@@ -569,6 +569,11 @@ def uygulama_kur():
     suru = SuruYoneticisi(konsol, dron, kilit)  # v2.4.3: sürü uçuş
     # Mission Planner koprusu: her dron icin 9000+sysid UDP MAVLink yayini
     udp_yayin = UdpYayinYoneticisi(dron, konsol)
+    # v2.4.243 (IS137): Python makrolari; dron erisimi 9000+sysid UDP aynasindan
+    from goktungu.makrolar import MakroKayitlari, MakroCalistirici
+    makrolar = MakroCalistirici(MakroKayitlari(), konsol,
+                                port_cozucu=udp_yayin.port_no,
+                                portlar_cozucu=udp_yayin.portlar)
     dron.udp_yayin = udp_yayin
 
     # --- Kancalar (bagimliliklari tersine cevirmeden gevsek baglanti) ---
@@ -662,7 +667,7 @@ def uygulama_kur():
                            dji_kopru=dji_kopru,
                            ai_yonetici=ai_yonetici,
                            kisiler=kisiler, araclar=araclar,
-                           istasyon2=istasyon2)
+                           istasyon2=istasyon2, makrolar=makrolar)
     # v2.4.191: coklu elektro-optik yoneticisi sunucuya baglanir.
     ws_sunucu.eo = eo
     # v2.4.192 (Faz C): merkez kipinde her M50 vekili kopruden kendi

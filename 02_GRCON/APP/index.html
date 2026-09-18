@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
 <link rel="stylesheet" href="css/stil.css?v=v24232">
 <link rel="stylesheet" href="css/diyagram.css?v=v24241">
+<link rel="stylesheet" href="css/makrolar.css?v=v24243">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -122,6 +123,8 @@
           <div class="mb-oge" id="mbRotaYukle" data-hizli="k"><i class="fa-solid fa-folder-open"></i><span data-i18n="mbRotaYukle">Rota Yükle</span></div>
           <input type="file" id="rotaDosyaGiris" accept=".waypoints,.plan,.mission,.txt" style="display:none">
           <div class="mb-oge" id="mbTumRota" data-hizli="t"><i class="fa-solid fa-eye"></i><span data-i18n="mbTumRota">Tüm Rotaları Aç/Kapat</span></div>
+          <!-- v2.4.243 (IS137): Python makrolari -->
+          <div class="mb-oge mb-popup-toggle pasif" id="mbMakrolar" data-yuzen="yzMakrolar" data-hizli="m"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-code"></i><span data-i18n="mbMakrolar">Makrolar</span></div>
           <div class="mb-ayrac"></div>
           <div class="mb-oge mb-panel-toggle" id="mbPanelRotalar" data-hizli="r" data-panel="rotalar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelRotalar">Rotalar Paneli</span></div>
         </div>
@@ -407,6 +410,63 @@
   </div>
   <div class="yuzen-icerik">
     <div id="radarlarListe" class="cl-liste"></div>
+  </div>
+</div>
+<!-- v2.4.243 (IS137): PYTHON MAKROLARI -->
+<div id="yzMakrolar" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:440px;min-height:300px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-code"></i> <span data-i18n="panelMakrolar">MAKROLAR</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzMakrolar" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketMakrolar">PYTHON MAKROLARI</span>
+    <span class="tb-bosluk"></span>
+    <button id="btnMakroYeni" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="btnMakroYeni" title="Yeni Makro"><i class="fa-solid fa-plus"></i><span data-i18n="btnMakroYeni">Yeni Makro</span></button>
+  </div>
+  <div class="yuzen-icerik"><div id="makrolarListe" class="cl-liste"></div></div>
+</div>
+<div id="yzMakroForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-code"></i> <span id="makroFormBaslik" data-i18n="panelMakroFormYeni">YENİ MAKRO</span></span>
+    <button class="yuzen-kapat" data-yuzen="yzMakroForm" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="yuzen-icerik">
+    <div class="alan">
+      <label for="mfAd" data-i18n="lblMakroAd">MAKRO ADI</label>
+      <input id="mfAd" type="text" maxlength="64">
+      <label for="mfAciklama" data-i18n="lblMakroAciklama">AÇIKLAMA</label>
+      <input id="mfAciklama" type="text" maxlength="500">
+      <label for="mfSure" data-i18n="lblMakroSure">EN UZUN ÇALIŞMA SÜRESİ (SN, 0 = SINIRSIZ)</label>
+      <input id="mfSure" type="number" min="0" max="86400" step="1" value="3600">
+    </div>
+  </div>
+  <div class="form-dip">
+    <button id="btnMakroFormIptal" class="ikincil" data-i18n="btnFormIptal">İptal</button>
+    <button id="btnMakroFormKaydet" data-i18n="btnFormKaydet">Kaydet</button>
+  </div>
+</div>
+<div id="yzMakroEditor" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:760px;min-height:560px">
+  <div class="yuzen-baslik">
+    <span><i class="fa-solid fa-file-code"></i> <span data-i18n="mkBaslik">PYTHON MAKRO</span> · <span id="mkEditorBaslik"></span></span>
+    <button class="yuzen-kapat" data-yuzen="yzMakroEditor" data-i18n-title="ipKapat" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="panel-toolbar">
+    <span class="tb-etiket" data-i18n="tbEtiketMakroEditor">MAKRO DÜZENLEME</span>
+    <select id="mkSysid" data-i18n-title="mkDronSecIpucu" title="Makronun çalıştırılacağı dron"></select>
+    <button id="mkSysidYenile" class="tb-btn" data-i18n-title="mkDronYenile" title="Dron listesini yenile"><i class="fa-solid fa-rotate"></i></button>
+    <span class="tb-bosluk"></span>
+    <span id="mkKaydetNot" class="mk-kaydet-not"></span>
+    <button id="btnMkKaydet" class="tb-btn tb-btn-metin" data-i18n-title="mkKaydet" title="Kaydet (Ctrl+S)"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="mkKaydet">Kaydet</span></button>
+    <button id="btnMkCalistir" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="mkCalistir" title="Çalıştır"><i class="fa-solid fa-play"></i><span data-i18n="mkCalistir">Çalıştır</span></button>
+    <button id="btnMkDurdur" class="tb-btn tb-btn-metin" data-i18n-title="mkDurdur" title="Durdur" disabled><i class="fa-solid fa-stop"></i><span data-i18n="mkDurdur">Durdur</span></button>
+  </div>
+  <div class="yuzen-icerik mk-editor-icerik">
+    <div class="mk-satir-ust"><span id="mkDurum" class="mk-durum mk-d-hazir" data-i18n="mkDurum_hazir">Hazır</span></div>
+    <textarea id="mkKod" class="mk-kod" spellcheck="false" wrap="off" data-i18n-placeholder="mkKodYer" placeholder="# Python makro kodu"></textarea>
+    <div class="mk-konsol-baslik"><span data-i18n="mkCikti">ÇIKTI</span><button id="btnMkTemizle" class="dk-konsol-btn" data-i18n-title="mkTemizle" title="Temizle"><i class="fa-solid fa-trash"></i></button></div>
+    <div id="mkKonsol" class="dk-konsol-govde mk-konsol"></div>
+    <div class="mk-degiskenler-baslik" data-i18n="mkDegiskenler">KULLANILABİLİR DEĞİŞKENLER VE İŞLEVLER</div>
+    <div id="mkDegiskenler" class="mk-degiskenler"></div>
   </div>
 </div>
 <div id="yzRadarForm" class="yuzen-panel yuzen-gizli yz-dipli" style="min-width:380px">
@@ -1762,7 +1822,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24240"></script>
+<script src="js/i18n.js?v=v24243"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1849,6 +1909,7 @@
 <script src="js/m50_pencere.js?v=v24225"></script>
 <script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
+<script src="js/makrolar.js?v=v24243"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>
 <script src="js/serbest_form.js?v=v24127"></script>
 <!-- v2.4.40: koridor gorev turu (merkez hat + genislik -> cift kenar tarama).
@@ -1897,14 +1958,14 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24242"></script>
+<script src="js/surum.js?v=v24243"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>
 <!-- FAZ20-IS93 -->
 <script src="js/goruntu_hedefler.js?v=v24135"></script>
 <script src="js/guncelleme.js?v=v24234"></script>
-<script src="js/ws.js?v=v24239"></script>
+<script src="js/ws.js?v=v24243"></script>
 <script src="js/widget.js?v=v24127"></script>
 <script src="js/widget_saat.js?v=v24127"></script>
 <script src="js/widget_hava.js?v=v24127"></script>
