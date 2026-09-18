@@ -1,17 +1,19 @@
-/* css/widget_baslatici.css — v2.4.247 widget baslatici (Google uygulamalar tarzi) */
+/* css/widget_baslatici.css — v2.4.250 widget baslatici (Google uygulamalar tarzi)
+   Tema: menu acilirlariyla (.mb-dropdown) AYNI degiskenler; html[data-tema="acik"] ile
+   gunduz temasina kendiliginden uyar. Sabit renk YOK. */
 #wgBaslaticiKutu { position: relative; display: inline-block; }
 #wgBaslatici { display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 4000;
-  grid-template-columns: repeat(3, 84px); gap: 4px; padding: 10px; border-radius: 12px;
-  background: var(--menu-zemin, var(--panel-zemin, #1a2230)); border: 1px solid rgba(140, 160, 180, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+  grid-template-columns: repeat(3, 92px); gap: 4px; padding: 10px; border-radius: 12px;
+  background: var(--panel-arka); border: 1px solid var(--cizgi); color: var(--metin);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35); }
 #wgBaslatici.acik { display: grid; }
-.wg-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  padding: 10px 4px 8px; border-radius: 10px; cursor: pointer; font-size: 11px; line-height: 1.2; text-align: center;
-  color: inherit; user-select: none; border: 1px solid transparent; }
-.wg-tile i { font-size: 22px; opacity: 0.85; }
-.wg-tile span { max-width: 78px; white-space: normal; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.wg-tile:hover { background: rgba(120, 160, 200, 0.15); }
-.wg-tile.aktif { background: rgba(77, 163, 255, 0.18); border-color: rgba(77, 163, 255, 0.55); color: var(--vurgu, #4da3ff); }
-.wg-tile.aktif i { opacity: 1; }
-#btnWidgetler.acik { color: var(--vurgu, #4da3ff); }
-body.tema-acik #wgBaslatici { background: #ffffff; border-color: #d9dfe7; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
+.wg-tile { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px;
+  padding: 10px 4px 8px; border-radius: 10px; cursor: pointer; font-size: 11px; line-height: 1.15; text-align: center;
+  color: var(--metin); user-select: none; border: 1px solid transparent; min-height: 64px; }
+.wg-tile i { font-size: 22px; color: var(--soluk); }
+.wg-tile span { max-width: 84px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wg-tile:hover { background: var(--dugme-arka); color: var(--beyaz, var(--metin)); }
+.wg-tile:hover i { color: inherit; }
+.wg-tile.aktif { border-color: var(--vurgu); background: color-mix(in srgb, var(--vurgu) 16%, transparent); color: var(--vurgu); }
+.wg-tile.aktif i { color: var(--vurgu); }
+#btnWidgetler.acik { color: var(--vurgu); }
