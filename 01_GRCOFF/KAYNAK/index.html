@@ -23,9 +23,10 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24232">
+<link rel="stylesheet" href="css/stil.css?v=v24247">
 <link rel="stylesheet" href="css/diyagram.css?v=v24241">
-<link rel="stylesheet" href="css/makrolar.css?v=v24244">
+<link rel="stylesheet" href="css/makrolar.css?v=v24247">
+<link rel="stylesheet" href="css/widget_baslatici.css?v=v24248">
 <!-- IS56: pencerelerin ic ice gecme (dok) davranisi kaldirildi.
      css/pencere_dok.css ve js/pencere_dok.js dosyalari SILINMEDI,
      yalnizca baglantidan cikarildi; geri donus iki satir yeter. -->
@@ -58,7 +59,7 @@
         <span class="mb-etiket" data-i18n="mbRadar">Radar</span>
         <div class="mb-dropdown">
           <!-- v2.4.194 (kullanici istegi #1): coklu radar -> once LISTE -->
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadarlar" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-satellite-dish"></i><span data-i18n="mbRadarlar">Radarlar</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzRadarlar" data-hizli="l"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="mbRadarlar">Radarlar</span></div>
           <!-- v2.4.227 (kullanici istegi): Hedef Filtresi, Iz Ayarlari,
                Hedef Siniflandirma, Kayit & Tekrar Oynatma, Tum Takibi Birak,
                Tespit/Takip panelleri KALDIRILDI. Radar yonetimi listedeki
@@ -71,21 +72,21 @@
           <!-- v2.4.194 (kullanici istegi #2): "M50 Kontrolu" menu ogesi
                KALDIRILDI; kontrol paneli listedeki cihaza tiklaninca acilir.
                Cihazlar -> liste paneli, Yeni M50 -> kayit formu. -->
-          <div class="mb-oge mb-popup-toggle pasif" id="mbEoCihazlar" data-yuzen="yzEoCihazlar" data-hizli="c"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbEoCihazlar" data-yuzen="yzEoCihazlar" data-hizli="c"><i class="fa-solid fa-list"></i><span data-i18n="mbEoCihazlar">Cihazlar</span></div>
           <!-- v2.4.195: "Yeni Elektro Optik" menuden KALDIRILDI; dugme
                Elektro Optik Cihazlari liste panelindedir. -->
           <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm Cihazlara Bağlan</span></div>
+          <div class="mb-oge" id="mbEoTumBaglan" data-hizli="t"><i class="fa-solid fa-link"></i><span data-i18n="mbEoTumBaglan">Tüm cihazlara bağlan</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbDronlar" data-hizli="d">
         <span class="mb-etiket" data-i18n="mbDronlar">Dronlar</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzSeri" data-hizli="b"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-tower-broadcast"></i><span data-i18n="mbBaglanti">Bağlantı Yöneticisi</span></div>
-          <div class="mb-oge" id="mbDronGecmis" data-hizli="g"><i class="fa-solid fa-clock-rotate-left"></i><span data-i18n="mbGecmis">Geçmiş Yönetimi</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" data-yuzen="yzSeri" data-hizli="b"><i class="fa-solid fa-tower-broadcast"></i><span data-i18n="mbBaglanti">Bağlantı yöneticisi</span></div>
+          <div class="mb-oge" id="mbDronGecmis" data-hizli="g"><i class="fa-solid fa-clock-rotate-left"></i><span data-i18n="mbGecmis">Geçmiş yönetimi</span></div>
           <!-- v2.4.42: sisteme kayitli tum dronlar (yetkiye duyarli) -->
-          <div class="mb-oge" id="mbKayitliDronlar" data-hizli="k"><i class="fa-solid fa-list-check"></i><span data-i18n="mbKayitliDronlar">Kayıtlı Dronlar</span></div>
-          <div class="mb-oge" id="mbSuruUcus" data-hizli="s"><i class="fa-solid fa-layer-group"></i><span data-i18n="mbSuruUcus">Sürü Uçuş</span></div>
+          <div class="mb-oge" id="mbKayitliDronlar" data-hizli="k"><i class="fa-solid fa-list-check"></i><span data-i18n="mbKayitliDronlar">Kayıtlı dronlar</span></div>
+          <div class="mb-oge" id="mbSuruUcus" data-hizli="s"><i class="fa-solid fa-layer-group"></i><span data-i18n="mbSuruUcus">Sürü uçuş</span></div>
           <!-- v2.4.45: "Yer İstasyonu 2" ögesi Göktungu menüsüne TAŞINDI
                (GCCDUAL). Bir yer kontrol istasyonu cihazıdır, dron
                kaydı değildir; Program Ayarları'ndan açılıp kapatılır. -->
@@ -93,7 +94,7 @@
           <!-- v2.4.33: "Dronlar Paneli" ogesi KALDIRILDI. Ayri panel yok;
                dron kartlari Baglanti Yoneticisi icinde bagli olduklari
                baglantinin altinda yasiyor. -->
-          <div class="mb-oge" id="mbUcusDuvari" data-hizli="u"><i class="fa-solid fa-gauge-high"></i><span data-i18n="mbUcusDuvari">Uçuş Duvarı</span></div>
+          <div class="mb-oge" id="mbUcusDuvari" data-hizli="u"><i class="fa-solid fa-gauge-high"></i><span data-i18n="mbUcusDuvari">Uçuş duvarı</span></div>
         </div>
       </div>
       <!-- OFFLINE-KAMERA: Yerel Merkezde kameralar Köprü gerektirmeden
@@ -101,83 +102,72 @@
       <div class="mb-item" id="mbKameralar" data-hizli="k">
         <span class="mb-etiket" data-i18n="mbKameralar">Kameralar</span>
         <div class="mb-dropdown">
-          <div class="mb-oge" id="mbYeniKamera" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></div>
-          <div class="mb-oge" id="mbTumKamera" data-hizli="t"><i class="fa-solid fa-circle-play"></i><span data-i18n="mbTumKamera">Tüm Kameralara Bağlan</span></div>
+          <div class="mb-oge" id="mbYeniKamera" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni kamera</span></div>
+          <div class="mb-oge" id="mbTumKamera" data-hizli="t"><i class="fa-solid fa-circle-play"></i><span data-i18n="mbTumKamera">Tüm kameralara bağlan</span></div>
           <!-- v2.4.220: "Önizleme Görünümü" kaldırıldı (kullanıcı isteği: tek liste görünümü);
                "Kameralar Paneli" geri geldi — 2.4.219'da yanlışlıkla kaldırılmıştı. -->
           <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbVideoDuvar" data-hizli="v"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></div>
+          <div class="mb-oge" id="mbVideoDuvar" data-hizli="v"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video duvarı</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge mb-panel-toggle" id="mbPanelKameralar" data-hizli="k" data-panel="kameralar"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelKameralar">Kameralar Paneli</span></div>
+          <div class="mb-oge mb-panel-toggle" id="mbPanelKameralar" data-hizli="k" data-panel="kameralar"><i class="fa-solid fa-table-columns"></i><span data-i18n="mbPanelKameralar">Kameralar paneli</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbRotalar" data-hizli="o">
         <span class="mb-etiket" data-i18n="mbRotalar">Rotalar</span>
         <div class="mb-dropdown">
-          <div class="mb-oge" id="mbYeniRota" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniRota">Yeni Rota</span></div>
+          <div class="mb-oge" id="mbYeniRota" data-hizli="y"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniRota">Yeni rota</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbSpiralRota" data-hizli="s"><i class="fa-solid fa-hurricane"></i><span data-i18n="mbSpiralRota">Spiral Rota</span></div>
-          <div class="mb-oge" id="mbSerbestForm" data-hizli="f"><i class="fa-solid fa-draw-polygon"></i><span data-i18n="mbSerbestForm">Serbest Form</span></div>
+          <div class="mb-oge" id="mbSpiralRota" data-hizli="s"><i class="fa-solid fa-hurricane"></i><span data-i18n="mbSpiralRota">Spiral rota</span></div>
+          <div class="mb-oge" id="mbSerbestForm" data-hizli="f"><i class="fa-solid fa-draw-polygon"></i><span data-i18n="mbSerbestForm">Serbest form</span></div>
           <div class="mb-oge" id="mbKoridorRota" data-hizli="d"><i class="fa-solid fa-road"></i><span data-i18n="mbKoridorRota">Koridor</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge" id="mbRotaYukle" data-hizli="k"><i class="fa-solid fa-folder-open"></i><span data-i18n="mbRotaYukle">Rota Yükle</span></div>
+          <div class="mb-oge" id="mbRotaYukle" data-hizli="k"><i class="fa-solid fa-folder-open"></i><span data-i18n="mbRotaYukle">Rota yükle</span></div>
           <input type="file" id="rotaDosyaGiris" accept=".waypoints,.plan,.mission,.txt" style="display:none">
-          <div class="mb-oge" id="mbTumRota" data-hizli="t"><i class="fa-solid fa-eye"></i><span data-i18n="mbTumRota">Tüm Rotaları Aç/Kapat</span></div>
+          <div class="mb-oge" id="mbTumRota" data-hizli="t"><i class="fa-solid fa-eye"></i><span data-i18n="mbTumRota">Tüm rotaları aç/kapat</span></div>
           <!-- v2.4.243 (IS137): Python makrolari -->
-          <div class="mb-oge mb-popup-toggle pasif" id="mbMakrolar" data-yuzen="yzMakrolar" data-hizli="m"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-code"></i><span data-i18n="mbMakrolar">Makrolar</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbMakrolar" data-yuzen="yzMakrolar" data-hizli="m"><i class="fa-brands fa-python"></i><span data-i18n="mbMakrolar">Makrolar</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge mb-panel-toggle" id="mbPanelRotalar" data-hizli="r" data-panel="rotalar" data-hizli="r"><i class="fa-solid fa-check mb-tik"></i><span data-i18n="mbPanelRotalar">Rotalar Paneli</span></div>
+          <div class="mb-oge mb-panel-toggle" id="mbPanelRotalar" data-hizli="r" data-panel="rotalar" data-hizli="r"><i class="fa-solid fa-table-columns"></i><span data-i18n="mbPanelRotalar">Rotalar paneli</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbAI" data-hizli="i">
         <span class="mb-etiket" data-i18n="mbAI">AI</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" id="mbLokasyonlar" data-hizli="l" data-popup-hedef="lokasyonPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-location-dot"></i><span data-i18n="mbLokasyonlar">Kayıtlı Lokasyonlar</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbLokasyonlar" data-hizli="l" data-popup-hedef="lokasyonPopup"><i class="fa-solid fa-location-dot"></i><span data-i18n="mbLokasyonlar">Kayıtlı lokasyonlar</span></div>
           <!-- v2.4.193 (Faz D): AYRI "Goruntu Koprusu" urunu KALDIRILDI.
                Kamera yakalama ve AI cikarimi artik saha Koprusunun kendi
                `video` ve `ai` servislerinde calisir; ikinci bir kurulum,
                ikinci bir panel (8802) ve ayri bir indirme yoktur. -->
           <!-- FAZ20-IS93 -->
-          <div class="mb-oge" id="mbGoruntuHedefler" data-hizli="h"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-crosshairs"></i><span data-i18n="mbGoruntuHedefler">Görüntü Hedefleri</span></div>
+          <div class="mb-oge" id="mbGoruntuHedefler" data-hizli="h"><i class="fa-solid fa-crosshairs"></i><span data-i18n="mbGoruntuHedefler">Görüntü hedefleri</span></div>
 
         </div>
       </div>
       <div class="mb-item" id="mbUygulama" data-hizli="g">
         <span class="mb-etiket" data-i18n="mbUygulama">Göktungu</span>
         <div class="mb-dropdown">
-          <div class="mb-oge mb-popup-toggle pasif" id="mbProgramAyar" data-hizli="p" data-popup-hedef="programAyarPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-gears"></i><span data-i18n="mbProgramAyar">Program Ayarları</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" id="mbHaritaAyar" data-hizli="h" data-popup-hedef="haritaPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-map"></i><span data-i18n="mbHaritaAyar">Harita Ayarları</span></div>
-          <div class="mb-oge mb-popup-toggle pasif" id="mbArayuzAyar" data-hizli="a" data-popup-hedef="arayuzPopup"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-sliders"></i><span data-i18n="mbArayuzAyar">Arayüz Ayarları</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbProgramAyar" data-hizli="p" data-popup-hedef="programAyarPopup"><i class="fa-solid fa-gears"></i><span data-i18n="mbProgramAyar">Program ayarları</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbHaritaAyar" data-hizli="h" data-popup-hedef="haritaPopup"><i class="fa-solid fa-map"></i><span data-i18n="mbHaritaAyar">Harita ayarları</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbArayuzAyar" data-hizli="a" data-popup-hedef="arayuzPopup"><i class="fa-solid fa-sliders"></i><span data-i18n="mbArayuzAyar">Arayüz ayarları</span></div>
           <!-- v2.4.45: GCCDUAL yer kontrol istasyonu. Program Ayarları'nda
                KAPALI ise bu öge JS ile gizlenir
                (istasyon2.js -> istasyon2MenuGorunumGuncelle). -->
           <div class="mb-ayrac" id="mbIstasyon2Ayrac" style="display:none;"></div>
-          <div class="mb-oge" id="mbIstasyon2" data-hizli="y" style="display:none;"><i class="fa-solid fa-gamepad"></i><span data-i18n="mbIstasyon2">Yer Kontrol İstasyonu Dual</span></div>
+          <div class="mb-oge" id="mbIstasyon2" data-hizli="y" style="display:none;"><i class="fa-solid fa-gamepad"></i><span data-i18n="mbIstasyon2">Yer kontrol istasyonu Dual</span></div>
         </div>
       </div>
       <div class="mb-item" id="mbYardim" data-hizli="y">
         <span class="mb-etiket" data-i18n="mbYardim">Destek</span>
         <div class="mb-dropdown">
-          <div class="mb-oge" id="mbYardimMerkez" data-hizli="y"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-book-open"></i><span data-i18n="mbYardimMerkez">Destek Merkezi</span></div>
+          <div class="mb-oge" id="mbYardimMerkez" data-hizli="y"><i class="fa-solid fa-book-open"></i><span data-i18n="mbYardimMerkez">Destek merkezi</span></div>
           <!-- v2.4.232: Kopruler (API kodlu kopru kayitlari; kip bagimsiz) -->
-          <div class="mb-oge mb-popup-toggle pasif" id="mbKopruler" data-yuzen="yzKopruler" data-hizli="k"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-diagram-project"></i><span data-i18n="mbKopruler">Köprüler</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbKopruler" data-yuzen="yzKopruler" data-hizli="k"><i class="fa-solid fa-diagram-project"></i><span data-i18n="mbKopruler">Köprüler</span></div>
           <!-- v2.4.201: uygulama icinden lisans yenileme -->
-          <div class="mb-oge mb-popup-toggle pasif" id="mbLisansYenile" data-yuzen="yzLisans" data-hizli="l"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-key"></i><span data-i18n="mbLisansYenile">Lisansı Yenile</span></div>
-          <div class="mb-oge" id="mbGuncelleme" data-hizli="g"><i class="fa-solid fa-check mb-tik" style="visibility:hidden"></i><i class="fa-solid fa-cloud-arrow-down"></i><span data-i18n="mbGuncelleme">Güncellemeleri Denetle</span></div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbLisansYenile" data-yuzen="yzLisans" data-hizli="l"><i class="fa-solid fa-key"></i><span data-i18n="mbLisansYenile">Lisansı yenile</span></div>
+          <div class="mb-oge" id="mbGuncelleme" data-hizli="g"><i class="fa-solid fa-cloud-arrow-down"></i><span data-i18n="mbGuncelleme">Güncellemeleri denetle</span></div>
           <div class="mb-ayrac"></div>
-          <div class="mb-oge mb-popup-toggle pasif" id="mbHakkinda" data-yuzen="yzHakkinda" data-hizli="p"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-circle-info"></i><span data-i18n="mbHakkinda">Program Hakkında</span></div>
-          <div class="mb-ayrac"></div>
-          <div class="mb-alt-baslik" data-i18n="mbWidget">Widget</div>
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgSaat" data-widget="saat" data-popup-hedef="widget_saat" data-hizli="s"><i class="fa-solid fa-check mb-tik"></i><i class="fa-regular fa-clock"></i><span data-i18n="wgSaat">Saat</span></div>
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgHava" data-widget="havadurumu" data-popup-hedef="widget_havadurumu" data-hizli="h"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-cloud-sun"></i><span data-i18n="wgHava">Hava Durumu</span></div>
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgKonum" data-widget="konum" data-popup-hedef="widget_konum"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-location-crosshairs"></i><span data-i18n="wgKonum">Konum</span></div>
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgPusula" data-widget="pusula" data-popup-hedef="widget_pusula"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-compass"></i><span data-i18n="wgPusula">Pusula</span></div>
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgPilotlar" data-widget="pilotlar" data-popup-hedef="widget_pilotlar"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-user-group"></i><span data-i18n="wgPilotlar">Pilotlar</span></div>
-          <!-- v2.4.33: Sayac (kronometre) widget'i -->
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgSayac" data-widget="sayac" data-popup-hedef="widget_sayac"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-stopwatch"></i><span data-i18n="wgSayac">Sayaç</span></div>
-          <!-- v2.4.34: Sistem Kaynaklari (tarayici yuk/bellek/ag + sunucu CPU/RAM) -->
-          <div class="mb-oge mb-popup-toggle mb-widget-toggle pasif" id="mbWgKaynaklar" data-widget="kaynaklar" data-popup-hedef="widget_kaynaklar"><i class="fa-solid fa-check mb-tik"></i><i class="fa-solid fa-gauge-high"></i><span data-i18n="wgKaynaklar">Sistem Kaynakları</span></div>
-        </div>
+          <div class="mb-oge mb-popup-toggle pasif" id="mbHakkinda" data-yuzen="yzHakkinda" data-hizli="p"><i class="fa-solid fa-circle-info"></i><span data-i18n="mbHakkinda">Program hakkında</span></div>
+          </div>
       </div>
     </div>
   </div>
@@ -186,6 +176,19 @@
     <span class="baslik">GÖKTUNGU</span>
   </div>
   <div id="ustBarSag">
+    <!-- v2.4.247 (kullanici: "widget'lari Yardim menusunden cikart, Google uygulamalari gibi sagda ikonla goster"): -->
+    <div id="wgBaslaticiKutu">
+      <button id="btnWidgetler" data-i18n-title="wgBaslatici" title="Widget'lar"><i class="fa-solid fa-grip"></i></button>
+      <div id="wgBaslatici" class="wg-baslatici">
+        <div class="wg-tile mb-widget-toggle" data-widget="saat" data-popup-hedef="widget_saat"><i class="fa-regular fa-clock"></i><span data-i18n="wgSaat">Saat</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="havadurumu" data-popup-hedef="widget_havadurumu"><i class="fa-solid fa-cloud-sun"></i><span data-i18n="wgHava">Hava durumu</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="konum" data-popup-hedef="widget_konum"><i class="fa-solid fa-location-crosshairs"></i><span data-i18n="wgKonum">Konum</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="pusula" data-popup-hedef="widget_pusula"><i class="fa-solid fa-compass"></i><span data-i18n="wgPusula">Pusula</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="pilotlar" data-popup-hedef="widget_pilotlar"><i class="fa-solid fa-user-group"></i><span data-i18n="wgPilotlar">Pilotlar</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="sayac" data-popup-hedef="widget_sayac"><i class="fa-solid fa-stopwatch"></i><span data-i18n="wgSayac">Sayaç</span></div>
+        <div class="wg-tile mb-widget-toggle" data-widget="kaynaklar" data-popup-hedef="widget_kaynaklar"><i class="fa-solid fa-gauge-high"></i><span data-i18n="wgKaynaklar">Sistem kaynakları</span></div>
+      </div>
+    </div>
     <button id="btnProgramAyar" class="gizli-tasindi" data-i18n-title="mbProgramAyar" title="Program Ayarları"><i class="fa-solid fa-gears"></i></button>
     <button id="btnLokasyonlar" class="gizli-tasindi" data-i18n-title="mbLokasyonlar" title="Kayıtlı Lokasyonlar"><i class="fa-solid fa-location-dot"></i></button>
     <button id="btnHaritaAyar" class="gizli-tasindi" data-i18n-title="mbHaritaAyar" title="Harita Ayarları"><i class="fa-solid fa-map"></i></button>
@@ -711,8 +714,8 @@
   <div class="panel-toolbar" id="kameralarToolbar">
     <span class="tb-etiket" data-i18n="tbEtiketKameralar">KAMERA YÖNETİMİ</span>
     <span class="tb-bosluk"></span>
-    <button id="tbVideoDuvar" class="tb-btn tb-btn-metin" data-i18n-title="kamVideoDuvar" title="Video Duvarı"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video Duvarı</span></button>
-    <button id="tbYeniKamera" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="kamYeni" title="Yeni Kamera"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni Kamera</span></button>
+    <button id="tbVideoDuvar" class="tb-btn tb-btn-metin" data-i18n-title="kamVideoDuvar" title="Video Duvarı"><i class="fa-solid fa-clapperboard"></i><span data-i18n="mbVideoDuvar">Video duvarı</span></button>
+    <button id="tbYeniKamera" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="kamYeni" title="Yeni Kamera"><i class="fa-solid fa-plus"></i><span data-i18n="mbYeniKamera">Yeni kamera</span></button>
   </div>
   <div class="sabit-icerik" id="kameralarIcerik">
     <div id="kameraListesi"></div>
@@ -728,10 +731,10 @@
   <div class="panel-toolbar" id="rotalarToolbar">
     <span class="tb-etiket" data-i18n="tbEtiketRotalar">G&Ouml;REV ROTALARI</span>
     <span class="tb-bosluk"></span>
-    <button id="tbSpiralRota" class="tb-btn tb-btn-metin" data-i18n-title="mbSpiralRota" title="Spiral Rota"><i class="fa-solid fa-hurricane"></i><span data-i18n="mbSpiralRota">Spiral Rota</span></button>
-    <button id="tbDilimliRota" class="tb-btn tb-btn-metin" data-i18n-title="mbSerbestForm" title="Dilimli Rota"><i class="fa-solid fa-draw-polygon"></i><span data-i18n="mbSerbestForm">Dilimli Rota</span></button>
+    <button id="tbSpiralRota" class="tb-btn tb-btn-metin" data-i18n-title="mbSpiralRota" title="Spiral Rota"><i class="fa-solid fa-hurricane"></i><span data-i18n="mbSpiralRota">Spiral rota</span></button>
+    <button id="tbDilimliRota" class="tb-btn tb-btn-metin" data-i18n-title="mbSerbestForm" title="Dilimli Rota"><i class="fa-solid fa-draw-polygon"></i><span data-i18n="mbSerbestForm">Dilimli rota</span></button>
     <button id="tbKoridorRota" class="tb-btn tb-btn-metin" data-i18n-title="mbKoridorRota" title="Koridor"><i class="fa-solid fa-road"></i><span data-i18n="mbKoridorRota">Koridor</span></button>
-    <button id="tbRotaYukle" class="tb-btn tb-btn-metin" data-i18n-title="mbRotaYukle" title="Rota Y&uuml;kle"><i class="fa-solid fa-folder-open"></i><span data-i18n="mbRotaYukle">Rota Y&uuml;kle</span></button>
+    <button id="tbRotaYukle" class="tb-btn tb-btn-metin" data-i18n-title="mbRotaYukle" title="Rota Y&uuml;kle"><i class="fa-solid fa-folder-open"></i><span data-i18n="mbRotaYukle">Rota y&uuml;kle</span></button>
     <button id="tbYeniRota" class="tb-btn tb-btn-metin tb-btn-ekle" data-i18n-title="rotaYeniRotaBaslik" title="Serbest Rota"><i class="fa-solid fa-plus"></i><span data-i18n="rotaYeniRotaBaslik">Serbest Rota</span></button>
   </div>
   <div class="sabit-icerik" id="rotalarIcerik">
@@ -1823,7 +1826,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24243"></script>
+<script src="js/i18n.js?v=v24247"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1843,7 +1846,7 @@
 <script src="js/param_meta.js?v=v24127"></script>
 <!-- v2.4.19: ArduPilot parametre deger secenekleri (combo box/bitmask) -->
 <script src="js/param_secenek.js?v=v24127"></script>
-<script src="js/dronlar.js?v=v24224"></script>
+<script src="js/dronlar.js?v=v24249"></script>
   <script src="js/dron_ekran_disi.js?v=v24127"></script>
 <!-- v2.4.42: HOME (kalkis/donus) noktasi harita ikonu. dronlar.js
      SONRASINDA yuklenmeli: dronRengi() ve sonVeri global'lerini kullanir
@@ -1891,8 +1894,8 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24225"></script>
-<script src="js/radar_panel.js?v=v24240"></script>
+<script src="js/radar_gorsel.js?v=v24248"></script>
+<script src="js/radar_panel.js?v=v24248"></script>
 <script src="js/radar_pencere.js?v=v24227"></script>
 <script src="js/m50_panel.js?v=v24240"></script>
 <script src="js/diyagram.js?v=v24241"></script>
@@ -1910,7 +1913,8 @@
 <script src="js/m50_pencere.js?v=v24225"></script>
 <script src="js/kamera_takip.js?v=v24226"></script>
 <script src="js/rotalar.js?v=v24127"></script>
-<script src="js/makrolar.js?v=v24244"></script>
+<script src="js/makrolar.js?v=v24247"></script>
+<script src="js/widget_baslatici.js?v=v24247"></script>
 <script src="js/rota_tipleri.js?v=v24127"></script>
 <script src="js/serbest_form.js?v=v24127"></script>
 <!-- v2.4.40: koridor gorev turu (merkez hat + genislik -> cift kenar tarama).
@@ -1959,7 +1963,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24246"></script>
+<script src="js/surum.js?v=v24249"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>

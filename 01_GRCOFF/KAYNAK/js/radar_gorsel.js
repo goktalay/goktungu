@@ -876,6 +876,28 @@ function gcsKutuMetni(){
          t.lblBoy + " : " + gcsKonum.lon.toFixed(6);
 }
 
+// v2.4.248 (kullanici: "radar ya da herhangi bir kayit olmamasina ragmen
+// sistemde bir kayit kalmis"): haritadaki kirmizi ucgen+halka, radar/GCS
+// MERKEZ isaretiydi ve ayarlardaki harita merkezinden (merkez_lat/lon)
+// radar kaydi olmasa da ciziliyordu. Artik en az bir radar kaydi yoksa
+// merkez isareti, supurme cizgisi ve irtifa kubbesi gizlidir.
+function radarKaydiVarMi(){
+  try {
+    if (typeof window.radarListesiOku === "function") return (window.radarListesiOku() || []).length > 0;
+  } catch (e) {}
+  return true;   // liste bilinmiyorsa eski davranis (gorunur)
+}
+window.gcsIsaretGorunurluk = function(goster){
+  const g = (goster == null) ? radarKaydiVarMi() : !!goster;
+  const _rg = (typeof window.radarYetenekVar === "function") ? window.radarYetenekVar() : true;
+  const s = g && _rg;
+  try { if (gcsVarlik) gcsVarlik.show = s; } catch (e) {}
+  try { if (radarCizgi) radarCizgi.show = s; } catch (e) {}
+  try { if (irtifaKubbe) irtifaKubbe.show = s; } catch (e) {}
+  try { if (!s && typeof radarKapsamaGorunurluk === "function") radarKapsamaGorunurluk(false); } catch (e) {}
+  return s;
+};
+
 function gcsGuncelle(lat, lon){
   gcsKonum = {lat: lat, lon: lon};
   kapsamaGuncelle(lat, lon);
@@ -935,6 +957,8 @@ function gcsGuncelle(lat, lon){
   }
   // Sol paneldeki GCS kartini guncelle
   gcsKartGuncelle();
+  // v2.4.248: radar kaydi yoksa merkez isareti gizli
+  window.gcsIsaretGorunurluk();
 }
 
 function gcsKartGuncelle(){

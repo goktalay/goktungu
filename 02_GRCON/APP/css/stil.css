@@ -4793,8 +4793,6 @@ body.tam-ekran-modu #haritaAracGrubu { top: 12px; }
   cursor: default;
 }
 /* Panel ac/kapat ogeleri: tik ikonu acikken gorunur, kapaliyken soluk bosluk */
-.mb-panel-toggle .mb-tik { color: var(--interceptor); }
-.mb-panel-toggle.pasif .mb-tik { visibility: hidden; }
 /* v2.3.1: kapali durumda metin gri DEGIL; yalnizca tik gizlenir */
 .mb-panel-toggle.pasif span { color: inherit; }
 
@@ -4958,8 +4956,6 @@ u.mb-hizli { text-decoration: none; }
 .hk-baslik { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .7; }
 .hk-ekip { list-style: none; margin: 4px 0 0; padding: 0; font-size: 13px; line-height: 1.9; }
 .hk-firma { font-size: 10px; opacity: .55; margin-top: 10px; letter-spacing: .5px; }
-.mb-oge .mb-tik { display: inline-block; width: 14px; text-align: center; margin-right: 4px; color: var(--vurgu, #4da3ff); }
-.mb-oge.pasif .mb-tik { visibility: hidden; }
 .mb-oge.pasif { opacity: 1; }
 [data-hizli] .hz-harf { text-decoration: underline; text-underline-offset: 2px; }
 .mb-oge.klavye-odak, .mb-item.klavye-odak > .mb-etiket { outline: 1px solid var(--vurgu, #4da3ff); outline-offset: -1px; background: rgba(77,163,255,.12); }
@@ -5596,8 +5592,6 @@ body.tam-ekran-modu #altOrtaPanel {
   text-transform:uppercase;font-size:9px;letter-spacing:.4px;}
 
 /* ================= v2.3.1: POPUP ACAN MENU OGELERI CHECK ================ */
-.mb-popup-toggle .mb-tik { color: var(--interceptor, var(--vurgu, #4da3ff)); }
-.mb-popup-toggle.pasif .mb-tik { visibility: hidden; }
 
 /* ===== v2.3.2: Sifremi unuttum + Yeni kullanici formu ===== */
 .giris-unuttum {

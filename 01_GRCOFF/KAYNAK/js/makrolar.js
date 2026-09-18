@@ -101,6 +101,8 @@
         "<span class='ra-nokta mk-d-" + d + "'></span>" +
         "<div class='cl-govde'><div class='cl-ad'></div><div class='cl-alt'></div></div>" +
         "<div class='cl-dgm'>" +
+          "<button type='button' class='kucuk mk-play' title='" + (t.mkCalistirSatir || "Makroyu seçili dronda çalıştır") + "'" + (d === "calisiyor" ? " disabled" : "") + "><i class='fa-solid fa-play'></i></button>" +
+          "<button type='button' class='kucuk tehlike mk-stop' title='" + (t.mkDurdurSatir || "Makroyu durdur") + "'" + (d === "calisiyor" ? "" : " disabled") + "><i class='fa-solid fa-stop'></i></button>" +
           "<button type='button' class='kucuk ikincil mk-kod-btn' title='" + (t.mkKodIpucu || "Python kodunu düzenle / çalıştır") + "'><i class='fa-solid fa-file-code'></i></button>" +
           "<button type='button' class='kucuk ikincil cl-duzenle' title='" + (t.btnDuzenle || "Düzenle") + "'><i class='fa-solid fa-pen'></i></button>" +
           "<button type='button' class='kucuk tehlike ikincil cl-sil' title='" + (t.btnSil || "Sil") + "'><i class='fa-solid fa-trash'></i></button>" +
@@ -110,6 +112,9 @@
       sat.title = t.mkSatirIpucu || "Python düzenleme panelini aç";
       sat.addEventListener("click", () => editorAc(r.id));
       sat.querySelector(".mk-kod-btn").addEventListener("click", (ev) => { ev.stopPropagation(); editorAc(r.id); });
+      // 2.4.247 (kullanici: "makrolar paneline play stop dugmesi koy")
+      sat.querySelector(".mk-play").addEventListener("click", (ev) => { ev.stopPropagation(); satirdanCalistir(r.id); });
+      sat.querySelector(".mk-stop").addEventListener("click", (ev) => { ev.stopPropagation(); gonder({ tip: "makro_durdur", makro_id: Number(r.id) }); });
       sat.querySelector(".cl-duzenle").addEventListener("click", (ev) => { ev.stopPropagation(); formAc(r); });
       sat.querySelector(".cl-sil").addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -249,6 +254,20 @@
       if (typeof sonra === "function") sonra();
     }
   }
+  // Satirdan calistirma: tek bagli dron varsa o; birden fazlaysa editorde
+  // secili olan; secim yoksa editor acilir ve dron secimi istenir.
+  function satirdanCalistir(id) {
+    const t = T();
+    const dronlar = Array.isArray(window.dronlarSon) ? window.dronlarSon : [];
+    let sysid = 0;
+    const s = el("mkSysid");
+    if (dronlar.length === 1) sysid = Number(dronlar[0].sysid) || 0;
+    else if (s && s.value && dronlar.some((d) => String(d.sysid) === s.value)) sysid = parseInt(s.value, 10);
+    if (!sysid) { editorAc(id); toast(t.mkDronSec || "Önce çalıştırılacak dronu seçin.", "uyari"); return; }
+    if (seciliId === Number(id) && kodDegisti) { kodKaydet(() => gonder({ tip: "makro_calistir", makro_id: Number(id), sysid: sysid })); return; }
+    gonder({ tip: "makro_calistir", makro_id: Number(id), sysid: sysid });
+  }
+
   function calistir() {
     if (!seciliId) return;
     const s = el("mkSysid");
@@ -306,6 +325,8 @@
 
   // -----------------------------------------------------------------
   function bagla() {
+    if (bagla._bagli) return;   // cift baglama korumasi
+    bagla._bagli = true;
     const yeni = el("btnMakroYeni"); if (yeni) yeni.addEventListener("click", () => formAc(null));
     const kaydet = el("btnMakroFormKaydet"); if (kaydet) kaydet.addEventListener("click", formKaydet);
     const iptal = el("btnMakroFormIptal"); if (iptal) iptal.addEventListener("click", () => kapat("yzMakroForm"));

@@ -1053,6 +1053,17 @@ function dronSil(sysid) {
   // Sol panelden sil
   const kart = document.getElementById("dronKart_" + sysid);
   if (kart) kart.remove();
+  // v2.4.249 (kullanici: ayni dron hem sanal dron kaydinda hem "Baglantisi
+  // bilinmeyen"de, eski ACRO durumuyla): yuzen pencere acikken panelde
+  // duran GOLGE satir (v2.4.224) ve varsa kayitli pencere konumu da
+  // temizlenir; yalniz `#dronKart_<sysid>` silmek golgeyi birakiyordu.
+  try {
+    const k = dronKartlar[sysid];
+    if (k && k.golge && k.golge.parentNode) k.golge.remove();
+    if (k) { k.golge = null; k.golgeBaslik = null; }
+  } catch (e) {}
+  document.querySelectorAll('.dron-kart[data-sysid="' + sysid + '"], .dk-golge[data-sysid="' + sysid + '"]').forEach((el) => { try { el.remove(); } catch (e) {} });
+  if (dronSilmeTimer[sysid]) { clearTimeout(dronSilmeTimer[sysid]); delete dronSilmeTimer[sysid]; }
   if (dronKartlar[sysid]) {
     // v2.4.2: kamera bolumu temizligi (video/proxy durdur)
     delete dronKartlar[sysid];

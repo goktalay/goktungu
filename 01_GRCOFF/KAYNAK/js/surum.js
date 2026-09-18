@@ -2,11 +2,38 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.246";
+const GCS_SURUM = "2.4.249";
 const GCS_SURUM_TARIH = "2026-09-17";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.249",
+    tarih: "2026-09-18",
+    baslik: "Silinen dronun gölge satırı da kalkar; aynı sysid yeniden gelince çift kart yok (paket 2.5.119)",
+    maddeler: [
+      "HATA (kök neden, kullanıcı: aynı dron hem sanal dron kaydında hem 'Bağlantısı bilinmeyen'de eski ACRO durumuyla): dron penceresi ayrıkken panelde duran gölge satır, dron silinirken temizlenmiyordu (yalnız ana kart siliniyordu). Gölge, kayıtlı pencere ve silme zamanlayıcısı artık birlikte temizlenir; aynı sysid ile yeni sanal dron gelince tek kart görünür.",
+    ],
+  },
+  {
+    surum: "2.4.248",
+    tarih: "2026-09-18",
+    baslik: "Radar kaydı yokken haritadaki merkez işareti gizli; widget kutucuk yazısı iki satır (paket 2.5.118)",
+    maddeler: [
+      "HATA (kök neden, kullanıcı: 'radar ya da herhangi bir kayıt olmamasına rağmen sistemde bir kayıt kalmış'): haritadaki kırmızı üçgen+halka bir kayıt değil, radar görselleştirmesinin GCS/radar MERKEZ işaretiydi; ayarlardaki harita merkezinden (merkez enlem/boylam) radar kaydı olmasa da çiziliyordu. Artık radar kaydı yoksa merkez işareti, süpürme çizgisi ve irtifa kubbesi gizlenir; ilk radar eklenince görünür.",
+      "Widget başlatıcı kutucuklarında uzun adlar (Sistem kaynakları) iki satıra sarılır.",
+    ],
+  },
+  {
+    surum: "2.4.247",
+    tarih: "2026-09-18",
+    baslik: "Menü standardı: tik yok, tümce düzeni, her öğede ikon; widget başlatıcı; makro satırında Çalıştır/Durdur (paket 2.5.117)",
+    maddeler: [
+      "KULLANICI İSTEĞİ: hiçbir menüde açık panel için tik gösterilmez; tüm menü öğeleri tümce düzeninde (ilk harf büyük; GRCON, AI, M50, DJI gibi ürün adı ve kısaltmalar korunur); ikonsuz öğe kalmadı (Kameralar paneli, Rotalar paneli); Makrolar ikonu Python simgesi oldu.",
+      "KULLANICI İSTEĞİ: Widget'lar Destek menüsünden çıkarıldı; menü çubuğunun sağındaki ızgara düğmesi Google uygulamaları tarzı bir başlatıcı açar (ikon üstte, ad altta); açık widget'lar seçili görünür, dışarı tıklama veya Esc kapatır.",
+      "KULLANICI İSTEĞİ: Makrolar listesinde her satırda Çalıştır (▶) ve Durdur (■): tek bağlı dron varsa doğrudan onda, birden fazlaysa editörde seçili dronda çalıştırır; seçim yoksa editörü açıp dron seçimi ister. Çalışan makroda ▶ pasif, ■ etkin.",
+    ],
+  },
   {
     surum: "2.4.246",
     tarih: "2026-09-18",

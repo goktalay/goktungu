@@ -44,9 +44,12 @@ function raSeciliRadar(){
   return radarListesi.find(r => Number(r.radar_id) === _raSecili) || radarListesi[0] || null;
 }
 
+window.radarListesiOku = function(){ return radarListesi; };
 window.radarListesiGuncelle = function(liste, eski){
   radarListesi = Array.isArray(liste) ? liste : [];
   if (typeof window.radarlarListeCiz === "function") window.radarlarListeCiz();
+  // v2.4.248: radar kaydi yoksa haritadaki merkez isareti gizlenir
+  if (typeof window.gcsIsaretGorunurluk === "function") window.gcsIsaretGorunurluk(radarListesi.length > 0);
   if (!radarListesi.length){ if (eski) radarPaneliGuncelle(eski); return; }
   if (!radarListesi.some(r => Number(r.radar_id) === _raSecili))
     _raSecili = Number(radarListesi[0].radar_id);
