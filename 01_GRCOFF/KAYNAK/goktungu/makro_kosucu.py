@@ -441,6 +441,18 @@ class DronFasadi:
         self._konum_denetle("git", zorla)
         if irtifa is None:
             irtifa = self.irtifa or 10.0
+        # v2.4.252 (IS150): goreli irtifa <= 0 hedefi, ArduPilot'ta
+        # "PANIC: Location cannot be (0, 0, 0)" cokmesine yol acar (SITL'de
+        # olculdu: set_position_target rel-alt 0 -> panik, rel-alt 1 -> normal).
+        # Uce bir metrelik guvenli tabana kelepcelenir; makro cokmeden surer.
+        try:
+            irtifa = float(irtifa)
+        except (TypeError, ValueError):
+            raise ValueError("git: irtifa sayisal olmali")
+        if irtifa < 1.0:
+            _yaz("git: hedef goreli irtifa %.2f m -> 1.0 m'ye yukseltildi "
+                 "(0 m otopilotu cokertir)" % irtifa, sev="UYARI")
+            irtifa = 1.0
         MASKE = 0b0000111111111000   # yalniz konum
         self.mav.mav.set_position_target_global_int_send(
             0, self.sysid, 1, 6,   # MAV_FRAME_GLOBAL_RELATIVE_ALT_INT

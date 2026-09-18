@@ -550,27 +550,14 @@
     // Takeoff irtifasi = rotanin ilk noktasinin irtifasi (backend ile ayni kural, min 2 m)
     const ilkNokta = (aktifRota.noktalar && aktifRota.noktalar[0]) || null;
     const tkIrtifa = Math.max(2, (ilkNokta && typeof ilkNokta.irtifa === "number") ? ilkNokta.irtifa : 2);
+    // v2.4.252 (IS150): eski SITL dalis / performans testi deneme sorularinin
+    // (sitlDalisSor / performansTestiSor) tetiklenmesi kaldirildi. Gorev tek
+    // onayla dogrudan baslar; arta kalan sorular kullaniciyi yordu.
     onayIste(onayMetni("onayGorevBaslat", {rota: aktifRota.isim || aktifRota.id, irtifa: tkIrtifa}), () => {
       if (!aktifRota || aktifSysid === null) return;
-      sitlDalisSor(aktifSysid, (sitlDalis) => {
-        if (!aktifRota || aktifSysid === null) return;
-        // Kullanıcı sanal senaryoyu seçtiyse normal performans kaydı ayrıca
-        // sorulmaz: senaryo zaten aynı 1 Hz kayıt altyapısına bağlanır.
-        if (sitlDalis){
-          yerelAsama = "yukleniyor";
-          wsGonder({tip: "gorev_baslat", sysid: aktifSysid,
-                    sitl_dalis: sitlDalis});
-          izlemeTazele();
-          return;
-        }
-        performansTestiSor(aktifSysid, (performansTest) => {
-          if (!aktifRota || aktifSysid === null) return;
-          yerelAsama = "gorevde";
-          wsGonder({tip: "gorev_baslat", sysid: aktifSysid,
-                    performans_test: performansTest || undefined});
-          izlemeTazele();
-        });
-      });
+      yerelAsama = "gorevde";
+      wsGonder({tip: "gorev_baslat", sysid: aktifSysid});
+      izlemeTazele();
     });
   });
 

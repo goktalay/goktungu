@@ -2,11 +2,21 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.251";
-const GCS_SURUM_TARIH = "2026-09-17";
+const GCS_SURUM = "2.4.252";
+const GCS_SURUM_TARIH = "2026-09-18";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.252",
+    tarih: "2026-09-18",
+    baslik: "SITL panik gözcüsü kaldırıldı; makro irtifa 0 hedefi kaynağında engellendi; görev başlatma soruları kaldırıldı (paket 2.5.122)",
+    maddeler: [
+      "İSTEK (kullanıcı: 'tüm panik sistemini devre dışı bırak'): sanal dron PANIC gözcüsü ve otomatik yeniden başlatma tamamen kaldırıldı. Sanal dron paniklerse sessizce durur; Bağlantı Yöneticisi'nden elle başlatılır.",
+      "HATA (kök neden, kullanıcı: 'sanal dron makroyu başlattıktan sonra bir müddet sonra offline oluyor'): makronun göreli irtifa 0 ile verdiği git hedefi ArduPlane'i 'PANIC: Location cannot be (0, 0, 0)' ile çökertiyordu (SITL'de ölçüldü: rel-irtifa 0 çöküyor, rel-irtifa 1 normal). dron.git artık 1 m altındaki hedef irtifasını 1 m'ye yükseltip uyarır; otopilot çökmez.",
+      "Görev başlatırken çıkan eski SITL dalış ve performans testi soruları (bir kod denemesinden arta kalmıştı) kaldırıldı; görev tek onayla doğrudan başlar.",
+    ],
+  },
   {
     surum: "2.4.251",
     tarih: "2026-09-18",

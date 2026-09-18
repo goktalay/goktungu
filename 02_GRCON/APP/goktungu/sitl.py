@@ -848,17 +848,11 @@ class SitlYoneticisi:
         self._kilit = threading.Lock()
         self._surecler = {}     # bid -> subprocess.Popen
         self._bilgi = {}        # bid -> {"port":.., "tip":.., "dizin":..}
-        # v2.4.251 (IS149): PANIC gozcusu. ArduPilot SITL `AP_HAL::panic`
-        # sonrasi surec CIKMAZ, sonsuz donguye girer: TCP acik kalir ama
-        # telemetri kesilir (olculdu: makro GPS'siz uçagi GUIDED'a alinca
-        # "PANIC: Location cannot be (0, 0, 0)"). Gozcu sitl.log'da PANIC
-        # gorunce sureci oldurup ayni argumanlarla yeniden baslatir.
-        self._son_args = {}     # bid -> baslat(**args)
-        self._panik_sayac = {}  # bid -> [ts, ...]
-        self._panik_gorulen = set()
-        self.panik_kancasi = None   # (bid, satir) -> None (arayuz bildirimi)
-        threading.Thread(target=self._panik_gozcusu, daemon=True,
-                         name="sitl-panik-gozcusu").start()
+        # v2.4.252 (IS150): PANIC gozcusu KALDIRILDI (kullanici istegi). SITL
+        # panigi (GPS'siz GUIDED / gecersiz irtifa) artik kaynakta onlenir:
+        # makro API'si irtifa<=0 hedefini ve konumsuz GUIDED'i reddeder.
+        # Otomatik yeniden baslatma yok; sanal dron paniklerse Baglanti
+        # Yoneticisi'nden elle baslatilir.
 
     # ------------------------------------------------------------------
     def _ayar_yolu(self):
@@ -1387,10 +1381,6 @@ class SitlYoneticisi:
 
         with self._kilit:
             self._surecler[bid] = p
-            self._son_args[bid] = {"bid": bid, "tip": tip, "lat": lat, "lon": lon,
-                                   "taban_port": taban_port, "sysid": sysid,
-                                   "irtifa": irtifa, "sira": sira}
-            self._panik_gorulen.discard(bid)
             # sysid ve konum bilgi sozlugunde tutulur: adet>1 durumunda
             # hangi ornegin hangi arac oldugunu ayirt etmenin baska yolu
             # yok (surecler ayni ikiliyi calistirir).
@@ -1404,67 +1394,6 @@ class SitlYoneticisi:
         return port, None
 
     # ------------------------------------------------------------------
-    PANIK_ENUST = 3            # 10 dk icinde bu kadar panikte yeniden baslatma durur
-    PANIK_PENCERE_SN = 600.0
-
-    def _panik_kontrol(self):
-        """Tek tur: calisan her SITL'in sitl.log sonunda PANIC ara. Doner: islenen bid listesi."""
-        with self._kilit:
-            adaylar = [(b, dict(self._bilgi.get(b) or {}), self._surecler.get(b)) for b in list(self._surecler)]
-        islenen = []
-        for bid, bilgi, p in adaylar:
-            if p is None or p.poll() is not None or bid in self._panik_gorulen:
-                continue
-            dizin = bilgi.get("dizin")
-            if not dizin:
-                continue
-            try:
-                with open(os.path.join(dizin, "sitl.log"), "rb") as f:
-                    f.seek(0, 2); boy = f.tell(); f.seek(max(0, boy - 8192))
-                    kuyruk = f.read().decode("utf-8", "replace")
-            except OSError:
-                continue
-            satir = next((s.strip() for s in kuyruk.splitlines() if "PANIC" in s), None)
-            if not satir:
-                continue
-            self._panik_gorulen.add(bid)
-            islenen.append(bid)
-            simdi = time.time()
-            zamanlar = [t for t in self._panik_sayac.get(bid, []) if simdi - t < self.PANIK_PENCERE_SN]
-            zamanlar.append(simdi); self._panik_sayac[bid] = zamanlar
-            self.konsol("SITL", "Sanal dron COKTU (id=%d): %s" % (bid, satir[:200]), "hata")
-            kanca = self.panik_kancasi
-            if kanca:
-                try:
-                    kanca(bid, satir)
-                except Exception:
-                    pass
-            args = self._son_args.get(bid)
-            if len(zamanlar) > self.PANIK_ENUST or not args:
-                self.konsol("SITL", "Sanal dron %d: %d panik/10 dk; otomatik yeniden baslatma durduruldu. "
-                            "Baglanti Yoneticisi'nden elle baslatin." % (bid, len(zamanlar)), "hata")
-                self._tek_durdur(bid)
-                continue
-            self._tek_durdur(bid)
-            time.sleep(1.0)
-            try:
-                port, hata = self.baslat(**args)
-            except Exception as e:
-                port, hata = None, str(e)
-            if port:
-                self.konsol("SITL", "Sanal dron %d panik sonrasi yeniden baslatildi (tcp:127.0.0.1:%s)" % (bid, port), "uyari")
-            else:
-                self.konsol("SITL", "Sanal dron %d yeniden baslatilamadi: %s" % (bid, hata), "hata")
-        return islenen
-
-    def _panik_gozcusu(self):
-        while True:
-            time.sleep(3.0)
-            try:
-                self._panik_kontrol()
-            except Exception:
-                pass
-
     def durdur(self, bid):
         """Kayda ait TUM SITL sureclerini durdurur.
 

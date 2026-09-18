@@ -1,6 +1,6 @@
 # GÖKTUNGU Python Makro API'si — makro yazan yapay zekâ için rehber
 
-Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.251) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
+Bu belge, GÖKTUNGU yer kontrol istasyonunda (GRCOFF/GRCON, uygulama sürümü ≥ 2.4.252) çalışan **dron makrolarını** yazacak bir yapay zekâ (veya geliştirici) için tam sözleşmedir. Makro, kullanıcının **Rotalar > Makrolar** panelinde oluşturduğu ve Python düzenleme panelinde çalıştırdığı bir Python 3.11 betiğidir.
 
 ## 1. Çalışma ortamı (mutlaka bilinmesi gerekenler)
 
@@ -64,7 +64,7 @@ Tüm işlevler ArduPilot (Copter/Plane/Rover) hedefler; komutlar `COMMAND_LONG` 
 | `dron.disarm(zorla=False)` | Disarm | ACK sonucu (0 = kabul) veya `None` |
 | `dron.mod_ayarla(ad, bekle=True, zaman_asimi=5, zorla=False)` | Uçuş modu (`"GUIDED"`, `"AUTO"`, `"LOITER"`, `"RTL"`, `"LAND"`, `"STABILIZE"` …); bilinmeyen ad `ValueError`. **Konum gerektiren modlar** (GUIDED, AUTO, RTL, LOITER, CIRCLE, …) geçerli konum yokken `RuntimeError` verir; `zorla=True` atlar (tehlikeli) | moda geçtiyse `True` |
 | `dron.kalk(irtifa=10, bekle=True, zaman_asimi=60, zorla=False)` | GUIDED → arm → MAV_CMD_NAV_TAKEOFF; irtifanın %95'ine ulaşınca döner. Konum yoksa veya arm edilemezse `RuntimeError` | `True/False` |
-| `dron.git(lat, lon, irtifa=None, bekle=False, tol_m=3, zaman_asimi=300, zorla=False)` | SET_POSITION_TARGET_GLOBAL_INT (GLOBAL_RELATIVE_ALT_INT, yalnız konum). `irtifa=None` → mevcut göreli irtifa. `bekle=True` varışa kadar bekler. Hedef (0,0) veya aralık dışıysa `ValueError`; aracın konumu yoksa `RuntimeError` | `True/False` |
+| `dron.git(lat, lon, irtifa=None, bekle=False, tol_m=3, zaman_asimi=300, zorla=False)` | SET_POSITION_TARGET_GLOBAL_INT (GLOBAL_RELATIVE_ALT_INT, yalnız konum). `irtifa=None` → mevcut göreli irtifa. `bekle=True` varışa kadar bekler. Hedef (0,0) veya aralık dışıysa `ValueError`; aracın konumu yoksa `RuntimeError`. **App ≥ 2.4.252:** 1 m altındaki göreli hedef irtifası 1 m'ye yükseltilir ve uyarı yazılır; göreli irtifa 0, ArduPilot'ta `PANIC: Location cannot be (0, 0, 0)` çökmesine yol açtığı için doğrudan gönderilmez. | `True/False` |
 | `dron.eve_don()` | RTL modu | `True/False` |
 | `dron.inis()` | LAND modu | `True/False` |
 | `dron.hiz_ayarla(m_s)` | MAV_CMD_DO_CHANGE_SPEED (yer hızı) | ACK sonucu |
