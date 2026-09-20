@@ -2,11 +2,19 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.254";
+const GCS_SURUM = "2.4.255";
 const GCS_SURUM_TARIH = "2026-09-20";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.255",
+    tarih: "2026-09-20",
+    baslik: "HOME ikonu daire içinde 'H' (standart helipad sembolü) (paket 2.5.125)",
+    maddeler: [
+      "İSTEK (kullanıcı): Tüm dronların HOME (kalkış/dönüş) noktası ikonu artık daire içinde 'H' harfiyle gösterilir. Daire dronun rengindedir, H beyaz; her harita altlığında okunur. Önceki ev şekli kaldırıldı.",
+    ],
+  },
   {
     surum: "2.4.254",
     tarih: "2026-09-20",

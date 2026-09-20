@@ -23,29 +23,25 @@
   // Ev ikonu. Taban ikonun ALT KENARINA oturur; billboard
   // `verticalOrigin: BOTTOM` ile yerlestirildiginde evin tabani tam
   // olarak HOME koordinatina gelir.
+  // IS162 (kullanici istegi): HOME ikonu artik DAIRE ICINDE "H" (standart
+  // helipad/home sembolu). Daire dronun renginde; H beyaz. Siyah kenar her
+  // altlikta okunurluk saglar.
   function homeIkonu(renk){
     if (ikonOnbellek[renk]) return ikonOnbellek[renk];
-    const b = 44;
+    const b = 48;
     const c = document.createElement("canvas");
     c.width = b; c.height = b;
     const x = c.getContext("2d");
-    x.lineJoin = "round";
-    x.lineWidth = 3;
-    x.strokeStyle = "rgba(0,0,0,.85)";   // her altlikta okunurluk
-    x.fillStyle = renk;                  // dronun rengi
-    x.beginPath();
-    x.moveTo(b * 0.50, b * 0.10);        // cati tepesi
-    x.lineTo(b * 0.92, b * 0.46);        // sag sacak
-    x.lineTo(b * 0.78, b * 0.46);
-    x.lineTo(b * 0.78, b * 0.94);        // sag duvar
-    x.lineTo(b * 0.22, b * 0.94);        // taban
-    x.lineTo(b * 0.22, b * 0.46);        // sol duvar
-    x.lineTo(b * 0.08, b * 0.46);        // sol sacak
-    x.closePath();
-    x.stroke(); x.fill();
-    // Kapi boslugu: kucuk olcekte de "ev" oldugu anlasilir
-    x.fillStyle = "rgba(0,0,0,.55)";
-    x.fillRect(b * 0.42, b * 0.62, b * 0.16, b * 0.32);
+    const cx = b / 2, cy = b / 2, r = b * 0.42;
+    // dis daire: dron rengi dolgu + siyah kenar
+    x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2);
+    x.fillStyle = renk; x.fill();
+    x.lineWidth = 3; x.strokeStyle = "rgba(0,0,0,.85)"; x.stroke();
+    // H harfi (beyaz, kalin)
+    x.fillStyle = "#ffffff";
+    x.font = "bold " + Math.round(b * 0.52) + "px Arial";
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("H", cx, cy + b * 0.02);
     const url = c.toDataURL();
     ikonOnbellek[renk] = url;
     return url;
@@ -80,8 +76,8 @@
         position: Cesium.Cartesian3.fromDegrees(hlon, hlat, 0),
         billboard: {
           image: homeIkonu(renk),
-          width: 26, height: 26,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          width: 28, height: 28,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,   // IS162: daire home noktasinda ortali
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           color: Cesium.Color.WHITE.withAlpha(alfa),
