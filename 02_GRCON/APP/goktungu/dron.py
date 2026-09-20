@@ -126,6 +126,7 @@ class DronYoneticisi:
         self.gorev_kancasi = None  # cagrilabilir(msg); _dongu icinde
         # UDP yayin koprusu (UdpYayinYoneticisi) — her ham paket iletilir
         self.udp_yayin = None      # main.py kurulumda atar
+        self.sitl = None           # IS161: main.py'de SitlYoneticisi baglanir (sanal dron tespiti)
         # Kayitli dron isimleri (UID -> isim)
         self.kayitli_dronlar = self._dron_kayitlari_yukle()
         # UID isteme durumu (sysid -> True/False)
@@ -1781,6 +1782,15 @@ class DronYoneticisi:
                         pass
                     if uid_val:
                         uid_str = hex(uid_val)
+                        # IS161: SANAL DRON (SITL) donanim UID'si TUM ornekler
+                        # icin AYNI gelir; boylece iki sanal dron ayni kalici
+                        # kayda (isim/renk) dusup birbirini eziyordu. Sanal ise
+                        # kimligi sysid'e baglayarak her birini benzersiz yap.
+                        try:
+                            if self.sitl and self.sitl.sysid_bilgi(sysid):
+                                uid_str = "sitl:%d" % int(sysid)
+                        except Exception:
+                            pass
                         d["uid"] = uid_str
                         # Kayitli isim varsa ata
                         kayitli = self._uid_ile_isim_coz(sysid, uid_str)

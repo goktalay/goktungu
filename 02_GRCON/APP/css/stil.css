@@ -1584,11 +1584,15 @@
   /* ===== DRON KARTI: UCUS GOSTERGELERI ===== */
   .dk-gos-dis { margin-bottom: 8px; }
   /* IS152: tek PFD canvas (Boeing tarzi cam kokpit) */
-  .dk-pfd-dis { margin-bottom: 8px; }
+  .dk-pfd-dis { margin-bottom: 0; }
+  /* IS159: ufuk gostergesi paneli — background ve border YOK (canvas kendi
+     zeminini cizer; etrafinda cerceve/panel gorunmesin) */
   .dk-pfd-canvas {
-    display: block; width: 100%; background: #1a1c22;
-    border-radius: 8px; border: 1px solid var(--cizgi, #2a2e38);
+    display: block; width: 100%; background: transparent;
+    border-radius: 8px; border: none;
   }
+  /* IS159: kamera satiri gizliyken yer kaplamasin (gostergeler-konsol bosluğu) */
+  .dk-kamera-satir.gizli { display: none; }
   /* IS154: ARM/Islemler/Fokus dugmeleri yapay ufuk uzerinde kose overlay'leri */
   .dk-pfd-dis.dk-pfd-kap { position: relative; }
   /* IS155: butonlar yapay ufkun (AI) IC KOSELERINE hizali — GPS/MANUAL ile
@@ -2208,10 +2212,12 @@
   /* Ayrilmis (tasinabilir popup) dron karti */
   .dron-kart.ayrik {
     position: fixed; z-index: 1250;
-    /* IS153: yuzen panel yeniden boyutlandirilabilir; PFD pencereyle olcekler */
+    /* IS159: yalniz YATAY resize -> yukseklik icerige gore otomatik, altta
+       bosluk kalmaz. PFD genislikle olceklenir; dikey tasarsa max-height +
+       overflow-y ile kaydirilir. */
     width: 340px; min-width: 300px; max-width: 92vw;
-    height: auto; min-height: 240px; max-height: 92vh;
-    overflow: auto; resize: both;
+    height: auto; max-height: 92vh;
+    overflow-x: auto; overflow-y: auto; resize: horizontal;
     box-shadow: 0 8px 32px rgba(0,0,0,.55);
     border: 1px solid var(--cizgi); border-radius: 6px;
     background: var(--panel-arka);

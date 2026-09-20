@@ -24,7 +24,8 @@
     ucak: "ucak.glb", quad: "quad.glb", hexa: "hexa.glb", octo: "octo.glb",
     tri: "tri.glb", heli: "heli.glb", radar: "radar.glb", eo: "eo.glb",
   };
-  var MIN_PIKSEL = 66;     // her zoom'da bu kadar gorunur
+  var MIN_PIKSEL = 99;     // IS160: %50 buyutuldu (66 -> 99), her zoom'da gorunur
+  var MODEL_OLCEK = 1.5;   // IS160: 3B model %50 buyuk (yakin gorusto)
   var MAKS_OLCEK = 6000;   // asiri yakinda devasa olmasin (metre)
 
   function viewerVar() {
@@ -82,6 +83,7 @@
       }, false),
       model: {
         uri: YOL + MODELLER[tur],
+        scale: MODEL_OLCEK,
         minimumPixelSize: MIN_PIKSEL,
         maximumScale: MAKS_OLCEK,
         heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,

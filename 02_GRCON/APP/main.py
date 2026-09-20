@@ -684,6 +684,7 @@ def uygulama_kur():
     # sysid eşleşmesiyle yetkilendirilir. UI/WS verisi tek başına yeterli
     # değildir; görev katmanı süreç türü ve canlılığını burada sorgular.
     gorev.sitl = ws_sunucu.sitl
+    dron.sitl = ws_sunucu.sitl   # IS161: sanal dron UID'si sysid'e baglansin (kimlik cakismasi)
     # v2.5.18: Guncelleme denetimi arka planda yapilir; ana telemetri
     # dongusu veya acilis bu uzak HTTP istegini ASLA beklemez.
     # v2.5.30: Dosya tabanli (artimli) guncelleme. Eski .exe modeli

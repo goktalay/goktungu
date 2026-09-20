@@ -2,11 +2,24 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.253";
-const GCS_SURUM_TARIH = "2026-09-19";
+const GCS_SURUM = "2.4.254";
+const GCS_SURUM_TARIH = "2026-09-20";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.254",
+    tarih: "2026-09-20",
+    baslik: "Dron paneli ve 3B ikon ince ayarları; sanal dron kimlik çakışması düzeltildi (paket 2.5.124)",
+    maddeler: [
+      "HATA (kullanıcı): birden fazla sanal dron başlatıldığında birinin adı/rengi değişince diğerininki de değişiyordu. Kök neden: SITL örnekleri AYNI donanım UID'sini bildirdiği için hepsi tek kalıcı kayda (isim/renk) düşüyordu. Artık sanal dron kimliği sysid'e bağlanır ('sitl:<sysid>'); her sanal dron benzersiz ad/renk alır.",
+      "Yüzen dron paneli yalnız YATAY yeniden boyutlandırılır: yükseklik içeriğe göre otomatik, altta boşluk kalmaz; saklanan boyut yalnız genişliktir.",
+      "Göstergeler ile konsol arasındaki boş alan giderildi (kamera kaydı yokken kamera satırı tamamen gizlenir).",
+      "Ufuk göstergesi panelinin arka planı ve kenarlığı kaldırıldı (PFD kendi zeminini çizer).",
+      "3B dron ikonu %50 büyütüldü; arkada bıraktığı hareket izi çizgisi inceltildi.",
+      "Başlığa çift tık paneli tamamen katlar/açar (eski 'kompakt' yerine); dron renk karesi ve ayrı fokus düğmesi kaldırıldı (GPS kutusuna tıklayınca drona fokuslanılır).",
+    ],
+  },
   {
     surum: "2.4.253",
     tarih: "2026-09-19",

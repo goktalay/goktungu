@@ -712,7 +712,7 @@ function dronIzEkle(d, pos, renk){
       id: "dron_iz_" + sysid,
       polyline: {
         positions: new Cesium.CallbackProperty(() => dronIzGecmisi[sysid] || [], false),
-        width: 2.5,
+        width: 1.5,   // IS160: iz cizgisi inceltildi (2.5 -> 1.5)
         material: cRenk,
         clampToGround: false,
       },
@@ -2729,17 +2729,18 @@ function dronPanelBoyutKaydet(sysid, kok) {
     if (!kok.classList.contains("ayrik")) return;
     if (kok.classList.contains("dk-yalniz-baslik")) return;
     const r = kok.getBoundingClientRect();
-    const w = Math.round(r.width), h = Math.round(r.height);
-    if (w < 240 || h < 160) return;
-    localStorage.setItem(DP_BOYUT_ON + sysid, JSON.stringify({ w: w, h: h }));
+    const w = Math.round(r.width);
+    if (w < 240) return;
+    // IS159: yalniz genislik saklanir (yukseklik icerige gore otomatik)
+    localStorage.setItem(DP_BOYUT_ON + sysid, JSON.stringify({ w: w }));
   } catch (e) {}
 }
 function dronPanelBoyutUygula(sysid, kok) {
   try {
     const s = JSON.parse(localStorage.getItem(DP_BOYUT_ON + sysid) || "null");
     if (s && s.w) {
-      kok.style.width = s.w + "px";
-      if (s.h) kok.style.height = s.h + "px";
+      kok.style.width = s.w + "px";   // IS159: yalniz genislik; yukseklik otomatik
+      kok.style.height = "";
     }
   } catch (e) {}
 }
