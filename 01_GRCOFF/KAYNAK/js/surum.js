@@ -2,11 +2,23 @@
 // Kullanim: Yardim > Program Hakkinda popup'inda gosterilir (menubar.js).
 // v2.1.8: GCS_SURUM_GECMISI eklendi - surum numarasina tiklaninca acilan
 // "Surum Gecmisi" popup'inda listelenir (js/surum_gecmisi.js).
-const GCS_SURUM = "2.4.252";
-const GCS_SURUM_TARIH = "2026-09-18";
+const GCS_SURUM = "2.4.253";
+const GCS_SURUM_TARIH = "2026-09-19";
 
 // Surum gecmisi: en yeni en ustte. s=surum, t=tarih, d=degisiklikler.
 const GCS_SURUM_GECMISI = [
+  {
+    surum: "2.4.253",
+    tarih: "2026-09-19",
+    baslik: "Haritada 3B model ikonlar ve dron paneli cam kokpit PFD'si (paket 2.5.123)",
+    maddeler: [
+      "3B HARİTA İKONLARI: araç tipine göre yerelde üretilen glTF modelleri — sabit kanat uçak (heading/pitch/roll), multirotor kol sayısına göre (quad/hexa/octo/tri), helikopter, radar (sürekli dönen anten), elektro-optik (gimbal+kamera). Her modelde yön üçgeni. minimumPixelSize ile her zoom'da görünür; tamamen çevrimdışı, harici kaynak gerektirmez. Harita Ayarları > '3B İkonlar' ile açılır/kapanır (varsayılan AÇIK).",
+      "DRON PANELİ PFD: eski gösterge karuseli yerine tek Boeing tarzı cam kokpit — yapay ufuk, hız/irtifa şeritleri, dikey hız ve pusula; tümü Türkçe ve metrik (m/s, m). Gece/gündüz temasına uyar (gündüzde açık gök/yer).",
+      "ARM durumu, İşlemler, GPS ve uçuş modu yapay ufkun dört köşesinde tutarlı kutular; ARM rengi duruma göre (hazır/uyarı/kopuk). GPS kutusuna tıklayınca drona fokuslanılır, mod kutusuna tıklayınca uçuş modu seçilir.",
+      "Yüzen panel yeniden boyutlandırılabilir (PFD pencereyle ölçeklenir, boyut dron bazında saklanır); başlığa çift tık paneli katlar/açar.",
+      "ARM kontrolünden 'AHRS / Tutum çözümü' maddesi çıkarıldı: sanal dronda EKF yakınsamadan yanlış 'arızalı' verip 'arm olamıyor' algısı yaratıyordu; gerçek tutum/konum sağlığı EKF maddeleriyle denetlenir.",
+    ],
+  },
   {
     surum: "2.4.252",
     tarih: "2026-09-18",

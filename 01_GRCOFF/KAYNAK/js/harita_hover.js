@@ -82,6 +82,14 @@
     try { secilen = viewer.scene.drillPick(p, 6) || []; } catch (e) { return; }
     let bulunan = null;
     for (const s of secilen){ const ent = s && s.id; if (hedefMi(ent)) { bulunan = ent; break; } }
+    // IS151: 3B rig parcasi secildiyse ANA dron entity'sine esle (etiket onda)
+    if (bulunan && typeof bulunan.id === "string"){
+      const m = bulunan.id.match(/^dron_(\d+)__r3/);
+      if (m && typeof viewer !== "undefined" && viewer){
+        const ana = viewer.entities.getById("dron_" + m[1]);
+        if (ana) bulunan = ana;
+      }
+    }
     if (bulunan === acik){ if (onizleme) eoOnizlemeTasi(ev); return; }
     kapat();
     if (bulunan && eoMu(bulunan)){ eoOnizlemeAc(bulunan, ev); acik = bulunan; return; }

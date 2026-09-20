@@ -773,6 +773,8 @@ const DILLER = {
     dkRenkIpucu: "Dron rengi (harita izi ile ayn\u0131)",
     lblTerrain: "Arazi Y\u00fcksekli\u011fi (Terrain)",
     terrainNot: "A\u00e7\u0131kken harita ger\u00e7ek arazi y\u00fckseltisiyle 3B g\u00f6sterilir (internet gerektirir).",
+    lbl3dIkon: "3B \u0130konlar",
+    ikon3dNot: "A\u00e7\u0131kken dron (sabit kanat/multirotor), radar ve elektro-optik haritada 3B model olarak g\u00f6sterilir; radar d\u00f6ner, her ikonun \u00f6n\u00fcnde y\u00f6n \u00fc\u00e7geni bulunur. Kapal\u0131yken sade elmas g\u00f6sterim kullan\u0131l\u0131r.",
     lblTerrainAcik: "A\u00c7IK", lblTerrainKapali: "KAPALI",
     panelHaritaAyar: "HAR\u0130TA AYARLARI",
     btnHaritaAyarIpucu: "Harita Ayarlar\u0131",
@@ -3058,6 +3060,8 @@ const DILLER = {
     dkRenkIpucu: "Drone color (same as map trail)",
     lblTerrain: "Terrain Elevation",
     terrainNot: "When enabled, the map is rendered in 3D with real terrain elevation (requires internet).",
+    lbl3dIkon: "3D Icons",
+    ikon3dNot: "When enabled, drones (fixed-wing/multirotor), radar and electro-optic appear as 3D models on the map; the radar spins and each icon shows a heading triangle. When off, a simple diamond marker is used.",
     lblTerrainAcik: "ON", lblTerrainKapali: "OFF",
     panelHaritaAyar: "MAP SETTINGS",
     btnHaritaAyarIpucu: "Map Settings",
@@ -4667,6 +4671,9 @@ function applyLanguage(dil, kaydet){
   // Terrain dugmesini yeni dile gore tazele
   if (typeof window.terrainBtnTazele === "function") {
     try { window.terrainBtnTazele(); } catch(e){}
+  }
+  if (typeof window.ikon3dDugmeTazele === "function") {
+    try { window.ikon3dDugmeTazele(); } catch(e){}
   }
   // ------------------------------------------------------------
   // v2.4.33: WIDGET DIL TAZELEME

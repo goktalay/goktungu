@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="lib/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="lib/flightindicators/flightindicators.min.css">
-<link rel="stylesheet" href="css/stil.css?v=v24247">
+<link rel="stylesheet" href="css/stil.css?v=v242534">
 <link rel="stylesheet" href="css/diyagram.css?v=v24241">
 <link rel="stylesheet" href="css/makrolar.css?v=v24247">
 <link rel="stylesheet" href="css/widget_baslatici.css?v=v24250">
@@ -1038,6 +1038,16 @@
         </div>
       </div>
     </div>
+    <!-- 3B Ikonlar (IS151) -->
+    <div class="alt-bolum">
+      <h3 class="alt-baslik"><i class="fa-solid fa-cubes"></i><span data-i18n="lbl3dIkon">3B İkonlar</span></h3>
+      <div class="alan">
+        <div class="tema-grup">
+          <button id="btn3dIkon"><i class="fa-solid fa-cubes"></i><span>AÇIK</span></button>
+        </div>
+        <div style="margin-top:6px;color:var(--soluk);font-size:10px;line-height:1.5;" data-i18n="ikon3dNot">Açıkken dron (sabit kanat/multirotor), radar ve elektro-optik haritada 3B model olarak gösterilir; radar döner, her ikonun önünde yön üçgeni bulunur. Kapalıyken sade elmas gösterim kullanılır.</div>
+      </div>
+    </div>
     <!-- Cesium Goruntu / Performans -->
     <div class="alt-bolum">
       <h3 class="alt-baslik"><i class="fa-solid fa-display"></i><span data-i18n="lblCesiumGoruntu">Görüntü / Performans</span></h3>
@@ -1826,7 +1836,7 @@
 <script src="js/bos_panel.js?v=v24127"></script>
 <script src="js/bolum_popup.js?v=v24227"></script>
 <script src="js/arayuz.js?v=v24213"></script>
-<script src="js/i18n.js?v=v24247"></script>
+<script src="js/i18n.js?v=v24253"></script>
 <script src="js/onay.js?v=v24127"></script>
 <script src="js/angajman.js?v=v24176"></script>
 <script src="js/angajman_izle.js?v=v24176"></script>
@@ -1840,13 +1850,15 @@
 <script src="js/harita_pilot_konum.js?v=v24228"></script>
 <!-- v2.4.29: prizma ikon + arazi yukseklik referansi (dronlar/hedefler/radar_gorsel ONCESINDE yuklenmeli) -->
 <script src="js/prizma_ikon.js?v=v24127"></script>
+<script src="js/harita_ikon_3d.js?v=v242532"></script>
 <script src="js/tema.js?v=v24237"></script>
 <script src="js/param_aciklama.js?v=v24127"></script>
 <script src="js/param_aciklama_tr.js?v=v24127"></script>
 <script src="js/param_meta.js?v=v24127"></script>
 <!-- v2.4.19: ArduPilot parametre deger secenekleri (combo box/bitmask) -->
 <script src="js/param_secenek.js?v=v24127"></script>
-<script src="js/dronlar.js?v=v24249"></script>
+<script src="js/panel_pfd.js?v=v242537"></script>
+<script src="js/dronlar.js?v=v242540"></script>
   <script src="js/dron_ekran_disi.js?v=v24127"></script>
 <!-- v2.4.42: HOME (kalkis/donus) noktasi harita ikonu. dronlar.js
      SONRASINDA yuklenmeli: dronRengi() ve sonVeri global'lerini kullanir
@@ -1894,13 +1906,13 @@
      seri.js'den SONRA yuklenir: bagDialogAc/bagEkleHataGoster gibi
      yardimcilari ve `ws` globalini kullanir. -->
 <script src="js/merkez_baglanti.js?v=v24127"></script>
-<script src="js/radar_gorsel.js?v=v24248"></script>
+<script src="js/radar_gorsel.js?v=v24253"></script>
 <script src="js/radar_panel.js?v=v24248"></script>
 <script src="js/radar_pencere.js?v=v24227"></script>
 <script src="js/m50_panel.js?v=v24240"></script>
 <script src="js/diyagram.js?v=v24241"></script>
 <script src="js/hedefler.js?v=v24227"></script>
-<script src="js/harita_hover.js?v=v24225"></script>
+<script src="js/harita_hover.js?v=v24253"></script>
 <script src="js/harita_cevrimici.js?v=v24220"></script>
 <script src="js/grafik.js?v=v24127"></script>
 <script src="js/konsol.js?v=v24224"></script>
@@ -1963,7 +1975,7 @@
 <script src="js/uyari_merkezi.js?v=v24127"></script>
 <script src="js/rol_yonetimi.js?v=v24127"></script>
 <script src="js/pilot_hakkinda.js?v=v24127"></script>
-<script src="js/surum.js?v=v24252"></script>
+<script src="js/surum.js?v=v242531"></script>
 <script src="js/surum_gecmisi.js?v=v24138"></script>
 <script src="js/destek_baglanti.js?v=v24127"></script>
 <script src="js/menubar.js?v=v24234"></script>

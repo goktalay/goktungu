@@ -668,6 +668,7 @@ function eoIkon(renk){
 
 window.eoIkonlariGuncelle = function(liste){
   if (typeof viewer === "undefined" || !viewer) return;
+  if (liste) window._eoSonListe = liste;   // IS151: 3B kip degisince yeniden ciz
   const gorulen = {};
   for (const c of (liste || [])){
     const eid = Number(c.eo_id);
@@ -733,11 +734,23 @@ window.eoIkonlariGuncelle = function(liste){
       v.gorus.show = d.durum === "bagli";
     }
     v.az = az; v.sonKey = key;
+    // IS151: 3B elektro-optik ikon. Acikken 2B billboard gizlenir.
+    try {
+      const eoAcik = (typeof window.ikon3dAcik === "function") ? window.ikon3dAcik() : false;
+      if (eoAcik && window.IkonMuh && window.IkonMuh.hazir()){
+        if (v.ikon.billboard) v.ikon.billboard.show = false;
+        window.IkonMuh.eo("eo_" + eid + "__r3", { lat: lat, lon: lon, yuk: 0, azimut: az, renk: renk });
+      } else {
+        if (v.ikon.billboard) v.ikon.billboard.show = true;
+        if (window.IkonMuh) window.IkonMuh.sil("eo_" + eid + "__r3");
+      }
+    } catch (e3) {}
   }
   for (const eid of Object.keys(eoIkonVarliklar)){
     if (!gorulen[eid]){
       const v = eoIkonVarliklar[eid];
       try { viewer.entities.remove(v.ikon); viewer.entities.remove(v.gorus); } catch (e) {}
+      try { if (window.IkonMuh) window.IkonMuh.sil("eo_" + eid + "__r3"); } catch (e) {}
       delete eoIkonVarliklar[eid];
     }
   }
@@ -955,6 +968,18 @@ function gcsGuncelle(lat, lon){
     gcsVarlik.position = pos;
     if (gcsVarlik.polygon) window.PrizmaIkon.tazele(gcsVarlik, gSecenek);
   }
+  // IS151: 3B DONEN radar ikonu. Acikken prizma gizlenir; anten surekli doner.
+  try {
+    const rAcik = (typeof window.ikon3dAcik === "function") ? window.ikon3dAcik() : false;
+    const rGor = (typeof window.radarYetenekVar === "function") ? window.radarYetenekVar() : true;
+    if (rAcik && rGor && window.IkonMuh && window.IkonMuh.hazir()){
+      if (gcsVarlik){ if (gcsVarlik.polygon) gcsVarlik.polygon.show = false; if (gcsVarlik.billboard) gcsVarlik.billboard.show = false; }
+      window.IkonMuh.radar("radar_ist__r3", { lat: lat, lon: lon, yuk: 0, heading: radarBakisYonu(), renk: gRenk });
+    } else {
+      if (gcsVarlik){ if (gcsVarlik.polygon) gcsVarlik.polygon.show = (typeof window.radarYetenekVar === "function" ? window.radarYetenekVar() : true); if (gcsVarlik.billboard) gcsVarlik.billboard.show = true; }
+      if (window.IkonMuh) window.IkonMuh.sil("radar_ist__r3");
+    }
+  } catch (e3) {}
   // Sol paneldeki GCS kartini guncelle
   gcsKartGuncelle();
   // v2.4.248: radar kaydi yoksa merkez isareti gizli
@@ -1001,3 +1026,11 @@ function gcsKutuTazele(){
 }
 
 // ---------------------------------------------------------------
+
+// IS151: 3B ikon kipi degisince radar istasyonu ve EO ikonlarini yeniden ciz
+window.radarIkon3dTazele = function(){
+  try { if (typeof gcsKonum !== "undefined" && gcsKonum) gcsGuncelle(gcsKonum.lat, gcsKonum.lon); } catch (e) {}
+};
+window.eoIkon3dTazele = function(){
+  try { window.eoIkonlariGuncelle(window._eoSonListe || []); } catch (e) {}
+};

@@ -1581,8 +1581,38 @@
 
   .cesium-viewer-bottom{display:none;}
 
-  /* ===== DRON KARTI: UCUS GOSTERGELERI (KARUSEL) ===== */
+  /* ===== DRON KARTI: UCUS GOSTERGELERI ===== */
   .dk-gos-dis { margin-bottom: 8px; }
+  /* IS152: tek PFD canvas (Boeing tarzi cam kokpit) */
+  .dk-pfd-dis { margin-bottom: 8px; }
+  .dk-pfd-canvas {
+    display: block; width: 100%; background: #1a1c22;
+    border-radius: 8px; border: 1px solid var(--cizgi, #2a2e38);
+  }
+  /* IS154: ARM/Islemler/Fokus dugmeleri yapay ufuk uzerinde kose overlay'leri */
+  .dk-pfd-dis.dk-pfd-kap { position: relative; }
+  /* IS155: butonlar yapay ufkun (AI) IC KOSELERINE hizali — GPS/MANUAL ile
+     ayni bolgede. AI sanal kutuda x:130..660 / y:55.. (800x560) -> oran. */
+  .dk-pfd-ov { position: absolute; top: 11%; z-index: 4; display: flex; gap: 5px; align-items: flex-start; }
+  .dk-pfd-ov-sol { left: 16.5%; }
+  .dk-pfd-ov-sag { right: 17.5%; }
+  /* IS154: butonlar PFD icindeki yesil "MANUAL" kutusu gibi gorunur —
+     koyu yari saydam zemin, ince renkli kenar, kompakt */
+  .dk-pfd-ov > button {
+    height: 24px; min-height: 24px; padding: 0 8px; margin: 0 !important;
+    font-size: 12px; font-weight: 700; line-height: 1; width: auto; min-width: 0; max-width: 170px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: rgba(6,10,16,.60) !important; color: #00e676 !important;
+    border: 1.5px solid rgba(0,230,118,.75) !important; border-radius: 5px; cursor: pointer;
+    box-shadow: none;
+  }
+  .dk-pfd-ov > button:hover { background: rgba(6,10,16,.82) !important; }
+  .dk-pfd-ov .dk-fokus-btn { width: 26px; padding: 0 !important; }
+  /* ARM durumu: MANUAL kutusu gibi, ama duruma gore renk (yesil/turuncu/gri) */
+  .dk-pfd-ov .dk-hazir-rozet.iyi { color: var(--iyi,#34d399) !important; border-color: rgba(52,211,153,.85) !important; }
+  .dk-pfd-ov .dk-hazir-rozet.uyari { color: #ffb020 !important; border-color: rgba(255,176,32,.9) !important; }
+  .dk-pfd-ov .dk-hazir-rozet.bilinmiyor { color: #c2cbd6 !important; border-color: rgba(194,203,214,.6) !important; }
   .dk-gosterge-kutu {
     display: flex; flex-wrap: nowrap; gap: 6px;
     justify-content: center; align-items: center;
@@ -2178,11 +2208,16 @@
   /* Ayrilmis (tasinabilir popup) dron karti */
   .dron-kart.ayrik {
     position: fixed; z-index: 1250;
-    width: 340px; max-height: 80vh; overflow-y: auto;
+    /* IS153: yuzen panel yeniden boyutlandirilabilir; PFD pencereyle olcekler */
+    width: 340px; min-width: 300px; max-width: 92vw;
+    height: auto; min-height: 240px; max-height: 92vh;
+    overflow: auto; resize: both;
     box-shadow: 0 8px 32px rgba(0,0,0,.55);
     border: 1px solid var(--cizgi); border-radius: 6px;
     background: var(--panel-arka);
   }
+  /* yalniz-baslik (katlanmis) iken resize kapali */
+  .dron-kart.ayrik.dk-yalniz-baslik { resize: none; height: auto !important; min-height: 0; }
   .dron-kart.ayrik .dron-kart-baslik { cursor: grab; touch-action: none; }
   /* v2.4.230: kopru grubunda "listeden kaldir" dugmesi */
   .bag-kopru-sil { flex: 0 0 auto; width: 24px; height: 22px; margin-left: 4px; display: inline-flex; align-items: center; justify-content: center;

@@ -1029,8 +1029,44 @@ function varlikGuncelle(d){
     }
     e.label.fillColor = Cesium.Color.fromCssColorString(renk).withAlpha(alfa);
   }
+  // IS151: 3B ikon motoru. Acikken tipe gore ucak/multirotor rig'i kurulur
+  // ve elmas (ellipsoid) gizlenir; kapaliyken rig silinip elmas geri gelir.
+  try { dron3dUygula(d, varliklar[d.sysid], renk, hdg); } catch (eIk) {}
   dronKameraOnizlemeTazele(d);
 }
+
+// IS151: dronun 3B rig'ini kur/guncelle veya kapat
+function dron3dUygula(d, e, renk, hdg){
+  if (!e) return;
+  const anaId = "dron_" + d.sysid + "__r3";
+  const acik = (typeof window.ikon3dAcik === "function") ? window.ikon3dAcik() : false;
+  if (acik && window.IkonMuh && window.IkonMuh.hazir()){
+    // Eski gosterimi gizle: elmas billboard (varsayilan) VE/VEYA ellipsoid.
+    if (e.billboard) e.billboard.show = false;
+    if (e.ellipsoid) e.ellipsoid.show = false;
+    window.IkonMuh.dron(anaId, {
+      lat: d.lat, lon: d.lon, yuk: Math.max(0, (typeof d.alt_rel === "number" ? d.alt_rel : 0)),
+      heading: (typeof d.heading === "number") ? d.heading : (hdg || 0),
+      pitch: (typeof d.pitch === "number") ? d.pitch : 0,
+      roll: (typeof d.roll === "number") ? d.roll : 0,
+      renk: renk, aracTipi: d.arac_tipi,
+    });
+  } else {
+    if (e.billboard) e.billboard.show = true;    // eski gosterimi geri getir
+    if (e.ellipsoid) e.ellipsoid.show = true;
+    if (window.IkonMuh) window.IkonMuh.sil(anaId);
+  }
+}
+
+// IS151: 3B ikon kipi degisince tum dronlari yeniden ciz (aninda etki)
+window.ikonModuTazele = function(){
+  try {
+    if (typeof sonVeri === "object" && sonVeri)
+      for (const sid in sonVeri) if (sonVeri[sid]) varlikGuncelle(sonVeri[sid]);
+  } catch (e) {}
+  try { if (typeof window.eoIkon3dTazele === "function") window.eoIkon3dTazele(); } catch (e) {}
+  try { if (typeof window.radarIkon3dTazele === "function") window.radarIkon3dTazele(); } catch (e) {}
+};
 
 function dronSil(sysid) {
   // Haritadan sil
@@ -1043,6 +1079,8 @@ function dronSil(sysid) {
     viewer.entities.remove(varliklar[sysid]);
     delete varliklar[sysid];
   }
+  // IS151: 3B rig'i de kaldir
+  try { if (window.IkonMuh) window.IkonMuh.sil("dron_" + sysid + "__r3"); } catch (e) {}
   // Hareket izini ve drona bağlı küçük görüntü önizlemelerini de sil.
   dronIzSil(sysid);
   dronGoruntuSil(sysid);
@@ -1109,8 +1147,11 @@ const DK_KAPAT_IKON = "<i class='fa-solid fa-xmark'></i>";
 // DURUMA GORE degisir. Onceki surumde (v2.4.39) her iki durumda
 // da carpi gosteriliyordu; kullanici buyult/kucult istedi.
 // ISLEV DEGISMEDI - yalniz ikon. DK_KAPAT_IKON adi korundu.
-const DK_BUYULT_IKON = "<i class='fa-solid fa-up-right-and-down-left-from-center'></i>";
-const DK_KUCULT_IKON = "<i class='fa-solid fa-down-left-and-up-right-to-center'></i>";
+// IS155: panel katla/ac dugmesi artik ac/kapa (chevron) ikonu.
+//   acikken  -> yukari chevron (katla)
+//   kapaliyken-> asagi chevron (ac)
+const DK_BUYULT_IKON = "<i class='fa-solid fa-chevron-down'></i>";
+const DK_KUCULT_IKON = "<i class='fa-solid fa-chevron-up'></i>";
 
 function dronKartGuncelle(d) {
   let kart = dronKartlar[d.sysid];
@@ -1230,12 +1271,18 @@ function dronKartGuncelle(d) {
     // .dk-ok listeye eklendi), burada da guvence olarak durduruyoruz.
     ok.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); });
     ok.addEventListener("dblclick", (ev) => { ev.stopPropagation(); });
-    // Ayrik (popup) modda basliga CIFT TIK: kompakt gorunum ac/kapa
-    // (yalniz gostergeler gorunur, telemetri satirlari gizlenir)
+    // IS157: Ayrik (popup) modda basliga CIFT TIK artik COLLAPSE/EXPAND yapar
+    // (yalniz baslik <-> tam panel). Eski "kompakt" gorunum yerine katla/ac
+    // dugmesiyle (dk-yalniz-baslik) ayni davranis; ikon da senkronlanir.
     baslik.addEventListener("dblclick", (ev) => {
       if (!kok.classList.contains("ayrik")) return;
       ev.preventDefault(); ev.stopPropagation();
-      kok.classList.toggle("kompakt");
+      const kucuk = kok.classList.toggle("dk-yalniz-baslik");
+      if (kok._btnKucult) {
+        kok._btnKucult.innerHTML = kucuk ? DK_BUYULT_IKON : DK_KUCULT_IKON;
+        kok._btnKucult.title = kucuk ? (D().dkGeriBuyut || "Geri büyüt")
+                                     : (D().dkYalnizBaslik || "Küçült (yalnız başlık)");
+      }
     });
     // Ayrik moddayken basliktan surukleme
     dronKartSurukleKur(kok, baslik);
@@ -1248,7 +1295,8 @@ function dronKartGuncelle(d) {
     govde.className = "dron-kart-icerik gizli";
     // Renk gostergesi: icerik sol ust kosesinde (left:10px top:10px)
     renkKare.title = D().dkRenkIpucu || "Dron rengi (harita izi ile ayni)";
-    govde.appendChild(renkKare);
+    // IS155: dron rengi karesi PFD ustunde bosluk yaratiyordu; gizlendi
+    // (govde'ye eklenmez; referans korunur, renk atamasi zararsizdir).
     // Drona odaklan dugmesi: icerik sag ust kosesinde (renk karesinin simetrigi)
     const btnFokusKart = document.createElement("button");
     btnFokusKart.type = "button";
@@ -1260,7 +1308,8 @@ function dronKartGuncelle(d) {
       ev.stopPropagation(); ev.preventDefault();
       dronaGit(d.sysid);
     });
-    govde.appendChild(btnFokusKart);
+    // IS157: Fokus dugmesi kaldirildi (gereksiz) — GPS kutusuna tiklayinca
+    // drona fokuslanilir. Buton olusturulur ama DOM'a EKLENMEZ (referans korunur).
 
     // --- v2.4.19: UCUSA HAZIR GOSTERGESI (kartin en ustu) ---
     // Tiklanirsa dronun bildirdigi hata/prearm mesajlari ayri panelde
@@ -1273,10 +1322,8 @@ function dronKartGuncelle(d) {
     const hazirRozet = document.createElement("button");
     hazirRozet.type = "button";
     hazirRozet.className = "dk-hazir-rozet bilinmiyor";
-    hazirRozet.innerHTML =
-      "<i class='fa-solid fa-circle-question dk-hazir-ikon'></i>" +
-      "<span class='dk-hazir-metin'>—</span>" +
-      "<i class='fa-solid fa-chevron-right dk-hazir-ok'></i>";
+    // IS155: ikon/ok yok — yalniz durum metni (GPS/mod kutulari gibi sade)
+    hazirRozet.innerHTML = "<span class='dk-hazir-metin'>—</span>";
     hazirRozet.addEventListener("pointerdown", (ev) => {
       if (ev.button !== 0 && ev.pointerType === "mouse") return;
       ev.stopPropagation(); ev.preventDefault();
@@ -1287,8 +1334,8 @@ function dronKartGuncelle(d) {
     islemBtn.type = "button";
     islemBtn.className = "dk-islem-btn";
     islemBtn.title = D().dkIslemler || "\u0130\u015flemler";
+    // IS155: ikon yok \u2014 yalniz metin
     islemBtn.innerHTML =
-      "<i class='fa-solid fa-sliders dk-islem-ikon'></i>" +
       "<span class='dk-islem-metin'>" +
       (D().dkIslemler || "\u0130\u015eLEMLER").toUpperCase() + "</span>";
     islemBtn.addEventListener("pointerdown", (ev) => {
@@ -1402,6 +1449,11 @@ function dronKartGuncelle(d) {
     telemetri.appendChild(udpBtn);
 
     govde.appendChild(gostergeler.kutu);
+    // IS156: ARM durumu, Islemler, GPS ve MOD artik PFD tuvaline CIZILI 4 kose
+    // kutusudur (resize'da birlikte olceklenir, ayni stil). HTML overlay butonlari
+    // KALDIRILDI. Tiklamalar canvas uzerinde hit-test ile yonlendirilir
+    // (bkz. dronGostergeleriOlustur -> canvas 'click'). Eski satir gizlenir.
+    try { if (hazirSatir && hazirSatir.parentNode) hazirSatir.remove(); } catch (eOv) {}
     govde.appendChild(telemetri);
     // v2.4.2: kartin en altina kamera secimi + gomulu izleme bolumu
     // v2.4.41: kart govdesinin EN SONUNA ince parametre yukleme seridi.
@@ -1456,6 +1508,9 @@ function dronKartGuncelle(d) {
                                     gosDilTazele: gostergeler.dilTazele };
     // Gostergeler DOM'a eklendikten sonra baslatilir (jquery secici)
     gostergeler.baslat();
+    // IS153: yuzen panel resize -> PFD'yi pencereyle olcekle + boyutu dron
+    // bazinda kaydet. ResizeObserver kok boyutu her degistiginde tetiklenir.
+    dronPanelResizeKur(d.sysid, kart);
   }
 
   // Baslik metni: kullanici ismi varsa onu goster, yoksa D{sysid} | TIP
@@ -1608,22 +1663,9 @@ function dronKartGuncelle(d) {
   // Baslik rengini baglanti durumuna gore ayarla
   kart.baslik.style.opacity = d.baglanti ? "1" : "0.5";
 
-  // --- UCUS GOSTERGELERINI BESLE (birim donusumleri) ---
-  if (kart.gosterge) {
-    const g = kart.gosterge;
-    try {
-      if (g.attitude) {
-        g.attitude.setRoll(-(d.roll || 0));   // kutuphane rolu ters isler
-        g.attitude.setPitch(d.pitch || 0);
-      }
-      if (g.heading) g.heading.setHeading(d.heading || 0);
-      if (g.altimeter)
-        g.altimeter.setAltitude((d.alt_rel || 0) * 3.28084);      // m -> ft
-      if (g.airspeed)
-        g.airspeed.setAirSpeed((d.groundspeed || 0) * 1.94384);   // m/s -> kt
-      if (g.variometer)
-        g.variometer.setVario(((d.vz || 0) * 196.85) / 1000);     // m/s -> 1000ft/min
-    } catch (e) { /* gosterge hazir degilse sessiz gec */ }
+  // --- UCUS GOSTERGESINI BESLE (IS152: tek PFD canvas) ---
+  if (kart.gosterge && typeof kart.gosterge.ciz === "function") {
+    try { kart.gosterge.ciz(d); } catch (e) { /* PFD hazir degilse sessiz gec */ }
   }
 
   // --- TOOLBAR DUGME DURUMLARI (ayri Arm/Disarm, Takeoff/Land) ---
@@ -1653,85 +1695,57 @@ const GOSTERGE_TANIM = [
   ["variometer", "dkGosVar"],
 ];
 
+// IS152: Dron paneli gostergesi artik TEK bir PFD canvas'i (Boeing tarzi cam
+// kokpit — kullanicinin yukledigi tasarim, sag 3B ucak gorunumu HARIC).
+// Eski jquery-flight-indicators karuseli (attitude/heading/altimeter/airspeed/
+// variometer, ok+nokta gezinme) KALDIRILDI. Yeni PFD tum gostergeleri tek
+// ekranda toplar: yapay ufuk, hiz seridi, irtifa seridi, dikey hiz, pusula.
 function dronGostergeleriOlustur(sysid) {
-  const kutu = document.createElement("div");
-  kutu.className = "dk-gosterge-kutu";
-
-  // Sol ok | gosterge sahnesi | sag ok
-  const btnSol = document.createElement("button");
-  btnSol.className = "dk-gos-ok sol";
-  btnSol.innerHTML = "<i class='fa-solid fa-chevron-left'></i>";
-  const sahne = document.createElement("div");
-  sahne.className = "dk-gos-sahne";
-  const btnSag = document.createElement("button");
-  btnSag.className = "dk-gos-ok sag";
-  btnSag.innerHTML = "<i class='fa-solid fa-chevron-right'></i>";
-  kutu.appendChild(btnSol);
-  kutu.appendChild(sahne);
-  kutu.appendChild(btnSag);
-
-  // Alt satir: gosterge adi + nokta gostergesi
-  const altSatir = document.createElement("div");
-  altSatir.className = "dk-gos-alt";
-  const adEtiket = document.createElement("span");
-  adEtiket.className = "dk-gos-ad";
-  const noktaKutu = document.createElement("span");
-  noktaKutu.className = "dk-gos-noktalar";
-  const noktalar = [];
-  for (let i = 0; i < GOSTERGE_TANIM.length; i++) {
-    const n = document.createElement("span");
-    n.className = "dk-gos-nokta";
-    n.addEventListener("click", () => goster(i));
-    noktaKutu.appendChild(n);
-    noktalar.push(n);
-  }
-  altSatir.appendChild(adEtiket);
-  altSatir.appendChild(noktaKutu);
-
   const dis = document.createElement("div");
-  dis.className = "dk-gos-dis";
-  dis.appendChild(kutu);
-  dis.appendChild(altSatir);
+  dis.className = "dk-gos-dis dk-pfd-dis";
+  const canvas = document.createElement("canvas");
+  canvas.className = "dk-pfd-canvas";
+  canvas.id = "dkPfd_" + sysid;
+  dis.appendChild(canvas);
 
-  // 5 gosterge hucresi DOM'da olusur; yalniz aktif olan gorunur
-  const hucreler = [];
-  for (const [tur] of GOSTERGE_TANIM) {
-    const hucre = document.createElement("span");
-    hucre.className = "dk-gosterge";
-    hucre.id = "dkGos_" + tur + "_" + sysid;
-    sahne.appendChild(hucre);
-    hucreler.push(hucre);
+  let sonDurum = null;
+  function ciz(d) {
+    if (!window.PanelPFD || !d) return;
+    sonDurum = window.PanelPFD.telemetriDurum(d);
+    try { window.PanelPFD.ciz(canvas, sonDurum); } catch (e) { /* sessiz */ }
   }
-
-  let aktif = 0;
-  function goster(i) {
-    // Sonsuz dongu: mod ile sar
-    aktif = ((i % GOSTERGE_TANIM.length) + GOSTERGE_TANIM.length) %
-            GOSTERGE_TANIM.length;
-    const t = D();
-    for (let k = 0; k < hucreler.length; k++) {
-      hucreler[k].style.display = (k === aktif) ? "inline-block" : "none";
-      noktalar[k].classList.toggle("aktif", k === aktif);
-    }
-    adEtiket.textContent = t[GOSTERGE_TANIM[aktif][1]] || GOSTERGE_TANIM[aktif][0];
-  }
-  btnSol.addEventListener("click", (ev) => { ev.stopPropagation(); goster(aktif - 1); });
-  btnSag.addEventListener("click", (ev) => { ev.stopPropagation(); goster(aktif + 1); });
-
-  const api = {};
+  // IS155: GPS kutusuna tiklayinca drona fokuslan
+  canvas.addEventListener("click", (ev) => {
+    try {
+      if (!window.PanelPFD || typeof window.PanelPFD.gpsKutuAlani !== "function") return;
+      const kutu = window.PanelPFD.gpsKutuAlani();
+      if (!kutu) return;
+      const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      // Sanal tuval yuksekligi H=528 (bkz. panel_pfd.js)
+      const sx = (ev.clientX - r.left) * 800 / r.width;
+      const sy = (ev.clientY - r.top) * 528 / r.height;
+      const ic = (kt) => kt && sx >= kt.x && sx <= kt.x + kt.w && sy >= kt.y && sy <= kt.y + kt.h;
+      const P = window.PanelPFD;
+      const al = (ad) => (typeof P[ad] === "function") ? P[ad]() : null;
+      const nokta = { x: ev.clientX, y: ev.clientY };
+      if (ic(kutu)) { if (typeof dronaGit === "function") dronaGit(sysid); return; }             // GPS -> fokus
+      if (ic(al("modKutuAlani"))) { if (typeof dkModPopupAc === "function") dkModPopupAc(sysid, nokta); return; }
+      if (ic(al("armKutuAlani"))) { if (typeof dkArmCheckPopupAc === "function") dkArmCheckPopupAc(sysid, nokta); return; }
+      if (ic(al("islemKutuAlani"))) { if (typeof window.dkIslemlerPopupAc === "function") window.dkIslemlerPopupAc(sysid, nokta); return; }
+    } catch (e) {}
+  });
   function baslat() {
-    if (typeof $ === "undefined" || !$.flightIndicator) return;
-    for (const [tur] of GOSTERGE_TANIM) {
-      try {
-        api[tur] = $.flightIndicator("#dkGos_" + tur + "_" + sysid, tur,
-                                     GOSTERGE_AYAR);
-      } catch (e) { /* svg eksikse gosterge atlanir */ }
-    }
-    goster(0);
+    // Canvas genisligi yerlesim tamamlaninca hazir olur; ilk cizimi ertele
+    requestAnimationFrame(() => {
+      if (sonDurum && window.PanelPFD) {
+        try { window.PanelPFD.ciz(canvas, sonDurum); } catch (e) {}
+      }
+    });
   }
-  // Dil degisince etiketi tazelemek icin disari ac
-  function dilTazele() { goster(aktif); }
-  return { kutu: dis, api, baslat, dilTazele };
+  function dilTazele() { /* PFD dilden bagimsizdir */ }
+  // api.ciz(d): dronKartGuncelle her telemetri paketinde cagirir
+  return { kutu: dis, api: { canvas: canvas, ciz: ciz }, baslat, dilTazele };
 }
 
 // ---------------------------------------------------------------
@@ -2708,6 +2722,45 @@ function dronKomutToolbarOlustur(sysid, kok) {
 // ---------------------------------------------------------------
 // KARTI TASINABILIR POPUP'A AYIRMA / GERI YERLESTIRME
 // ---------------------------------------------------------------
+// IS153: yuzen dron panelinin boyutunu dron bazinda sakla/uygula
+const DP_BOYUT_ON = "gcs_dpanel_boyut_";
+function dronPanelBoyutKaydet(sysid, kok) {
+  try {
+    if (!kok.classList.contains("ayrik")) return;
+    if (kok.classList.contains("dk-yalniz-baslik")) return;
+    const r = kok.getBoundingClientRect();
+    const w = Math.round(r.width), h = Math.round(r.height);
+    if (w < 240 || h < 160) return;
+    localStorage.setItem(DP_BOYUT_ON + sysid, JSON.stringify({ w: w, h: h }));
+  } catch (e) {}
+}
+function dronPanelBoyutUygula(sysid, kok) {
+  try {
+    const s = JSON.parse(localStorage.getItem(DP_BOYUT_ON + sysid) || "null");
+    if (s && s.w) {
+      kok.style.width = s.w + "px";
+      if (s.h) kok.style.height = s.h + "px";
+    }
+  } catch (e) {}
+}
+function dronPanelResizeKur(sysid, kart) {
+  if (typeof ResizeObserver === "undefined" || kart._resizeGozlemci) return;
+  let zam = null;
+  const ro = new ResizeObserver(() => {
+    const kok = kart.kok;
+    if (!kok.classList.contains("ayrik")) return;
+    // Uçuş göstergesini (PFD) pencere boyutuna göre ANINDA yeniden çiz
+    const d = sonVeri[sysid];
+    if (d && kart.gosterge && typeof kart.gosterge.ciz === "function") {
+      try { kart.gosterge.ciz(d); } catch (e) {}
+    }
+    clearTimeout(zam);
+    zam = setTimeout(() => dronPanelBoyutKaydet(sysid, kok), 400);
+  });
+  ro.observe(kart.kok);
+  kart._resizeGozlemci = ro;
+}
+
 function dronKartAyirToggle(sysid) {
   const kart = dronKartlar[sysid];
   if (!kart) return;
@@ -2720,6 +2773,7 @@ function dronKartAyirToggle(sysid) {
     kok.classList.remove("dk-yalniz-baslik");
     if (kok._btnKucult) kok._btnKucult.innerHTML = DK_KUCULT_IKON;
     kok.style.left = ""; kok.style.top = "";
+    kok.style.width = ""; kok.style.height = "";   // IS153: panelde sabit boyut
     // v2.4.224: panelde duran golge satirin yerine kart geri konur.
     if (kart.golge && kart.golge.parentNode) {
       kart.golge.replaceWith(kok);
@@ -2771,6 +2825,7 @@ function dronKartAyirToggle(sysid) {
       kok.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 356)) + "px";
       kok.style.top = Math.max(8, Math.min(rect.top, window.innerHeight - 200)) + "px";
     }
+    dronPanelBoyutUygula(sysid, kok);   // IS153: kayitli boyut varsa uygula
     kok.dataset.sysid = String(sysid);
     // v2.2.0: ayrilan kart en uste acilir; tiklaninca da en uste gelir
     if (typeof window.pencereEnUsteKur === "function") window.pencereEnUsteKur(kok);

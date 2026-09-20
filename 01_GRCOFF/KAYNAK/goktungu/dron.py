@@ -969,7 +969,12 @@ class DronYoneticisi:
         sensor_madde("mag", "Pusula (3D)", SENSOR_MAG)
         sensor_madde("baro", "Barometre", SENSOR_BARO)
         sensor_madde("gps", "GPS", SENSOR_GPS)
-        sensor_madde("ahrs", "AHRS / Tutum çözümü", SENSOR_AHRS)
+        # IS158 (kullanici istegi): "AHRS / Tutum çözümü" maddesi ARM kontrol
+        # listesinden CIKARILDI. Ozellikle sanal dron (SITL) baslangicta EKF/AHRS
+        # yakinsamadan bu biti "saglıksız" bildirip "arm olamiyor" algisi
+        # yaratiyordu. Gercek tutum/konum saglami EKF grubu maddeleriyle
+        # (ekf_bayrak) yapilir; AHRS sensor biti gosterilmez.
+        # sensor_madde("ahrs", "AHRS / Tutum çözümü", SENSOR_AHRS)
         sensor_madde("batarya", "Batarya izleme", SENSOR_BATTERY,
                      grup="guc")
         # v2.4.37: "Itki / Motor" maddesi KALDIRILDI.
