@@ -17,8 +17,13 @@ SRC = sys.argv[sys.argv.index("--src") + 1] if "--src" in sys.argv else REPO + "
 M = REPO + "/01_GRCOFF/KAYNAK/varliklar/marka/"
 gece = Image.open(M + "turkbey_ikon_gece_1024.png").convert("RGBA")
 gunduz = Image.open(M + "turkbey_ikon_gunduz_1024.png").convert("RGBA")
-px = gece.getpixel((512, 60))
-ZEMIN = "#%02X%02X%02X" % px[:3]
+# 2026-09-21: Turkbey amblemi (kirmizi kalkan-kurt) SEFFAF zeminlidir; gece/gunduz
+# ayrimi yoktur. logo.png/logo_acik.png seffaf amblem olur (her temada kirmizi
+# gorunur). maskable/Android/favicon zemini BEYAZ (kurumsal): kirmizi amblem
+# beyaz uzerinde okunur. Kose pikselinden zemin okumak amblem kirmizisini
+# verecegi icin (amblem gorunmez olurdu) zemin sabit beyazdir.
+px = (255, 255, 255, 255)
+ZEMIN = "#FFFFFF"
 
 
 def kare(im, n):
