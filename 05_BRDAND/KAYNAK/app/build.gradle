@@ -19,8 +19,8 @@ android {
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
-        versionCode 3
-        versionName '1.1.1'
+        versionCode 4
+        versionName '1.1.2'
 
         // Multidex GEREKMEZ: MSDK kalktigi icin yontem sayisi 64K
         // sinirinin cok altinda.  Kaldirmak acilis suresini kisaltir.
