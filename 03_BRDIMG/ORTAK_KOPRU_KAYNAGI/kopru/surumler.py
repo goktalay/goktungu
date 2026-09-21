@@ -18,8 +18,17 @@ Surum bicimi: MAJOR.MINOR.YAMA
 # ---------------------------------------------------------------------
 # KOPRU CEKIRDEGI
 # ---------------------------------------------------------------------
-KOPRU_SURUM = "1.7.25"
+KOPRU_SURUM = "1.7.26"
 KOPRU_GECMIS = [
+    {
+        "surum": "1.7.26",
+        "tarih": "2026-09-21",
+        "notlar": [
+            "MARKA: Türkbey Teknoloji A.Ş. amblemi (kırmızı kalkan-kurt) tüm "
+            "köprü ikonlarına uygulandı (kurulum, hicolor, favicon, .ico). "
+            "İşlevsel değişiklik yok; yalnız marka görseli güncellendi.",
+        ],
+    },
     {
         "surum": "1.7.25",
         "tarih": "2026-09-18",
