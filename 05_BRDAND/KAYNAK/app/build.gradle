@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.turkbey.goktungumav'
+    namespace 'com.turkbey.goktungu.bridge'
     compileSdk rootProject.ext.derleme_sdk
 
     defaultConfig {

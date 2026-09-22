@@ -1,7 +1,7 @@
-package com.turkbey.goktungumav
+package com.turkbey.goktungu.bridge
 
 import android.app.Application
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.veri.Gunluk
 
 /**
  * Uygulama girisi.

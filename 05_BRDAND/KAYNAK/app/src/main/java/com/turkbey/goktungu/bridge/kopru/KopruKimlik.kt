@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.content.Context
 import android.content.SharedPreferences

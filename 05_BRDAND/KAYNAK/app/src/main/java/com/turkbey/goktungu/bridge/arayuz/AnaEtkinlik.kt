@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.arayuz
+package com.turkbey.goktungu.bridge.arayuz
 
 import android.Manifest
 import android.app.AlertDialog
@@ -18,17 +18,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.turkbey.goktungumav.BuildConfig
-import com.turkbey.goktungumav.R
-import com.turkbey.goktungumav.databinding.EtkinlikAnaBinding
-import com.turkbey.goktungumav.kopru.KimlikKodu
-import com.turkbey.goktungumav.kopru.KopruAjan
-import com.turkbey.goktungumav.kopru.KopruHizmeti
-import com.turkbey.goktungumav.kopru.KopruKimlik
-import com.turkbey.goktungumav.kopru.KopruYonetici
-import com.turkbey.goktungumav.mavlink.UsbSeri
-import com.turkbey.goktungumav.veri.Ayarlar
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.BuildConfig
+import com.turkbey.goktungu.bridge.R
+import com.turkbey.goktungu.bridge.databinding.EtkinlikAnaBinding
+import com.turkbey.goktungu.bridge.kopru.KimlikKodu
+import com.turkbey.goktungu.bridge.kopru.KopruAjan
+import com.turkbey.goktungu.bridge.kopru.KopruHizmeti
+import com.turkbey.goktungu.bridge.kopru.KopruKimlik
+import com.turkbey.goktungu.bridge.kopru.KopruYonetici
+import com.turkbey.goktungu.bridge.mavlink.UsbSeri
+import com.turkbey.goktungu.bridge.veri.Ayarlar
+import com.turkbey.goktungu.bridge.veri.Gunluk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

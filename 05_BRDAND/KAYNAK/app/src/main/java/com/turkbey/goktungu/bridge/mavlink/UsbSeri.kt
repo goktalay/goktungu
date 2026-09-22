@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.mavlink
+package com.turkbey.goktungu.bridge.mavlink
 
 import android.app.PendingIntent
 import android.content.Context
@@ -9,7 +9,7 @@ import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.veri.Gunluk
 
 /**
  * USB seri baglantisi (uçuş kontrolcusu / telemetri modemi).
@@ -353,7 +353,7 @@ class UsbSeri(private val baglam: Context) {
     }
 
     companion object {
-        const val EYLEM_IZIN = "com.turkbey.goktungumav.USB_IZIN"
+        const val EYLEM_IZIN = "com.turkbey.goktungu.bridge.USB_IZIN"
 
         /**
          * ArduPilot USB dogrudan baglantida 115200 kullanir; SiK

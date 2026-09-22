@@ -5,14 +5,14 @@
 # icin gerekli olanlardir.
 
 # Gorunum baglama (ViewBinding) siniflari yansima ile olusturulur.
--keep class com.turkbey.goktungumav.databinding.** { *; }
+-keep class com.turkbey.goktungu.bridge.databinding.** { *; }
 
 # On plan hizmeti, etkinlik ve uygulama sinifi manifestten adiyla
 # cagrilir; kucultme adlarini degistirirse calisma aninda
 # ClassNotFoundException olusur.
--keep class com.turkbey.goktungumav.kopru.KopruHizmeti { *; }
--keep class com.turkbey.goktungumav.arayuz.AnaEtkinlik { *; }
--keep class com.turkbey.goktungumav.GoktunguMavUygulama { *; }
+-keep class com.turkbey.goktungu.bridge.kopru.KopruHizmeti { *; }
+-keep class com.turkbey.goktungu.bridge.arayuz.AnaEtkinlik { *; }
+-keep class com.turkbey.goktungu.bridge.GoktunguMavUygulama { *; }
 
 # Kotlin coroutines ic gerceklemesi
 -dontwarn kotlinx.coroutines.**

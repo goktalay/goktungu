@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.mavlink
+package com.turkbey.goktungu.bridge.mavlink
 
 /**
  * MAVLink v1/v2 cerceve ayristiricisi.

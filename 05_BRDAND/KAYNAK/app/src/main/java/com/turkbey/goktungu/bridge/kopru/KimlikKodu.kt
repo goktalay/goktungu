@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.util.Base64
 import org.json.JSONObject

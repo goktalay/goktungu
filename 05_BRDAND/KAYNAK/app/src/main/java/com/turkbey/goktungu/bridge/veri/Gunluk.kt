@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.veri
+package com.turkbey.goktungu.bridge.veri
 
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow

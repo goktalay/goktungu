@@ -1,7 +1,7 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.util.Base64
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.veri.Gunluk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

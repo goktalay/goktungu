@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.mavlink
+package com.turkbey.goktungu.bridge.mavlink
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

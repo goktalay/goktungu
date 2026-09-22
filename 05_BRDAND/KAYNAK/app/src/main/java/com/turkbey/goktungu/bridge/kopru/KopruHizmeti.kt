@@ -1,4 +1,4 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,9 +9,9 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.turkbey.goktungumav.R
-import com.turkbey.goktungumav.arayuz.AnaEtkinlik
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.R
+import com.turkbey.goktungu.bridge.arayuz.AnaEtkinlik
+import com.turkbey.goktungu.bridge.veri.Gunluk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

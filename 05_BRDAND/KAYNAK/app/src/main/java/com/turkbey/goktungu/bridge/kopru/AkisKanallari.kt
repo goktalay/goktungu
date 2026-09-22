@@ -1,10 +1,10 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.hardware.usb.UsbDevice
-import com.turkbey.goktungumav.mavlink.MavCerceve
-import com.turkbey.goktungumav.mavlink.MavGozlemci
-import com.turkbey.goktungumav.mavlink.UsbSeri
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.mavlink.MavCerceve
+import com.turkbey.goktungu.bridge.mavlink.MavGozlemci
+import com.turkbey.goktungu.bridge.mavlink.UsbSeri
+import com.turkbey.goktungu.bridge.veri.Gunluk
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream

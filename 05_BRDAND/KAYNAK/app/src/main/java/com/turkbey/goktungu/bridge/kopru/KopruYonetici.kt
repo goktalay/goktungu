@@ -1,12 +1,12 @@
-package com.turkbey.goktungumav.kopru
+package com.turkbey.goktungu.bridge.kopru
 
 import android.content.Context
 import android.os.Build
 import android.util.Base64
-import com.turkbey.goktungumav.BuildConfig
-import com.turkbey.goktungumav.mavlink.MavGozlemci
-import com.turkbey.goktungumav.mavlink.UsbSeri
-import com.turkbey.goktungumav.veri.Gunluk
+import com.turkbey.goktungu.bridge.BuildConfig
+import com.turkbey.goktungu.bridge.mavlink.MavGozlemci
+import com.turkbey.goktungu.bridge.mavlink.UsbSeri
+import com.turkbey.goktungu.bridge.veri.Gunluk
 import org.json.JSONArray
 import org.json.JSONObject
 
