@@ -1,0 +1,7 @@
+imza.properties
+imza/
+yerel.properties
+build/
+.gradle/
+local.properties
+.kotlin/

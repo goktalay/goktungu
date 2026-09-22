@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="uygulama_adi">GÖKTUNGU</string>
+    <string name="uygulama_alt_adi">GÖRÜNTÜ KÖPRÜSÜ</string>
+
+    <!-- Kart başlıkları -->
+    <string name="onizleme_baslik">KAMERA ÖNİZLEME</string>
+    <string name="durum_baslik">DURUM</string>
+    <string name="kurulum_baslik">İLK KURULUM</string>
+    <string name="kimlik_baslik">KÖPRÜ KİMLİĞİ</string>
+    <string name="gunluk_baslik">GÜNLÜK</string>
+
+    <!-- Durum iletileri -->
+    <string name="durum_merkez_kopuk">Merkez: köprü durdu</string>
+    <string name="durum_merkez_yeniden">Merkez: yeniden bağlanılıyor…</string>
+    <string name="durum_merkez_baglaniyor">Merkez: bağlanıyor…</string>
+    <string name="durum_merkez_bagli">Merkez: bağlı · %1$s · %2$s</string>
+    <string name="durum_merkez_hata">Merkez: %1$s</string>
+    <string name="durum_kamera_yok">Kamera bağlı değil (izin verin ve köprüyü başlatın)</string>
+    <string name="durum_kamera_var">Kamera: %1$s · %2$d kare</string>
+    <string name="durum_kamera_hata">Kamera hatası: %1$s</string>
+    <string name="durum_kanal_yok">Kanal: merkez henüz görüntü akışı açmadı</string>
+    <string name="durum_kanal_var">Kanal: %1$d açık · %2$s</string>
+    <string name="durum_sayac">Kare: %1$d   İzleyici: %2$d</string>
+
+    <!-- Kurulum -->
+    <string name="kurulum_aciklama">Bu görüntü köprüsü hangi merkeze bağlanacak? Seçin, sonra o merkezin Destek → Köprüler panelinde oluşturulan köprü kaydının API kodunu yapıştırın. Kod kimliği ve adresi birlikte taşır; başka bir şey girmeniz gerekmez.</string>
+    <string name="kurulum_grcon">GRCON — Merkez Sunucu (goktungu.com üzerindeki çevrimiçi merkez)</string>
+    <string name="kurulum_grcoff">GRCOFF — Yerel Kurulum (kapalı devre çalışan kendi Merkez Uygulamanız)</string>
+    <string name="alan_kod">API kodu</string>
+    <string name="ipucu_kod">GTK1.…</string>
+    <string name="kurulum_not_grcon">Kodu GRCON merkezindeki uygulamanın Destek → Köprüler panelinden kopyalayın. Köprü ilk kez bağlandığında kod merkezde silinir; kaybolursa panelden Kodu yenile ile yenisini alın.</string>
+    <string name="kurulum_not_grcoff">Kodu yerel Merkez Uygulamasının (GRCOFF) Destek → Köprüler panelinden kopyalayın. Telefon ile GRCOFF aynı ağda olmalıdır. Kod ilk bağlantıda silinir; kaybolursa Kodu yenile ile yenisini alın.</string>
+    <string name="dg_kur">KAYDET VE BAĞLAN</string>
+    <string name="kurulum_tamam">Kimlik kaydedildi; merkeze bağlanılıyor</string>
+    <string name="hata_kod">API kodu geçersiz: %1$s</string>
+    <string name="hata_kod_secim">Bu API kodu %1$s için üretilmiş; kurulum seçimi %2$s. Doğru kodu girin veya seçimi değiştirin.</string>
+    <string name="hata_kimlik_yok">Önce API kodu ile kurulumu tamamlayın.</string>
+
+    <!-- Kimlik kartı -->
+    <string name="kimlik_ozet">Köprü: %1$s\nMerkez: %2$s\nAdres: %3$s</string>
+    <string name="dg_baglan">KÖPRÜYÜ BAŞLAT</string>
+    <string name="dg_kes">DURDUR</string>
+    <string name="alan_oto_baslat">Uygulama açılınca köprüyü kendiliğinden başlat</string>
+    <string name="alan_mercek">Kamera merceği</string>
+    <string name="mercek_arka">Arka</string>
+    <string name="mercek_on">Ön</string>
+    <string name="dg_kimlik_sil">Kimliği sıfırla (yeni API kodu gir)</string>
+    <string name="kimlik_sil_baslik">Kimlik sıfırlansın mı?</string>
+    <string name="kimlik_sil_govde">Köprü durdurulur ve kurulum kimliği silinir. Yeniden bağlanmak için merkezden yeni bir API kodu (Kodu yenile) gerekir.</string>
+    <string name="kimlik_sil_onay">Sıfırla</string>
+    <string name="dg_gunluk_temizle">Temizle</string>
+
+    <!-- Genel -->
+    <string name="tel_deger_yok">—</string>
+
+    <!-- İzinler / uyarılar -->
+    <string name="izin_kamera_gerek">Görüntü köprüsü için kamera izni gerekir. İzni verip köprüyü yeniden başlatın.</string>
+    <string name="kopru_baslatildi">Köprü başlatıldı; merkeze bağlanılıyor</string>
+
+    <!-- Günlük -->
+    <string name="gunluk_bos">Kayıt yok</string>
+
+    <!-- Ön plan hizmeti -->
+    <string name="hizmet_kanal_adi">Köprü durumu</string>
+    <string name="hizmet_kanal_aciklama">Yayın sürerken köprünün ve kamera yakalamanın ayakta kalmasını sağlar</string>
+    <string name="hizmet_bildirim_baslik">GÖKTUNGU Görüntü Köprüsü</string>
+    <string name="hizmet_bildirim_govde">%1$s · %2$s</string>
+    <string name="hizmet_kamera_bagli">Kamera %1$s · %2$d kare</string>
+    <string name="hizmet_merkez_bagli">Merkez: %1$s</string>
+    <string name="hizmet_merkez_hata">Merkez bağlantı hatası</string>
+
+    <!-- Hakkında -->
+    <string name="hakkinda_baslik">Hakkında</string>
+    <string name="hakkinda_kapat">Kapat</string>
+    <string name="hakkinda_surum">Sürüm %1$s</string>
+    <string name="hakkinda_telif">Türkbey Teknoloji Anonim Şirketi</string>
+    <string name="hakkinda_lisans">Kullanım koşulları</string>
+    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir görüntü köprüsüdür. Cihaz kamerasından yakalanan görüntü yerel ağda MJPEG olarak sunulur (kareler cihazda/yerel ağda kalır); merkezin Destek → Köprüler panelinde üretilen API kodu ile eşleşen güvenli WebSocket bağlantısı üzerinden merkeze yalnızca DURUM ve akış-meta bilgisi taşınır. Uygulama araç üzerinde kendi başına komut üretmez.</string>
+</resources>

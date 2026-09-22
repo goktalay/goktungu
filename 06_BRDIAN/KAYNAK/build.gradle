@@ -1,0 +1,42 @@
+// GOKTUNGU Goruntu Koprusu (BRDIAN) -- kok Gradle yapilandirmasi.
+//
+// AGP / Kotlin / SDK ucluSu BRDAND (05_BRDAND) ile AYNI birlesimden
+// devralinmistir; boylece ayni derleme kutusunda (android-build imaji)
+// ek surum cakismasi olmadan derlenir.
+//
+// BRDAND'dan FARK: DJI MSDK gomulu DEGILDIR. BRDIAN tek amacli bir
+// GORUNTU koprusudur (CameraX ile cihaz kamerasi). Bu yuzden Kotlin
+// 2.1.0 zorunlulugu (MSDK metadata) burada gecerli degildir; yine de
+// tutarlilik icin ayni surum korunur.
+
+buildscript {
+    ext {
+        agp_surum = '8.5.2'
+        kotlin_surum = '2.1.0'
+        // Play Store: 31 Agu 2026 sonrasi yeni uygulama/guncelleme API 36.
+        hedef_sdk = 36
+        derleme_sdk = 36
+        // CameraX + on plan hizmeti (foregroundServiceType) modern izin
+        // akisina gore en dusuk surum 24.
+        en_dusuk_sdk = 24
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_surum"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_surum"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

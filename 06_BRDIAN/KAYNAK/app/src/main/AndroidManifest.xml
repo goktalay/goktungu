@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Ag: merkeze (GRCON/GRCOFF) ters WebSocket ile durum/akis-meta. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Cihaz kamerasi: goruntu koprusunun cekirdek kaynagi. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+      On plan hizmeti.
+
+      Goruntu koprusu yayin sirasinda kapatilmamalidir: ekran kapansa
+      bile merkez baglantisi ve yerel MJPEG sunumu ayakta kalmalidir.
+      Android 14 (API 34) itibariyle `camera` turu icin ayri izin
+      (FOREGROUND_SERVICE_CAMERA) gerekir.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!--
+      Kamera destegi.
+
+      `required="false"`: kamerasiz bir cihazda uygulama yine kurulabilir
+      (ornegin ileride DJI kamera goruntusu eklenince harici kaynaklar da
+      kullanilabilir), fakat temel islev cihaz kamerasini gerektirir.
+    -->
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
+    <application
+        android:name=".GoktunguGoruntuUygulama"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/uygulama_adi"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:theme="@style/Tema.Goktungu"
+        android:networkSecurityConfig="@xml/ag_guvenligi"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="35">
+
+        <activity
+            android:name=".arayuz.AnaEtkinlik"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Yayin surerken koprunun yasamasini saglayan on plan hizmeti -->
+        <service
+            android:name=".kopru.KopruHizmeti"
+            android:exported="false"
+            android:foregroundServiceType="camera" />
+
+    </application>
+</manifest>

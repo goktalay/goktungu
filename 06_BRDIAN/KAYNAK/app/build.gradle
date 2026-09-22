@@ -1,0 +1,113 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.turkbey.goktungu.image'
+    compileSdk rootProject.ext.derleme_sdk
+
+    defaultConfig {
+        // AYRI PAKET ADI (bilincli karar).
+        //
+        // Bayrak urun (tam GOKTUNGU uygulamasi) com.turkbey.goktungu
+        // adini alir; MAVLink koprusu .bridge, DJI koprusu .dji son
+        // ekini alir. Bu GORUNTU koprusu .image son ekiyle ayrilir.
+        // Play Store paket adini benzersiz kimlik olarak aldigindan bu
+        // uygulamalar ayni hesaptan birlikte yayimlanabilir ve ayni
+        // cihaza birlikte kurulabilir.
+        applicationId 'com.turkbey.goktungu.image'
+        minSdk rootProject.ext.en_dusuk_sdk
+        targetSdk rootProject.ext.hedef_sdk
+        // 1.0.0: cihaz kamerasi yakalama + yerel MJPEG sunumu, merkeze
+        //        (GRCON/GRCOFF) ters WebSocket ile YALNIZ durum/akis-meta.
+        versionCode 1
+        versionName '1.0.0'
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    signingConfigs {
+        // Yayin imzasi imza.properties'ten okunur; dosya yoksa yayin
+        // derlemesi imzasiz kalir (yerel dogrulama icin yeterli).
+        // BRDAND signingConfig deseni birebir korunur.
+        release {
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                def p = new Properties()
+                imzaDosya.withInputStream { p.load(it) }
+                storeFile rootProject.file(p.getProperty("anahtar.deposu"))
+                storePassword p.getProperty("depo.sifresi")
+                keyAlias p.getProperty("anahtar.adi")
+                keyPassword p.getProperty("anahtar.sifresi")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // `-PkucultmeKapali` ile R8 kapatilabilir. Bu uygulama saf
+            // JVM/AndroidX oldugu icin R8 sorunsuz calisir; guard yalniz
+            // BRDAND ile ayni komut satiri sozlesmesini korumak icindir.
+            minifyEnabled !project.hasProperty('kucultmeKapali')
+            shrinkResources !project.hasProperty('kucultmeKapali')
+            proguardFiles getDefaultProguardFile(
+                'proguard-android-optimize.txt'), 'proguard-rules.pro'
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix '.hata'
+            versionNameSuffix '-hata'
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    // --- Android temel ---
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-service:2.8.4'
+
+    // --- CameraX (cihaz kamerasi yakalama + onizleme) ---
+    // BRDIMG masaustu video_vekil.py desenini Android'e tasir: kamera
+    // OpenCV yerine CameraX ile acilir, kareler yerelde tutulur.
+    def camerax = '1.3.4'
+    implementation "androidx.camera:camera-core:$camerax"
+    implementation "androidx.camera:camera-camera2:$camerax"
+    implementation "androidx.camera:camera-lifecycle:$camerax"
+    implementation "androidx.camera:camera-view:$camerax"
+
+    // Es zamanlilik
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    // Merkeze ters WebSocket baglantisi (kopru ajani) -- BRDAND ile ayni.
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // --- Olcum ---
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}
