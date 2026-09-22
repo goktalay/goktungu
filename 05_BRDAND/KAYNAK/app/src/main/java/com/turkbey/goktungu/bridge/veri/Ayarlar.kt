@@ -20,10 +20,12 @@ object Ayarlar {
 
     private const val A_CIHAZ = "cihaz_kimlik"
     private const val A_OTO = "oto_baslat"
+    private const val A_KOPRU_TIP = "kopru_tip"
 
     data class Deger(
         val cihazKimlik: String,
-        val otoBaslat: Boolean
+        val otoBaslat: Boolean,
+        val kopruTip: String
     )
 
     private fun p(baglam: Context): SharedPreferences =
@@ -41,11 +43,17 @@ object Ayarlar {
         }
         return Deger(
             cihazKimlik = cihaz,
-            otoBaslat = s.getBoolean(A_OTO, true)
+            otoBaslat = s.getBoolean(A_OTO, true),
+            kopruTip = s.getString(A_KOPRU_TIP, "ardupilot") ?: "ardupilot"
         )
     }
 
     fun otoBaslatYaz(baglam: Context, deger: Boolean) {
         p(baglam).edit().putBoolean(A_OTO, deger).apply()
+    }
+
+    /** Kullanicinin sectigi kopru tipini (KopruTipi.id) saklar. */
+    fun kopruTipYaz(baglam: Context, id: String) {
+        p(baglam).edit().putString(A_KOPRU_TIP, id).apply()
     }
 }

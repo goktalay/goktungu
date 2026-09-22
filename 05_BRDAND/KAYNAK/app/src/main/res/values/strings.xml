@@ -93,5 +93,38 @@
     <string name="hakkinda_surum">Sürüm %1$s</string>
     <string name="hakkinda_telif">Türkbey Teknoloji Anonim Şirketi</string>
     <string name="hakkinda_lisans">Kullanım koşulları</string>
-    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir MAVLink köprüsüdür. Uçuş kontrolcüsünden USB ile alınan MAVLink çerçeveleri, merkezin Destek → Köprüler panelinde üretilen API kodu ile eşleşen güvenli WebSocket bağlantısı üzerinden merkeze taşınır; merkez bağlantıyı kendi Bağlantı Yöneticisi\'nden açar. Uygulama araç üzerinde kendi başına komut üretmez.</string>
+    <string name="hakkinda_lisans_metni">Bu uygulama GÖKTUNGU yer kontrol sistemine bağlanan bir köprüdür. Uçuş kontrolcüsünden USB ile alınan MAVLink/MSP çerçeveleri ya da DJI Mobile SDK telemetrisi, merkezin Destek → Köprüler panelinde üretilen API kodu ile eşleşen güvenli WebSocket bağlantısı üzerinden merkeze taşınır; merkez bağlantıyı kendi Bağlantı Yöneticisi\'nden açar. Uygulama araç üzerinde kendi başına komut üretmez.</string>
+
+    <!-- Sol menü / köprü tipi -->
+    <string name="menu_ust">GÖKTUNGU</string>
+    <string name="menu_alt">Köprü tipini seçin</string>
+    <string name="dg_menu">☰ Köprü tipi</string>
+    <string name="menu_ac">Köprü tipi menüsünü aç</string>
+    <string name="menu_kapat">Menüyü kapat</string>
+    <string name="tip_secili">Köprü tipi: %1$s</string>
+    <string name="tip_ardupilot">ArduPilot · MAVLink</string>
+    <string name="tip_betaflight">BetaFlight · MSP</string>
+    <string name="tip_dji">DJI Mobile SDK</string>
+    <string name="tip_eo">Elektro-Optik telemetri</string>
+    <string name="tip_radar">Radar</string>
+
+    <!-- DJI telemetri -->
+    <string name="dji_arac_yok">DJI aracı bağlı değil</string>
+    <string name="dji_msdk_baslamadi">DJI MSDK henüz başlatılmadı</string>
+    <string name="dji_kayit_ok">MSDK kaydı: tamam</string>
+    <string name="dji_kayit_basliyor">MSDK kaydı: başlıyor…</string>
+    <string name="dji_kayit_hata">MSDK kaydı: HATA — %1$s</string>
+    <string name="dji_kayit_yok">MSDK kaydı: başlamadı</string>
+
+    <!-- BetaFlight (MSP) telemetri -->
+    <string name="bf_fc_yok">Uçuş kontrolcüsü bağlı değil</string>
+    <string name="bf_oturum_yok">MSP oturumu yok (BAŞLAT ile USB üzerinden açılır)</string>
+    <string name="bf_hata">MSP hatası: %1$s</string>
+    <string name="bf_bekleniyor">MSP yanıtı bekleniyor… (USB izni ve baud ayarını denetleyin)</string>
+    <string name="bf_salt_okunur">BetaFlight MSP · SALT-OKUNUR (komut yazılmaz)</string>
+    <string name="tel_tutum">Tutum</string>
+
+    <!-- İskele köprü tipleri -->
+    <string name="iskele_pasif">Pasif · backend entegre değil</string>
+    <string name="iskele_govde">%1$s köprü tipi seçildi.\n\nBu tip için veri kaynağı henüz entegre değil (iskele); bağlantı bekleniyor. Kimlik varsa köprü merkeze bağlanıp tipini bildirir, telemetri ileride doldurulacaktır.</string>
 </resources>

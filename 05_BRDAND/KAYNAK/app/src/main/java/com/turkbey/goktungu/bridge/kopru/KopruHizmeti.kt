@@ -69,7 +69,7 @@ class KopruHizmeti : Service() {
             var oncekiMerkez = ""
             while (true) {
                 val t = KopruYonetici.gozlemci.durum.value
-                val kanal = KopruYonetici.kanallar?.etkinSayi() ?: 0
+                val kanal = KopruYonetici.etkinKanalSayi()
                 val arac = if (t.aracVar) {
                     getString(R.string.hizmet_arac_bagli, t.sysid, KopruYonetici.gozlemci.kipAdi())
                 } else if (kanal > 0) {

@@ -84,5 +84,38 @@
     <string name="hakkinda_surum">Version %1$s</string>
     <string name="hakkinda_telif">Turkbey Teknoloji A.S.</string>
     <string name="hakkinda_lisans">Terms of use</string>
-    <string name="hakkinda_lisans_metni">This application is a MAVLink bridge for the GOKTUNGU ground control system. MAVLink frames read from the flight controller over USB are carried to the centre over a secure WebSocket paired with the API code issued in the centre\'s Support → Bridges panel; the centre opens the link from its Connection Manager. The app issues no commands to the aircraft on its own.</string>
+    <string name="hakkinda_lisans_metni">This application is a bridge for the GOKTUNGU ground control system. MAVLink/MSP frames read from the flight controller over USB, or DJI Mobile SDK telemetry, are carried to the centre over a secure WebSocket paired with the API code issued in the centre\'s Support → Bridges panel; the centre opens the link from its Connection Manager. The app issues no commands to the aircraft on its own.</string>
+
+    <!-- Side menu / bridge type -->
+    <string name="menu_ust">GOKTUNGU</string>
+    <string name="menu_alt">Choose the bridge type</string>
+    <string name="dg_menu">☰ Bridge type</string>
+    <string name="menu_ac">Open the bridge type menu</string>
+    <string name="menu_kapat">Close the menu</string>
+    <string name="tip_secili">Bridge type: %1$s</string>
+    <string name="tip_ardupilot">ArduPilot · MAVLink</string>
+    <string name="tip_betaflight">BetaFlight · MSP</string>
+    <string name="tip_dji">DJI Mobile SDK</string>
+    <string name="tip_eo">Electro-optical telemetry</string>
+    <string name="tip_radar">Radar</string>
+
+    <!-- DJI telemetry -->
+    <string name="dji_arac_yok">DJI aircraft not connected</string>
+    <string name="dji_msdk_baslamadi">DJI MSDK not started yet</string>
+    <string name="dji_kayit_ok">MSDK registration: ok</string>
+    <string name="dji_kayit_basliyor">MSDK registration: starting…</string>
+    <string name="dji_kayit_hata">MSDK registration: ERROR — %1$s</string>
+    <string name="dji_kayit_yok">MSDK registration: not started</string>
+
+    <!-- BetaFlight (MSP) telemetry -->
+    <string name="bf_fc_yok">Flight controller not connected</string>
+    <string name="bf_oturum_yok">No MSP session (opened over USB via START)</string>
+    <string name="bf_hata">MSP error: %1$s</string>
+    <string name="bf_bekleniyor">Waiting for MSP response… (check USB permission and baud)</string>
+    <string name="bf_salt_okunur">BetaFlight MSP · READ-ONLY (no commands written)</string>
+    <string name="tel_tutum">Attitude</string>
+
+    <!-- Skeleton bridge types -->
+    <string name="iskele_pasif">Passive · backend not integrated</string>
+    <string name="iskele_govde">%1$s bridge type selected.\n\nThe data source for this type is not integrated yet (skeleton); awaiting connection. If an identity exists the bridge connects to the centre and reports its type; telemetry will be filled in later.</string>
 </resources>

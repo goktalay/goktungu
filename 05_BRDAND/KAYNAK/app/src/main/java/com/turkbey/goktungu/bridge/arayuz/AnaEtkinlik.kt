@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import com.turkbey.goktungu.bridge.BuildConfig
 import com.turkbey.goktungu.bridge.R
@@ -25,6 +26,7 @@ import com.turkbey.goktungu.bridge.kopru.KimlikKodu
 import com.turkbey.goktungu.bridge.kopru.KopruAjan
 import com.turkbey.goktungu.bridge.kopru.KopruHizmeti
 import com.turkbey.goktungu.bridge.kopru.KopruKimlik
+import com.turkbey.goktungu.bridge.kopru.KopruTipi
 import com.turkbey.goktungu.bridge.kopru.KopruYonetici
 import com.turkbey.goktungu.bridge.mavlink.UsbSeri
 import com.turkbey.goktungu.bridge.veri.Ayarlar
@@ -33,18 +35,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * GOKTUNGU MAVLink Koprusu — ana ekran (1.1.0).
+ * GOKTUNGU Koprusu — ana ekran (Faz 2: SOL MENULU cok-kopru arayuzu).
  *
- * Iki hal vardir:
- *  1. KURULUM: kimlik yok. "GRCON — Merkez Sunucu mu, GRCOFF — Yerel
- *     Kurulum mu?" secimi + API kodu. Kod merkezin Destek > Kopruler
- *     panelinden kopyalanir ve adresi de tasidigi icin IP/port
- *     girilmez.
- *  2. CALISMA: kimlik var. Ajan merkeze bagli; USB cihazlar
- *     bildirilir, kanallar merkezden acilir. Ekran yalniz durum,
- *     USB izni, baslat/durdur ve gunluk gosterir.
+ * Sol menuden (DrawerLayout + NavigationView) kopru tipi secilir:
+ * ArduPilot / BetaFlight / DJI Mobile SDK / Elektro-Optik / Radar. Secilen
+ * tipin durum ve telemetri kartlari gosterilir; kurulum (GRCON/GRCOFF +
+ * API kodu) ve gunluk kartlari kopru tipinden BAGIMSIZ ortaktir.
  *
- * Is mantigi [KopruYonetici] icindedir; bu sinif yalniz sunum yapar.
+ * Is mantigi [KopruYonetici] koordinatorunde ve tipe ozel
+ * [com.turkbey.goktungu.bridge.kopru.KopruStrateji] gerceklemelerindedir;
+ * bu sinif yalniz sunum yapar. Durum/telemetri tek bir 1 sn'lik yoklama
+ * dongusunden gelir; boylece tip degisince yeniden abone olmak gerekmez.
  */
 class AnaEtkinlik : AppCompatActivity() {
 
@@ -81,11 +82,20 @@ class AnaEtkinlik : AppCompatActivity() {
         bag.dgKimlikSil.setOnClickListener { kimlikSilSor() }
         bag.dgGunlukTemizle.setOnClickListener { Gunluk.temizle() }
         bag.dgHakkinda.setOnClickListener { hakkindaGoster() }
+        bag.dgMenu.setOnClickListener { bag.drawer.openDrawer(GravityCompat.START) }
         bag.kutuOto.setOnCheckedChangeListener { _, secili ->
             Ayarlar.otoBaslatYaz(this, secili)
         }
         bag.radioGrcon.setOnCheckedChangeListener { _, _ -> kurulumNotuTazele() }
         bag.radioGrcoff.setOnCheckedChangeListener { _, _ -> kurulumNotuTazele() }
+
+        // Sol menu: kopru tipi secimi (tek secilebilir grup).
+        menuIsaretle(KopruYonetici.aktifTip.value)
+        bag.navGoruntu.setNavigationItemSelectedListener { oge ->
+            tipSec(menuTip(oge.itemId))
+            bag.drawer.closeDrawer(GravityCompat.START)
+            true
+        }
 
         val suzgec = IntentFilter(UsbSeri.EYLEM_IZIN)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -99,16 +109,16 @@ class AnaEtkinlik : AppCompatActivity() {
         kurulumNotuTazele()
         gorunumTazele()
         cihazlariTara()
-        akislariDinle()
+        durumDongusu()
 
         // Kimlik varsa ve tercih acik ise kendiliginden baslar: saha
-        // pilotu telefonu acar, kopru merkeze baglanir.
+        // pilotu telefonu acar, secili kopru tipi merkeze baglanir.
         if (KopruKimlik.var_(this) && Ayarlar.oku(this).otoBaslat &&
             !KopruYonetici.calisiyorMu()
         ) {
             baslat(sessiz = true)
         }
-        Gunluk.yaz("ARAYUZ", "Ana ekran acildi")
+        Gunluk.yaz("ARAYUZ", "Ana ekran acildi (aktif tip: ${KopruYonetici.aktifTip.value.etiket})")
     }
 
     override fun onDestroy() {
@@ -120,6 +130,42 @@ class AnaEtkinlik : AppCompatActivity() {
         super.onResume()
         cihazlariTara()
         gorunumTazele()
+    }
+
+    // ------------------------------------------------------------ kopru tipi
+
+    private fun menuTip(itemId: Int): KopruTipi = when (itemId) {
+        R.id.tip_betaflight -> KopruTipi.BETAFLIGHT
+        R.id.tip_dji -> KopruTipi.DJI
+        R.id.tip_eo -> KopruTipi.ELEKTRO_OPTIK
+        R.id.tip_radar -> KopruTipi.RADAR
+        else -> KopruTipi.ARDUPILOT
+    }
+
+    private fun tipMenuId(tip: KopruTipi): Int = when (tip) {
+        KopruTipi.BETAFLIGHT -> R.id.tip_betaflight
+        KopruTipi.DJI -> R.id.tip_dji
+        KopruTipi.ELEKTRO_OPTIK -> R.id.tip_eo
+        KopruTipi.RADAR -> R.id.tip_radar
+        KopruTipi.ARDUPILOT -> R.id.tip_ardupilot
+    }
+
+    private fun menuIsaretle(tip: KopruTipi) {
+        bag.navGoruntu.setCheckedItem(tipMenuId(tip))
+    }
+
+    /** Sol menuden kopru tipi secilince: onceki durdurulur, yenisi kurulur. */
+    private fun tipSec(tip: KopruTipi) {
+        if (KopruYonetici.aktifTip.value == tip) return
+        // Etkin kopruyu ve on plan hizmetini durdur (tek ajan baglanir).
+        durdur()
+        KopruYonetici.secTip(tip)
+        menuIsaretle(tip)
+        cihazlariTara()
+        gorunumTazele()
+        Toast.makeText(
+            this, getString(R.string.tip_secili, tip.etiket), Toast.LENGTH_SHORT
+        ).show()
     }
 
     // ------------------------------------------------------------ kurulum
@@ -284,8 +330,11 @@ class AnaEtkinlik : AppCompatActivity() {
 
     // ------------------------------------------------------------ gorunum
 
-    /** Kurulum/calisma kartlarinin gorunurlugu ve kimlik etiketi. */
+    /** Aktif tip etiketi, kart gorunurlukleri, USB bolumu ve kimlik. */
     private fun gorunumTazele() {
+        val tip = KopruYonetici.aktifTip.value
+        bag.etiketTip.text = tip.etiket
+
         val k = KopruKimlik.oku(this)
         val kimlikVar = k != null && k.eksiksizMi()
         bag.kartKurulum.visibility = if (kimlikVar) View.GONE else View.VISIBLE
@@ -296,123 +345,30 @@ class AnaEtkinlik : AppCompatActivity() {
                 k.ad.ifBlank { "—" }, k.turEtiketi(), k.merkezAdres
             )
         }
+
+        // USB bolumu ve durum satiri yalniz seri kullanan tiplerde.
+        val seri = tip.seriKullanir
+        bag.bolumUsb.visibility = if (seri) View.VISIBLE else View.GONE
+        bag.etiketUsb.visibility = if (seri) View.VISIBLE else View.GONE
+
         val calisiyor = KopruYonetici.calisiyorMu()
         bag.dgBaslat.isEnabled = kimlikVar && !calisiyor
         bag.dgKes.isEnabled = calisiyor
     }
 
-    private fun akislariDinle() {
-        val ajan = KopruYonetici.ajan ?: return
+    // ------------------------------------------------------------ durum dongusu
 
-        lifecycleScope.launch {
-            ajan.durum.collect { d ->
-                val b = ajan.bilgi.value
-                bag.etiketMerkez.text = when (d) {
-                    KopruAjan.Durum.BAGLI -> getString(
-                        R.string.durum_merkez_bagli, b.ad.ifBlank { "#" + b.ornekId }, b.adres
-                    )
-                    KopruAjan.Durum.BAGLANIYOR -> getString(R.string.durum_merkez_baglaniyor)
-                    KopruAjan.Durum.HATA -> getString(
-                        R.string.durum_merkez_hata, ajan.sonHata.value
-                    )
-                    else -> if (KopruYonetici.calisiyorMu()) {
-                        getString(R.string.durum_merkez_yeniden)
-                    } else {
-                        getString(R.string.durum_merkez_kopuk)
-                    }
-                }
-                bag.etiketMerkez.setTextColor(
-                    renk(
-                        when (d) {
-                            KopruAjan.Durum.BAGLI -> R.color.iyi
-                            KopruAjan.Durum.HATA -> R.color.kotu
-                            KopruAjan.Durum.BAGLANIYOR -> R.color.uyari
-                            else -> R.color.soluk
-                        }
-                    )
-                )
-                gorunumTazele()
-            }
-        }
-
-        // Kanal ve sayac satiri: kanallar merkezden acilir; yoklamayla
-        // gosterilir (basit ve yeterli).
+    /**
+     * Tek yoklama dongusu: merkez baglantisi, kanal, arac ve telemetri
+     * satirlarini AKTIF stratejiden 1 sn'de bir okur. Boylece kopru tipi
+     * degisince arayuzun yeniden abone olmasi gerekmez. Gunluk ayrica
+     * tepkimeli olarak izlenir.
+     */
+    private fun durumDongusu() {
         lifecycleScope.launch {
             while (true) {
-                val k = KopruYonetici.kanallar
-                val n = k?.etkinSayi() ?: 0
-                bag.etiketKanal.text = if (n == 0) {
-                    getString(R.string.durum_kanal_yok)
-                } else {
-                    getString(R.string.durum_kanal_var, n, k?.ozet() ?: "")
-                }
-                bag.etiketKanal.setTextColor(renk(if (n > 0) R.color.iyi else R.color.soluk))
-                val b = ajan.bilgi.value
-                bag.etiketSayac.text = getString(
-                    R.string.durum_sayac, b.gidenAkisByte / 1024, b.gelenAkisByte / 1024
-                )
+                tazeleDurum()
                 delay(1000)
-            }
-        }
-
-        lifecycleScope.launch {
-            KopruYonetici.gozlemci.durum.collect { t ->
-                bag.etiketArac.text = if (t.aracVar) {
-                    getString(
-                        R.string.durum_arac_bagli,
-                        "sys ${t.sysid} · ${KopruYonetici.gozlemci.kipAdi()}"
-                    )
-                } else {
-                    getString(R.string.durum_arac_yok)
-                }
-                bag.etiketArac.setTextColor(renk(if (t.aracVar) R.color.iyi else R.color.soluk))
-                val konum = t.konum
-                bag.etiketTelemetri.text = buildString {
-                    if (konum == null) {
-                        appendLine(getString(R.string.tel_konum_yok))
-                    } else {
-                        appendLine(
-                            "%s  %.6f, %.6f".format(
-                                getString(R.string.tel_konum), konum.enlem, konum.boylam
-                            )
-                        )
-                    }
-                    appendLine(
-                        "%s  %s".format(
-                            getString(R.string.tel_irtifa),
-                            t.altRel?.let { "%.1f m".format(it) } ?: getString(R.string.tel_deger_yok)
-                        )
-                    )
-                    appendLine(
-                        "%s  %s".format(
-                            getString(R.string.tel_yon),
-                            t.heading?.let { "%.0f".format(it) } ?: getString(R.string.tel_deger_yok)
-                        )
-                    )
-                    appendLine(
-                        "%s  %s".format(
-                            getString(R.string.tel_batarya),
-                            if (t.bataryaPct != null || t.bataryaV != null) {
-                                "%s  %s".format(
-                                    t.bataryaPct?.let { "$it%%" } ?: "-",
-                                    t.bataryaV?.let { "%.1f V".format(it) } ?: "-"
-                                )
-                            } else getString(R.string.tel_deger_yok)
-                        )
-                    )
-                    appendLine(
-                        "%s  %s".format(
-                            getString(R.string.tel_arm),
-                            getString(if (t.armed) R.string.tel_arm_acik else R.string.tel_arm_kapali)
-                        )
-                    )
-                    append(
-                        "%s  %s".format(
-                            getString(R.string.tel_mod),
-                            KopruYonetici.gozlemci.kipAdi().ifEmpty { getString(R.string.tel_deger_yok) }
-                        )
-                    )
-                }
             }
         }
 
@@ -421,12 +377,73 @@ class AnaEtkinlik : AppCompatActivity() {
                 bag.etiketGunluk.text = if (kayitlar.isEmpty()) {
                     getString(R.string.gunluk_bos)
                 } else {
-                    kayitlar.takeLast(60).reversed().joinToString("\n") { k ->
-                        "${k.zamanMetni()} [${k.etiket}] ${k.ileti}"
+                    kayitlar.takeLast(60).reversed().joinToString("\n") { kt ->
+                        "${kt.zamanMetni()} [${kt.etiket}] ${kt.ileti}"
                     }
                 }
             }
         }
+    }
+
+    private fun tazeleDurum() {
+        val strateji = KopruYonetici.aktif
+        val ajan = KopruYonetici.ajan
+
+        // Merkez baglantisi
+        val d = ajan?.durum?.value ?: KopruAjan.Durum.KAPALI
+        val bilgi = ajan?.bilgi?.value ?: KopruAjan.Bilgi()
+        val (merkezMetin, merkezRenk) = when (d) {
+            KopruAjan.Durum.BAGLI -> getString(
+                R.string.durum_merkez_bagli,
+                bilgi.ad.ifBlank { "#${bilgi.ornekId}" }, bilgi.adres
+            ) to R.color.iyi
+            KopruAjan.Durum.BAGLANIYOR -> getString(R.string.durum_merkez_baglaniyor) to R.color.uyari
+            KopruAjan.Durum.HATA -> getString(
+                R.string.durum_merkez_hata, ajan?.sonHata?.value ?: ""
+            ) to R.color.kotu
+            else -> if (KopruYonetici.calisiyorMu()) {
+                getString(R.string.durum_merkez_yeniden) to R.color.soluk
+            } else {
+                getString(R.string.durum_merkez_kopuk) to R.color.soluk
+            }
+        }
+        bag.etiketMerkez.text = merkezMetin
+        bag.etiketMerkez.setTextColor(renk(merkezRenk))
+
+        // Kanal / oturum
+        val n = KopruYonetici.etkinKanalSayi()
+        val ozet = strateji.kanalOzet()
+        bag.etiketKanal.text = when {
+            n > 0 -> getString(R.string.durum_kanal_var, n, ozet)
+            ozet.isNotBlank() -> ozet
+            else -> getString(R.string.durum_kanal_yok)
+        }
+        bag.etiketKanal.setTextColor(renk(if (n > 0) R.color.iyi else R.color.soluk))
+
+        // Arac / durum satiri
+        val arac = strateji.aracSatiri(this)
+        if (arac != null) {
+            bag.etiketArac.visibility = View.VISIBLE
+            bag.etiketArac.text = arac.first
+            bag.etiketArac.setTextColor(renk(arac.second))
+        } else {
+            bag.etiketArac.visibility = View.GONE
+        }
+
+        // Sayac
+        bag.etiketSayac.text = getString(
+            R.string.durum_sayac,
+            bilgi.gidenAkisByte / 1024, bilgi.gelenAkisByte / 1024
+        )
+
+        // Telemetri
+        bag.etiketTelemetri.text = strateji.telemetriMetni(this)
+
+        // Baslat/durdur dugmeleri
+        val kimlikVar = KopruKimlik.var_(this)
+        val calisiyor = KopruYonetici.calisiyorMu()
+        bag.dgBaslat.isEnabled = kimlikVar && !calisiyor
+        bag.dgKes.isEnabled = calisiyor
     }
 
     private fun renk(kaynak: Int) = ContextCompat.getColor(this, kaynak)

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sol menu (NavigationView) — kopru tipi secimi.
+
+  Tek secilebilir grup: ayni anda yalniz bir kopru tipi etkindir
+  (bir cihaz, bir kurulum kimligi, merkeze bir baglanti). Oge kimlikleri
+  AnaEtkinlik.menuTip() ile KopruTipi enum'una eslenir.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group
+        android:id="@+id/grup_kopru_tipi"
+        android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/tip_ardupilot"
+            android:checked="true"
+            android:title="@string/tip_ardupilot" />
+
+        <item
+            android:id="@+id/tip_betaflight"
+            android:title="@string/tip_betaflight" />
+
+        <item
+            android:id="@+id/tip_dji"
+            android:title="@string/tip_dji" />
+
+        <item
+            android:id="@+id/tip_eo"
+            android:title="@string/tip_eo" />
+
+        <item
+            android:id="@+id/tip_radar"
+            android:title="@string/tip_radar" />
+    </group>
+</menu>
