@@ -2372,7 +2372,7 @@ def _u_firma_kayit(h, istek, oturum):
 # ============================================================
 
 DESTEK_MODULLER = (
-    "app", "kopru", "merkez", "radar", "gccdual", "m50", "dji", "ai", "video",
+    "app", "kopru", "merkez", "radar", "gccdual", "m50", "ai", "video",
     "kurumsal_panel", "yonetim_paneli", "odeme", "kurulum", "diger",
 )
 DESTEK_MODUL_AD = (
@@ -2380,7 +2380,7 @@ DESTEK_MODUL_AD = (
     ("merkez", "Merkez Uygulama"), ("radar", "Radar Modulu"),
     ("m50", "M50 Elektro-Optik Modulu"),
     ("gccdual", "Yer Kontrol Istasyonu Dual"),
-    ("dji", "DJI Koprusu (Android)"), ("ai", "AI Sunucusu"),
+    ("ai", "AI Sunucusu"),
     ("video", "Video Sunucusu"), ("kurumsal_panel", "Kurumsal Panel"),
     ("yonetim_paneli", "Yonetim Paneli"), ("odeme", "Odeme / Abonelik"),
     ("kurulum", "Kurulum / Sihirbaz"), ("diger", "Diger"),

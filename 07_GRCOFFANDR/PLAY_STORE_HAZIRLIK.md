@@ -16,20 +16,19 @@ birlikte kurulamaz. Bu yüzden kimlikler ayrıldı:
 |---|---|---|---|
 | GÖKTUNGU (tam uygulama, GRCOFFANDR) | `com.turkbey.goktungu` | Bayrak ürün | İskelet (Chaquopy + WebView) |
 | GÖKTUNGU MAVLink Köprüsü (05_BRDAND) | `com.turkbey.goktungu.bridge` | Yardımcı | Hazır (yeniden derleme gerek) |
-| GÖKTUNGU DJI Köprüsü (06_BRDDJI) | `com.turkbey.goktungu.dji` | Yardımcı | Hazır (yeniden derleme gerek) |
 
-Not: Köprülerin `applicationId`'leri değiştiği için Play Store'a
-girmeden önce yeni kimlikle bir kez daha derlenip imzalanmaları gerekir.
-Halihazırda imzalı DJI 1.1.3 APK'sı ESKİ (`com.turkbey.goktungu`) kimliği
-taşır; iç katalog için kullanılabilir, Play Store için yeniden derlenir.
+Not: Köprünün `applicationId`'si değiştiği için Play Store'a
+girmeden önce yeni kimlikle bir kez daha derlenip imzalanması gerekir.
+Halihazırda imzalı APK'lar ESKİ (`com.turkbey.goktungu`) kimliği
+taşıyabilir; iç katalog için kullanılabilir, Play Store için yeniden derlenir.
 
 ---
 
 ## 2. Teknik hazırlık — yazılım tarafı (bende)
 
-- [x] Üç paket adı Play Store'da bir arada yayınlanabilir şekilde ayrıldı.
+- [x] İki paket adı Play Store'da bir arada yayınlanabilir şekilde ayrıldı.
 - [x] Hedef API 36 (Android 16) — Play Store 2026 zorunluluğu karşılanıyor.
-- [x] 64-bit desteği: köprüler saf Kotlin (tüm ABI), tam uygulama
+- [x] 64-bit desteği: köprü saf Kotlin (tüm ABI), tam uygulama
       Chaquopy `arm64-v8a` içeriyor.
 - [ ] Yayın biçimi APK değil **App Bundle (.aab)** olacak
       (`./gradlew bundleRelease`). Play Store yeni uygulamalarda AAB ister.
@@ -89,7 +88,7 @@ Seçenekler:
 - **C) Mevcut iç katalog + doğrudan APK**: Şu anki yöntem; Play Store
   politikası devreye girmez, tam kontrol sizde kalır.
 
-Öneri: Köprüler (MAVLink/DJI) halka açık Play Store'a uygundur. Tam
+Öneri: Köprü (MAVLink) halka açık Play Store'a uygundur. Tam
 GÖKTUNGU uygulaması için **B veya C** daha güvenli; halka açık listeleme
 istenirse angajman özellikleri kapatılmış bir "sivil" sürüm önerilir.
 

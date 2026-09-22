@@ -93,16 +93,15 @@ window.PANEL_SURUM = {
       s: "1.3.4", t: "19 Ağustos 2026",
       d: [
         /* FAZ19-IS39-DEFTER */
-        "ANDROID KOPRU UYGULAMALARI PANELE EKLENDI. Kopru Yazilimi " +
-        "sayfasinda artik dort platform listeleniyor: Windows, " +
-        "Ubuntu/Linux, Android \u2014 Pixhawk/MAVLink ve Android \u2014 DJI. " +
-        "APK dosyalari dogrudan iniyor; magaza yonlendirmesi yok.",
+        "ANDROID KOPRU UYGULAMASI PANELE EKLENDI. Kopru Yazilimi " +
+        "sayfasinda artik uc platform listeleniyor: Windows, " +
+        "Ubuntu/Linux ve Android \u2014 Pixhawk/MAVLink. " +
+        "APK dosyasi dogrudan iniyor; magaza yonlendirmesi yok.",
         "Pixhawk/MAVLink koprusu telefonu ucus denetleyicisine USB OTG " +
         "veya telemetri baglantisiyla baglar; ArduPilot ve PX4 " +
-        "desteklenir. DJI koprusu DJI Mobile SDK uzerinden uzaktan " +
-        "kumandaya bagli telefonda calisir.",
-        "Iki uygulama ayni urun ve platform altinda DOSYA ADIYLA " +
-        "ayrisir. Ayri urun kimligi BILINCLI OLARAK kullanilmadi: " +
+        "desteklenir.",
+        "Uygulama kopru urunu ve android platformu altinda DOSYA ADIYLA " +
+        "suzulur. Ayri urun kimligi BILINCLI OLARAK kullanilmadi: " +
         "sunucudaki statik indirme yolunun oturum kapisi urun adina " +
         "bakiyor ve yeni urun adlari oraya eklenmezse paketler " +
         "oturum acmadan inebilirdi. Mevcut kopru urunu altinda " +

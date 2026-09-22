@@ -15,7 +15,6 @@ GÖKTUNGU, dron komuta-kontrol ekosistemidir: yer kontrol istasyonu, çevrimiçi
 | **BRDIMG** | Görüntü Köprüsü | Saha görüntü kaynağı/işleme köprüsü (AI Görüntü Köprüsü) | `03_BRDIMG/ORTAK_KOPRU_KAYNAGI/` |
 | **BRDTLM** | Telemetri/Radar Köprüsü | Telemetri ve radar bağlantı köprüsü (BRDIMG ile ortak çekirdek) | `04_BRDTLM/` |
 | **BRDAND** | Android Köprü | Android MAVLink telemetri köprüsü | `05_BRDAND/KAYNAK/` |
-| **BRDDJI** | Android DJI | Android DJI köprüsü | `06_BRDDJI/KAYNAK/` |
 | **GRCCMP** | Kurumsal/Müşteri Paneli | Lisanslı müşteri, paket ve kurum yüzü | `07_GRCCMP/KAYNAK/` |
 | **GRCADM** | Yönetim Paneli | Operasyon ve katalog yönetimi | `08_GRCADM/KAYNAK/` |
 | **GRCWEB** | Tanıtım Sitesi | Açık tanıtım, yardım ve yasal sayfalar | `09_GRCWEB/KAYNAK/` |

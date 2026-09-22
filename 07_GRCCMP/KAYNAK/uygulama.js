@@ -982,7 +982,7 @@ async function sayfaDronlar() {
 const ORNEK_TANIM = {
   kopru: {
     baslik: 'Köprüler', tekil: 'Köprü', yeni: 'Yeni Köprü',
-    aciklama: 'Sahadaki köprü yazılımları (Windows, Ubuntu, Android MAVLink ve DJI) ' +
+    aciklama: 'Sahadaki köprü yazılımları (Windows, Ubuntu, Android MAVLink) ' +
       'merkeze API koduyla eşleşir ve ters WebSocket ile bağlanır; sabit IP gerekmez. ' +
       'Kayıt yalnız bir ad ister. Üretilen kodu köprünün ilk kurulum ekranına ' +
       '(GRCON seçili) yapıştırın; dron, radar ve kamera bağlantılarını Merkez ' +
@@ -2209,8 +2209,8 @@ async function sayfaKopru() {
   const lin = kayitlar.filter((k) => k.platform === 'linux' ||
                                      k.platform === 'ubuntu');
   /* ANDROID KOPRULERI — FAZ19-IS39-ANDROID-KOPRU
-   * Iki farkli Android uygulamasi ayni urun (`kopru`) ve ayni platform
-   * (`android`) altinda durur; ayrim DOSYA ADIYLA yapilir. Ayri urun
+   * Android kopru uygulamasi ayni urun (`kopru`) ve ayni platform
+   * (`android`) altinda durur; APK dosya adiyla suzulur. Ayri urun
    * kimligi kullanilmadi cunku sunucudaki statik `/indir/<urun>/`
    * oturum kapisi urun adina bakiyor ve yeni urun adlari oraya
    * eklenmezse APK'lar oturumsuz inebilirdi.
@@ -2221,7 +2221,6 @@ async function sayfaKopru() {
            String(k.dosya_ad || '').toUpperCase()
              .indexOf('-' + anahtar + '-') !== -1);
   const androidMav = apkTur('MAVLINK');
-  const androidDji = apkTur('DJI');
   /* Ortak `paketKarti` kullanilir: en guncel surum one cikar, eskiler
    * katlanir (bkz. dosya basindaki OLCULEN KUSUR notu). */
   const kart = (baslik, liste, ipucu) =>
@@ -2247,12 +2246,6 @@ async function sayfaKopru() {
       'APK doğrudan iner: kurulum için cihazınızda ' +
       '<strong>bilinmeyen kaynaklardan kuruluma</strong> izin vermeniz ' +
       'gerekir (Ayarlar → Güvenlik). Android 8.0 ve üzeri.')}
-    ${kart('Android — DJI', androidDji,
-      'DJI Mobile SDK üzerinden çalışır; uzaktan kumandaya bağlı ' +
-      'telefonda açılır ve telemetriyi merkeze aktarır. APK doğrudan ' +
-      'iner: <strong>bilinmeyen kaynaklardan kuruluma</strong> izin ' +
-      'vermeniz gerekir. Android 8.0 ve üzeri; DJI uçuş uygulaması ' +
-      'aynı cihazda kurulu olmalıdır.')}
     <div class="pano">
       <div class="pano-baslik">Kurulum sonrası</div>
       <ol class="madde">
@@ -2306,7 +2299,7 @@ const DESTEK_ONCELIK_RENK = {
 const DESTEK_MODUL_AD = {
   app: 'GCS Uygulaması', kopru: 'Köprü Yazılımı',
   merkez: 'Merkez Uygulama', radar: 'Radar Modülü',
-  gccdual: 'Yer Kontrol İstasyonu Dual', dji: 'DJI Köprüsü (Android)',
+  gccdual: 'Yer Kontrol İstasyonu Dual',
   ai: 'AI Sunucusu', video: 'Video Sunucusu',
   kurumsal_panel: 'Kurumsal Panel', yonetim_paneli: 'Yönetim Paneli',
   odeme: 'Ödeme / Abonelik', kurulum: 'Kurulum / Sihirbaz',

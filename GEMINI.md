@@ -4,7 +4,7 @@ Bu arşiv, GÖKTUNGU ekosisteminin kaynak ve teknik teslim paketidir. Çalışma
 
 ## Sistem modeli
 
-GÖKTUNGU bileşenleri resmi kodlarıyla yönetilir: GRCOFF (offline merkez), GRCON (online sunucu), BRDIMG (görüntü köprüsü), BRDTLM (telemetri/radar köprüsü), BRDAND (Android köprü), BRDDJI (Android DJI), GRCCMP (kurumsal panel), GRCADM (yönetim paneli) ve GRCWEB (tanıtım sitesi).
+GÖKTUNGU bileşenleri resmi kodlarıyla yönetilir: GRCOFF (offline merkez), GRCON (online sunucu), BRDIMG (görüntü köprüsü), BRDTLM (telemetri/radar köprüsü), BRDAND (Android köprü), GRCCMP (kurumsal panel), GRCADM (yönetim paneli) ve GRCWEB (tanıtım sitesi).
 
 GRCOFF ile GRCON kesin olarak ayrıdır. Offline yerel kamera/AI yüzeyi yalnız GRCOFF’ta kalır. Çevrimiçi GRCON’a offline kamera menüsü veya yerel AI popup’ı eklenmemelidir. BRDIMG ve BRDTLM aynı köprü çekirdeğini paylaşır; değişiklikler ikili regresyon gerektirir.
 
@@ -38,7 +38,7 @@ GRCOFF ile GRCON kesin olarak ayrıdır. Offline yerel kamera/AI yüzeyi yalnız
 | GRCON/Python | `02_GRCON/MERKEZ_PYTHON/` |
 | PostgreSQL aktarımı | `02_GRCON/POSTGRESQL_AKTARIM/` |
 | Köprü kaynakları | `03_BRDIMG/ORTAK_KOPRU_KAYNAGI/` |
-| Android kaynakları | `05_BRDAND/KAYNAK/`, `06_BRDDJI/KAYNAK/` |
+| Android kaynakları | `05_BRDAND/KAYNAK/` |
 | Web kaynakları | `07_GRCCMP/`, `08_GRCADM/`, `09_GRCWEB/` |
 | Testler | `12_TESTLER/` |
 | Paket örnekleri | `11_PAKETLER/` |

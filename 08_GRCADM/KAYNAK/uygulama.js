@@ -2275,7 +2275,7 @@ const DESTEK_ONCELIK_RENK = {
 const DESTEK_MODUL_AD = {
   app: 'GCS Uygulaması', kopru: 'Köprü Yazılımı',
   merkez: 'Merkez Uygulama', radar: 'Radar Modülü',
-  gccdual: 'Yer Kontrol İstasyonu Dual', dji: 'DJI Köprüsü (Android)',
+  gccdual: 'Yer Kontrol İstasyonu Dual',
   ai: 'AI Sunucusu', video: 'Video Sunucusu',
   kurumsal_panel: 'Kurumsal Panel', yonetim_paneli: 'Yönetim Paneli',
   odeme: 'Ödeme / Abonelik', kurulum: 'Kurulum / Sihirbaz',

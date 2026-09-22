@@ -17,7 +17,6 @@ Bu tek ZIP arşivi, erişilebilen GÖKTUNGU kaynaklarını, GRCOFF kaynağını 
 | `03_BRDIMG/` | Görüntü Köprüsü ortak kaynak ağacı |
 | `04_BRDTLM/` | Telemetri/Radar Köprüsü kaynak ilişkisi notu |
 | `05_BRDAND/` | Android Köprü kaynakları |
-| `06_BRDDJI/` | Android DJI kaynakları |
 | `07_GRCCMP/` | Kurumsal/Müşteri paneli |
 | `08_GRCADM/` | Yönetim paneli |
 | `09_GRCWEB/` | Tanıtım sitesi |

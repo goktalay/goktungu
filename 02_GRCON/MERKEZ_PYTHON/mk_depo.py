@@ -118,11 +118,11 @@ LISANSLI_URUNLER = ("gcs",)
 # yetenegi bulunmuyor.
 OTURUM_GEREKEN_URUNLER = ("kopru", "video")
 
-# `android`: Pixhawk/MAVLink ve DJI kopru uygulamalari (APK).
+# `android`: Pixhawk/MAVLink kopru uygulamasi (APK).
 # Ayri URUN olarak eklenmedi - mk_sunucu.py statik `/indir/<urun>/`
 # oturum kapisi urun adina bakar; ayri urun oturumsuz indirmeye
 # kapi acardi. `kopru` urunu altinda platform olarak durur.
-# Iki uygulama dosya adiyla ayrisir: -MAVLink- / -DJI-
+# APK dosya adiyla suzulur: -MAVLink-
 # FAZ19-IS39-ANDROID-KOPRU
 PLATFORMLAR = ("ortak", "linux", "windows", "linux-arm64", "android")
 KANALLAR = ("kararli", "beta", "deneysel")

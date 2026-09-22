@@ -5,7 +5,7 @@ Kaynak: 01_GRCOFF/KAYNAK/varliklar/marka/turkbey_ikon_{gece,gunduz}_1024.png
 (896x967 tasarim dosyasindan golgesiz kirpilip 895x895 kare tuvale ortalanmis,
 1024'e olceklenmis). Hedefler: GRCOFF/GRCON (logo.png=gece, logo_acik.png=gunduz,
 pwa, varliklar/hicolor, goktungu.ico, favicon), kopru varliklar, Android
-mipmap/round/adaptive (05_BRDAND, 06_BRDDJI), web img/favicon_*.
+mipmap/round/adaptive (05_BRDAND), web img/favicon_*.
 
 Kullanim: python3.11 ikon_uret_pil.py [--src /root/grcoff_2528_build/src]
 """
@@ -80,7 +80,7 @@ yaz(gece, 180, S + "pwa/apple-touch-icon.png"); yaz(gece, 192, S + "pwa/ikon-192
 maskeli(gece, 192).save(S + "pwa/ikon-maskable-192.png"); maskeli(gece, 512).save(S + "pwa/ikon-maskable-512.png")
 varliklar(S + "varliklar/")
 varliklar(REPO + "/03_BRDIMG/ORTAK_KOPRU_KAYNAGI/varliklar/")
-for app in ("05_BRDAND", "06_BRDDJI"):
+for app in ("05_BRDAND",):
     R = REPO + "/%s/KAYNAK/app/src/main/res/" % app
     for d, n in (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)):
         yaz(gece, n, R + "mipmap-%s/ic_launcher.png" % d)
