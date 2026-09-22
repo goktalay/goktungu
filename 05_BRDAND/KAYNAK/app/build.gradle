@@ -3,6 +3,25 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// DJI API anahtari yapilandirmadan okunur. Anahtar uygulama PAKET
+// ADINA baglidir (com.turkbey.goktungu.bridge) ve DJI Developer
+// hesabindan alinir; bu yuzden kaynak depoya gomulemez. Sirasiyla su
+// yerlere bakilir:
+//   1. yerel.properties -> dji.api.anahtari
+//   2. cevre degiskeni  -> DJI_API_ANAHTARI
+// Ikisi de yoksa bos kalir; uygulama calisir ama MSDK kaydi basarisiz
+// olur ve arayuz bunu acikca bildirir (sessiz cokme YOK).
+def djiAnahtar = ""
+def yerelDosya = rootProject.file("yerel.properties")
+if (yerelDosya.exists()) {
+    def p = new Properties()
+    yerelDosya.withInputStream { p.load(it) }
+    djiAnahtar = p.getProperty("dji.api.anahtari", "")
+}
+if (djiAnahtar?.isEmpty()) {
+    djiAnahtar = System.getenv("DJI_API_ANAHTARI") ?: ""
+}
+
 android {
     namespace 'com.turkbey.goktungu.bridge'
     compileSdk rootProject.ext.derleme_sdk
@@ -20,15 +39,41 @@ android {
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
+        // 1.1.3: DJI MSDK v5 cekirdegi gommeli DJI kopru tipi olarak
+        //        eklendi (mevcut MAVLink yolu regresyonsuz korunuyor).
         versionCode 4
-        versionName '1.1.2'
+        versionName '1.1.3'
 
-        // Multidex GEREKMEZ: MSDK kalktigi icin yontem sayisi 64K
-        // sinirinin cok altinda.  Kaldirmak acilis suresini kisaltir.
+        // DJI MSDK gomuldugu icin multidex ZORUNLU: yontem sayisi artik
+        // 64K DEX sinirinin cok uzerinde. MultiDex.install cagrisi
+        // GoktunguMavUygulama.attachBaseContext icindedir.
+        multiDexEnabled true
 
-        // ABI suzgeci GEREKMEZ: yerel (native) kutuphane yok.  Saf
-        // Kotlin/JVM kodu tum ABI'lerde calisir; boylece x86 tabanli
-        // cihazlar ve oykunucular da desteklenir.
+        // ABI daraltma (DJI MSDK yerel kutuphane tasir).
+        //
+        // OLCULDU (dji-sdk-v5-aircraft-5.18.0.aar jni/ icerigi):
+        //   arm64-v8a  : 57 dosya, 257.5 MB
+        //   armeabi-v7a: 19 dosya,  26.2 MB
+        //   x86        :  7 dosya,  10.6 MB
+        //   x86_64     :  4 dosya,   9.5 MB
+        // AAR'da x86/x86_64 dizinleri VAR fakat yalniz birkac yardimci
+        // kutuphane iceriyor -- ucus denetimi katmani yok. Yani x86
+        // gercek bir gercekleme degil; oykunucuda ucus CALISMAZ.
+        //
+        // REGRESYON NOTU: MAVLink yolu saf-JVM'dir ve onceden tum
+        // ABI'lerde (x86/x86_64 oykunucular dahil) calisiyordu. DJI MSDK
+        // gomuldugu icin APK artik yalniz arm64-v8a + armeabi-v7a
+        // paketliyor; x86/x86_64 OYKUNUCU DESTEGI DUSTU. Bu bilincli bir
+        // takas: MSDK zaten x86'da ucus saglamaz ve tum ABI'leri
+        // paketlemek APK'yi gereksiz yere buyutur. Gercek arm cihazlarda
+        // (saha telefonlari) MAVLink islevi degismeden calisir.
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+
+        manifestPlaceholders = [
+            DJI_API_ANAHTARI: djiAnahtar
+        ]
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
@@ -51,8 +96,13 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            // `-PkucultmeKapali` ile R8 kapatilabilir. DJI MSDK gomuldugu
+            // icin R8 sinirli bellekli derleme kutularinda MSDK'yi
+            // kuculturken OOM'dan dusebilir; kucultmesiz APK islevsel
+            // olarak aynidir, yalnizca buyuktur (MSDK zaten proguard
+            // kurallariyla dagitilir). BRDDJI ile ayni guard.
+            minifyEnabled !project.hasProperty('kucultmeKapali')
+            shrinkResources !project.hasProperty('kucultmeKapali')
             proguardFiles getDefaultProguardFile(
                 'proguard-android-optimize.txt'), 'proguard-rules.pro'
             def imzaDosya = rootProject.file("imza.properties")
@@ -81,6 +131,22 @@ android {
         buildConfig true
     }
 
+    packagingOptions {
+        // DJI MSDK ve diger bagimliliklar ayni yerel kutuphaneleri
+        // tasiyabilir; ilk gorulen alinir (.so cakismasi cozumu).
+        jniLibs {
+            useLegacyPackaging true
+            pickFirsts += ['**/libc++_shared.so', '**/libcrypto.so']
+        }
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES', 'META-INF/LICENSE*',
+                'META-INF/NOTICE*', 'META-INF/*.kotlin_module',
+                'META-INF/rxjava.properties'
+            ]
+        }
+    }
+
     lint {
         abortOnError false
         checkReleaseBuilds false
@@ -88,6 +154,21 @@ android {
 }
 
 dependencies {
+    def msdk = rootProject.ext.msdk_surum
+
+    // --- DJI MSDK v5 (gommeli DJI kopru tipi) ---
+    // aircraft: ana denetim paketi
+    implementation "com.dji:dji-sdk-v5-aircraft:$msdk"
+    // provided: yalniz derleme arayuzleri
+    compileOnly "com.dji:dji-sdk-v5-aircraft-provided:$msdk"
+    // networkImp: DJI ag katmani. Bizim koprumuz kendi baglantisini
+    // kurar, ancak bazi araclar ag katmani olmadan etkinlestirme
+    // yapamiyor ve uzaktan kimlik yukumlulukleri bunu gerektiriyor.
+    runtimeOnly "com.dji:dji-sdk-v5-networkImp:$msdk"
+
+    // DJI MSDK gomuldugu icin multidex zorunlu
+    implementation 'androidx.multidex:multidex:2.0.1'
+
     // --- Android temel ---
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'

@@ -41,6 +41,15 @@ object Gunluk {
     fun yaz(etiket: String, ileti: String) =
         ekle(etiket, ileti, Duzey.BILGI)
 
+    /**
+     * Basari kaydi. DJI cekirdegi (DjiKopru/GorevYonetici/KmzUretici)
+     * ayri bir "basari" duzeyi bekliyor; MAVLink tarafi bu duzeyi ayirt
+     * etmedigi icin BILGI olarak yazilir. Boylece tasinan DJI koduna
+     * dokunmadan ayni cagri karsilanir.
+     */
+    fun basari(etiket: String, ileti: String) =
+        ekle(etiket, ileti, Duzey.BILGI)
+
     fun uyari(etiket: String, ileti: String) =
         ekle(etiket, ileti, Duzey.UYARI)
 

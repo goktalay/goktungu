@@ -7,10 +7,14 @@
 buildscript {
     ext {
         agp_surum = '8.5.2'
-        // MSDK kalktigi icin Kotlin 2.1.0 zorunlulugu da kalkti,
-        // ancak dogrulanmis birlesimi bozmamak icin ayni surum
-        // korunuyor.
+        // DJI MSDK v5 gomuldugu icin Kotlin 2.1.0 yeniden ZORUNLU:
+        // MSDK 5.18.0 Kotlin 2.1.0 metadata ile derlenmistir, daha
+        // dusuk surum "incompatible version of Kotlin ... metadata is
+        // 2.1.0" hatasi verir. Zaten dogrulanmis birlesim buydu.
         kotlin_surum = '2.1.0'
+        // DJI MSDK surumu tek yerde tanimli; yukseltirken yalniz burayi
+        // degistirmek yeterli olmali (BRDDJI ile ayni surum).
+        msdk_surum = '5.18.0'
         // Play Store: 31 Agu 2026'dan SONRA yeni uygulamalar ve
         // guncellemeler API 36 (Android 16) hedeflemek ZORUNDA.
         hedef_sdk = 36

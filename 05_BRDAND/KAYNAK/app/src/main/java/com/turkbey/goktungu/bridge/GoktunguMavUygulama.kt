@@ -1,23 +1,39 @@
 package com.turkbey.goktungu.bridge
 
 import android.app.Application
+import android.content.Context
+import androidx.multidex.MultiDex
 import com.turkbey.goktungu.bridge.veri.Gunluk
 
 /**
  * Uygulama girisi.
  *
- * ## Neden multidex yok
+ * ## Multidex (DJI MSDK gommeli)
  *
- * DJI koprusu MSDK'nin buyuklugu nedeniyle `multiDexEnabled true`
- * kullanmak ZORUNDAYDI.  MAVLink koprusunun hicbir agir bagimliligi
- * yoktur (kendi seri surucusu ve kendi cerceve ayristiricisi var), bu
- * yuzden yontem sayisi 64K sinirinin cok altinda kalir ve multidex
- * gereksizdir.  Multidex'i kaldirmak acilis suresini kisaltir.
+ * DJI MSDK v5 cekirdegi gomulunce yontem sayisi 64K DEX sinirinin
+ * uzerine cikar; bu yuzden `multiDexEnabled true` ZORUNLUDUR ve MSDK
+ * buyuk oldugu icin [attachBaseContext] icinde `MultiDex.install`
+ * cagrilmalidir (BRDDJI `GoktunguUygulama` deseni). Bu, saf-JVM MAVLink
+ * yolunun davranisini DEGISTIRMEZ; yalnizca ikincil dex dosyalarinin
+ * eski surumlerde de yuklenmesini saglar.
  *
- * Kopru cekirdegi burada kurulmaz; `AnaEtkinlik` icinde kurulur cunku
- * USB erisimi icin etkinlik baglami ve kullanici izni gerekir.
+ * ## Kopru cekirdekleri burada BASLATILMAZ
+ *
+ * MAVLink cekirdegi `AnaEtkinlik` icinde kurulur cunku USB erisimi icin
+ * etkinlik baglami ve kullanici izni gerekir. DJI cekirdegi
+ * ([com.turkbey.goktungu.bridge.kopru.DjiKopruCekirdegi]) da ancak
+ * arayuzden DJI kopru tipi secilince (Faz 2) `kur()` ile tetiklenir;
+ * boylece cagrilmadan MSDK BASLAMAZ ve mevcut MAVLink davranisi
+ * korunur.
  */
 class GoktunguMavUygulama : Application() {
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // DJI MSDK gommeli oldugundan yontem sayisi 64K'yi asar;
+        // ikincil dex'ler burada yuklenir.
+        MultiDex.install(this)
+    }
 
     override fun onCreate() {
         super.onCreate()
