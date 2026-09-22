@@ -24,31 +24,11 @@ import time
 
 from . import goruntu_gecmisi
 
-# IS94_TELEMETRI_KISMA: veri degismese bile en gec bu kadar saniyede
-# bir paket gonderilir. Gerekce: NAT/LTE ara kutulari uzun sessizlikte
-# baglantiyi dusurur. Sunucu ping araligi 20 sn oldugu icin 10 sn
-# guvenli tarafta kalir.
-IS94_SESSIZLIK_TAVANI = 10.0
-
-# v2.4.163: asyncio.to_thread varsayilan havuz is parcaciklari HIC olmez;
-# PostgreSQL havuzundan odunc aldiklari baglanti is parcacigi olumunde geri
-# alinir -> hic geri verilmiyordu. Birkac AI ayar degisikliginden sonra
-# havuz (10) doluyor, sonraki islemler 20 sn bekleyip arayuzu kilitliyordu.
-# Her cagri sonunda baglanti havuza iade edilir.
-def _db_iade_ederek(fn, *a, **k):
-    try:
-        return fn(*a, **k)
-    finally:
-        try:
-            from . import veritabani as _vt
-            _vt.baglanti_kapat()
-        except Exception:
-            pass
-
-
-async def _db_is_parcasi(fn, *a, **k):
-    return await asyncio.to_thread(_db_iade_ederek, fn, *a, **k)
-
+# IS94_SESSIZLIK_TAVANI (telemetri sessizlik tavani) ile
+# `_db_iade_ederek`/`_db_is_parcasi` (DB is-parcasi sarmalayicilari) ayri
+# module tasindi ve asagida `.sunucu_yardimci2`den yeniden disa acildi
+# (Risk 6, davranis-koruyucu modulerlestirme). Olculen gerekceler
+# (IS94_TELEMETRI_KISMA, v2.4.163 havuz iadesi) yeni modulde belgelidir.
 
 from .sabitler import (WS_PORTLAR, HTTP_PORTLAR, YAYIN_HZ, PROJE_KOKU,
                        WS_ADRES, HTTP_ADRES,
@@ -57,19 +37,10 @@ from .sabitler import (WS_PORTLAR, HTTP_PORTLAR, YAYIN_HZ, PROJE_KOKU,
                        RADAR_VARSAYILAN_IP, RADAR_VARSAYILAN_PORT,
                        RADAR_IZ_ZAMANASIMI, C20_MOD_KODLARI)
 
-# v2.4.52: HTTP koku `assets/web`, kullanici verisi `veri/` altinda.
-# Arayuz bu dosyalari KOK-GORELI ister ve istenen yollar veritabaninda
-# kayitlidir (`avatars/x.png`, `ai_yuzler/kisiN_....jpg`); yol bicimi
-# degistirilemez, cunku mevcut kayitlar bozulur. Bu yuzden istek yolu
-# korunur, dosya sistemi tarafinda gercek konuma cevrilir.
-#
-# Yeni bir kullanici-verisi klasoru arayuze acilacaksa BURAYA eklenir;
-# tek tek `translate_path` icine yazilirsa biri unutulur ve eksik olan
-# SESSIZCE 404 doner (olculen vaka: `ai_yuzler`).
-_VERI_ESLEME = (
-    ("/avatars/", AVATAR_KLASORU),
-    ("/ai_yuzler/", _veri_yolu("ai_yuzler")),
-)
+# `_VERI_ESLEME` (istek onegi -> gercek klasor eslemesi) ayri module
+# tasindi ve yukarida `.sunucu_yardimci2`den yeniden disa acildi (Risk 6,
+# davranis-koruyucu modulerlestirme). Olculen gerekce (v2.4.52 kok-goreli
+# istek yolu korumasi, `ai_yuzler` vakasi) yeni modulde belgelidir.
 
 # KK_APP_WS_v1 — kaba kuvvet korumasi.
 #
@@ -97,98 +68,26 @@ from .sunucu_yardimci import (  # noqa: F401  (acik isimler: import * altcizgiyi
     _STATIK_ENGEL_UZANTI, _STATIK_IZIN_TAM, _STATIK_IZIN_ONEK,
     _STATIK_ENGEL_ONEK, _STATIK_ENGEL_DESEN, _statik_engelli_mi)
 
-
-def _merkez_panel_adresi():
-    """Kurumsal panelin (merkez sunucudaki) tam adresini dondurur.
-
-    Merkez Uygulama kurulumunda `/company/` yereldeki dosyalardan
-    servis EDILEMEZ: panel 23 ayri `/api/firma/...` ucu cagirir ve
-    bu uclar yalniz merkez sunucuda vardir (olculdu). Bu yuzden
-    istek merkeze yonlendirilir.
-
-    Adres program ayarindan (`merkez_adres`) okunur; lisans
-    dosyasindan DEGIL. Lisans govdesine alan eklemek imza
-    sozlesmesini degistirir ve dagitilmis tum lisanslari gecersiz
-    kilar.
-
-    Merkez kullanilmayan (kapali devre) kurulumda bos dizi doner;
-    cagiran taraf kullaniciyi bilgilendirir.
-    """
-    # `AyarYoneticisi` KULLANILMAZ: kurucusu `konsol` parametresi ister
-    # ve icinde `tablolari_olustur()` + JSON gocu calistirir. Her HTTP
-    # isteginde ornek yaratmak hem hatali (konsol yok) hem pahalidir.
-    # Yalniz gereken anahtar dogrudan okunur.
-    try:
-        from . import merkez as _merkez
-        from . import veritabani as _vt
-    except Exception:
-        return ""
-    try:
-        with _vt.baglanti() as con:
-            r = con.execute(
-                "SELECT deger FROM ayarlar WHERE anahtar = ?",
-                ("merkez_adres",)).fetchone()
-        ham = r["deger"] if r else None
-        try:
-            deger = json.loads(ham) if ham is not None else None
-        except (ValueError, TypeError):
-            deger = None
-        ayar = _merkez.ayar_coz({"merkez_adres": deger})
-    except Exception:
-        return ""
-    # `etkin` degil `adres` olculur: merkez kimlik dogrulamasi kapali
-    # olsa da (yerel kullanicilarla giris) kurumsal panel adresi
-    # gecerli olabilir. Ters durum da olur; bu yuzden adres bos ise
-    # panel yok sayilir.
-    adres = str(ayar.get("adres") or "").strip()
-    if not adres:
-        return ""
-    try:
-        taban = _merkez._taban(adres)
-    except Exception:
-        return ""
-    return f"{taban}/company/" if taban else ""
+# SUNUCU KOPRUSU YARDIMCILARI: SSL baglami, DB is-parcasi sarmalayicilari,
+# veri esleme, merkez panel adresi, telemetri sessizlik tavani ve kamera
+# listesi cozucusu ayri module tasindi (Risk 6, davranis-koruyucu
+# modulerlestirme). Geriye tam uyumluluk icin buradan yeniden disa acilir;
+# `goktungu.sunucu.ssl_baglami`, `goktungu.sunucu._db_is_parcasi`,
+# `goktungu.sunucu._VERI_ESLEME`, `goktungu.sunucu.IS94_SESSIZLIK_TAVANI`
+# gibi erisimler AYNEN calisir. `_db_iade_ederek`/`_merkez_panel_adresi`
+# icindeki `from . import veritabani/merkez` importlari GOVDE ICINDE
+# oldugu icin import dongusu OLUSMAZ (ayrinti yeni modulde belgelidir).
+from .sunucu_yardimci2 import *  # noqa: F401,F403
+from .sunucu_yardimci2 import (  # noqa: F401  (acik: import * altcizgiyi atlamasin)
+    IS94_SESSIZLIK_TAVANI, _VERI_ESLEME, _db_iade_ederek, _db_is_parcasi,
+    _merkez_panel_adresi, ssl_baglami, _goruntu_kamera_listesi_coz)
 
 
-def ssl_baglami():
-    """Kendinden imzali sertifika ile SSL baglami dondurur.
-
-    sertifika/gcs.crt + gcs.key yoksa openssl ile otomatik uretir.
-    openssl bulunamazsa veya uretim basarisiz olursa None doner
-    (HTTPS/WSS devre disi kalir, HTTP/WS calismaya devam eder).
-    """
-    import ssl
-    import subprocess
-    crt = os.path.join(SERTIFIKA_KLASORU, "gcs.crt")
-    key = os.path.join(SERTIFIKA_KLASORU, "gcs.key")
-    if not (os.path.exists(crt) and os.path.exists(key)):
-        try:
-            os.makedirs(SERTIFIKA_KLASORU, exist_ok=True)
-            subprocess.run(
-                ["openssl", "req", "-x509", "-newkey", "rsa:2048",
-                 "-keyout", key, "-out", crt,
-                 "-days", "3650", "-nodes",
-                 "-subj", "/CN=goktungu-gcs"],
-                check=True, capture_output=True, timeout=30)
-            print(f"[SSL] Kendinden imzali sertifika uretildi: {crt}")
-        except Exception as e:
-            print(f"[SSL] Sertifika uretilemedi ({e}); "
-                  f"HTTPS/WSS devre disi. openssl kurulu mu?")
-            return None
-    try:
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(crt, key)
-        return ctx
-    except Exception as e:
-        print(f"[SSL] Sertifika yuklenemedi ({e}); HTTPS/WSS devre disi.")
-        return None
-
-
-def _goruntu_kamera_listesi_coz(veri):
-    """Köprü kamera yanıtının doğrudan veya zarflı liste biçimini çözer."""
-    if isinstance(veri, dict):
-        veri = veri.get("sonuc", veri.get("kameralar"))
-    return veri if isinstance(veri, list) else None
+# `_merkez_panel_adresi`, `ssl_baglami` ve `_goruntu_kamera_listesi_coz`
+# ayri module tasindi ve yukarida `.sunucu_yardimci2`den yeniden disa
+# acildi (Risk 6, davranis-koruyucu modulerlestirme). Olculen gerekceler
+# (merkez panel yonlendirmesi, kendinden imzali SSL uretimi) yeni modulde
+# belgelidir.
 
 
 class WSSunucusu:

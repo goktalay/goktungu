@@ -61,7 +61,41 @@ import mk_paket as paket
 from mk_sunucu_yardimci import *  # noqa: F401,F403
 from mk_sunucu_yardimci import (  # noqa: F401  (acik: import * altcizgiyi atlamasin)
     _GZ_TURLER, _GZ_ALT_SINIR, _GZ_SEVIYE, _GZ_ONBELLEK_TAVAN,
-    _gz_onbellek, _gz_kilit, _gz_boyut, _gz_uygun_mu, _gz_sikistir)
+    _gz_onbellek, _gz_kilit, _gz_boyut, _gz_uygun_mu, _gz_sikistir,
+    _json_varsayilan)
+
+# STATIK SUNUM SIZINTI ENGELI: yedek/kaynak dosya engeli (`_yedek_yolu_mu`
+# + `_ENGELLI_*`) ve `/app/` vekili ikinci katman engeli (`_app_engelli_mi`
+# + `_APP_*`) ayri module tasindi (Risk 6, davranis-koruyucu
+# modulerlestirme). Geriye tam uyumluluk icin buradan yeniden disa acilir;
+# `mk_sunucu._yedek_yolu_mu`, `mk_sunucu._app_engelli_mi`,
+# `mk_sunucu._ENGELLI_DESEN` gibi erisimler AYNEN calisir. Olculen aciklar
+# (yedek dosya sizintisi, BULGU_04, FAZ18-IS29) yeni modulun icinde
+# belgelidir.
+from mk_sunucu_statik import *  # noqa: F401,F403
+from mk_sunucu_statik import (  # noqa: F401  (acik: import * altcizgiyi atlamasin)
+    _ENGELLI_UZANTI, _ENGELLI_DESEN, _yedek_yolu_mu,
+    _APP_ENGEL_UZANTI, _APP_IZIN_TAM, _APP_IZIN_ONEK, _APP_ENGEL_DESEN,
+    _APP_ENGEL_ONEK, _app_engelli_mi)
+
+# TLS/SNI baglam yardimcilari (`tls_baglamlari`, `tls_baglam_kur`, SNI ad
+# eslesme ve sertifika ad cozumu + `_TLS_ONBELLEK`/`_TLS_KILIT` global
+# durumu) ayri module tasindi (Risk 6, davranis-koruyucu modulerlestirme).
+# Geriye tam uyumluluk icin buradan yeniden disa acilir; `mk_sunucu.
+# tls_baglam_kur`, `mk_sunucu.tls_baglamlari` gibi erisimler AYNEN calisir.
+from mk_sunucu_tls import *  # noqa: F401,F403
+from mk_sunucu_tls import (  # noqa: F401  (acik: import * altcizgiyi atlamasin)
+    _TLS_ONBELLEK, _TLS_KILIT, _ad_uyar_mi, _sertifika_adlari,
+    tls_baglamlari, tls_baglam_kur)
+
+# Kurum logosu cozumleme/saklama (`logo_coz`, `logo_yaz` + `LOGO_*`
+# sabitleri) ayri module tasindi (Risk 6, davranis-koruyucu
+# modulerlestirme). Geriye tam uyumluluk icin buradan yeniden disa
+# acilir; `mk_sunucu.logo_coz`, `mk_sunucu.logo_yaz`, `mk_sunucu.LOGO_DIZIN`
+# gibi erisimler AYNEN calisir.
+from mk_sunucu_logo import *  # noqa: F401,F403
+from mk_sunucu_logo import (  # noqa: F401  (acik: import * altcizgiyi atlamasin)
+    LOGO_DIZIN, LOGO_MAKS_BAYT, LOGO_TURLERI, logo_coz, logo_yaz)
 
 import mk_bakim as bakim
 import mk_iyzico as iyzico
@@ -120,14 +154,10 @@ def kopruye_sor(ornek_id: int, eylem: str, veri: dict | None = None,
 # --------------------------------------------------------------------------
 # HTTP yardımcıları
 # --------------------------------------------------------------------------
-def _json_varsayilan(x: Any) -> Any:
-    if isinstance(x, (dt.datetime, dt.date)):
-        return x.isoformat()
-    if isinstance(x, dt.timedelta):
-        return x.total_seconds()
-    if hasattr(x, "__str__"):
-        return str(x)
-    raise TypeError(type(x))
+# `_json_varsayilan` (JSON serilestirme varsayilan donusturucusu) ayri
+# module tasindi ve yukarida `mk_sunucu_yardimci`den yeniden disa acildi
+# (Risk 6, davranis-koruyucu modulerlestirme). `mk_sunucu._json_varsayilan`
+# erisimi AYNEN calisir.
 
 
 class Istek:
@@ -215,158 +245,11 @@ def yol(yontem: str, desen: str, yetki: str = "yonetici"):
 
 
 
-# ----------------------------------------------------------------- #
-# YEDEK / KAYNAK DOSYA DESEN ENGELI                                  #
-#                                                                    #
-# Bu sunucuda nginx YOKTUR; statik dosyalari bu surec sunuyor.       #
-# nginx'in ontanimli "yedek uzantisini sunma" korumasi burada        #
-# bulunmadigi icin engel elle kurulur.                               #
-#                                                                    #
-# 2026-08-17 denetiminde olculdu: gecis sirasinda birakilan 13       #
-# `.adbak` dosyasi ve 2 panel yedek dizini HTTP 200 donuyordu.       #
-# Sizan icerik: eski marka, eski alan adi, yururlukten kalkmis KVKK  #
-# metni ve panel kaynak kodu.                                        #
-#                                                                    #
-# 404 doner (403 DEGIL): 403 dosyanin varligini dogrular ve          #
-# saldirgana harita cizer.                                           #
-# ----------------------------------------------------------------- #
-_ENGELLI_UZANTI = (
-    ".adbak", ".bak", ".orij", ".orig", ".eski", ".old",
-    ".save", ".swp", ".swo", ".tmp", ".rej", ".patch", ".diff",
-)
-_ENGELLI_DESEN = re.compile(
-    r"(^|/)\."              # nokta ile baslayan (gizli) dosya ya da dizin
-    r"|~$"                  # editor yedegi: dosya.html~
-    r"|_yedek(_|/|$)"       # company_yedek_2105/
-    r"|yedek_arsiv"         # arsiv dizini
-    r"|(^|/)__pycache__(/|$)",
-    re.IGNORECASE,
-)
-
-
-def _yedek_yolu_mu(yol: str) -> bool:
-    """Yol bir yedek/kaynak/gizli dosyaya mi isaret ediyor."""
-    d = (yol or "").lower()
-    if d.endswith(_ENGELLI_UZANTI):
-        return True
-    return bool(_ENGELLI_DESEN.search(d))
-
-
-# ----------------------------------------------------------------- #
-# /app/ VEKILI ICIN SIZINTI ENGELI (BULGU_04)                       #
-#                                                                   #
-# `_dosya_sun` icindeki `_yedek_yolu_mu` engeli /app/ dalini KAPSAMAZ:#
-# vekil dali YOL_TABLOSU'ndan once donuyor (satir ~492). Olculen     #
-# sizinti: /app/veri/pg.json veritabani parolasini donduruyordu.     #
-#                                                                   #
-# Bu, app tarafindaki engelin IKINCI katmanidir. Iki katman ayni     #
-# oruntuleri bagimsiz olarak sorgular; biri kaldirilirsa digeri      #
-# sizintiyi durdurur.                                               #
-# ----------------------------------------------------------------- #
-_APP_ENGEL_UZANTI = (
-    ".py", ".pyc", ".pyo", ".pyd", ".sh", ".bat", ".ps1",
-    ".json", ".ini", ".cfg", ".conf", ".yaml", ".yml", ".toml",
-    ".log", ".db", ".sqlite", ".sqlite3", ".sql", ".jsonl",
-    ".env", ".pem", ".key", ".crt", ".csr", ".p12", ".pfx", ".jks",
-)
-
-# PWA islevi icin zorunlu; engellenirse uygulama kurulamaz.
-# Yol `/app/` onegi SOYULDUKTAN sonra karsilastirilir.
-_APP_IZIN_TAM = frozenset((
-    "/manifest.json",
-    "/sw.js",
-    "/js/surum.js",
-))
-# FAZ18-IS29: ISLEVSEL ONEK IZNI (vekil katmani).
-#
-# OLCULEN KUSUR: `.json` kara listesi Cesium'un ISLEVSEL varliklarini
-# da vuruyordu ve harita SAHNESI hic kurulmuyordu:
-#   /lib/Cesium/Assets/approximateTerrainHeights.json  (arazi yuksekligi)
-#   /lib/Cesium/Assets/IAU2006_XYS/IAU2006_XYS_*.json  (gok referansi)
-# Ikisi de reddedilince Cesium `promise` reddiyle coker; dron ikonu,
-# lokasyon ikonu, cetvel ve rota isaretcileri BIRLIKTE gorunmez olur
-# (dort belirti, tek kok neden).
-#
-# BU KATMAN NICIN AYRI YAMALANIR: yukaridaki yorumda anlatildigi gibi
-# app ve vekil kara listeleri BILINCLI olarak birbirinden bagimsizdir.
-# Bagimsizlik sizinti karsisinda degerlidir, ancak ISLEVSEL izin de
-# iki katmanda AYNI olmak zorundadir; yoksa App 200 dondururken vekil
-# 404 doner (olculdu).
-#
-# NEDEN ONEK, TEK TEK DOSYA DEGIL: Cesium 30 .json varligi tasir ve
-# surum yukseltmesinde liste degisir; tek tek saymak yeni surumde
-# SESSIZ 404 uretir.
-#
-# GUVENLIK OLCUMU: /lib/ altinda riskli uzanti 0 dosya, sir izi
-# (password/secret/token) tasiyan .json 0 dosya.
-#
-# YOL GECISI: denetim normpath ve unquote SONRASINDA yapilir, bu yuzden
-# `/lib/../veri/pg.json` ve `%2e%2e` kodlamalari `/veri/pg.json` olarak
-# normalize edilir ve `_APP_ENGEL_ONEK` tarafindan engellenmeye DEVAM
-# eder.
-_APP_IZIN_ONEK = (
-    "/lib/",
-)
-
-# /app/ dalina OZEL desenler. Genel `_ENGELLI_DESEN` degistirilmez:
-# o desen /company/ ve /admin/ dallarinda da kullanilir ve orada
-# `requirements.txt` mesru bir kurulum belgesi olabilir.
-_APP_ENGEL_DESEN = re.compile(
-    r"(^|/)requirements\.txt$"
-    r"|(^|/)calisma\.json$"
-    r"|(^|/)__pycache__(/|$)"
-    r"|\.txt$",
-    re.IGNORECASE,
-)
-
-_APP_ENGEL_ONEK = (
-    "/veri/",
-    "/sertifika/",
-    "/goktungu/",
-    "/ai_modeller/",
-    "/araclar/",
-    "/python/",
-    "/assets/python/",
-)
-
-
-def _app_engelli_mi(ic_yol: str) -> bool:
-    """`/app/` onegi soyulmus yol hassas bir kaynaga mi isaret ediyor.
-
-    Yol NORMALLESTIRILIR: `/js/../veri/pg.json` onek denetimini
-    atlatmasin. Yuzde kodlamasi da cozulur (`%2e%2e`).
-    """
-    d = (ic_yol or "").split("?", 1)[0].split("#", 1)[0]
-    try:
-        d = urllib.parse.unquote(d)
-    except Exception:
-        pass
-    d = d.replace("\\", "/")
-    dizin_istegi = d.endswith("/")
-    d = posixpath.normpath(d)
-    if not d.startswith("/"):
-        d = "/" + d
-    if dizin_istegi and not d.endswith("/"):
-        d += "/"
-    alt = d.lower()
-    if alt in _APP_IZIN_TAM:
-        return False
-    # FAZ18-IS29: islevsel onek izni. Engel ONEK ve DESEN denetimleri
-    # bu izinden BAGIMSIZ uygulanmaya devam eder; boylece /lib/
-    # altindaki .json varliklari servis edilirken /veri/, /goktungu/,
-    # __pycache__ ve yedek engelleri bozulmaz.
-    if alt.startswith(_APP_IZIN_ONEK):
-        if not alt.startswith(_APP_ENGEL_ONEK):
-            if not _APP_ENGEL_DESEN.search(alt):
-                if not _ENGELLI_DESEN.search(alt):
-                    return False
-    if alt.endswith(_APP_ENGEL_UZANTI):
-        return True
-    if alt.startswith(_APP_ENGEL_ONEK):
-        return True
-    if _APP_ENGEL_DESEN.search(alt):
-        return True
-    return bool(_ENGELLI_DESEN.search(alt))
+# STATIK SUNUM SIZINTI ENGELI: yedek/kaynak dosya engeli ve `/app/`
+# vekili ikinci katman engeli ayri module tasindi ve yukarida
+# `mk_sunucu_statik`den yeniden disa acildi (Risk 6, davranis-koruyucu
+# modulerlestirme). `mk_sunucu._yedek_yolu_mu`, `mk_sunucu._app_engelli_mi`,
+# `mk_sunucu._ENGELLI_DESEN` gibi erisimler AYNEN calisir.
 
 
 class MerkezIsleyici(BaseHTTPRequestHandler):
@@ -4906,152 +4789,11 @@ async def _nabiz_goktungusu() -> None:
                 print(f"[AKIS] {len(dusen)} terk edilmis kanal kapatildi")
 
 
-# ==========================================================================
-# v2.4.71 — SNI ÇOĞULLAMALI TLS BAĞLAMI
-# ==========================================================================
-# Merkez tek süreçte birden çok alan adı taşır:
-#   * goktungu.com + *.goktungu.com  (Sectigo wildcard, birincil)
-#   * gozcu.veilox.com.tr            (Let's Encrypt, eski adres)
-#
-# Önceki kod tek `load_cert_chain` çağrısı yapıyordu; sonuç olarak hangi
-# alan adı istenirse istenmesin AYNI sertifika sunuluyordu ve eski adrese
-# gelen tarayıcı `ERR_CERT_COMMON_NAME_INVALID` alıyordu. Çözüm SNI:
-# istemci el sıkışmada hangi adı istediğini söyler, `sni_callback` o ada
-# uyan bağlamı soketle eşler.
-#
-# NEDEN `sni_callback` ve `set_servername_callback` DEĞİL: Python'da
-# `sni_callback` bağlamı doğrudan değiştirmeye izin verir
-# (`soket.context = ...`); bu, sertifika seçiminin el sıkışma
-# tamamlanmadan yapılmasını sağlar.
-#
-# DİKKAT: Geri çağrı içinde YÜKSELTİLEN istisna el sıkışmayı sessizce
-# düşürür ve hata ayıklaması çok zordur. Bu yüzden gövde tümüyle
-# korumalıdır ve başarısızlıkta birincil bağlama düşer.
-
-_TLS_ONBELLEK: dict[str, ssl.SSLContext] = {}
-_TLS_KILIT = threading.Lock()
-
-
-def _ad_uyar_mi(desen: str, ad: str) -> bool:
-    """Sertifika adı deseninin istenen ada uyup uymadığını söyler.
-
-    Joker karakter YALNIZCA en soldaki etikette ve TEK etiketi karşılar
-    (RFC 6125): `*.goktungu.com` → `app.goktungu.com` uyar,
-    `a.b.goktungu.com` UYMAZ, `goktungu.com` UYMAZ.
-    """
-    desen = (desen or "").strip().lower().rstrip(".")
-    ad = (ad or "").strip().lower().rstrip(".")
-    if not desen or not ad:
-        return False
-    if desen == ad:
-        return True
-    if desen.startswith("*."):
-        kok = desen[2:]
-        if not ad.endswith("." + kok):
-            return False
-        return "." not in ad[: -(len(kok) + 1)]
-    return False
-
-
-def _sertifika_adlari(crt_yolu: str) -> list[str]:
-    """Sertifikadaki SAN (yoksa CN) adlarını döndürür.
-
-    `ssl._ssl._test_decode_cert` özel bir işlevdir ancak ek bağımlılık
-    (cryptography) getirmeden PEM'i çözmenin tek yerleşik yoludur.
-    Başarısız olursa boş liste döner; çağıran dosya adına düşer.
-    """
-    adlar: list[str] = []
-    try:
-        bilgi = ssl._ssl._test_decode_cert(crt_yolu)  # noqa: SLF001
-        for tur, deger in bilgi.get("subjectAltName", ()):
-            if tur.lower() == "dns":
-                adlar.append(deger)
-        if not adlar:
-            for demet in bilgi.get("subject", ()):
-                for anahtar, deger in demet:
-                    if anahtar == "commonName":
-                        adlar.append(deger)
-    except Exception as e:
-        print(f"[TLS] {crt_yolu} adlari okunamadi: {e}")
-    return adlar
-
-
-def tls_baglamlari() -> tuple[ssl.SSLContext | None,
-                              list[tuple[list[str], ssl.SSLContext]]]:
-    """(birincil bağlam, [(adlar, bağlam), ...]) döndürür.
-
-    Birincil bağlam ayar dosyasındaki `sertifika` girdisidir ve SNI
-    göndermeyen istemcilere sunulur. `ek_sertifikalar` listesindeki her
-    girdi ayrıca yüklenir.
-    """
-    a = ayar_oku()
-    girdiler: list[dict] = []
-    ana = a.get("sertifika") or {}
-    if ana.get("crt") and ana.get("key"):
-        girdiler.append(dict(ana))
-    for ek in (a.get("ek_sertifikalar") or []):
-        if isinstance(ek, dict) and ek.get("crt") and ek.get("key"):
-            girdiler.append(dict(ek))
-
-    yuklu: list[tuple[list[str], ssl.SSLContext]] = []
-    birincil: ssl.SSLContext | None = None
-    for g in girdiler:
-        crt, key = g["crt"], g["key"]
-        if not (os.path.isfile(crt) and os.path.isfile(key)):
-            print(f"[TLS] Atlandi (dosya yok): {crt}")
-            continue
-        try:
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            # TLS 1.0/1.1 ve zayif sifreler kapali: SSL Labs A notu ve
-            # PCI uyumu icin gerekli. TLS 1.2 tabanı korunur cunku
-            # sahadaki Windows 8.1 ve eski Android istemciler 1.3
-            # konusamaz.
-            ctx.minimum_version = ssl.TLSVersion.TLSv1_2
-            ctx.load_cert_chain(crt, key)
-        except Exception as e:
-            print(f"[TLS] Yuklenemedi {crt}: {e}")
-            continue
-        adlar = g.get("adlar") or _sertifika_adlari(crt)
-        yuklu.append((adlar, ctx))
-        if birincil is None:
-            birincil = ctx
-        print(f"[TLS] Yuklendi: {crt} -> {', '.join(adlar) or '(ad yok)'}")
-
-    if birincil is not None and len(yuklu) > 1:
-        def _sni(soket, istenen_ad, _ctx):  # noqa: ANN001, ANN202
-            try:
-                if not istenen_ad:
-                    return None          # birincil bağlamda kal
-                for adlar, ctx in yuklu:
-                    for d in adlar:
-                        if _ad_uyar_mi(d, istenen_ad):
-                            soket.context = ctx
-                            return None
-            except Exception:
-                pass                     # sessizce birincile düş
-            return None
-
-        for _adlar, ctx in yuklu:
-            ctx.sni_callback = _sni
-
-    return birincil, yuklu
-
-
-def tls_baglam_kur() -> ssl.SSLContext | None:
-    """Süreç genelinde tek kez kurulan TLS bağlamını döndürür.
-
-    HTTPS dinleyicisi ve WebSocket dinleyicisi AYNI bağlamı paylaşır;
-    böylece sertifika yolu tek yerden yönetilir ve iki dinleyicinin
-    farklı sertifika sunması gibi bir tutarsızlık oluşamaz.
-    """
-    with _TLS_KILIT:
-        hazir = _TLS_ONBELLEK.get("birincil")
-        if hazir is not None:
-            return hazir
-        birincil, _ = tls_baglamlari()
-        if birincil is not None:
-            _TLS_ONBELLEK["birincil"] = birincil
-        return birincil
+# TLS/SNI baglam yardimcilari ayri module tasindi ve yukarida
+# `mk_sunucu_tls`den yeniden disa acildi (Risk 6, davranis-koruyucu
+# modulerlestirme). `mk_sunucu.tls_baglam_kur`, `mk_sunucu.tls_baglamlari`
+# gibi erisimler AYNEN calisir. SNI cogullama gerekcesi (v2.4.71) yeni
+# modulde belgelidir.
 
 
 async def _ws_calistir() -> None:
@@ -5135,124 +4877,10 @@ def http_baslat(port: int, tls: bool = False) -> ThreadingHTTPServer | None:
     return sunucu
 
 
-# ======================================================================
-# v2.4.53 Faz 4 — KURUM LOGOSU
-# ======================================================================
-# Logo, kurum /company/ altinda kayit olurken yuklenir ve merkezde
-# saklanir. /app/ altindaki GOKTUNGU arayuzu giris yaptiginda kendi
-# kurumunun logosuyla acilir; ucus raporu antedi de ayni logoyu
-# kullanir. Boylece kullanici hangi bilgisayardan girerse girsin
-# kurumsal kimlik korunur.
-LOGO_DIZIN = os.path.join(VERI_KOKU, "varlik", "logo")
-LOGO_MAKS_BAYT = 2 * 1024 * 1024          # 2 MB
-LOGO_TURLERI = {
-    "image/png": ".png",
-    "image/jpeg": ".jpg",
-    "image/jpg": ".jpg",
-    "image/webp": ".webp",
-    "image/svg+xml": ".svg",
-}
-
-
-def logo_coz(veri_url):
-    """`data:` URL'sini (tur, baytlar) ikilisine cozer.
-
-    Donus: (uzanti, baytlar, hata). Hata varsa ilk iki deger None.
-
-    NEDEN data URL: kayit formu tek JSON istegi gonderir; multipart
-    kullanmak icin hem istemci hem sunucu tarafinda ayri bir ayristirici
-    gerekirdi. Logo boyutu 2 MB ile sinirli oldugu icin base64
-    genislemesi (%33) kabul edilebilir.
-    """
-    s = str(veri_url or "").strip()
-    if not s:
-        return None, None, None                # logo istege bagli
-    if not s.startswith("data:"):
-        return None, None, "Logo bicimi taninmadi"
-    basl, _, govde64 = s.partition(",")
-    if not govde64:
-        return None, None, "Logo verisi bos"
-    tur = basl[5:].split(";")[0].strip().lower()
-    uzanti = LOGO_TURLERI.get(tur)
-    if not uzanti:
-        return None, None, ("Desteklenmeyen logo turu: %s "
-                            "(PNG, JPEG, WEBP veya SVG kullanin)" % tur)
-    if "base64" not in basl:
-        return None, None, "Logo base64 kodlanmis olmali"
-    import base64 as _b64
-    try:
-        baytlar = base64.b64decode(govde64, validate=False)
-    except Exception:
-        return None, None, "Logo verisi cozulemedi"
-    if not baytlar:
-        return None, None, "Logo verisi bos"
-    if len(baytlar) > LOGO_MAKS_BAYT:
-        return None, None, ("Logo cok buyuk (%.1f MB); en fazla 2 MB"
-                            % (len(baytlar) / 1048576.0))
-    # Ikili imza denetimi: uzanti ile gercek icerik uyusmuyorsa dosya
-    # sunucuda yanlis Content-Type ile sunulur.
-    if uzanti == ".png" and not baytlar.startswith(b"\x89PNG"):
-        return None, None, "Dosya gercek bir PNG degil"
-    if uzanti == ".jpg" and not baytlar.startswith(b"\xff\xd8"):
-        return None, None, "Dosya gercek bir JPEG degil"
-    if uzanti == ".webp" and baytlar[8:12] != b"WEBP":
-        return None, None, "Dosya gercek bir WEBP degil"
-    if uzanti == ".svg":
-        try:
-            bas = baytlar[:400].decode("utf-8", "ignore").lower()
-        except Exception:
-            bas = ""
-        if "<svg" not in bas:
-            return None, None, "Dosya gercek bir SVG degil"
-        # SVG icinde betik calistirilabilir; kurum logosunda buna
-        # gerek yoktur ve saklanan dosya baska kullanicilara sunulur.
-        if "<script" in baytlar.decode("utf-8", "ignore").lower():
-            return None, None, "SVG icinde betik bulundu; kabul edilmez"
-    return uzanti, baytlar, None
-
-
-def logo_yaz(firma_id, veri_url):
-    """Logoyu diske yazar ve `firmalar.logo_yol` degerini gunceller.
-
-    Donus: (logo_yol|None, hata|None). Logo bos ise (None, None).
-    """
-    uzanti, baytlar, hata = logo_coz(veri_url)
-    if hata:
-        return None, hata
-    if not baytlar:
-        return None, None
-    import secrets as _sec
-    os.makedirs(LOGO_DIZIN, exist_ok=True)
-    # Rastgele belirtec: firma_id tahmin edilerek baska kurumun logosu
-    # dogrudan /varlik/ yolundan cekilemesin.
-    ad = "firma_%d_%s%s" % (int(firma_id), _sec.token_hex(8), uzanti)
-    tam = os.path.join(LOGO_DIZIN, ad)
-    try:
-        with open(tam, "wb") as f:
-            f.write(baytlar)
-    except OSError as e:
-        return None, "Logo kaydedilemedi: %s" % e
-    goreli = "logo/" + ad
-    # Eski logo dosyasi varsa silinir; aksi halde her guncellemede
-    # disk sisirilir.
-    try:
-        eski = db.deger(
-            "SELECT logo_yol FROM firmalar WHERE firma_id = %s",
-            (int(firma_id),))
-        if eski and str(eski) != goreli:
-            e_tam = os.path.join(VERI_KOKU, "varlik", str(eski))
-            if os.path.isfile(e_tam) and os.path.realpath(
-                    e_tam).startswith(os.path.realpath(LOGO_DIZIN)):
-                os.remove(e_tam)
-    except Exception:
-        pass
-    try:
-        db.calistir(
-            "UPDATE firmalar SET logo_yol = %s, guncel_ts = now()"
-            " WHERE firma_id = %s", (goreli, int(firma_id)))
-    except Exception as e:
-        return None, "Logo yolu yazilamadi: %s" % e
-    return goreli, None
+# Kurum logosu cozumleme/saklama ayri module tasindi ve yukarida
+# `mk_sunucu_logo`den yeniden disa acildi (Risk 6, davranis-koruyucu
+# modulerlestirme). `mk_sunucu.logo_coz`, `mk_sunucu.logo_yaz`,
+# `mk_sunucu.LOGO_DIZIN` gibi erisimler AYNEN calisir.
 
 
 @yol("GET", r"/api/genel/firma_logo", yetki="acik")

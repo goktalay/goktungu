@@ -30,7 +30,25 @@ __all__ = [
     "_gz_boyut",
     "_gz_uygun_mu",
     "_gz_sikistir",
+    "_json_varsayilan",
 ]
+
+# JSON serilestirme yardimcisi: `json.dumps(..., default=_json_varsayilan)`
+# icin varsayilan donusturucu. `mk_sunucu.py`den DAVRANIS-KORUYUCU olarak
+# BIREBIR tasinmistir. Yalniz stdlib `datetime`e baglidir -> import
+# dongusu YOKTUR.
+import datetime as dt
+from typing import Any
+
+
+def _json_varsayilan(x: Any) -> Any:
+    if isinstance(x, (dt.datetime, dt.date)):
+        return x.isoformat()
+    if isinstance(x, dt.timedelta):
+        return x.total_seconds()
+    if hasattr(x, "__str__"):
+        return str(x)
+    raise TypeError(type(x))
 
 
 # ==========================================================================
