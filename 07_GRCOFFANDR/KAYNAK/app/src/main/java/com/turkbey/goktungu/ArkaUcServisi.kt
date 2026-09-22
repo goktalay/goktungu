@@ -11,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.turkbey.goktungu.kopru.YerelDjiKopru
 import com.turkbey.goktungu.usb.UsbMavKoprusu
 import java.io.File
 import kotlin.concurrent.thread
@@ -46,6 +47,16 @@ class ArkaUcServisi : Service() {
             // tcp:127.0.0.1:5760 ile bağlanır (android_sunucu bu bağlantıyı
             // otomatik kaydeder).
             usbKoprusu = UsbMavKoprusu(this).also { it.baslat() }
+            // DJI native köprüsü (Faz 4): MSDK telemetri/komutlarını gömülü
+            // Python'un DJI GDP sunucusuna (127.0.0.1:8790) bağlar. MSDK
+            // kaydı burada başlar; sunucu henüz dinlemiyorsa üstel geri
+            // çekilmeyle yeniden dener. Chaquopy/WebView/MAVLink'e dokunmaz.
+            runCatching {
+                YerelDjiKopru.kur(applicationContext)
+                YerelDjiKopru.baslat()
+            }.onFailure {
+                android.util.Log.e("GRCOFF", "DJI köprüsü başlatılamadı", it)
+            }
         }
         return START_STICKY
     }
@@ -136,6 +147,7 @@ class ArkaUcServisi : Service() {
         calisiyor = false
         runCatching { usbKoprusu?.durdur() }
         usbKoprusu = null
+        runCatching { YerelDjiKopru.durdur() }
         super.onDestroy()
     }
 }

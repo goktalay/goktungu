@@ -16,6 +16,26 @@ plugins {
     id 'com.chaquo.python'
 }
 
+// DJI API anahtari yapilandirmadan okunur (Faz 4). Anahtar uygulama
+// PAKET ADINA (com.turkbey.goktungu) baglidir ve DJI Developer
+// hesabindan alinir; kaynak depoya gomulemez. Sirasiyla su yerlere
+// bakilir:
+//   1. yerel.properties -> dji.api.anahtari
+//   2. cevre degiskeni  -> DJI_API_ANAHTARI
+// Ikisi de yoksa bos kalir; uygulama calisir ama SDK kaydi basarisiz
+// olur ve gunluk bunu acikca bildirir (sessiz cokme YOK). NOT: anahtar
+// icerigi burada OKUNMAZ/LOGLANMAZ; yalniz manifestPlaceholders'a gecer.
+def djiAnahtar = ""
+def yerelDosya = rootProject.file("yerel.properties")
+if (yerelDosya.exists()) {
+    def p = new Properties()
+    yerelDosya.withInputStream { p.load(it) }
+    djiAnahtar = p.getProperty("dji.api.anahtari", "")
+}
+if (djiAnahtar?.isEmpty()) {
+    djiAnahtar = System.getenv("DJI_API_ANAHTARI") ?: ""
+}
+
 android {
     // Bayrak ürün: tam GÖKTUNGU uygulaması Play Store'da com.turkbey.goktungu
     // kimliğini taşır. DJI köprüsü com.turkbey.goktungu.dji'ye, MAVLink
@@ -30,12 +50,37 @@ android {
         versionCode 17
         versionName '0.2.6'
 
+        // DJI MSDK cok buyuk -> multidex ZORUNLU (Chaquopy dex'i ile
+        // birlikte 64K metod sinirini asar). MultiDex.install
+        // GoktunguUygulama.attachBaseContext icinde cagrilir.
+        multiDexEnabled true
+
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
-        // Chaquopy: yalnızca gerçek cihaz + oykunucu ABI'leri.
+        // ABI SUZGECI (Faz 4): arm64-v8a + armeabi-v7a'ya DARALTILDI.
+        //
+        // OLCULDU (dji-sdk-v5-aircraft-5.18.0.aar jni/):
+        //   arm64-v8a  : ~257 MB (tam ucus denetimi)
+        //   armeabi-v7a: ~26 MB  (tam ucus denetimi)
+        //   x86 / x86_64: yalniz birkac yardimci .so; UCUS DENETIMI YOK
+        //     -> oykunucude DJI ucusu ZATEN CALISMAZ (gercek gercekleme degil).
+        //
+        // DIKKAT — CHAQUOPY BAGI: Chaquopy'nin `python { }` ABI kumesi
+        // `ndk.abiFilters`'i TAKIP EDER. Yani x86/x86_64 buradan cikinca
+        // gomulu PYTHON da o mimariler icin paketlenmez. SONUC: bu APK
+        // artik x86/x86_64 OYKUNUCULARDA calismaz (hem MSDK hem Python
+        // kaybi). Gerekce: (1) DJI ucusu oykunucude zaten imkansiz;
+        // (2) x86 ABI'lerini eklemek APK'yi buyutur ve MSDK .so'lari
+        // orada islevsel degil. Gercek cihaz (arm) hedeflenir; urun
+        // yalniz-tablet (>=600dp) zaten sahada arm cihazdir.
         ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
         }
+
+        // DJI API anahtari manifest'e (com.dji.sdk.API_KEY) buradan gecer.
+        manifestPlaceholders = [
+            DJI_API_ANAHTARI: djiAnahtar
+        ]
 
         python {
             // OpenJ9 kutusunda derleme yapan Python 3.11.
@@ -130,6 +175,22 @@ android {
         buildConfig true
     }
 
+    packagingOptions {
+        // MSDK, Chaquopy (Python native) ve FFmpeg ayni yerel
+        // kutuphaneleri tasiyabilir -> ilk bulunani al (cakisma cozumu).
+        jniLibs {
+            useLegacyPackaging true
+            pickFirsts += ['**/libc++_shared.so', '**/libcrypto.so']
+        }
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES', 'META-INF/LICENSE*',
+                'META-INF/NOTICE*', 'META-INF/*.kotlin_module',
+                'META-INF/rxjava.properties'
+            ]
+        }
+    }
+
     lint {
         abortOnError false
         checkReleaseBuilds false
@@ -137,6 +198,18 @@ android {
 }
 
 dependencies {
+    def msdk = rootProject.ext.msdk_surum
+
+    // --- DJI MSDK v5 (Faz 4) ---
+    // aircraft   : ana denetim paketi (telemetri, ucus, waypoint)
+    implementation "com.dji:dji-sdk-v5-aircraft:$msdk"
+    // provided   : yalniz derleme arayuzleri (APK'ye girmez)
+    compileOnly "com.dji:dji-sdk-v5-aircraft-provided:$msdk"
+    // networkImp : DJI ag katmani. Koprumuz kendi TCP baglantisini kursa
+    //   da bazi araclar ag katmani olmadan etkinlestirilemez ve uzaktan
+    //   kimlik yukumlulukleri bunu gerektirir.
+    runtimeOnly "com.dji:dji-sdk-v5-networkImp:$msdk"
+
     // --- Android temel ---
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
@@ -144,6 +217,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.4'
     implementation 'androidx.lifecycle:lifecycle-service:2.8.4'
     implementation 'androidx.webkit:webkit:1.11.0'
+    // MSDK + Chaquopy dex'i icin multidex (attachBaseContext'te kurulur).
+    implementation 'androidx.multidex:multidex:2.0.1'
 
     // Eş zamanlılık
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'

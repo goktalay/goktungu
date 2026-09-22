@@ -3,18 +3,36 @@
      Gömülü Python arka uç yerel bir HTTP sunucusu açar; WebView bu
      sunucuya 127.0.0.1 üzerinden bağlanır. İnternet izni yerel soket
      ve (isteğe bağlı) çevrimiçi harita katmanları içindir. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Telemetri/USB seri (MAVLink) ve konum arka uç için -->
+    <!-- DJI MSDK: bazı araçlar Wi-Fi durumu okumadan etkinleşmez -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <!-- Telemetri/USB seri (MAVLink) ve konum arka uç için; ayrıca DJI
+         araçları konum olmadan uçuş izni vermeyebilir -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- DJI kumanda (RC) USB ile bağlanır -->
+    <uses-permission android:name="android.permission.USB_PERMISSION"
+        tools:ignore="ProtectedPermissions" />
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <!-- DJI MSDK 5.18 kendi manifestinde usb.accessory'yi required="true"
+         bildirir ve birleştirmede bizimkini ezer; USB aksesuar
+         bildirmeyen tabletler Play Store'da uygulamayı GÖRMEZ olurdu.
+         DJI aracı Wi-Fi ile de bağlanabildiği için tools:replace ile
+         geri alınıyor. -->
+    <uses-feature
+        android:name="android.hardware.usb.accessory"
+        android:required="false"
+        tools:replace="android:required" />
     <!-- Arka uç servisi ön planda çalışabilsin -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- YALNIZ TABLET: en küçük genişlik >= 600dp olan cihazlar (7"+
          tablet). Telefonlar (small/normal ekran) Play Store'da elenir. -->
@@ -26,13 +44,26 @@
         android:requiresSmallestWidthDp="600" />
 
     <application
+        android:name=".GoktunguUygulama"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/uygulama_adi"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.GRCOFFANDR">
+        android:theme="@style/Theme.GRCOFFANDR"
+        tools:replace="android:allowBackup,android:usesCleartextTraffic"
+        tools:targetApi="35">
+
+        <!-- DJI API anahtarı. Değer build.gradle manifestPlaceholders'tan
+             gelir; yerel.properties (dji.api.anahtari) veya
+             DJI_API_ANAHTARI çevre değişkeninden okunur. Boş olabilir; o
+             durumda MSDK kaydı başarısız olur ve günlük bunu açıkça
+             bildirir (sessiz çökme yok). Anahtar com.turkbey.goktungu
+             paket adına kayıtlı olmalıdır. -->
+        <meta-data
+            android:name="com.dji.sdk.API_KEY"
+            android:value="${DJI_API_ANAHTARI}" />
 
         <activity
             android:name=".AnaEtkinlik"
@@ -47,7 +78,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Gömülü Python arka ucunu tutan ön plan servisi -->
+        <!-- Gömülü Python arka ucunu + DJI native köprüsünü tutan ön plan
+             servisi. Tip dataSync olarak KORUNUR: startForeground manifest
+             tiplerinin TAMAMINI uyguladığı için connectedDevice eklemek,
+             bağlı cihaz ön koşulu karşılanmadan servisi düşürebilirdi
+             (mevcut Chaquopy arka ucu regresyonu). DJI native köprüsü bu
+             dataSync servisi içinde TCP + MSDK ile sorunsuz çalışır. -->
         <service
             android:name=".ArkaUcServisi"
             android:exported="false"

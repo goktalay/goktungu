@@ -15,6 +15,10 @@ buildscript {
         // guncellemeler API 36 (Android 16) hedeflemek ZORUNDA.
         hedef_sdk = 36
         derleme_sdk = 36
+        // DJI MSDK v5 surumu (Faz 4). Tek yerde tanimli; 06_BRDDJI ile
+        // dogrulanmis birlesim. MSDK 5.18.0 Kotlin 2.1.0 metadata ister
+        // (yukaridaki kotlin_surum ile uyumlu).
+        msdk_surum = '5.18.0'
         // USB Host API cok eski surumlerde de var; en dusuk surum
         // `foregroundServiceType` ve modern izin akisina gore secildi.
         en_dusuk_sdk = 24

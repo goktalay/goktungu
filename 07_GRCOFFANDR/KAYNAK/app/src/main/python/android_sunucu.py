@@ -275,6 +275,26 @@ def _ortam_hazirla(veri_koku, web_koku, port):
 _USB_TCP_PORT = "5760"
 _USB_HOST = "127.0.0.1"
 
+# DJI native köprüsü (Faz 4): Kotlin MSDK katmanı 127.0.0.1:8790'daki
+# GDP (NDJSON) sunucusuna bağlanır. "dji" türü bir bağlantı kaydı
+# olmadan dji_kopru.py o portu DİNLEMEZ; bu yüzden (yoksa) kaydedilir.
+# Kullanıcı arayüzden "Bağlan"a dokununca sunucu 8790'ı dinlemeye başlar
+# ve native istemci (üstel geri çekilmeyle bekleyen) bağlanır.
+_DJI_PORT = "8790"
+
+
+def _dji_baglantisini_kaydet(baglantilar):
+    """DJI native köprüsü için 'dji' türü bağlantıyı (yoksa) ekler."""
+    for k in (baglantilar.listele() or []):
+        if k.get("tur") == "dji" and str(k.get("port")) == _DJI_PORT:
+            return  # zaten kayıtlı
+    kid, hata = baglantilar.ekle(
+        "DJI Aracı (yerel)", "dji", _DJI_PORT, ucus_yazilimi="dji")
+    if hata:
+        _gunlukle("DJI bağlantısı eklenemedi: %s" % hata)
+    else:
+        _gunlukle("DJI bağlantısı kaydedildi (dji:0.0.0.0:%s)" % _DJI_PORT)
+
 
 def _usb_baglantisini_kaydet(baglantilar):
     """USB köprüsü için tcp:127.0.0.1:5760 bağlantısını (yoksa) ekler."""
@@ -355,6 +375,10 @@ def baslat(veri_koku, web_koku, port):
                 _usb_baglantisini_kaydet(ws.baglantilar)
             except Exception as e:
                 _gunlukle("USB bağlantısı kaydedilemedi: %r" % e)
+            try:
+                _dji_baglantisini_kaydet(ws.baglantilar)
+            except Exception as e:
+                _gunlukle("DJI bağlantısı kaydedilemedi: %r" % e)
             _sonuc["ws"], _sonuc["http"] = ws, http
         except BaseException:
             # BaseException: `import main` SystemExit fırlatabilir (paket
