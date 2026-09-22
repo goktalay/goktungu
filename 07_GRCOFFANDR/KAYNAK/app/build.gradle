@@ -1,0 +1,153 @@
+// GRCOFFANDR — GÖKTUNGU GRCOFF Android (gömülü tam uygulama)
+//
+// Mimari:
+//   - Chaquopy: GRCOFF Python arka ucu (goktungu paketi) APK içinde,
+//     Python 3.11 yorumlayıcısı ile gömülü çalışır.
+//   - WebView: mevcut GRCOFF web arayüzü (Cesium harita + panel_pfd + JS)
+//     yerel bir HTTP sunucusu üzerinden gösterilir.
+//   - SQLite: PostgreSQL yerine cihaz-içi veri deposu (arka uç portu).
+//
+// Chaquopy native Python içerdiği için ABI süzgeci ZORUNLUdur; aksi
+// halde APK tüm mimarilerin .so'larını taşıyıp devasa olur.
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    // Gömülü Python (Chaquopy) — arka ucu APK'ye derler.
+    id 'com.chaquo.python'
+}
+
+android {
+    // Bayrak ürün: tam GÖKTUNGU uygulaması Play Store'da com.turkbey.goktungu
+    // kimliğini taşır. DJI köprüsü com.turkbey.goktungu.dji'ye, MAVLink
+    // köprüsü com.turkbey.goktungumav'a ayrılır (çakışma önlenir).
+    namespace 'com.turkbey.goktungu'
+    compileSdk rootProject.ext.derleme_sdk
+
+    defaultConfig {
+        applicationId 'com.turkbey.goktungu'
+        minSdk rootProject.ext.en_dusuk_sdk
+        targetSdk rootProject.ext.hedef_sdk
+        versionCode 17
+        versionName '0.2.6'
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+        // Chaquopy: yalnızca gerçek cihaz + oykunucu ABI'leri.
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+        }
+
+        python {
+            // OpenJ9 kutusunda derleme yapan Python 3.11.
+            buildPython "/usr/bin/python3.11"
+            version "3.11"
+            pip {
+                // GRCOFF arka ucunun bağımlılıkları.
+                //   numpy  : Chaquopy'nin önceden derlenmiş tekeri (arm64...)
+                //   pyserial: saf Python
+                //   pymavlink: --no-deps ile kurulur. Aksi halde `fastcrc`
+                //     (Rust) ve `lxml` (C) çekilir; Chaquopy yerel kod
+                //     DERLEYEMEZ. İkisi de çalışma anında ZORUNLU DEĞİL:
+                //     fastcrc koşullu (saf-Python CRC yedeği var), lxml
+                //     yalnız DataFlash log ayrıştırma + dialect üretiminde
+                //     tembel kullanılır. Çekirdek MAVLink (mavutil, dialects)
+                //     bunlarsız çalışır.
+                options "--no-deps"
+                install "pyserial"
+                // pymavlink C uzantısı (dfindexer) PYMAVLINK_FAST_INDEX=0
+                // ile atlanır (derleme betiğinde -e ile verilir); Chaquopy
+                // yerel kod derleyemez. Saf-Python indeksleyici yedeği var.
+                install "pymavlink==2.4.49"
+                install "numpy"
+                // numpy'nin native bağımlılıkları (Requires-Dist:
+                // chaquopy-openblas, chaquopy-libcxx) --no-deps yüzünden
+                // atlanıyordu → çalışma anında `libopenblas.so bulunamadı`.
+                // Bu yüzden AÇIKÇA eklenir (libopenblas.so + libc++ sağlar).
+                install "chaquopy-openblas"
+                install "chaquopy-libcxx"
+                // openblas Fortran ile derli → libgfortran.so.3 gerekir.
+                // chaquopy-openblas'ın Requires-Dist'i; --no-deps yüzünden
+                // atlanıyordu (zincir: numpy → openblas → libgfortran).
+                install "chaquopy-libgfortran"
+                // WebSocket sunucusu (arayüz iletişimi) — ZORUNLU. İsteğe
+                // bağlı C hızlandırması (speedups) optional=True olduğundan
+                // Chaquopy derleyemese de kurulum sürer (saf-Python yedeği).
+                install "websockets==17.0.1"
+            }
+            // Arka uç açılışta modül olarak başlatılır.
+            pyc {
+                src false
+            }
+        }
+    }
+
+    signingConfigs {
+        release {
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                def p = new Properties()
+                imzaDosya.withInputStream { p.load(it) }
+                storeFile rootProject.file(p.getProperty("anahtar.deposu"))
+                storePassword p.getProperty("depo.sifresi")
+                keyAlias p.getProperty("anahtar.adi")
+                keyPassword p.getProperty("anahtar.sifresi")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Chaquopy + WebView JS köprüsü için R8 kapalı (yansıma
+            // ve JS arayüz sınıfları korunmalı; DJI köprüsünde de
+            // R8 kapalıydı).
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile(
+                'proguard-android-optimize.txt'), 'proguard-rules.pro'
+            def imzaDosya = rootProject.file("imza.properties")
+            if (imzaDosya.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix '.hata'
+            versionNameSuffix '-hata'
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    // --- Android temel ---
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-service:2.8.4'
+    implementation 'androidx.webkit:webkit:1.11.0'
+
+    // Eş zamanlılık
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}

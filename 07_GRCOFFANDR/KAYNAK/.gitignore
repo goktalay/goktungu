@@ -1,0 +1,16 @@
+# Derleme çıktıları
+build/
+.gradle/
+.kotlin/
+local.properties
+
+# İmza (git-ignored, 600) — köprülerdeki düzenle aynı
+imza.properties
+imza/
+
+# gomulu_hazirla.sh tarafından GRCOFF kaynağından ÜRETİLEN gömülü varlıklar
+# (kaynak tek doğruluk noktası: grcoff_2528_build/src). Depoda tutulmaz;
+# her derleme öncesi yeniden üretilir. El yazımı android_sunucu.py KORUNUR.
+app/src/main/python/main.py
+app/src/main/python/goktungu/
+app/src/main/assets/web/

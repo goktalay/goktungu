@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- GÖKTUNGU koyu uçuş yer istasyonu teması -->
+    <style name="Theme.GRCOFFANDR" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#1f6feb</item>
+        <item name="colorOnPrimary">#ffffff</item>
+        <item name="android:statusBarColor">#0b1622</item>
+        <item name="android:navigationBarColor">#0b1622</item>
+        <item name="android:windowBackground">#0b1622</item>
+    </style>
+
+    <style name="Theme.GRCOFFANDR.TamEkran" parent="Theme.GRCOFFANDR">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

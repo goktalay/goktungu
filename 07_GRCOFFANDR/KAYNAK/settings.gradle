@@ -1,0 +1,13 @@
+// GRCOFFANDR — GÖKTUNGU GRCOFF Android (gömülü Python arka uç + WebView arayüz)
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        // Chaquopy (gömülü Python) eklentisi
+        maven { url "https://chaquo.com/maven" }
+    }
+}
+
+rootProject.name = 'GRCOFFANDR'
+include ':app'

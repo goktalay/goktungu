@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GRCOFFANDR — GÖKTUNGU GRCOFF Android (gömülü tam uygulama)
+     Gömülü Python arka uç yerel bir HTTP sunucusu açar; WebView bu
+     sunucuya 127.0.0.1 üzerinden bağlanır. İnternet izni yerel soket
+     ve (isteğe bağlı) çevrimiçi harita katmanları içindir. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Telemetri/USB seri (MAVLink) ve konum arka uç için -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <!-- Arka uç servisi ön planda çalışabilsin -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- YALNIZ TABLET: en küçük genişlik >= 600dp olan cihazlar (7"+
+         tablet). Telefonlar (small/normal ekran) Play Store'da elenir. -->
+    <supports-screens
+        android:smallScreens="false"
+        android:normalScreens="false"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:requiresSmallestWidthDp="600" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/uygulama_adi"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.GRCOFFANDR">
+
+        <activity
+            android:name=".AnaEtkinlik"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|density"
+            android:screenOrientation="sensorLandscape"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.GRCOFFANDR">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Gömülü Python arka ucunu tutan ön plan servisi -->
+        <service
+            android:name=".ArkaUcServisi"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+    </application>
+</manifest>
