@@ -26,12 +26,15 @@ android {
     compileSdk rootProject.ext.derleme_sdk
 
     defaultConfig {
-        applicationId 'com.turkbey.goktungu'
+        // Bayrak ürün (tam GÖKTUNGU uygulaması) com.turkbey.goktungu adını
+        // aldığı için DJI köprüsü yardımcı uygulama olarak .dji son ekiyle
+        // ayrılır (Play Store'da ve aynı cihazda birlikte kurulabilir).
+        applicationId 'com.turkbey.goktungu.dji'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
-        versionCode 3
-        versionName '1.1.1'
+        versionCode 4
+        versionName '1.1.3'
 
         // MSDK buyuk -> multidex zorunlu
         multiDexEnabled true

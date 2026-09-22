@@ -10,12 +10,13 @@ android {
     defaultConfig {
         // AYRI PAKET ADI (bilincli karar).
         //
-        // DJI koprusu `com.turkbey.goktungu` kullaniyor.  Play
-        // Store paket adini benzersiz kimlik olarak alir; ayni adla
-        // ikinci uygulama YAYIMLANAMAZ ve mevcut DJI koprusunun
-        // uzerine yazardi.  Bu yuzden MAVLink koprusu ayri uygulama
-        // olarak yayimlanir.
-        applicationId 'com.turkbey.goktungumav'
+        // Bayrak urun (tam GOKTUNGU uygulamasi) com.turkbey.goktungu
+        // adini alir. MAVLink koprusu yardimci uygulama olarak
+        // .bridge son ekiyle ayrilir; DJI koprusu .dji alir. Play
+        // Store paket adini benzersiz kimlik olarak aldigindan bu uc
+        // uygulama ayni hesaptan birlikte yayimlanabilir ve ayni
+        // cihaza birlikte kurulabilir.
+        applicationId 'com.turkbey.goktungu.bridge'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
