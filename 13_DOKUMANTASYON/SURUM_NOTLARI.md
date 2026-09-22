@@ -2,6 +2,62 @@
 
 Uygulama `js/surum.js` (`GCS_SURUM`), paket `goktungu/paket_surum.py`.
 
+> Not: 2.5.29 ve sonrası girdiler git geçmişinden (`git log`) özetlenmiştir; her başlık gerçek bir commit'e dayanır. Tam ayrıntı için ilgili commit'e / `GCS_SURUM_GECMISI`'ne bakın.
+
+## Paket 2.5.126 / Uygulama 2.4.256 — 2026-09-21
+
+**Marka: Türkbey Teknoloji A.Ş. amblemi tüm ürün ikonlarında (paket 2.5.126)**
+
+- Tüm sistemde (GRCOFF, GRCON, PWA, favicon, .ico, köprü, Android, web) proje sahibi Türkbey Teknoloji A.Ş. amblemi (kırmızı kalkan-kurt) kullanılır; GÖKTUNGU ürün adı korunur. Android MAVLink köprüsü 1.1.2 ve Köprü 1.7.26 launcher ikonlarına da uygulandı.
+
+## Paket 2.5.123–2.5.125 / Uygulama 2.4.253–2.4.255 — 2026-09-20
+
+**3B harita ikonları, cam kokpit PFD'si ve HOME sembolü**
+
+- 3B harita ikonları (glTF) + dron paneli cam kokpit PFD'si (2.5.123); sanal dron kimlik çakışması düzeltmesi ve panel/3B ikon ince ayarları (2.5.124); HOME ikonu daire içinde 'H' standart helipad sembolü (2.5.125).
+
+## Paket 2.5.121–2.5.122 / Uygulama 2.4.251–2.4.252 — 2026-09-18
+
+**Makro güvenliği: konum koruması ve panik gözcüsü**
+
+- Makro konum koruması ve SITL panik gözcüsü eklendi (2.5.121); ardından panik gözcüsü kaldırıldı, makro irtifa 0 kaynağında engellendi ve görev soruları kaldırıldı (2.5.122).
+
+## Paket 2.5.112–2.5.120 / Uygulama 2.4.242–2.4.244 — 2026-09-18
+
+**Python makroları, makro editörü ve video aktarımı**
+
+- Köprüdeki kamera görüntüsünün GRCON ve GRCOFF'a köprü üzerinden aktarımı (#140, 2.5.112, Köprü 1.7.25); Rotalar > Makrolar altında Python makroları (#137, 2.5.113); makro editörüne Python sözdizimi vurgulama ve siyah çıktı konsolu (2.5.114). Katalog yayın betikleri 2.5.119 ve 2.5.120 ile güncellendi. (Ara sürümler için git geçmişine bakın.)
+
+## Paket 2.5.99–2.5.111 / Uygulama 2.4.229–2.4.241 — 2026-09-16 – 2026-09-18
+
+**Köprü mimarisi, kurumsal panel köprü yönetimi ve marka ikonları**
+
+- Yeni Türkbey kurt ikonu (gece/gündüz) tüm ürünlerde (2.5.111); GRCON'da yeni kayıt için çevrimiçi köprü zorunlu, kamera köprü seçici (2.5.110); bağlantı diyagramı düğmesi, SITL uçuş kaydı kapatıldı (2.5.109); yerel kipte tüm formlarda köprü seçimi (2.5.108); tema uyumlu Türkbey logo/ikon (2.5.107); ilk kurulumda varsayılan Radar/M50 kaydı yok (2.5.106); kopru.json gerçek veri köküne yazılır (2.5.105); GRCON merkez kipinde güncelleme arayüzü kaldırıldı (2.5.104); API kodlu kurulum, köprüler kurumsal panelde, gerçek Android köprü ajanları (2.5.103, Kurumsal Panel 1.4.0, Android köprüleri 1.1.0); Destek > Köprüler paneli (2.5.102, Köprü 1.7.23); merkez kipinde firmaya özel radar/EO kayıtları (2.5.101); köprüler listeden kaldırılabilir, köprü son IP/görülme (2.5.100); kritik telemetri replayAktif çökme düzeltmesi + /app/ vekili yol öneki (2.5.99).
+
+## Paket 2.5.94–2.5.98 / Uygulama 2.4.224–2.4.228 — 2026-09-16
+
+**Radar protokol v3.0.0, takip araç çubuğu ve sahiplik unvanı**
+
+- Sahip firma unvanı Türkbey Teknoloji Anonim Şirketi tüm ürünlerde (2.5.98, Köprü 1.7.22); radar yönetim penceresi, protokol v3.0.0 tüm yüzeyi (2.5.97); takip araç çubuğu 10 Hz yeniden çizimi kaldırıldı, Angaje Ol/Takip Et/Bırak tıklanabilir (2.5.96); tespit-takip ayrımı, M50 penceresinde AI+takip ayarları (2.5.95); AI ayarlarında Uygula, %80 tam ekran, dron kapat/küçült (2.5.94).
+
+## Paket 2.5.75–2.5.92 / Uygulama 2.4.205–2.4.222 — 2026-09-15 – 2026-09-16
+
+**M50 canlı görüntü penceresi ve Elektro-Optik altyapısı**
+
+- Kamera penceresi konsol yüksekliği + tam ekran, takip AI'dan bağımsız (2.5.92); kameralar.js önbellek etiketi düzeltmesi (2.5.91); Kameralar paneli sadeleşti, harita offline radar/M50 düzeltmeleri (2.5.89–2.5.90); hava aracı modeli paketleme, Jetson GPU kurulum betiği (2.5.88); Ubuntu ARM64 M50 vaInitialize düzeltmesi (2.5.87); Ubuntu M50 ARM64 SDK / x86_64 Wine köprüsü (2.5.86); M50 cihaz OSD'si (2.5.85); M50 penceresi bilgi katmanı ve sürüm rozeti (2.5.84); M50 sol panel ayracı (2.5.83); OpenCV RTSP zaman aşımı geri alındı (2.5.82); vekil kilidi kamera başına, süreç içi video kaydı (2.5.81); M50 penceresi ekran bilgileri ve video kaydı (2.5.80); M50 hava aracı tanıma entegrasyonu, PTZ takibi (2.5.79); harita M50 önizlemesine çift tık (2.5.78); M50 penceresi durum çubuğu, tekerlekle zoom (2.5.77); M50 canlı görüntü penceresi ayrı sistem (2.5.76); M50 PTZ kaydırıcı ve ayrılabilir görüntü penceresi (2.5.75).
+
+## Paket 2.5.53–2.5.74 / Uygulama 2.4.183–2.4.204 — 2026-09-14 – 2026-09-15
+
+**Çoklu radar / Elektro-Optik (Faz A–D), M50 protokolü ve kök neden düzeltmeleri**
+
+- M50 canlı görüntü RTSP kimliği yakalama katmanında (2.5.74); açılış lisans özetine m50 alanı (2.5.73); harita etiketleri hover, dron rengi seçimi (2.5.72); Yardım > Lisansı Yenile (2.5.71); EO menü bayrağı korumada (2.5.70); köprüsüz kurulumda Elektro-Optik menüsü (2.5.69); olay döngüsü deadlock düzeltmesi (2.5.68); sihirbaz WS sırası bağımsız (2.5.67); gizli panel CSS ve sihirbaz düzeltmeleri (2.5.66); sihirbaz/liste paneli düzeltmeleri (2.5.65); Radarlar ve Elektro Optik liste panelleri (2.5.64); Faz D (2.5.63) ve Faz C (2.5.62); çoklu Elektro-Optik Faz B + RTK konumu (2.5.61); çoklu radar Faz A (2.5.60); Kamera Yönetimi sadeleştirme (2.5.59); Elektro-Optik paneli tam SDK (2.5.58, Köprü 1.7.18); M50 RTSP otomatik (2.5.57, Köprü 1.7.17); M50 köprüsüz mod durumu (2.5.56); M50 SDK DLL yolu düzeltmesi (2.5.55); M50 köprüsüz doğrudan bağlantı (2.5.54); köprü liste/güncelleme hata gösterimi (2.5.53).
+
+## Paket 2.5.29–2.5.52 / Uygulama 2.4.159–2.4.182 — 2026-09-13 – 2026-09-14
+
+**C-UAS modu, YOLO tespiti, elle hedef seçimi ve kritik havuz/çökme düzeltmeleri**
+
+- Hava aracı tespitinde sınıf bazlı taban eşik sertleştirmesi (2.5.52); M50 kamera protokolü, sürükle-bırak PTZ (2.5.51); kesin kök neden: os.fchmod Windows'ta yok, takip_isle çökmesi (2.5.50); AI uç hataları konsol panelinde (2.5.49); AI uç hatalarında tam traceback (2.5.48); kesin kök neden: AI HTTP uçları PG bağlantı havuzunu sızdırıyordu (2.5.47); piksel takip düğmeleri kayboluyordu (2.5.46); YOLO tespiti her karede (2.5.45); piksel takip artık bloklamıyor (2.5.44); Angaje Ol/Takip Et düğmeleri, mesafeli takip (2.5.43); elle hedef seçimi — dikdörtgen çiz (2.5.42); canlı AI teknoloji/performans rozeti (2.5.41); YOLO GPU hızlandırması, ONNX Runtime + DirectML (2.5.40); hava aracı tip sınıflandırması, sınıf bazlı hassasiyet (2.5.39); yanlış alarm koruması + YOLO ONNX dron modeli (2.5.38); ffmpeg'siz RTSP/video oynatma (2.5.37); video dosyası kamera kaynağı (2.5.36); C-UAS modu — yalnız hava aracı tespiti/angajmanı (2.5.35); videoda çift tıkla takip (2.5.34); ayrıntılı güncelleme ilerlemesi, PG havuz sızıntısı düzeltmesi (2.5.33); eski AI işçisi güncellemede yenilenir (2.5.32); ayrı Yüz tespiti, angajman kalibrasyonu (2.5.31); Yardım menüsüne 'Güncellemeleri Denetle' (2.5.30); yerel AI 'sunucu yok' hatası giderildi (2.5.29).
+
 ## Paket 2.5.28 / Uygulama 2.4.158 — 2026-09-13
 
 **Yakın çekim insan tespiti eklendi (paket 2.5.28)**

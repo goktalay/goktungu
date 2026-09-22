@@ -35,7 +35,8 @@ Ayrıntı: [`13_DOKUMANTASYON/SISTEM_DEVIR_REHBERI.md`](13_DOKUMANTASYON/SISTEM_
 
 - **Uygulama sürümü** (GRCOFF arayüzü) tek kaynak: `01_GRCOFF/KAYNAK/js/surum.js` → `GCS_SURUM`. Değişiklik geçmişi (`GCS_SURUM_GECMISI`) aynı dosyadadır.
 - **Paket sürümü** (katalog) uygulamadan ayrıdır ve `01_GRCOFF/KAYNAK/goktungu/paket_surum.py` içinde tektir (`PAKET_SURUM`, `UYGULAMA_SURUM`). `main.py` ve iki build betiği bu dosyadan okur.
-- Güncel: **paket 2.5.113 / uygulama 2.4.243.** Sürüm notları: [`13_DOKUMANTASYON/SURUM_NOTLARI.md`](13_DOKUMANTASYON/SURUM_NOTLARI.md).
+- Güncel: **paket 2.5.126 / uygulama 2.4.256.** Sürüm notları: [`13_DOKUMANTASYON/SURUM_NOTLARI.md`](13_DOKUMANTASYON/SURUM_NOTLARI.md).
+- **Sürüm kapısı:** `js/surum.js` (`GCS_SURUM`) + `goktungu/__init__.py` (`_SON_BILINEN`) + `goktungu/paket_surum.py` birlikte artar; build betikleri eşleşmezse durur. Ayrıntı: [`13_DOKUMANTASYON/DERLEME.md`](13_DOKUMANTASYON/DERLEME.md).
 
 ## Kurulum, derleme ve yayın
 
