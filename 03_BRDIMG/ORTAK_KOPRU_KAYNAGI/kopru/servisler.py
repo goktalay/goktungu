@@ -218,6 +218,90 @@ SERVIS_ADLARI = SERVIS_SIRA
 
 
 # ---------------------------------------------------------------------
+# Faz 5 — URUN PROFILI (BRDIMG / BRDTLM ayrimi)
+# ---------------------------------------------------------------------
+# Ayni cekirdek iki AYRI urun olarak paketlenir:
+#   * BRDIMG = goruntu koprusu   -> yalniz video + ai
+#   * BRDTLM = telemetri/cihaz koprusu -> dron + m50 + radar + gcsdual
+#
+# Profil YALNIZ paketleme sirasinda `GOKTUNGU_KOPRU_URUN` ortam
+# degiskeniyle (ya da kurulum kokundeki `URUN` dosyasiyla) secilir.
+#
+# GERIYE UYUMLULUK — KRITIK: degisken/dosya AYARSIZ iken profil YOKTUR;
+# `aktif_urun()` None doner ve tum suzgecler no-op olur. Boylece mevcut
+# BRDIMG kurulumlari (profil ayari tasimaz) tum servisleri gormeye
+# BYTE-AYNI davranisla devam eder. Bir servisi bir urunden cikarmak,
+# yalniz o urun profili acikca secildiginde gerceklesir.
+URUN_PROFIL = {
+    "brdimg": ("video", "ai"),
+    "brdtlm": ("dron", "m50", "radar", "gcsdual"),
+}
+
+# `URUN` dosyasi okuma onbellegi: dosya kurulumda bir kez yazilir,
+# calisma boyunca degismez. Ortam degiskeni ise HER cagride yeniden
+# okunur (sinav ve elle mudahale degiskeni aninda gorsun diye).
+_URUN_DOSYA_ONBELLEK = None
+
+
+def _urun_dosyadan():
+    """Kurulum kokundeki `URUN` dosyasindan urun adini okur.
+
+    Windows SCM servisi ortam degiskenini alt sureclere her zaman temiz
+    aktaramadigi icin paket, kimligini kokune yazilan bir `URUN` dosyasi
+    ile de tasiyabilir. Dosya yoksa bos metin doner (profil yok).
+    """
+    global _URUN_DOSYA_ONBELLEK
+    if _URUN_DOSYA_ONBELLEK is not None:
+        return _URUN_DOSYA_ONBELLEK
+    deger = ""
+    try:
+        yol = os.path.join(paket_koku(), "URUN")
+        if os.path.isfile(yol):
+            with open(yol, "r", encoding="utf-8") as f:
+                deger = f.read().strip().lower()
+    except Exception:
+        deger = ""
+    _URUN_DOSYA_ONBELLEK = deger
+    return deger
+
+
+def aktif_urun():
+    """Etkin urun profilinin adi, ya da None (profil yok = tum servisler).
+
+    Kaynak sirasi: once `GOKTUNGU_KOPRU_URUN` ortam degiskeni, o bos ise
+    kurulum kokundeki `URUN` dosyasi. Taninmayan/bos deger None sayilir;
+    bilinmeyen bir profil adiyla tum servisleri gizleyip paneli bos
+    birakmak yerine ESKI davranisa (tumu acik) donmek yeglenir.
+    """
+    ad = str(os.environ.get("GOKTUNGU_KOPRU_URUN") or "").strip().lower()
+    if not ad:
+        ad = _urun_dosyadan()
+    return ad if ad in URUN_PROFIL else None
+
+
+def urun_servisleri(urun=None):
+    """Profilin izin verdigi servis adlari kumesi; profil yoksa None.
+
+    None donusu "suzme yapma" demektir (tum servisler). Bos kume DEGIL
+    None kullanilir: ikisi anlamca farklidir ve cagiranlar None'i acikca
+    "profil yok" olarak ele alir.
+    """
+    if urun is None:
+        urun = aktif_urun()
+    if urun is None:
+        return None
+    return frozenset(URUN_PROFIL.get(urun, ()))
+
+
+def urun_kapsaminda_mi(ad):
+    """`ad` servisi etkin urun profiline dahil mi? Profil yoksa daima True."""
+    kume = urun_servisleri()
+    if kume is None:
+        return True
+    return str(ad) in kume
+
+
+# ---------------------------------------------------------------------
 # v1.5.6 — Servis <-> firma yetkisi eslemesi
 # ---------------------------------------------------------------------
 # Kullanici istegi: "kullanicilar kopruyu indirip login olduktan sonra
@@ -256,7 +340,15 @@ def servis_gorunur_mu(ad, yetkiler):
     merkez erisilemezken radar/gccdual/ai'yi bedelsiz kullanima
     acardi. Kapali tarafa dusmek yalnizca menuyu eksik gosterir;
     kullanici merkeze baglaninca duzelir.
+
+    Faz 5 — URUN PROFILI: firma yetkisinden ONCE profil suzgeci
+    uygulanir. Servis etkin urun profilinin disindaysa (ornegin BRDTLM
+    kurulumunda `video`) yetkiden bagimsiz gizlenir. Profil ayarsizken
+    `urun_kapsaminda_mi` daima True doner; bu satir davranisi
+    DEGISTIRMEZ (geriye uyumluluk).
     """
+    if not urun_kapsaminda_mi(ad):
+        return False
     anahtar = SERVIS_YETKI.get(str(ad), None)
     if anahtar is None:
         # Tanimsiz (ozel tanimla eklenmis) servis de cekirdek sayilir:
@@ -599,6 +691,13 @@ class ServisYoneticisi:
         sirali = [a for a in SERVIS_SIRA if a in self.servisler]
         ekstra = sorted(a for a in self.servisler if a not in SERVIS_SIRA)
         adlar = sirali + ekstra
+        # Faz 5 — URUN PROFILI suzgeci. Yetkiden BAGIMSIZ uygulanir:
+        # BRDTLM paketinin panelinde `video`/`ai`, oturum acilmadan
+        # (yetkiler=None) bile gorunmemeli. Profil ayarsizken `kume`
+        # None doner ve bu blok atlanir -> davranis BYTE-AYNI kalir.
+        kume = urun_servisleri()
+        if kume is not None:
+            adlar = [a for a in adlar if a in kume]
         # v1.5.6 — yetki suzgeci. `yetkiler=None` verildiginde suzme
         # YAPILMAZ: ic cagirilar (tumunu_durdur, olcum, sinav) tam
         # listeyi gormeye devam etmeli.
@@ -610,6 +709,13 @@ class ServisYoneticisi:
         s = self.al(ad)
         if not s:
             return False, "Bilinmeyen servis: %s" % ad
+        # Faz 5 — URUN PROFILI: bu paketin urunune ait olmayan bir
+        # servisi baslatmak, yetki verilmemis olsa da (yetkiler=None,
+        # yerel baslatma) reddedilir. Profil ayarsizken kapsam daima
+        # dogrudur ve bu blok davranisi DEGISTIRMEZ.
+        if not urun_kapsaminda_mi(ad):
+            return False, ("Bu servis bu urun paketinde (%s) yer almiyor."
+                           % (aktif_urun() or "?"))
         # Yetki denetimi SUNUCUDA yapilir. Menuyu JS'te saklamak
         # yeterli DEGILDIR: yetkisiz bir firma dogrudan
         # `POST /api/servis/baslat {"servis":"radar"}` diyerek servisi

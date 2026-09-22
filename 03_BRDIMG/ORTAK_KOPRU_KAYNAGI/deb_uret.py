@@ -54,6 +54,71 @@ VERI = "/var/lib/goktungu-kopru"
 SERVIS_KULLANICI = "goktungu-kopru"
 PANEL_PORT = 8790
 
+# ---------------------------------------------------------------------
+# Faz 5 — URUN PROFILI (BRDIMG / BRDTLM)
+# ---------------------------------------------------------------------
+# Ayni cekirdek iki AYRI .deb olarak paketlenebilir. `--urun brdtlm`
+# verilince asagidaki genel degiskenler BRDTLM'e ozgu degerlerle yeniden
+# atanir; boylece paket adi, servis adi, kurulum/veri dizinleri, panel
+# portu ve ikon dosya adi BRDTLM'e ait olur ve iki paket AYNI makineye
+# yan yana kurulabilir (dpkg dosya cakismasi olmaz).
+#
+# GERIYE UYUMLULUK — KRITIK: `--urun` verilmezse (ya da `brdimg`
+# verilirse) hicbir genel degisken degismez ve uretilen .deb BYTE-AYNI
+# kalir. Asagidaki degiskenlerin varsayilanlari bilerek mevcut
+# literallerle birebir aynidir; f-string'lerde artik bu degiskenler
+# kullanildigi icin varsayilan cikti degismez.
+URUN = "brdimg"                         # etkin urun (varsayilan)
+URUN_ENV = None                         # systemd Environment / URUN dosyasi
+URUN_GORUNEN_AD = "GÖKTUNGU Köprü"       # .desktop Name
+URUN_GORUNEN_AD_EN = "GOKTUNGU Bridge"   # .desktop Name[en]
+URUN_KISA_ACIKLAMA = "GOKTUNGU Kopru — yerel servis koprusu"
+
+# `--urun brdtlm` icin uygulanacak degerler. Yalniz secildiginde
+# yuklenir; secilmezse hicbiri okunmaz.
+URUN_TANIMLARI = {
+    "brdimg": {},   # varsayilan: hicbir sey degismez (BYTE-AYNI cikti)
+    "brdtlm": {
+        "PAKET_AD": "goktungu-kopru-tlm",
+        "HEDEF": "/opt/goktungu/kopru-tlm",
+        "VERI": "/var/lib/goktungu-kopru-tlm",
+        "SERVIS_KULLANICI": "goktungu-kopru-tlm",
+        "PANEL_PORT": 8791,
+        "URUN_ENV": "brdtlm",
+        "URUN_GORUNEN_AD": "GÖKTUNGU Köprü (Telemetri)",
+        "URUN_GORUNEN_AD_EN": "GOKTUNGU Bridge (Telemetry)",
+        "URUN_KISA_ACIKLAMA":
+            "GOKTUNGU Kopru (Telemetri) — dron/telemetri cihaz koprusu",
+    },
+}
+
+
+def urun_uygula(urun):
+    """Secilen urunun genel degiskenlerini yukler.
+
+    `brdimg` (varsayilan) icin HICBIR sey degismez: uretilen paket
+    onceki surumlerle BYTE-AYNI kalir. Bilinmeyen urun adinda hata verir;
+    sessizce brdimg'e donmek, kullanicinin istedigi paketi degil baskasini
+    uretip fark etmemesine yol acardi.
+    """
+    global URUN, PAKET_AD, HEDEF, VERI, SERVIS_KULLANICI, PANEL_PORT
+    global URUN_ENV, URUN_GORUNEN_AD, URUN_GORUNEN_AD_EN, URUN_KISA_ACIKLAMA
+    ad = str(urun or "brdimg").strip().lower()
+    if ad not in URUN_TANIMLARI:
+        raise SystemExit("Bilinmeyen urun: %r (secenekler: %s)"
+                         % (urun, ", ".join(sorted(URUN_TANIMLARI))))
+    URUN = ad
+    d = URUN_TANIMLARI[ad]
+    PAKET_AD = d.get("PAKET_AD", PAKET_AD)
+    HEDEF = d.get("HEDEF", HEDEF)
+    VERI = d.get("VERI", VERI)
+    SERVIS_KULLANICI = d.get("SERVIS_KULLANICI", SERVIS_KULLANICI)
+    PANEL_PORT = d.get("PANEL_PORT", PANEL_PORT)
+    URUN_ENV = d.get("URUN_ENV", URUN_ENV)
+    URUN_GORUNEN_AD = d.get("URUN_GORUNEN_AD", URUN_GORUNEN_AD)
+    URUN_GORUNEN_AD_EN = d.get("URUN_GORUNEN_AD_EN", URUN_GORUNEN_AD_EN)
+    URUN_KISA_ACIKLAMA = d.get("URUN_KISA_ACIKLAMA", URUN_KISA_ACIKLAMA)
+
 # Pakete girecek uygulama dosyalari
 # `tani_sifirla.sh` pakete DAHILDIR: servis olusmadiginda kullanicinin
 # elinde tani araci bulunmali. Disaridan indirmesi gerekirse tam o anda
@@ -119,17 +184,46 @@ def kur_agaci(calisma):
                     "__pycache__", "*.pyc", "hicolor"),
             )
 
+    # --- URUN kimlik dosyasi (Faz 5) ---
+    # BRDTLM paketinin kimligini kurulum kokune yazar. systemd birimi
+    # ayrica GOKTUNGU_KOPRU_URUN=brdtlm ortam degiskenini de verir; dosya
+    # ikinci bir kaynaktir (elle calistirma, servis disi arac vb.). URUN
+    # secilmemisken (brdimg) dosya YAZILMAZ -> cikti BYTE-AYNI kalir.
+    if URUN_ENV:
+        with open(os.path.join(hedef, "URUN"), "w",
+                  encoding="utf-8", newline="\n") as f:
+            f.write(f"{URUN_ENV}\n")
+
     # --- Ikonlar: hicolor temasina ---
     ikon_kaynak = os.path.join(KOK, "varliklar", "hicolor")
     if os.path.isdir(ikon_kaynak):
         ikon_hedef = os.path.join(kok, "usr/share/icons/hicolor")
         shutil.copytree(ikon_kaynak, ikon_hedef, dirs_exist_ok=True)
+        # Ikon dosya adi paket adiyla ESLENMELI. Ayri urunler (BRDTLM)
+        # ayni "goktungu-kopru.png" dosyasina sahip cikamaz; yoksa iki
+        # paket ayni makineye kurulunca dpkg dosya cakismasi verir.
+        # Varsayilan (goktungu-kopru) icin ad zaten dogru: yeniden
+        # adlandirma yapilmaz ve cikti BYTE-AYNI kalir.
+        if PAKET_AD != "goktungu-kopru":
+            for kokd, _, dslar in os.walk(ikon_hedef):
+                for ds in dslar:
+                    if ds == "goktungu-kopru.png":
+                        os.rename(
+                            os.path.join(kokd, ds),
+                            os.path.join(kokd, "%s.png" % PAKET_AD))
 
     # --- systemd sistem servisi ---
     # StartLimitBurst/StartLimitIntervalSec [Unit] bolumune AITTIR.
     # [Service] altina yazilirsa systemd "Unknown key name" diyerek
     # SESSIZCE yok sayar; cokme dongusu sinirsiz kalir. Bu kusur
     # kur.sh'de gercek systemd ile OLCULDU.
+    #
+    # URUN profili: BRDTLM icin GOKTUNGU_KOPRU_URUN=brdtlm ortam
+    # degiskeni eklenir; servis ve tum alt servisler bunu miras alir ve
+    # yalniz BRDTLM servislerini (dron/m50/radar/gcsdual) gosterir. URUN
+    # secilmemisken satir BOS olur -> birim dosyasi BYTE-AYNI kalir.
+    _urun_env_satiri = (
+        f"Environment=GOKTUNGU_KOPRU_URUN={URUN_ENV}\n" if URUN_ENV else "")
     yaz(os.path.join(kok, "lib/systemd/system", f"{PAKET_AD}.service"), f"""\
 [Unit]
 Description=GOKTUNGU Kopru Yazilimi
@@ -145,7 +239,7 @@ User={SERVIS_KULLANICI}
 Group={SERVIS_KULLANICI}
 WorkingDirectory={HEDEF}
 Environment=GOKTUNGU_KOPRU_VERI={VERI}
-# --tarayici-yok: servis kipinde tarayici acmak anlamsizdir; grafik
+{_urun_env_satiri}# --tarayici-yok: servis kipinde tarayici acmak anlamsizdir; grafik
 # oturum olmayabilir ve tarayici acma cagrisi saniyelerce bloke olur.
 ExecStart={HEDEF}/.venv/bin/python {HEDEF}/main.py --tarayici-yok
 Restart=always
@@ -170,11 +264,11 @@ WantedBy=multi-user.target
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=GÖKTUNGU Köprü
+Name={URUN_GORUNEN_AD}
 GenericName=Köprü Yönetim Paneli
-Name[en]=GOKTUNGU Bridge
-Comment=GÖKTUNGU Köprü yerel yönetim panelini açar
-Comment[en]=Opens the GOKTUNGU Bridge local management panel
+Name[en]={URUN_GORUNEN_AD_EN}
+Comment={URUN_GORUNEN_AD} yerel yönetim panelini açar
+Comment[en]=Opens the {URUN_GORUNEN_AD_EN} local management panel
 Exec=xdg-open http://127.0.0.1:{PANEL_PORT}/
 Icon={PAKET_AD}
 Terminal=false
@@ -237,7 +331,7 @@ Recommends: ffmpeg
 Maintainer: {BAKIMCI}
 Installed-Size: {kurulu_boyut}
 Homepage: https://goktungu.com/
-Description: GOKTUNGU Kopru — yerel servis koprusu
+Description: {URUN_KISA_ACIKLAMA}
  GOKTUNGU merkezi komuta kontrol sistemine baglanan kopru yazilimi.
  Yerel bir web yonetim paneli acar; dron, AI, video, GroundGCC ve
  radar servislerini yonetir ve telemetriyi merkeze aktarir.
@@ -620,12 +714,24 @@ exit 0
     yaz(os.path.join(dbn, "md5sums"), "\n".join(satirlar) + "\n")
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="GOKTUNGU Kopru .deb paketi ureteci")
+    # `--urun` VERILMEZSE brdimg (varsayilan) ve cikti onceki surumlerle
+    # BYTE-AYNI kalir. `--urun brdtlm` telemetri/cihaz koprusu paketini
+    # (goktungu-kopru-tlm) uretir.
+    ap.add_argument("--urun", default="brdimg",
+                    choices=sorted(URUN_TANIMLARI),
+                    help="Uretilecek urun paketi (varsayilan: brdimg)")
+    a = ap.parse_args(argv)   # argv None ise sys.argv[1:] kullanilir
+    urun_uygula(a.urun)
+
     calisma = os.path.join(KOK, "dagitim", "deb_calisma")
     os.makedirs(calisma, exist_ok=True)
 
     print("=" * 68)
-    print(f"GOKTUNGU KOPRU {KOPRU_SURUM} — .deb paketi uretiliyor")
+    print(f"GOKTUNGU {PAKET_AD} {KOPRU_SURUM} — .deb paketi uretiliyor")
     print("=" * 68)
 
     kok = kur_agaci(calisma)
@@ -682,12 +788,13 @@ def main():
     r = subprocess.run(["dpkg-deb", "--contents", cikti],
                        capture_output=True, text=True)
     icerik = r.stdout
-    d("uygulama /opt/goktungu/kopru altinda",
-      "./opt/goktungu/kopru/main.py" in icerik)
+    _hedef_ic = "./%s" % HEDEF.lstrip("/")
+    d("uygulama %s altinda" % HEDEF,
+      ("%s/main.py" % _hedef_ic) in icerik)
     # Yerel AI iscisi: eksikligi sessiz kalir (kurulum basarili gorunur),
     # bu yuzden pakette oldugu BURADA olculur.
     d("yerel AI iscisi var",
-      "./opt/goktungu/kopru/ai_sunucu.py" in icerik,
+      ("%s/ai_sunucu.py" % _hedef_ic) in icerik,
       "ayri AI donanimi olmayan sahada AI hic calismaz")
     d("systemd birimi var",
       f"./lib/systemd/system/{PAKET_AD}.service" in icerik)

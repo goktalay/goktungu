@@ -28,6 +28,38 @@ Telemetri once yerel JSONL dosyasina yazilir, dakikalik dosyalar
 kapandikca merkeze aktarilir. Dogrudan her ornegi merkeze gondermek
 10 Hz x dron sayisi kadar WSS mesaji uretir ve baglanti koptugunda
 veri KAYBOLUR. Tampon, kopmayi dayanikli hale getirir.
+
+## PROTOKOL SOYUTLAMASI (Faz 5)
+
+Bir seri ucus kumandasi iki farkli protokol konusabilir:
+
+  * ArduPilot / PX4  -> MAVLink  (mevcut, DEGISMEZ yol)
+  * Betaflight       -> MSP v1   (Faz 5'te EKLENDI, SALT-OKUNUR)
+
+MAVLink yolu bugune kadarki gibi merkezdeki Baglanti Yoneticisi
+uzerinden yurur; bu servis onu OLDUGU GIBI korur. Faz 5, buna iki sey
+ekler:
+
+1. `protokol_algila(kayit)`: bir seri portun MAVLink mi (ardupilot) yoksa
+   MSP mi (betaflight) konustugunu, hicbir kumanda cercevesi yazmadan,
+   guvenli sekilde ayirt eder (bkz. `protokol_algilama`).
+2. Salt-okunur Betaflight MSP oturumlari: `betaflight_msp` surucusuyle
+   MSP tanilama/telemetri sorgulari yapilir. MSP_SET_*, ARM, motor, RC,
+   reboot, CLI gibi YAZMA komutlari surucude ne tanimli ne de
+   uretilebilir; Betaflight yolu tamamen pasiftir.
+
+Bu islevler panel/merkez tarafindan `servis_kanal` komut kanaliyla
+(GCSDUAL ile ayni desen) surulur; boylece seri port yalniz SAHA
+makinesinde acilir.
+
+## HENUZ EKLENMEDI — DJI Onboard SDK / DJI Windows SDK
+
+BRDTLM'in kapsaminda DJI dron protokolleri de var; ancak masaustu DJI
+uygulama anahtarlari (app key/secret) HENUZ YOK ve bu SDK'lar native
+(C++/kapali kaynak) baglama gerektirir. Bu yuzden DJI yolu bilerek
+ATLANMISTIR: anahtar + SDK saglaninca protokol soyutlamasina ucuncu bir
+yol (`dji_onboard` / `dji_windows`) olarak eklenecektir. Su an yalnizca
+MAVLink (ardupilot) ve MSP (betaflight) yollari vardir.
 """
 import glob
 import json
@@ -35,10 +67,16 @@ import os
 import time
 
 from . import ayar as ayar_mod
+from . import servis_kanal as _sk
 from .servis_temel import Servis, calistir
 
 DONGU_ARALIK_SN = 5.0
 TAMPON_DAKIKA_SN = 60.0
+
+# Servisin tanidigi ucus protokolleri. `bilinmiyor`, algilama sonucsuz
+# kaldiginda dondurulur; cagiran taraf kullaniciya baud/hat kontrolu
+# onerir.
+PROTOKOLLER = ("ardupilot", "betaflight", "bilinmiyor")
 
 
 def _ilgili_mi(port, aciklama, donanim):
@@ -115,9 +153,34 @@ def seri_portlar(tumu=False):
     return bulunan
 
 
+def protokol_algila(kayit):
+    """Bir seri baglantinin ucus protokolunu guvenli biçimde belirler.
+
+    Protokol soyutlamasinin oto-algilama yuzu. Once (hicbir sey
+    gondermeden) gecerli CRC'li MAVLink HEARTBEAT dinlenir; kanit yoksa
+    YALNIZ Betaflight'in salt-okunur `MSP_API_VERSION` sorgusu denenir.
+    ARM/motor/RC/ayar/reboot/CLI gibi hicbir kumanda uretilmez.
+
+    Donus sozlugu `protokol` alaninda `ardupilot`, `betaflight` ya da
+    `bilinmiyor` tasir (bkz. `protokol_algilama.seri_protokol_algila`).
+    """
+    try:
+        from . import protokol_algilama as _pa
+    except Exception as e:
+        return {"tamam": False, "protokol": "bilinmiyor",
+                "hata": "Protokol algilayici yuklenemedi: %s" % e}
+    return _pa.seri_protokol_algila(kayit)
+
+
 class DronServisi(Servis):
     ad = "dron"
     baslik = "Dron Servisi"
+
+    # Guvenli varsayilanlar: `hazirla()` bunlari yeniden atar, ancak
+    # servis dogrudan (sinav/teshis) kullanildiginda da komut yonlendirme
+    # ve olcum kodu AttributeError vermeden calismalidir.
+    kanal = None
+    _msp = None
 
     def hazirla(self):
         self.tampon_dizin = os.path.join(ayar_mod.veri_dizini(),
@@ -139,6 +202,39 @@ class DronServisi(Servis):
                          "uyari")
         self._son_bildirim = 0.0
 
+        # --- Protokol soyutlamasi (Faz 5) -----------------------------
+        # Panel/merkez komutlari bu surece `servis_kanal` uzerinden iner
+        # (GCSDUAL ile ayni desen). Kanal yoksa (elle calistirma) servis
+        # yine calisir; komut yalnizca islenmez.
+        try:
+            self.kanal = _sk.ServisKanali()
+        except Exception as e:
+            self.kanal = None
+            self.yaz("Komut kanali kurulamadi: %s" % e, "uyari")
+        if self.kanal is not None and self.kanal.etkin():
+            self.yaz("Protokol komut kanali etkin (algilama + Betaflight "
+                     "MSP komutlari bu surece iner).", "basari")
+
+        # Salt-okunur Betaflight MSP oturum yoneticisi. MAVLink yolu bundan
+        # BAGIMSIZDIR ve degismeden merkezdeki Baglanti Yoneticisi
+        # uzerinden yurur; bu yonetici yalnizca MSP (betaflight) yolunu
+        # ekler. Surucu YAZMA komutu uretemez.
+        self._msp = None
+
+    def _msp_yonetici(self):
+        """MSP yoneticisini gec yaratir (yalniz gerekince).
+
+        Betaflight surucusu yalniz bir baglanti betaflight olarak
+        algilandiginda/kullanildiginda gerekir; her dron servisinin onu
+        pesinen kurmasi gereksizdir.
+        """
+        if self._msp is None:
+            from .betaflight_msp import BetaflightMspYonetici
+            self._msp = BetaflightMspYonetici(
+                konsol=lambda etiket, metin, seviye="bilgi":
+                    self.yaz("%s: %s" % (etiket, metin), seviye))
+        return self._msp
+
     def _tampon_dosyalari(self):
         return sorted(glob.glob(os.path.join(self.tampon_dizin, "*.jsonl")))
 
@@ -159,6 +255,10 @@ class DronServisi(Servis):
         son_olcum = time.time()
         while not self.durdur_istendi():
             simdi = time.time()
+            # Protokol/MSP komutlarini yokla. Beklemeden ONCE yapilir ki
+            # panelden gelen "protokolu algila" komutu 5 sn'ye kadar
+            # gecikmesin.
+            self._komutlari_isle()
             # Olcum dosyasi KONSOL bildiriminden daha sik guncellenir:
             # panel ve merkez bunu canli gosterge olarak okur, 30 sn
             # gecikme kullaniciya "donmus" izlenimi verir.
@@ -169,9 +269,97 @@ class DronServisi(Servis):
                 self._son_bildirim = simdi
                 bekleyen = self._bekleyen_ornek()
                 p = len(seri_portlar())
+                msp = self._msp_oturum_sayisi()
                 self.yaz("Durum: %d yerel seri port, %d bekleyen telemetri "
-                         "ornegi" % (p, bekleyen))
-            self.bekle(DONGU_ARALIK_SN)
+                         "ornegi, %d Betaflight MSP oturumu"
+                         % (p, bekleyen, msp))
+            self._bekle_komutlu(DONGU_ARALIK_SN)
+
+    def _bekle_komutlu(self, sn):
+        """Beklerken komut yoklar. Kanal yoksa duz bekleme yapar.
+
+        Beklerken de komut yoklanir; aksi halde "protokolu algila" veya
+        "MSP baslat" komutu bir sonraki donguye (5 sn) kadar gecikir.
+        """
+        if not (self.kanal is not None and self.kanal.etkin()):
+            return self.bekle(sn)
+        bitis = time.time() + float(sn)
+        while not self.durdur_istendi():
+            kalan = bitis - time.time()
+            if kalan <= 0:
+                return self.durdur_istendi()
+            if self.bekle(min(0.25, kalan)):
+                return True
+            self._komutlari_isle()
+        return self.durdur_istendi()
+
+    # -----------------------------------------------------------------
+    # Komut kanali (panel/merkez -> bu surec)
+    # -----------------------------------------------------------------
+    def _komutlari_isle(self):
+        k = self.kanal
+        if not (k is not None and k.etkin()):
+            return
+        for komut in k.oku():
+            kid = komut.get("id")
+            eylem = str(komut.get("eylem") or "")
+            veri = komut.get("veri") or {}
+            try:
+                tamam, hata, cikti = self._komut_uygula(eylem, veri)
+            except Exception as e:
+                tamam, hata, cikti = False, "%s: %s" % (
+                    type(e).__name__, e), {}
+            k.yanit(kid, tamam, hata, cikti)
+
+    def _komut_uygula(self, eylem, veri):
+        """Tek protokol komutunu uygular. Donus: `(tamam, hata, veri)`.
+
+        Desteklenen eylemler (hepsi SALT-OKUNUR):
+
+          * `protokol_algila` : {port, baud, tur} -> ardupilot/betaflight
+          * `msp_baslat`      : {id, port, baud, ucus_yazilimi, tur}
+          * `msp_durdur`      : {id}
+          * `msp_durum`       : (arguman yok) -> tum MSP oturum durumlari
+
+        MAVLink/ArduPilot baglantilari BU KANALDAN yonetilmez: onlar
+        merkezdeki Baglanti Yoneticisi'nde bugune kadarki gibi yurur.
+        """
+        eylem = str(eylem or "").lower()
+
+        if eylem == "protokol_algila":
+            kayit = dict(veri or {})
+            kayit.setdefault("tur", "seri")
+            sonuc = protokol_algila(kayit)
+            return (bool(sonuc.get("tamam")), str(sonuc.get("hata") or ""),
+                    sonuc)
+
+        if eylem == "msp_baslat":
+            kayit = dict(veri or {})
+            kayit.setdefault("tur", "seri")
+            kayit.setdefault("ucus_yazilimi", "betaflight")
+            tamam, hata = self._msp_yonetici().baslat(kayit)
+            return bool(tamam), str(hata or ""), {
+                "baglanti_id": kayit.get("id")}
+
+        if eylem == "msp_durdur":
+            if self._msp is None:
+                return True, "", {}
+            self._msp.durdur(veri.get("id"))
+            return True, "", {"baglanti_id": veri.get("id")}
+
+        if eylem == "msp_durum":
+            durumlar = self._msp.durumlar() if self._msp is not None else {}
+            return True, "", {"oturumlar": durumlar}
+
+        return False, "Bilinmeyen dron komutu: %s" % eylem, {}
+
+    def _msp_oturum_sayisi(self):
+        if self._msp is None:
+            return 0
+        try:
+            return len(self._msp.durumlar())
+        except Exception:
+            return 0
 
     def _olcum_yaz(self):
         """Panel ve merkezin okudugu canli olcumleri yazar.
@@ -184,15 +372,27 @@ class DronServisi(Servis):
 
         Sayim `Uygulama.servis_durumu_zengin()` icinde, kanallarin
         gercekten yasadigi yerde yapilir.
+
+        `betaflight_msp` olcumu ise BU surece aittir (MSP oturumlari
+        burada yasar), bu yuzden burada yazilir.
         """
         try:
             self.durum_yaz(seri_port=len(seri_portlar()),
-                           bekleyen_telemetri=self._bekleyen_ornek())
+                           bekleyen_telemetri=self._bekleyen_ornek(),
+                           betaflight_msp=self._msp_oturum_sayisi())
         except Exception:
             pass
 
     def kapat(self):
         self.yaz("Ucus baglantilari kapatiliyor")
+        # Salt-okunur MSP oturumlari acikta kalmasin: seri portlar
+        # birakilmali ki servis yeniden baslatilinca "port mesgul"
+        # hatasi cikmasin.
+        if self._msp is not None:
+            try:
+                self._msp.kapat()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

@@ -85,13 +85,56 @@ except ImportError:  # pragma: no cover - Windows disi
     win32serviceutil = _Sahte()  # type: ignore[assignment]
 
 
-SERVIS_ADI = "GoktunguKopru"
-SERVIS_GORUNEN_AD = "GOKTUNGU Kopru Yazilimi"
-SERVIS_ACIKLAMA = (
-    "GOKTUNGU saha kopru yazilimi: yerel dron, AI, video, GroundGCC ve "
-    "radar servislerini yonetir ve telemetriyi GOKTUNGU merkezine "
-    "aktarir. Yerel panel: http://127.0.0.1:8790/"
-)
+# ---------------------------------------------------------------------
+# URUN PROFILI (Faz 5)
+# ---------------------------------------------------------------------
+# Ayni cekirdek iki AYRI Windows servisi olarak kurulabilir (BRDIMG /
+# BRDTLM). Urun; once `GOKTUNGU_KOPRU_URUN` ortam degiskeninden, o bos
+# ise kurulum dizinindeki `URUN` dosyasindan belirlenir (BRDTLM setup'i
+# bu dosyayi yazar). Belirlenirse ortam degiskeni de sabitlenir; boylece
+# hem servis sureci hem de baslattigi alt servisler ayni profili gorur.
+#
+# GERIYE UYUMLULUK — KRITIK: ne degisken ne dosya varsa `_URUN` bos
+# kalir; servis adi ve kimligi mevcut BRDIMG degerlerinde kalir ve
+# os.environ'a DOKUNULMAZ. BRDIMG servis davranisi degismez.
+
+
+def _urun_belirle():
+    u = str(os.environ.get("GOKTUNGU_KOPRU_URUN") or "").strip().lower()
+    if not u:
+        try:
+            yol = os.path.join(_BU_DIZIN, "URUN")
+            if os.path.isfile(yol):
+                with open(yol, "r", encoding="utf-8") as f:
+                    u = f.read().strip().lower()
+        except Exception:
+            u = ""
+    return u
+
+
+_URUN = _urun_belirle()
+if _URUN and _URUN != "brdimg":
+    # Alt servisler os.environ'i miras alir; profil suzgeci orada da
+    # etkin olsun. `setdefault`: degisken zaten verilmisse ezme.
+    os.environ.setdefault("GOKTUNGU_KOPRU_URUN", _URUN)
+
+if _URUN == "brdtlm":
+    SERVIS_ADI = "GoktunguKopruTlm"
+    SERVIS_GORUNEN_AD = "GOKTUNGU Kopru (Telemetri)"
+    SERVIS_ACIKLAMA = (
+        "GOKTUNGU saha telemetri/cihaz koprusu: yerel dron (ArduPilot / "
+        "Betaflight), M50 elektro-optik, radar ve GroundGCC servislerini "
+        "yonetir ve telemetriyi GOKTUNGU merkezine aktarir. "
+        "Yerel panel: http://127.0.0.1:8791/"
+    )
+else:
+    SERVIS_ADI = "GoktunguKopru"
+    SERVIS_GORUNEN_AD = "GOKTUNGU Kopru Yazilimi"
+    SERVIS_ACIKLAMA = (
+        "GOKTUNGU saha kopru yazilimi: yerel dron, AI, video, GroundGCC ve "
+        "radar servislerini yonetir ve telemetriyi GOKTUNGU merkezine "
+        "aktarir. Yerel panel: http://127.0.0.1:8790/"
+    )
 
 
 def _gunluk_dosyasi() -> str:

@@ -21,17 +21,47 @@ Unicode true
   !define SURUM "1.4.0"
 !endif
 
-!define URUN         "GOKTUNGU Kopru Yazilimi"
-!define URUN_KISA    "GOKTUNGU Kopru"
+; ---------------------------------------------------------------------
+; URUN KIMLIGI (Faz 5)
+;
+; Asagidaki tanimlar `!ifndef` ile korunur: BRDTLM sarmalayicisi
+; (04_BRDTLM) makensis'e `-DURUN=...  -DSERVIS_ADI=GoktunguKopruTlm
+; -DURUN_PROFIL=brdtlm ...` gecerek AYRI bir urun uretebilir.
+;
+; GERIYE UYUMLULUK — KRITIK: hicbir `-D` verilmezse tanimlar mevcut
+; degerlerine cozulur ve uretilen setup.exe BYTE-AYNI kalir. Yeni
+; `URUN_PROFIL` tanimi verilmedigi surece kurulum $INSTDIR\URUN dosyasini
+; yazmaz; BRDIMG davranisi degismez.
+; ---------------------------------------------------------------------
+!ifndef URUN
+  !define URUN         "GOKTUNGU Kopru Yazilimi"
+!endif
+!ifndef URUN_KISA
+  !define URUN_KISA    "GOKTUNGU Kopru"
+!endif
 !define SIRKET       "Turkbey Teknoloji Anonim Sirketi"
-!define SERVIS_ADI   "GoktunguKopru"
-!define PANEL_URL    "http://127.0.0.1:8790/"
-!define KAYIT_ANAHTAR "Software\Microsoft\Windows\CurrentVersion\Uninstall\GoktunguKopru"
-!define AYAR_ANAHTAR  "Software\VEILOX\GoktunguKopru"
+!ifndef SERVIS_ADI
+  !define SERVIS_ADI   "GoktunguKopru"
+!endif
+!ifndef PANEL_URL
+  !define PANEL_URL    "http://127.0.0.1:8790/"
+!endif
+!ifndef KAYIT_ANAHTAR
+  !define KAYIT_ANAHTAR "Software\Microsoft\Windows\CurrentVersion\Uninstall\GoktunguKopru"
+!endif
+!ifndef AYAR_ANAHTAR
+  !define AYAR_ANAHTAR  "Software\VEILOX\GoktunguKopru"
+!endif
+!ifndef CIKTI_AD
+  !define CIKTI_AD     "GOKTUNGU-Kopru-Setup"
+!endif
+!ifndef KURULUM_DIZIN
+  !define KURULUM_DIZIN "$PROGRAMFILES64\Goktungu\Kopru"
+!endif
 
 Name "${URUN} ${SURUM}"
-OutFile "dagitim\GOKTUNGU-Kopru-Setup-${SURUM}.exe"
-InstallDir "$PROGRAMFILES64\Goktungu\Kopru"
+OutFile "dagitim\${CIKTI_AD}-${SURUM}.exe"
+InstallDir "${KURULUM_DIZIN}"
 InstallDirRegKey HKLM "${AYAR_ANAHTAR}" "KurulumDizini"
 BrandingText "${SIRKET}"
 SetCompressor /SOLID lzma
@@ -164,6 +194,18 @@ Section "GOKTUNGU Kopru" AnaBolum
   File "main.py"
   File "servis_win.py"
   File "SURUM"
+
+  ; URUN kimlik dosyasi (Faz 5). Yalniz BRDTLM gibi bir profil
+  ; secildiginde yazilir; servis (servis_win.py) ve tum alt servisler
+  ; bunu okuyup GOKTUNGU_KOPRU_URUN degerini belirler. URUN_PROFIL
+  ; tanimlanmamissa (BRDIMG) bu blok derlemeye HIC girmez -> setup.exe
+  ; BYTE-AYNI kalir.
+!ifdef URUN_PROFIL
+  DetailPrint "Urun kimligi yaziliyor: ${URUN_PROFIL}"
+  FileOpen $9 "$INSTDIR\URUN" w
+  FileWrite $9 "${URUN_PROFIL}"
+  FileClose $9
+!endif
 
   ; YEREL AI cikarim iscisi (v1.7.20). AI servisi bunu gomulu Python
   ; ile 127.0.0.1 uzerinde alt surec olarak baslatir. Dosya yazilmazsa
@@ -380,6 +422,9 @@ Section "Uninstall"
   Delete "$INSTDIR\ai_sunucu.py"
   Delete "$INSTDIR\servis_win.py"
   Delete "$INSTDIR\SURUM"
+  ; URUN kimlik dosyasi (yalniz BRDTLM gibi profillerde vardir; yoksa
+  ; Delete sessizce gecer). Silinmezse $INSTDIR bos kalmaz.
+  Delete "$INSTDIR\URUN"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR\kopru"
   ; Modeller kurulum dizinindedir (salt okunur); silinmezse $INSTDIR
