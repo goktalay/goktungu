@@ -2127,6 +2127,11 @@ async function sayfaGoruntu() {
   const win = kayitlar.filter((k) => k.platform === 'windows');
   const lin = kayitlar.filter((k) => k.platform === 'linux' ||
                                      k.platform === 'ubuntu');
+  /* ANDROID GORUNTU KOPRUSU (BRDIAN) — com.turkbey.goktungu.image
+   * Ayni `video` urunu ve `android` platformu altinda dagitilir; boylece
+   * sunucudaki statik `/indir/video/` oturum kapisi bu APK'yi da korur.
+   * Windows/Ubuntu ile ayni `goruntu_indir` ucundan iner. */
+  const android = kayitlar.filter((k) => k.platform === 'android');
   const kart = (baslik, liste, ipucu) =>
     paketKarti(baslik, liste, ipucu, 'goruntu_indir');
   el('#icerik').innerHTML = `
@@ -2155,6 +2160,14 @@ async function sayfaGoruntu() {
       '<code class="kod">http://127.0.0.1:8802</code> · Ubuntu 22.04 ve ' +
       'üzeri. Kurulum sırasında bağımlılıklar indirilir; internet ' +
       'bağlantısı gerekir.')}
+    ${kart('Android — Görüntü Köprüsü', android,
+      'GOKTUNGU Görüntü Köprüsü (Android): telefon veya tabletinizin ' +
+      'kamerasını yerel Merkez Uygulamanıza (GRCON) ya da çevrimdışı ' +
+      'merkeze (GRCOFF) köprüler; görüntü işleme ve tespit cihazda ' +
+      'yereldir, ham görüntü buluta aktarılmaz. APK doğrudan iner: ' +
+      'kurulum için cihazınızda <strong>bilinmeyen kaynaklardan ' +
+      'kuruluma</strong> izin vermeniz gerekir (Ayarlar → Güvenlik). ' +
+      'Android 8.0 ve üzeri. Sürüm 1.0.0.')}
     <div class="pano">
       <div class="pano-baslik">Kurulum sonrası</div>
       <ol class="madde">

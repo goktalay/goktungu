@@ -12,10 +12,28 @@
 
 window.PANEL_SURUM = {
   ad: 'GÖKTUNGU Kurumsal Panel',
-  surum: '1.4.0',
-  tarih: '2026-09-17',
+  surum: '1.5.0',
+  tarih: '2026-09-23',
   telif: '© 2026 Türkbey Teknoloji Anonim Şirketi',
   gecmis: [
+    {
+      s: "1.5.0", t: "23 Eylül 2026",
+      d: [
+        "ANDROID GORUNTU KOPRUSU (BRDIAN) INDIRME KARTI EKLENDI. Goruntu " +
+        "Koprusu sayfasina Windows ve Ubuntu paketlerinin yanina " +
+        "'Android — Goruntu Koprusu' karti geldi. GOKTUNGU Goruntu " +
+        "Koprusu (Android, com.turkbey.goktungu.image) telefon veya " +
+        "tabletin kamerasini yerel Merkez Uygulamaya (GRCON) ya da " +
+        "cevrimdisi merkeze (GRCOFF) koprular; goruntu isleme cihazda " +
+        "yereldir, ham goruntu buluta aktarilmaz. Surum 1.0.0.",
+        "PAKET DAGITIMI. APK ayni `video` urunu ve `android` platformu " +
+        "altinda dagitilir; boylece `/indir/video/` oturum kapisi bu " +
+        "paketi de korur ve indirme Windows/Ubuntu ile ayni " +
+        "`goruntu_indir` ucundan yapilir. APK dogrudan iner; kurulum " +
+        "icin cihazda bilinmeyen kaynaklardan kuruluma izin gerekir " +
+        "(Android 8.0 ve uzeri)."
+      ]
+    },
     {
       s: "1.4.0", t: "17 Eylül 2026",
       d: [
