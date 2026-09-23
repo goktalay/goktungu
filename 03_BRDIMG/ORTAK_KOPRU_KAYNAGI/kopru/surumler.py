@@ -935,6 +935,7 @@ SERVIS_SURUMLERI = {
     "gcsdual": "1.1.0",
     "radar": "2.3.0",
     "m50": "1.2.0",
+    "dji": "1.0.0",
 }
 
 SERVIS_GECMIS = {
@@ -1159,6 +1160,27 @@ SERVIS_GECMIS = {
             "surum": "1.0.0",
             "tarih": "2026-09-14",
             "notlar": ["M50 elektro-optik servisi (1.7.15-1.7.18)."]
+        },
+    ],
+    "dji": [
+        {
+            "surum": "1.0.0",
+            "tarih": "2026-09-23",
+            "notlar": [
+                "Faz 5 DJI: DJI dron servisi (saf Python katman). Native "
+                "OSDK yardimcisi (goktungu_osdk_kopru) alt surec olarak "
+                "baslatilir; OSDK verisi GDP/NDJSON olarak merkeze/role "
+                "kanalina koprulenir (Android DJI koprusuyle ayni protokol).",
+                "Kapali varsayilan (M50 gibi): acik 'dji_baslat' komutu "
+                "gelmeden hicbir kanala baglanmaz; firma yetkisine baglidir.",
+                "Native yardimci yoksa donanimsiz benzetim (SimKanal) veya "
+                "'OSDK yardimcisi bekleniyor' durumuna duser; cokme yok.",
+                "Uygulama kimligi (app id/key/lisans) dji_ayar.json'dan "
+                "okunup native yardimciya ortam degiskeniyle aktarilir; "
+                "anahtar icerigi serviste tutulmaz/gunluge yazilmaz.",
+                "Windows SDK yolu henuz iskele: ileride m50_wine emsali "
+                "'dji_windows' kipi olarak eklenecek.",
+            ]
         },
     ],
     "radar": [

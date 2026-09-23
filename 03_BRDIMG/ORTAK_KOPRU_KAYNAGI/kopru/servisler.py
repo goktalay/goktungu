@@ -204,13 +204,23 @@ SERVIS_TANIM = {
                      "komutuyla yonetir; ham video merkeze tasinmaz.",
         "modul": "kopru.servis_m50",
     },
+    # Faz 5 (DJI): DJI dronlarini native OSDK yardimcisi (goktungu_osdk_
+    # kopru) uzerinden GDP/NDJSON olarak merkeze koprular. Native yardimci
+    # yoksa donanimsiz benzetim (SimKanal) veya "yardimci bekleniyor"
+    # durumuna duser; acik komutla baslar, kor baslatma yoktur.
+    "dji": {
+        "baslik": "DJI Dron Sunucusu",
+        "aciklama": "DJI dronlarini OSDK/Windows SDK ile, acik operator "
+                     "komutuyla merkeze koprular (GDP/NDJSON).",
+        "modul": "kopru.servis_dji",
+    },
 }
 
 # Panelde ve merkez bildiriminde kullanilan SABIT sira. Sozluk sirasina
 # guvenilmez: servis eklendiginde panel duzeni kaymamalidir.
 # Kullanicinin belirttigi menu sirasi (13.08.2026): Dron, AI, Video,
 # GroundGCC, Radar.
-SERVIS_SIRA = ("dron", "ai", "video", "gcsdual", "radar", "m50")
+SERVIS_SIRA = ("dron", "ai", "video", "gcsdual", "radar", "m50", "dji")
 
 # Diger moduller (uygulama, panel, kurulum) servis adlarini ELLE
 # yazmasin: yeni bir servis eklendiginde tek noktadan yayilir.
@@ -234,7 +244,7 @@ SERVIS_ADLARI = SERVIS_SIRA
 # yalniz o urun profili acikca secildiginde gerceklesir.
 URUN_PROFIL = {
     "brdimg": ("video", "ai"),
-    "brdtlm": ("dron", "m50", "radar", "gcsdual"),
+    "brdtlm": ("dron", "m50", "radar", "gcsdual", "dji"),
 }
 
 # `URUN` dosyasi okuma onbellegi: dosya kurulumda bir kez yazilir,
@@ -325,6 +335,11 @@ SERVIS_YETKI = {
     # görünmez ve başlatılamaz. Eski merkezlerin eksik yetki özetinde
     # kapalı kalması bilinçli güvenli varsayımdır.
     "m50": "m50",
+    # DJI de fiziksel dron denetimi ve uygulama anahtarı gerektirir;
+    # M50 gibi firma yetkisine bağlıdır (yetki/anahtar yoksa görünmez ve
+    # başlatılamaz — kör başlatma yok). Eski merkezlerin eksik yetki
+    # özetinde kapalı kalması bilinçli güvenli varsayımdır.
+    "dji": "dji",
 }
 
 
