@@ -47,8 +47,8 @@ android {
         applicationId 'com.turkbey.goktungu'
         minSdk rootProject.ext.en_dusuk_sdk
         targetSdk rootProject.ext.hedef_sdk
-        versionCode 17
-        versionName '0.2.6'
+        versionCode 18
+        versionName '0.2.7'
 
         // DJI MSDK cok buyuk -> multidex ZORUNLU (Chaquopy dex'i ile
         // birlikte 64K metod sinirini asar). MultiDex.install
