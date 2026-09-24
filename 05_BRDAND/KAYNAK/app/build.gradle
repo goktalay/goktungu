@@ -41,8 +41,8 @@ android {
         // 1.1.0: gercek kopru ajani (WebSocket role, API kodu ile kurulum)
         // 1.1.3: DJI MSDK v5 cekirdegi gommeli DJI kopru tipi olarak
         //        eklendi (mevcut MAVLink yolu regresyonsuz korunuyor).
-        versionCode 4
-        versionName '1.1.3'
+        versionCode 5
+        versionName '1.1.4'
 
         // DJI MSDK gomuldugu icin multidex ZORUNLU: yontem sayisi artik
         // 64K DEX sinirinin cok uzerinde. MultiDex.install cagrisi

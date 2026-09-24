@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
@@ -48,6 +49,23 @@ import kotlinx.coroutines.launch
  * dongusunden gelir; boylece tip degisince yeniden abone olmak gerekmez.
  */
 class AnaEtkinlik : AppCompatActivity() {
+
+    // Cihazin sistem yazi tipi olcegi cok buyukse (erisilebilirlik)
+    // arayuz tasiyor ve sabit yukseklikli dugme metinleri (ornegin
+    // KOPRUYU BASLAT) kirpiliyordu. Olcegi makul bir tavana sabitle:
+    // metin okunur kalir, kart/dugme duzeni bozulmaz. (Kullanici
+    // bildirimi 2026-09.)
+    override fun attachBaseContext(base: Context) {
+        val tavan = 1.15f
+        val kaynak = base.resources.configuration
+        if (kaynak.fontScale > tavan) {
+            val yapil = Configuration(kaynak)
+            yapil.fontScale = tavan
+            super.attachBaseContext(base.createConfigurationContext(yapil))
+        } else {
+            super.attachBaseContext(base)
+        }
+    }
 
     private lateinit var bag: EtkinlikAnaBinding
     private var cihazlar: List<UsbDevice> = emptyList()
